@@ -3522,13 +3522,13 @@ if(typeof document !== 'undefined' && !document.getElementById('__opselcss')){
   document.head.appendChild(st);
 }
 
-const OUTLINE_COLOUR = '#2366FF', OUTLINE_SLOT = 9;   // higher slot = lower layer = runs last
+const OUTLINE_COLOUR = '#848B96', OUTLINE_SLOT = 9;   // higher slot = lower layer = runs last
 
 /* The XCS 16-colour grid. Colour decides which layer an object joins, and
    layers run top of the panel downward — so slots are chosen to ascend in
    the order the job must run. 16 is the last layer available. */
 const PALETTE = ['#EB3DBA','#FE0002','#FF7F56','#E1C000','#C29900','#96D71D',
-  '#00C715','#00897B','#2366FF','#00BEFE','#8170EF','#A958FF','#582FA8',
+  '#00C715','#00897B','#848B96','#00BEFE','#8170EF','#A958FF','#582FA8',
   '#D9D9D9','#848B96','#000000'];
 
 /* Starting parameters per material. XCS cannot read these from a file, but
@@ -3547,7 +3547,7 @@ const M2 = [
   { op:'cut',     layer:'op-4-CUT-INNER',      colour:'#00C715',  device:'455nm laser',
     mode:'Cut', preset:'1% · 16mm/s · 1 pass · air 100%',
     note:'Windows, slots and holes only.' },
-  { op:'outer',   layer:'op-5-CUT-OUTER-LAST', colour:'#2366FF',  device:'455nm laser',
+  { op:'outer',   layer:'op-5-CUT-OUTER-LAST', colour:'#848B96',  device:'455nm laser',
     mode:'Cut', preset:'1% · 16mm/s · 1 pass · air 100%',
     note:'One continuous perimeter, and nothing after it.' }
 ];
@@ -4083,7 +4083,7 @@ function doc(pl){
   L.push('        2      2   #FE0002 red      engrave         ' + PRESET.engrave);
   L.push('        3      3   #FF7F56 orange   registration    ' + PRESET.score + '  (must NOT cut)');
   L.push('        4      7   #00C715 green    INTERIOR cuts   ' + PRESET.cutIn);
-  L.push('        5      9   #2366FF blue     EXTERIOR outline ' + PRESET.cutOut + '  <- LAST');
+  L.push('        5      9   #848B96 blue     EXTERIOR outline ' + PRESET.cutOut + '  <- LAST');
   L.push('');
   L.push('      Interior = every aperture inside the card. Exterior = the card');
   L.push('      outline itself. Interior sits ABOVE exterior in the panel, so');
