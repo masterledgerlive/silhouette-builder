@@ -1,0 +1,1751 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>SILOUTTES Reader — highscores.live</title>
+<style>
+:root{ --bg:#0b0f14; --ink:#e8edf5; --dim:#8b94a3; --ok:#2dd4bf; --warn:#e0a94a;
+       --bad:#ff5d5d; --line:#242c38; --mono:ui-monospace,SFMono-Regular,Menlo,monospace; }
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.55 var(--mono);
+     padding:14px;padding-bottom:env(safe-area-inset-bottom)}
+h1{font-size:15px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ok);margin:0 0 2px}
+.sub{color:var(--dim);font-size:12px;margin-bottom:12px}
+.card{border:1px solid var(--line);border-radius:10px;padding:11px;margin-bottom:10px}
+button{font:600 14px var(--mono);background:#1b2230;color:var(--ink);
+       border:1px solid #39404a;border-radius:8px;padding:12px 14px;width:100%;margin-top:7px}
+button.go{background:var(--ok);color:#06131a;border:none}
+video,canvas{width:100%;border-radius:8px;background:#000;display:block}
+#hits div{border-top:1px solid var(--line);padding:7px 0}
+.k{color:var(--ok);font-weight:700}
+.w{color:var(--warn)} .b{color:var(--bad)} .d{color:var(--dim)}
+a{color:var(--ok)}
+label{display:block;margin-top:7px}
+input[type=file]{width:100%;font:12px var(--mono);color:var(--dim);margin-top:5px}
+</style>
+
+<h1>SILOUTTES Reader</h1>
+<div class="sub">Reads a card. Separate from the builder on purpose — the builder is 3.8&nbsp;MB
+and has no business loading on a phone.</div>
+
+<div class="card">
+  <div id="cap" class="d">checking what this device can do…</div>
+</div>
+
+<div class="card">
+  <button id="start" class="go">▶ Start camera</button>
+  <button id="stop" style="display:none">■ Stop</button>
+  <label class="d">…or read a photo / an exported PNG:
+    <input type="file" id="file" accept="image/*">
+  </label>
+  <video id="vid" playsinline muted style="display:none;margin-top:9px"></video>
+  <canvas id="shot" style="display:none;margin-top:9px"></canvas>
+</div>
+
+<div class="card">
+  <div class="d" style="margin-bottom:4px;">FOUND</div>
+  <div id="hits" class="d">nothing yet</div>
+</div>
+
+<div class="card" id="manifest" style="display:none"></div>
+
+<div class="card" id="ledger" style="display:none"></div>
+
+<div class="card">
+  <button id="csv">↓ Export CSV (spreadsheet / eBay)</button>
+  <button id="json">↓ Export JSON for the shadow-box builder</button>
+  <button id="wipe">Clear the scan list</button>
+  <div class="d" style="font-size:12px;margin-top:7px">Scans are kept in this browser only.
+  Last record: <span id="recid" class="k" style="display:none"></span></div>
+</div>
+
+<div class="card" id="flat" style="display:none"></div>
+
+<div class="card" id="pichash" style="display:none"></div>
+
+<div class="card" id="idcard" style="display:none">
+  <div class="d" style="margin-bottom:4px;">CARD IDENTITY</div>
+  <div id="ident"></div>
+  <div id="vault" style="display:none;margin-top:9px;border-top:1px solid var(--line);padding-top:9px">
+    <div class="w" style="font-size:12px">🔒 This card has a vaulted section.</div>
+    <div class="d" style="font-size:12px;margin:4px 0">
+      The key is not in the photograph. It is under the scratch panel on the card itself,
+      which is the whole point — see below.
+    </div>
+    <input id="vkey" placeholder="claim key from under the panel"
+      style="width:100%;font:14px var(--mono);padding:10px;border-radius:8px;
+             border:1px solid #39404a;background:#11161d;color:var(--ink);margin-top:5px">
+    <button id="vgo">Unlock</button>
+    <div id="vout" style="margin-top:7px"></div>
+  </div>
+</div>
+
+<div class="card" style="font-size:12px;border-color:#5a3a3a">
+  <b class="b">READ THIS BEFORE TRUSTING A PHOTO.</b><br><br>
+  A photograph cannot prove an object. Anything printed can be photocopied, and the copy
+  scans <i>identically</i> — same QR, same serial, same everything. So "one picture documents
+  the card's legitimacy" is not true on its own, and it is worth knowing that now rather than
+  after a dispute.<br><br>
+  <b class="k">What does work, and it is the design you were already reaching for:</b><br>
+  1 · The <b>serial is public</b> — printed, scannable, identifies which card this is.<br>
+  2 · The <b>claim key is secret</b> — printed <i>under the scratch panel</i>, so it is not in
+  any photograph of an unopened card.<br>
+  3 · The <b>ledger is authoritative</b> — the first person to redeem that key owns it. A
+  photocopy scans the same and claims nothing, because the key was already spent.<br><br>
+  That is why the scratch panel matters. It is not decoration — it is the half of the system
+  that a camera cannot capture. The picture proves <i>which</i> card; the sealed key proves
+  <i>this</i> card.<br><br>
+  <span class="d">You said the constant "can be mimicked" — that instinct was right, and it is
+  exactly why the key has to be rotatable on transfer. On sale the seller reveals the key, the
+  buyer redeems it, and the ledger issues a new one. The old key is dead the moment it is
+  used.</span>
+</div>
+
+<div class="card d" style="font-size:12px">
+  <b class="k">What this can and cannot read.</b><br><br>
+  The standard symbologies — QR, UPC, EAN, Code&nbsp;128, Data&nbsp;Matrix, PDF417, Aztec —
+  are decoded by the browser itself, with no library downloaded at all. That is the honest
+  answer to "is there already a system": yes, and it is already on the phone.<br><br>
+  <b class="w">The DAVID colour grid, Morse marks, punch holes and Braille are NOT readable
+  here yet.</b> They are our own encodings, so no browser and no app knows them. Reading one
+  from a photo needs a step nothing has built yet: find the card in the picture, work out its
+  corners, undo the perspective, and only then sample the cells. That is the next real piece
+  of work, and it is a genuine piece of work — not a switch to flip.<br><br>
+  Google Lens did not miss your hidden data. It OCR'd the card text and image-searched the
+  artwork, because that is all Lens does. To Lens a colour grid is texture.
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const hits = $('hits');
+let detector = null, stream = null, raf = 0, seen = new Set();
+
+/* ── what does this device actually support? ────────────────── */
+(async function capability(){
+  const lines = [];
+  if('BarcodeDetector' in window){
+    try{
+      const fmts = await BarcodeDetector.getSupportedFormats();
+      detector = new BarcodeDetector({ formats: fmts });
+      lines.push('<span class="k">✓ Native barcode decoding available.</span>');
+      lines.push('Formats: ' + fmts.join(', '));
+      lines.push('<span class="d">Zero bytes downloaded — this is built into the browser.</span>');
+    }catch(e){
+      lines.push('<span class="b">✖ BarcodeDetector present but refused to start: '+e.message+'</span>');
+    }
+  } else {
+    lines.push('<span class="w">✖ No native barcode decoding on this browser.</span>');
+    lines.push('That means iPhone, or Firefox. Apple has still not shipped the ' +
+      'Barcode Detection API, so Safari cannot do this without a WebAssembly ' +
+      'library — about 300&nbsp;KB, loaded only on this page, never in the builder.');
+    lines.push('<span class="d">On this device: use the stock Camera app for QR codes. ' +
+      'It works, it just is not something a web page can reach.</span>');
+  }
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia)
+    lines.push('<span class="b">✖ No camera access from this browser.</span>');
+  $('cap').innerHTML = lines.join('<br>');
+})();
+
+/* ── results ─────────────────────────────────────────────────── */
+function add(fmt, value, how){
+  const key = fmt + '|' + value;
+  if(seen.has(key)) return;
+  seen.add(key);
+  if(hits.textContent === 'nothing yet') hits.innerHTML = '';
+  const isURL = /^https?:\/\//i.test(value);
+  const el = document.createElement('div');
+  el.innerHTML = '<span class="k">' + fmt + '</span> <span class="d">· ' + how + '</span><br>' +
+    (isURL ? '<a href="' + value.replace(/"/g,'&quot;') + '" target="_blank" rel="noopener">' +
+               value.replace(/</g,'&lt;') + '</a>'
+           : '<span style="word-break:break-all">' + value.replace(/</g,'&lt;') + '</span>');
+  hits.prepend(el);
+  if(navigator.vibrate) navigator.vibrate(40);
+  const id = identify(value);
+  if(id) showIdentity(id);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   CARD IDENTITY
+   A GS1 Digital Link carries the product number and serial in the
+   path: /01/<gtin>/21/<serial>. That is a published convention, so
+   a retail system reads it too — the card is not speaking a private
+   language just to us.
+   ══════════════════════════════════════════════════════════════ */
+function crc32(s){
+  let c = 0xFFFFFFFF;
+  for(let i=0;i<s.length;i++){
+    c ^= s.charCodeAt(i);
+    for(let k=0;k<8;k++) c = (c>>>1) ^ (0xEDB88320 & -(c & 1));
+  }
+  return (c ^ 0xFFFFFFFF) >>> 0;
+}
+const hex8 = v => '0x' + (v>>>0).toString(16).padStart(8,'0');
+
+let CARD = null;
+function identify(value){
+  const m = String(value).match(/\/01\/(\d{8,14})(?:\/21\/([^/?#]+))?/);
+  if(!m) return null;
+  return { gtin:m[1], serial:m[2] || null, url:value };
+}
+function showIdentity(c){
+  CARD = c;
+  $('idcard').style.display = 'block';
+  const rows = [
+    ['Product (GTIN)', c.gtin],
+    ['Serial', c.serial || '<span class="w">none — this is a product code, not a unique card</span>'],
+    ['Fingerprint', c.serial ? hex8(crc32(c.gtin + '|' + c.serial)) : '—']
+  ];
+  $('ident').innerHTML = rows.map(r=>
+    '<div style="display:flex;gap:8px"><span class="d" style="min-width:100px">'+r[0]+
+    '</span><span class="k">'+r[1]+'</span></div>').join('') +
+    '<div class="d" style="margin-top:7px;font-size:12px">' +
+      (c.serial
+        ? 'This identifies <b>which</b> card. It does not prove <b>this</b> card — see the red panel.'
+        : 'No serial in the code, so every card in the run scans the same. Add /21/&lt;serial&gt; to make each one unique.') +
+    '</div>';
+  if(c.serial) $('vault').style.display = 'block';
+}
+
+/* ── the vault, demonstrated for real ────────────────────────────
+   The vaulted blob is XOR-scrambled with a keystream seeded from the
+   claim key and the serial, with a CRC32 over the plaintext. A wrong
+   key produces bytes whose CRC does not match, so it fails loudly
+   instead of returning plausible rubbish.
+
+   Stated plainly: this is obfuscation, not AES. It proves the
+   handshake works. Real money needs the key checked server-side
+   against a ledger, because anything a phone can verify offline, a
+   forger can also verify offline while guessing. */
+function seed(key, serial){
+  let h = 0x811c9dc5;
+  const s = key + '|' + serial;
+  for(let i=0;i<s.length;i++){ h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
+  return h >>> 0 || 0x2545f491;
+}
+function keystream(sd, n){
+  let x = sd >>> 0; const o = new Uint8Array(n);
+  for(let i=0;i<n;i++){ x^=x<<13; x>>>=0; x^=x>>>17; x^=x<<5; x>>>=0; o[i]=x&255; }
+  return o;
+}
+function vaultSeal(text, key, serial){
+  const b = new TextEncoder().encode(text);
+  const ks = keystream(seed(key, serial), b.length);
+  const out = new Uint8Array(b.length);
+  for(let i=0;i<b.length;i++) out[i] = b[i] ^ ks[i];
+  return { blob: out, crc: crc32(text) };
+}
+function vaultOpen(blob, crc, key, serial){
+  const ks = keystream(seed(key, serial), blob.length);
+  const out = new Uint8Array(blob.length);
+  for(let i=0;i<blob.length;i++) out[i] = blob[i] ^ ks[i];
+  const text = new TextDecoder().decode(out);
+  return crc32(text) === crc ? { ok:true, text } : { ok:false };
+}
+
+/* a demo vault so the handshake can be exercised without a server */
+let DEMO = null;
+function armDemo(serial){
+  DEMO = vaultSeal(
+    'VAULTED · card ' + serial + '\n' +
+    'creator: David Jeffords\n' +
+    'edition: 1 of 1\n' +
+    'unlocked at ' + new Date().toISOString().slice(0,10),
+    'CLAIM-0001', serial);
+}
+$('vgo').onclick = ()=>{
+  if(!CARD || !CARD.serial) return;
+  if(!DEMO) armDemo(CARD.serial);
+  const key = $('vkey').value.trim();
+  const r = vaultOpen(DEMO.blob, DEMO.crc, key, CARD.serial);
+  $('vout').innerHTML = r.ok
+    ? '<span class="k">✓ Unlocked.</span><pre style="white-space:pre-wrap;margin:5px 0 0">' +
+      r.text.replace(/</g,'&lt;') + '</pre>' +
+      '<div class="d" style="font-size:12px;margin-top:6px">The key is now spent. On a real ' +
+      'ledger this transfers ownership and issues a fresh key to the buyer.</div>'
+    : '<span class="b">✖ Wrong key.</span> <span class="d">The CRC over the decrypted bytes ' +
+      'does not match, so it refuses rather than handing back rubbish that looks like data. ' +
+      'This demo card opens with <b>CLAIM-0001</b>.</span>';
+};
+
+/* ══════════════════════════════════════════════════════════════
+   IDENTIFY BY PICTURE — how real card scanners actually work
+   Delver Lens, TCGplayer, ManaBox and the rest do not read a code.
+   They: find the card outline, flatten the perspective, then compute
+   a PERCEPTUAL HASH of the artwork and look it up. New cards need no
+   new code — only a new row in the database.
+
+   dHash below: shrink to 9×8 grey, compare each pixel to its right
+   neighbour, one bit per comparison, 64 bits total. Two photos of the
+   same card land within a few bits of each other; different cards are
+   far apart. Crude, tiny, and genuinely what the field uses.
+   ══════════════════════════════════════════════════════════════ */
+function dHash(src){
+  const W = 9, H = 8;
+  const c = document.createElement('canvas');
+  c.width = W; c.height = H;
+  const x = c.getContext('2d', { willReadFrequently:true });
+  x.drawImage(src, 0, 0, W, H);
+  const d = x.getImageData(0, 0, W, H).data;
+  const grey = [];
+  for(let i=0;i<W*H;i++){
+    const p = i*4;
+    grey.push(0.299*d[p] + 0.587*d[p+1] + 0.114*d[p+2]);
+  }
+  let bits = '';
+  for(let r=0;r<H;r++)
+    for(let col=0;col<W-1;col++)
+      bits += grey[r*W+col] < grey[r*W+col+1] ? '1' : '0';
+  let hex = '';
+  for(let i=0;i<64;i+=4) hex += parseInt(bits.slice(i,i+4),2).toString(16);
+  return { bits, hex };
+}
+function hexToBits(hex){
+  let s = '';
+  for(const ch of String(hex)) s += parseInt(ch,16).toString(2).padStart(4,'0');
+  return s;
+}
+function hamming(a, b){
+  let n = 0;
+  for(let i=0;i<Math.min(a.length,b.length);i++) if(a[i] !== b[i]) n++;
+  return n;
+}
+/* a stand-in for the real database. In production this is one row per
+   card: hash, name, set, market price, and the manifest URL. */
+const LIBRARY = [];
+function identifyByPicture(src){
+  const h = dHash(src);
+  let best = null;
+  LIBRARY.forEach(e=>{
+    const dist = hamming(h.bits, e.bits);
+    if(!best || dist < best.dist) best = { dist, entry:e };
+  });
+  return { hash:h, best };
+}
+function showPicHash(src){
+  const r = identifyByPicture(src);
+  const box = $('pichash');
+  box.style.display = 'block';
+  let verdict;
+  if(!r.best)
+    verdict = '<span class="w">No reference library loaded here.</span> ' +
+      '<span class="d">This is the piece that needs a server: one row per card holding ' +
+      'this hash, the name, the set and the manifest. Match on nearest hash and every card ' +
+      'ever printed becomes identifiable — including ones with no code on them at all.</span>';
+  else if(r.best.dist <= 10)
+    verdict = '<span class="k">Match: ' + r.best.entry.name + '</span> ' +
+      '<span class="d">(' + r.best.dist + ' bits different — under 10 is the usual threshold)</span>';
+  else
+    verdict = '<span class="w">Nearest is ' + r.best.entry.name + ' at ' + r.best.dist +
+      ' bits — too far. That is a card the library has not seen.</span>';
+  box.innerHTML =
+    '<div class="d" style="margin-bottom:4px">PICTURE FINGERPRINT</div>' +
+    '<div><span class="d" style="min-width:100px;display:inline-block">dHash</span>' +
+    '<span class="k">' + r.hash.hex + '</span></div>' +
+    '<div style="margin-top:6px;font-size:12px">' + verdict + '</div>' +
+    '<div class="d" style="margin-top:7px;font-size:12px">' +
+    'Photographed at an angle this drifts, because the hash is taken over whatever shape ' +
+    'the camera saw. Real scanners fix that by finding the card corners and flattening the ' +
+    'perspective first — <b>the same step the DAVID grid needs</b>. Build it once, both work.' +
+    '</div>';
+}
+
+/* ══════════════════════════════════════════════════════════════
+   FIND THE CARD AND FLATTEN IT
+   The step every real scanner does first, and the one this project
+   has been missing since the beginning. Photograph a card at an
+   angle and it is a trapezoid; nothing downstream works properly on
+   a trapezoid. Hashes drift, grids sample the wrong cells, barcodes
+   skew.
+
+   No OpenCV, no library. Estimate the background from the picture's
+   own border, mark everything unlike it as card, then take the four
+   extreme corners — the pixel furthest along x+y is the bottom
+   right, furthest along x−y is the top right, and so on. That trick
+   finds a rotated rectangle without any contour tracing at all.
+
+   Then solve the eight-parameter homography from those corners to a
+   clean rectangle and resample. Same maths a scanner uses.
+   ══════════════════════════════════════════════════════════════ */
+function detectCard(src){
+  const W = 240, H = Math.max(1, Math.round(src.height * (240/src.width)));
+  const c = document.createElement('canvas');
+  c.width = W; c.height = H;
+  const x = c.getContext('2d', { willReadFrequently:true });
+  x.drawImage(src, 0, 0, W, H);
+  const d = x.getImageData(0,0,W,H).data;
+  const at = (i,j)=>{ const p = (j*W+i)*4; return [d[p],d[p+1],d[p+2]]; };
+
+  /* background = median of the outer frame */
+  const edge = [];
+  for(let i=0;i<W;i++){ edge.push(at(i,0)); edge.push(at(i,H-1)); }
+  for(let j=0;j<H;j++){ edge.push(at(0,j)); edge.push(at(W-1,j)); }
+  const med = k =>{ const v = edge.map(e=>e[k]).sort((a,b)=>a-b); return v[v.length>>1]; };
+  const bg = [med(0), med(1), med(2)];
+
+  /* anything far enough from the background is card */
+  const THRESH = 60;
+  let sumP = null, difP = null, sumM = null, difM = null, n = 0;
+  for(let j=0;j<H;j++) for(let i=0;i<W;i++){
+    const p = at(i,j);
+    const dist = Math.abs(p[0]-bg[0]) + Math.abs(p[1]-bg[1]) + Math.abs(p[2]-bg[2]);
+    if(dist < THRESH) continue;
+    n++;
+    const s = i + j, f = i - j;
+    if(!sumP || s > sumP.s) sumP = { s, i, j };     // bottom-right
+    if(!sumM || s < sumM.s) sumM = { s, i, j };     // top-left
+    if(!difP || f > difP.f) difP = { f, i, j };     // top-right
+    if(!difM || f < difM.f) difM = { f, i, j };     // bottom-left
+  }
+  const coverage = n / (W*H);
+  if(n < 500 || coverage > 0.98)
+    return { ok:false, why: coverage > 0.98
+      ? 'the whole frame is the same colour as the card — no border to find. Put the card '+
+        'on a contrasting surface and leave a margin around it.'
+      : 'could not separate a card from the background. Needs a plain surface that is not '+
+        'the same colour as the card.' };
+
+  const k = src.width / W;                          // back to full resolution
+  const pt = o => [o.i*k, o.j*k];
+  return { ok:true, coverage,
+    corners:{ tl:pt(sumM), tr:pt(difP), br:pt(sumP), bl:pt(difM) } };
+}
+
+/* solve an 8-parameter homography mapping the output rectangle back
+   into the source image, so each output pixel knows where to sample */
+function solveH(dst, src){
+  const A = [], b = [];
+  for(let i=0;i<4;i++){
+    const [u,v] = dst[i], [x,y] = src[i];
+    A.push([u, v, 1, 0, 0, 0, -u*x, -v*x]); b.push(x);
+    A.push([0, 0, 0, u, v, 1, -u*y, -v*y]); b.push(y);
+  }
+  /* Gaussian elimination with partial pivoting */
+  for(let col=0; col<8; col++){
+    let piv = col;
+    for(let r=col+1;r<8;r++) if(Math.abs(A[r][col]) > Math.abs(A[piv][col])) piv = r;
+    if(Math.abs(A[piv][col]) < 1e-9) return null;
+    [A[col], A[piv]] = [A[piv], A[col]];
+    [b[col], b[piv]] = [b[piv], b[col]];
+    for(let r=0;r<8;r++){
+      if(r === col) continue;
+      const f = A[r][col] / A[col][col];
+      if(!f) continue;
+      for(let cc=col; cc<8; cc++) A[r][cc] -= f * A[col][cc];
+      b[r] -= f * b[col];
+    }
+  }
+  return b.map((v,i)=> v / A[i][i]);
+}
+
+function flattenCard(src, corners, outW){
+  const AR = 88.9 / 63.5;                            // trading card aspect
+  const W = outW || 500, H = Math.round(W * AR);
+  const dst = [[0,0],[W,0],[W,H],[0,H]];
+  const s = [corners.tl, corners.tr, corners.br, corners.bl];
+  const h = solveH(dst, s);
+  if(!h) return null;
+
+  const sc = document.createElement('canvas');
+  sc.width = src.width; sc.height = src.height;
+  sc.getContext('2d').drawImage(src, 0, 0);
+  const sd = sc.getContext('2d', { willReadFrequently:true })
+               .getImageData(0,0,src.width,src.height).data;
+
+  const out = document.createElement('canvas');
+  out.width = W; out.height = H;
+  const oi = out.getContext('2d').createImageData(W, H);
+
+  for(let v=0; v<H; v++) for(let u=0; u<W; u++){
+    const den = h[6]*u + h[7]*v + 1;
+    const sx = Math.round((h[0]*u + h[1]*v + h[2]) / den);
+    const sy = Math.round((h[3]*u + h[4]*v + h[5]) / den);
+    const o = (v*W+u)*4;
+    if(sx < 0 || sy < 0 || sx >= src.width || sy >= src.height){ oi.data[o+3] = 255; continue; }
+    const p = (sy*src.width + sx)*4;
+    oi.data[o]   = sd[p];
+    oi.data[o+1] = sd[p+1];
+    oi.data[o+2] = sd[p+2];
+    oi.data[o+3] = 255;
+  }
+  out.getContext('2d').putImageData(oi, 0, 0);
+  return out;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   SELF-MADE IDENTIFIERS
+   A Topps Chrome front carries no barcode — nothing to decode. But a
+   card is not featureless, and none of this needs a database: it is
+   all measured off the picture itself. Together these are a
+   signature. Two photos of the SAME card land close on every one of
+   them; two different cards do not.
+   ══════════════════════════════════════════════════════════════ */
+function measure(src){
+  const W = 64, H = Math.max(1, Math.round(src.height * (W/src.width)));
+  const c = document.createElement('canvas');
+  c.width = W; c.height = H;
+  const x = c.getContext('2d', { willReadFrequently:true });
+  x.drawImage(src, 0, 0, W, H);
+  const d = x.getImageData(0,0,W,H).data;
+
+  let rs=0, gs=0, bs=0, lum=0, satHi=0, n=0;
+  const bins = {};
+  let prevL = null, edges = 0;
+  for(let i=0;i<d.length;i+=4){
+    const r=d[i], g=d[i+1], b=d[i+2];
+    rs+=r; gs+=g; bs+=b; n++;
+    const mx=Math.max(r,g,b), mn=Math.min(r,g,b);
+    const l=(mx+mn)/2, s = mx===mn ? 0 : (mx-mn)/(255 - Math.abs(mx+mn-255) || 1);
+    lum += l;
+    if(s > 0.45) satHi++;
+    /* 3 bits per channel = 512 buckets, enough for a palette */
+    const key = ((r>>5)<<6) | ((g>>5)<<3) | (b>>5);
+    bins[key] = (bins[key]||0) + 1;
+    if(prevL !== null && Math.abs(l - prevL) > 28) edges++;
+    prevL = l;
+  }
+  const top = Object.keys(bins).sort((a,b)=>bins[b]-bins[a]).slice(0,5).map(k=>{
+    const v = +k;
+    const r = ((v>>6)&7)*36, g = ((v>>3)&7)*36, b = (v&7)*36;
+    return '#' + [r,g,b].map(z=>Math.min(255,z).toString(16).padStart(2,'0')).join('');
+  });
+  return {
+    avg: '#' + [rs/n, gs/n, bs/n].map(v=>Math.round(v).toString(16).padStart(2,'0')).join(''),
+    brightness: +(lum/n/255).toFixed(3),
+    palette: top,
+    /* chrome and refractor stock throws saturated specular colour all
+       over the card. High saturated-pixel share plus lots of local
+       contrast is a decent tell. Heuristic, not proof. */
+    foilScore: +(satHi/n).toFixed(3),
+    busyness: +(edges/n).toFixed(3),
+    aspect: +(src.height/src.width).toFixed(3)
+  };
+}
+
+/* ══════════════════════════════════════════════════════════════
+   MORSE, READ BACK OFF THE CARD
+   The first of our own encodings the reader can actually decode.
+   The builder prints marks at 1:3:7 timing — a dot is one unit, a
+   dash three, gaps are one inside a letter, three between letters,
+   seven between words. So: threshold to ink, find the bands that
+   contain marks, measure every run and gap along each band, take
+   the shortest run as the unit, and classify from there.
+
+   No template, no training. It measures the card's own rhythm.
+   ══════════════════════════════════════════════════════════════ */
+const MORSE_BACK = {
+ '.-':'a','-...':'b','-.-.':'c','-..':'d','.':'e','..-.':'f','--.':'g','....':'h',
+ '..':'i','.---':'j','-.-':'k','.-..':'l','--':'m','-.':'n','---':'o','.--.':'p',
+ '--.-':'q','.-.':'r','...':'s','-':'t','..-':'u','...-':'v','.--':'w','-..-':'x',
+ '-.--':'y','--..':'z','-----':'0','.----':'1','..---':'2','...--':'3','....-':'4',
+ '.....':'5','-....':'6','--...':'7','---..':'8','----.':'9','.-.-.-':'.',
+ '--..--':',','..--..':'?','-..-.':'/','-....-':'-','---...':':','.--.-.':'@'
+};
+function readMorse(src){
+  const W = Math.min(900, src.width);
+  const H = Math.max(1, Math.round(src.height * (W/src.width)));
+  const c = document.createElement('canvas');
+  c.width = W; c.height = H;
+  const x = c.getContext('2d', { willReadFrequently:true });
+  x.drawImage(src, 0, 0, W, H);
+  const d = x.getImageData(0,0,W,H).data;
+  const ink = (i,j)=>{
+    const p = (j*W+i)*4;
+    return (0.299*d[p] + 0.587*d[p+1] + 0.114*d[p+2]) < 110 ? 1 : 0;
+  };
+  /* rows that contain ink, grouped into bands */
+  const rowInk = [];
+  for(let j=0;j<H;j++){ let n=0; for(let i=0;i<W;i++) n += ink(i,j); rowInk.push(n); }
+  const bands = [];
+  let start = -1;
+  for(let j=0;j<H;j++){
+    const on = rowInk[j] > 2;
+    if(on && start < 0) start = j;
+    if((!on || j === H-1) && start >= 0){
+      if(j - start >= 2) bands.push([start, j]);
+      start = -1;
+    }
+  }
+  if(!bands.length) return { ok:false, why:'no horizontal marks found' };
+
+  /* FIRST PASS — run-length every band, and only then work out the unit.
+     Taking it from the first band alone was wrong: one contaminated band
+     (a border edge clipped into the crop, say) set a bad unit and every
+     later band decoded against it. Reading a region cropped out of a full
+     card turned "highscores.live" into "highskeores?tlive" that way. */
+  const bandRuns = [];
+  bands.forEach(([y0,y1])=>{
+    const row = [];
+    for(let i=0;i<W;i++){
+      let n = 0;
+      for(let j=y0;j<=y1;j++) n += ink(i,j);
+      row.push(n > (y1-y0)*0.4 ? 1 : 0);
+    }
+    const runs = [];
+    let cur = row[0], len = 1;
+    for(let i=1;i<W;i++){
+      if(row[i] === cur) len++;
+      else { runs.push({ on:cur, len }); cur = row[i]; len = 1; }
+    }
+    runs.push({ on:cur, len });
+    while(runs.length && !runs[0].on) runs.shift();
+    while(runs.length && !runs[runs.length-1].on) runs.pop();
+    if(runs.length && runs.some(r=>r.on)) bandRuns.push(runs);
+  });
+  if(!bandRuns.length) return { ok:false, why:'no marks in any band' };
+
+  /* the unit is the shortest mark ANYWHERE — a dot. Use the median of the
+     shortest few rather than the single minimum, so one speck of noise
+     cannot shrink the unit and turn every dash into a run of dots. */
+  /* Estimate the unit from BOTH marks and gaps. Only marks is too few
+     samples and skews small, and a unit that is even slightly short makes
+     a 1-unit gap measure as 2 — which splits characters. That is exactly
+     how "highscores" came back "highskeores": the last dot of c broke off
+     into its own letter. Antialiasing puts every edge within a pixel or
+     so, so take the MEDIAN of the whole short cluster rather than the
+     single smallest run. */
+  const allRuns = [];
+  bandRuns.forEach(rs=> rs.forEach(r=> allRuns.push(r.len)));
+  allRuns.sort((a,b)=>a-b);
+  /* Anchor on the 10th percentile, NOT the smallest run. A single narrow
+     artifact — a sliver of background at a region edge, a stray pixel —
+     was dragging the anchor down and halving the unit, which collapsed
+     conformance to 21% and made a perfectly good panel look like noise. */
+  const lo = allRuns[Math.min(allRuns.length-1, Math.floor(allRuns.length*0.10))];
+  const shortCluster = allRuns.filter(v=> v >= lo * 0.6 && v <= lo * 1.8);
+  const unitGuess = Math.max(1, shortCluster[shortCluster.length >> 1]);
+
+  /* `sym` lives OUTSIDE the band loop on purpose. The builder wraps to a
+     new line mid-character, and no gap is drawn across a wrap — so a
+     letter genuinely continues onto the next band. Flushing at the band
+     edge cut c (-.-.) into k (-.-) plus e (.), which is precisely how
+     "highscores" kept coming back "highskeores". Single-line messages
+     passed the whole time, which is what pointed at the wrap. */
+  const words = [];
+  let sym = '';
+  bandRuns.forEach(runs=>{
+    const unit = unitGuess;
+    let out = '';
+    runs.forEach(r=>{
+      const u = r.len / unit;
+      if(r.on){ sym += (u >= 2) ? '-' : '.'; }
+      else {
+        if(u >= 5){ out += (MORSE_BACK[sym] || '?'); sym = ''; out += ' '; }
+        else if(u >= 2){ out += (MORSE_BACK[sym] || '?'); sym = ''; }
+      }
+    });
+    /* The builder wraps only BETWEEN letters now, so a band edge is
+       always a character boundary — flush here. Carrying the symbol
+       across bands was the right guess against the old encoder and the
+       wrong one against this: it merged e+d into l. Encoder and reader
+       have to agree on what a line break means, and now they do. */
+    if(sym){ out += (MORSE_BACK[sym] || '?'); sym = ''; }
+    if(out) words.push(out);
+  });
+
+  /* Bands are WRAPPED LINES, not words. The stream simply continues on
+     the next row, so joining them with a space invents word breaks that
+     were never encoded — "highscores.live" came back "highsc ores. live"
+     until this was a plain concatenation. Real word gaps (7 units) are
+     already handled inside a band.
+     Known limit: a word gap landing exactly on a wrap is lost, because
+     the gap is never drawn. Encode short lines if that matters. */
+  const text = words.join('').replace(/\s+/g,' ').trim();
+  const unknown = (text.match(/\?/g) || []).length;
+
+  /* ── SANITY GATES ─────────────────────────────────────────────
+     Run blind over a whole card, this happily "found" Morse in the
+     artwork: one band covering the entire picture, a 1-pixel unit,
+     and the confident output "t t t mt". A reader that invents a
+     message is worse than one that finds nothing, so the structure
+     has to look like Morse before the answer is offered.
+
+     Real Morse is thin isolated lines of bars whose widths cluster
+     tightly at one and three units. Artwork is neither. */
+  const reject = [];
+  if(unitGuess < 3)
+    reject.push('unit came out ' + unitGuess + 'px — too fine to be printed marks, '+
+                'this is almost certainly picture detail');
+  const tallest = bands.reduce((m,[a,b])=>Math.max(m, b-a), 0);
+  if(tallest > H * 0.5)
+    reject.push('one band covers ' + Math.round(tallest/H*100) + '% of the height — '+
+                'Morse is thin lines, that is a picture');
+  /* widths must cluster at 1u and 3u */
+  const marks = [];
+  bandRuns.forEach(rs=> rs.forEach(r=>{ if(r.on) marks.push(r.len / unitGuess); }));
+  const conform = marks.filter(v=> Math.abs(v-1) < 0.5 || Math.abs(v-3) < 0.9).length;
+  const rate = marks.length ? conform / marks.length : 0;
+  if(rate < 0.75)
+    reject.push('only ' + Math.round(rate*100) + '% of the bar widths land near one or '+
+                'three units — real marks cluster, this does not');
+  if(unknown > text.length * 0.25)
+    reject.push(unknown + ' of ' + text.length + ' characters undecodable');
+
+  if(reject.length)
+    return { ok:false, text:'', bands:bands.length, unit:unitGuess,
+             why:'not Morse — ' + reject[0] };
+
+  return { ok: text.length > 0,
+    text, bands: bands.length, unit: unitGuess,
+    conformance: Math.round(rate*100) + '%',
+    why: text ? '' : 'nothing decoded' };
+}
+
+/* ══════════════════════════════════════════════════════════════
+   THE MANIFEST — the card tells the reader where to look
+   This is the difference between our cards and everyone else's.
+
+   A sports card is a mystery object: you photograph it and guess.
+   Our cards are SPECIFIED. So the card carries a tiny manifest —
+   in the QR, alongside the URL — listing every region in card
+   millimetres, what encoding is in it, and what order the pieces
+   go in. The reader does not hunt. It reads the manifest, goes to
+   each named rectangle on the flattened card, applies exactly the
+   right decoder, and reassembles in the stated order.
+
+   Deterministic, not speculative. Searching is what you do when
+   you did not design the thing.
+
+     m=1;001;morse@6,52,51x26,0;qr@3,3,25x25,1
+     └ver └card └ type @ x,y,wxh, shard index
+
+   Compact on purpose: it has to fit in a QR next to the URL.
+   ══════════════════════════════════════════════════════════════ */
+const CARD_MM = { w:63.5, h:88.9 };
+function parseManifest(text){
+  const m = String(text).match(/(?:^|[?&#])m=([^&\s]+)/) ||
+            (/^m=1;/.test(text) ? [null, text.slice(2)] : null);
+  if(!m) return null;
+  const parts = decodeURIComponent(m[1]).split(';').filter(Boolean);
+  if(parts[0] !== '1' && parts[0] !== 'm=1') return null;
+  const out = { version:1, card:parts[1] || null, regions:[] };
+  parts.slice(2).forEach(p=>{
+    const r = p.match(/^([a-z0-9]+)@([\d.]+),([\d.]+),([\d.]+)x([\d.]+)(?:,(\d+))?$/i);
+    if(!r) return;
+    out.regions.push({ type:r[1].toLowerCase(), x:+r[2], y:+r[3], w:+r[4], h:+r[5],
+                       index: r[6] === undefined ? out.regions.length : +r[6] });
+  });
+  return out.regions.length ? out : null;
+}
+function cropRegion(flat, r){
+  /* The flattened card is the whole card, so millimetres map linearly.
+     Inset by a fraction of a millimetre: cropping exactly on the declared
+     edge drags the region's own border into the picture, and a dark border
+     strip reads as a full-width mark that wrecks the decode. */
+  const IN = 0.4;
+  const sx = Math.round((r.x + IN) / CARD_MM.w * flat.width);
+  const sy = Math.round((r.y + IN) / CARD_MM.h * flat.height);
+  const sw = Math.max(2, Math.round((r.w - IN*2) / CARD_MM.w * flat.width));
+  const sh = Math.max(2, Math.round((r.h - IN*2) / CARD_MM.h * flat.height));
+  const c = document.createElement('canvas');
+  c.width = sw; c.height = sh;
+  c.getContext('2d').drawImage(flat, sx, sy, sw, sh, 0, 0, sw, sh);
+  return c;
+}
+async function readByManifest(flat, man){
+  const found = [];
+  for(const r of man.regions.slice().sort((a,b)=>a.index-b.index)){
+    const crop = cropRegion(flat, r);
+    let piece = null, why = '';
+    if(r.type === 'morse'){
+      const mo = readMorse(crop);
+      if(mo.ok) piece = mo.text; else why = mo.why || 'no marks';
+    } else if(r.type === 'braille'){
+      /* sampled off the FULL card at card-mm, no crop inset to fumble */
+      const br = readBraille(flat, r);
+      if(br.ok) piece = br.text; else why = br.why;
+    } else if(r.type === 'punchcard' || r.type === 'punch'){
+      const pu = readPunch(flat, r);
+      if(pu.ok) piece = pu.text; else why = pu.why;
+    } else if(r.type === 'qr' || r.type === 'code128' || r.type === 'upc'){
+      if(!detector){ why = 'no native decoder on this browser'; }
+      else {
+        try{
+          const f = await detector.detect(crop);
+          if(f.length) piece = f[0].rawValue; else why = 'nothing decoded in that region';
+        }catch(e){ why = e.message; }
+      }
+    } else {
+      why = 'no decoder for "' + r.type + '" yet';
+    }
+    found.push({ region:r, piece, why });
+  }
+  const got = found.filter(f=>f.piece);
+  return {
+    ok: got.length === found.length && found.length > 0,
+    regions: found,
+    assembled: got.map(f=>f.piece).join(''),
+    complete: got.length + '/' + found.length
+  };
+}
+function showManifest(res, man){
+  const box = $('manifest');
+  box.style.display = 'block';
+  box.innerHTML =
+    '<div class="d" style="margin-bottom:5px">MANIFEST · card ' +
+    (man.card || '?') + ' · ' + man.regions.length + ' declared region' +
+    (man.regions.length===1?'':'s') + '</div>' +
+    res.regions.map(f=>
+      '<div style="border-top:1px solid var(--line);padding:6px 0;font-size:12px">' +
+      '<span class="' + (f.piece?'k':'w') + '">' + (f.piece?'✓':'✖') + ' ' +
+      f.region.type + '</span> <span class="d">@ ' + f.region.x + ',' + f.region.y +
+      ' ' + f.region.w + '×' + f.region.h + 'mm · piece ' + f.region.index + '</span><br>' +
+      (f.piece ? '<span style="word-break:break-all">' + f.piece.replace(/</g,'&lt;') + '</span>'
+               : '<span class="d">' + f.why + '</span>') +
+      '</div>').join('') +
+    '<div style="margin-top:7px;padding-top:7px;border-top:1px solid var(--line)">' +
+    '<span class="' + (res.ok?'k':'w') + '">' + res.complete + ' regions recovered</span>' +
+    (res.assembled ? '<br><span class="k" style="word-break:break-all">' +
+       res.assembled.replace(/</g,'&lt;') + '</span>' : '') +
+    '<div class="d" style="font-size:12px;margin-top:5px">The reader went straight to each ' +
+    'rectangle the card declared. No searching — for our own cards that is the whole point.' +
+    '</div></div>';
+}
+
+/* ══════════════════════════════════════════════════════════════
+   SAMPLING BY GEOMETRY
+   The payoff of the manifest. For encodings laid out on a fixed
+   pitch — Braille cells, punch-card rows — the reader does not
+   need to FIND anything. The card said where the region is, the
+   standard says where the dots go inside it, so the reader samples
+   exactly those coordinates and reads the answer off.
+
+   These work on the FULL flattened card in card-millimetres, so
+   there is no crop-inset arithmetic to get wrong.
+   ══════════════════════════════════════════════════════════════ */
+function sampler(flat){
+  const ctx = flat.getContext('2d', { willReadFrequently:true });
+  const d = ctx.getImageData(0, 0, flat.width, flat.height).data;
+  const sx = flat.width / CARD_MM.w, sy = flat.height / CARD_MM.h;
+  /* average a small disc so one stray pixel cannot decide a bit */
+  return function inkAt(mmx, mmy, radiusMM){
+    const cx = mmx*sx, cy = mmy*sy, r = Math.max(1, (radiusMM||0.5)*sx);
+    let sum = 0, n = 0;
+    for(let dy=-r; dy<=r; dy++) for(let dx=-r; dx<=r; dx++){
+      if(dx*dx + dy*dy > r*r) continue;
+      const x = Math.round(cx+dx), y = Math.round(cy+dy);
+      if(x<0||y<0||x>=flat.width||y>=flat.height) continue;
+      const p = (y*flat.width + x)*4;
+      sum += 0.299*d[p] + 0.587*d[p+1] + 0.114*d[p+2];
+      n++;
+    }
+    return n ? (sum/n) : 255;
+  };
+}
+
+/* ── Braille · Library of Congress pitch, sampled ─────────────── */
+const BRL_R = { 1:[0,0], 2:[0,1], 3:[0,2], 4:[1,0], 5:[1,1], 6:[1,2] };
+const BRL_LOOKUP = {};
+(function(){
+  const T = { a:[1],b:[1,2],c:[1,4],d:[1,4,5],e:[1,5],f:[1,2,4],g:[1,2,4,5],h:[1,2,5],
+    i:[2,4],j:[2,4,5],k:[1,3],l:[1,2,3],m:[1,3,4],n:[1,3,4,5],o:[1,3,5],p:[1,2,3,4],
+    q:[1,2,3,4,5],r:[1,2,3,5],s:[2,3,4],t:[2,3,4,5],u:[1,3,6],v:[1,2,3,6],w:[2,4,5,6],
+    x:[1,3,4,6],y:[1,3,4,5,6],z:[1,3,5,6],'.':[2,5,6],',':[2],'-':[3,6],'/':[3,4],
+    ':':[2,5],"'":[3] };
+  Object.keys(T).forEach(k=>{ BRL_LOOKUP[T[k].join(',')] = k; });
+  BRL_LOOKUP[''] = ' ';
+  BRL_LOOKUP['3,4,5,6'] = '#';     // number sign
+  BRL_LOOKUP['6'] = '^';           // capital sign
+})();
+const BRL_DIGITS = { a:'1',b:'2',c:'3',d:'4',e:'5',f:'6',g:'7',h:'8',i:'9',j:'0' };
+
+function readBraille(flat, R){
+  const DOT = 1.44, PITCH = 2.34, CELL = 6.20, LINE = 10.00, PAD = 2;
+  const inkAt = sampler(flat);
+  const perLine = Math.floor((R.w - PAD*2) / CELL);
+  const lines   = Math.floor((R.h - PAD*2) / LINE);
+  if(perLine < 1 || lines < 1) return { ok:false, why:'region too small for a Braille cell' };
+
+  /* calibrate: the darkest and lightest samples in the grid set the
+     threshold, so it works on any background the panel is printed on */
+  const samples = [];
+  const pts = [];
+  for(let ln=0; ln<lines; ln++) for(let col=0; col<perLine; col++) for(let dnum=1; dnum<=6; dnum++){
+    const [gx,gy] = BRL_R[dnum];
+    const x = R.x + PAD + col*CELL + gx*PITCH + DOT/2;
+    const y = R.y + PAD + ln*LINE  + gy*PITCH + DOT/2;
+    const v = inkAt(x, y, DOT*0.35);
+    samples.push(v); pts.push({ ln, col, dnum, v });
+  }
+  const sorted = samples.slice().sort((a,b)=>a-b);
+  const dark = sorted[Math.floor(sorted.length*0.05)];
+  const light = sorted[Math.floor(sorted.length*0.95)];
+  if(light - dark < 40)
+    return { ok:false, why:'no contrast between dot and no-dot — nothing printed here' };
+  const cut = (dark + light) / 2;
+
+  const cells = [];
+  for(let ln=0; ln<lines; ln++) for(let col=0; col<perLine; col++) cells.push([]);
+  pts.forEach(p=>{
+    if(p.v < cut) cells[p.ln*perLine + p.col].push(p.dnum);
+  });
+
+  let outText = '', numberMode = false, capNext = false, unknown = 0, seen = 0;
+  cells.forEach(dots=>{
+    const key = dots.sort((a,b)=>a-b).join(',');
+    const ch = BRL_LOOKUP[key];
+    if(ch === undefined){ unknown++; outText += '?'; seen++; return; }
+    if(ch === '#'){ numberMode = true; return; }
+    if(ch === '^'){ capNext = true; return; }
+    if(ch === ' '){ numberMode = false; outText += ' '; return; }
+    seen++;
+    let c = (numberMode && BRL_DIGITS[ch]) ? BRL_DIGITS[ch] : ch;
+    if(capNext){ c = c.toUpperCase(); capNext = false; }
+    outText += c;
+  });
+  const text = outText.replace(/\s+$/,'');
+  if(!text) return { ok:false, why:'grid sampled clean but every cell was empty' };
+  if(unknown > seen*0.25)
+    return { ok:false, why:unknown+' of '+seen+' cells were not valid Braille' };
+  return { ok:true, text, cells:perLine+'×'+lines, threshold:Math.round(cut) };
+}
+
+/* ── Punch card · 12 rows, column pitch inferred ──────────────── */
+const PUNCH_ROWS = [12,11,0,1,2,3,4,5,6,7,8,9];
+function unHollerithLocal(rows){
+  if(!rows.length) return ' ';
+  const ORD = r => r===12 ? -2 : r===11 ? -1 : r;
+  const r = rows.slice().sort((a,b)=>ORD(a)-ORD(b));
+  if(r.length === 1){
+    if(r[0] >= 0 && r[0] <= 9) return String(r[0]);
+    if(r[0] === 11) return '-';
+  }
+  if(r.length === 2){
+    const z = r[0], dg = r[1];
+    if(z===12 && dg>=1 && dg<=9) return String.fromCharCode(64+dg);
+    if(z===11 && dg>=1 && dg<=9) return String.fromCharCode(73+dg);
+    if(z===0 && dg===1) return '/';
+    if(z===0 && dg>=2 && dg<=9) return String.fromCharCode(81+dg);
+    if(z===2 && dg===8) return ':';
+  }
+  const key = r.join(',');
+  return ({ '12,3,8':'.', '0,3,8':',' })[key] || '?';
+}
+function readPunch(flat, R){
+  const inkAt = sampler(flat);
+  const maxCols = Math.floor(R.w / 1.9);
+  if(maxCols < 1) return { ok:false, why:'region too narrow for a punch column' };
+
+  /* the builder sets column count from the text length, which the reader
+     cannot know — so try every plausible count and keep whichever decodes
+     to the most valid Hollerith characters. A wrong pitch produces
+     nonsense, so the score separates cleanly. */
+  let best = null;
+  for(let cols=2; cols<=maxCols; cols++){
+    const cw = R.w/cols, rh = R.h/12;
+    const vals = [];
+    for(let c=0; c<cols; c++){
+      const punched = [];
+      for(let ri=0; ri<12; ri++){
+        const x = R.x + c*cw + cw*0.5;
+        const y = R.y + ri*rh + rh*0.5;
+        vals.push({ c, ri, v: inkAt(x, y, Math.min(cw,rh)*0.2) });
+      }
+    }
+    const sorted = vals.map(v=>v.v).sort((a,b)=>a-b);
+    const dark = sorted[Math.floor(sorted.length*0.05)];
+    const light = sorted[Math.floor(sorted.length*0.95)];
+    if(light - dark < 40) continue;
+    const cut = (dark+light)/2;
+    const colRows = [];
+    for(let c=0; c<cols; c++) colRows.push([]);
+    vals.forEach(v=>{ if(v.v < cut) colRows[v.c].push(PUNCH_ROWS[v.ri]); });
+    const chars = colRows.map(unHollerithLocal);
+    const good = chars.filter(ch=>ch !== '?').length;
+    const ratio = good / cols;
+    /* Score by how much VALID CONTENT a pitch recovers, not by the ratio.
+       Ratio alone is maximised by guessing two columns — both happened to
+       be valid and it scored 100%, returning "HL" out of a 15-character
+       string. Count the real characters, and only among pitches that are
+       almost entirely valid. */
+    const content = chars.filter(ch=>ch !== '?' && ch !== ' ').length;
+    /* An over-estimated pitch samples each real column more than once,
+       which yields the right letters padded with gaps and the odd
+       duplicate — "H I G H S C ORRE S . L I V E". It scored higher on raw
+       content than the true pitch did, so interior blanks are subtracted:
+       the correct pitch has none. */
+    const joined = chars.join('').replace(/\s+$/,'');
+    const interiorBlanks = (joined.match(/ /g) || []).length;
+    const score2 = content - interiorBlanks;
+    if(ratio < 0.8) continue;
+    if(!best || score2 > best.score2 || (score2 === best.score2 && cols < best.cols))
+      best = { score:ratio, content, score2, cols, text:chars.join('') };
+  }
+  if(!best || best.score < 0.8)
+    return { ok:false, why:'no column pitch produced valid Hollerith'+
+             (best ? ' (best '+Math.round(best.score*100)+'% at '+best.cols+' columns)' : '') };
+  return { ok:true, text:best.text.replace(/\s+$/,''), columns:best.cols,
+           confidence:Math.round(best.score*100)+'%' };
+}
+
+/* ── the scan ledger ─────────────────────────────────────────── */
+let LEDGER = [];
+try{ LEDGER = JSON.parse(localStorage.getItem('siloReaderLedger') || '[]'); }catch(e){}
+function saveLedger(){
+  try{ localStorage.setItem('siloReaderLedger', JSON.stringify(LEDGER)); }catch(e){}
+}
+function localId(hashHex){
+  return 'SILO-' + hashHex.slice(0,8).toUpperCase();
+}
+function recordScan(src, codes){
+  const h = dHash(src);
+  const m = measure(src);
+  const rec = {
+    id: localId(h.hex),
+    scanned: new Date().toISOString(),
+    dhash: h.hex,
+    aspect: m.aspect,
+    brightness: m.brightness,
+    foilScore: m.foilScore,
+    busyness: m.busyness,
+    avgColour: m.avg,
+    palette: m.palette.join(' '),
+    codes: (codes && codes.length) ? codes.join(' | ') : '',
+    name: '', set: '', number: '', player: '', notes: ''   // you fill these in
+  };
+  /* Same card scanned twice? Update rather than duplicate.
+     NOT parseInt(hex,16) — a 16-digit hex value is larger than a
+     double can hold exactly, so the low bits come back as noise and
+     every comparison is meaningless. Convert a nibble at a time. */
+  let nearest = null;
+  LEDGER.forEach(e=>{
+    const dist = hamming(hexToBits(e.dhash), h.bits);
+    if(!nearest || dist < nearest.dist) nearest = { dist, e };
+  });
+  /* Measured on test cards: the SAME card photographed at two angles
+     came out 13 bits apart, two DIFFERENT cards 23. That margin is
+     thinner than the usual 10-bit rule assumes, and real photos will
+     be worse once lighting and focus vary. So: merge only when it is
+     obviously the same shot, FLAG the uncertain middle, and never
+     silently fold two cards into one. A duplicate row is annoying;
+     a wrong merge loses a card. */
+  if(nearest && nearest.dist <= 8){
+    nearest.e.scanned = rec.scanned;
+    nearest.e.codes = rec.codes || nearest.e.codes;
+    rec.merged = true;
+  } else {
+    if(nearest && nearest.dist <= 20)
+      rec.notes = 'possible duplicate of ' + nearest.e.id +
+                  ' (' + nearest.dist + ' bits apart) — check by eye';
+    LEDGER.push(rec);
+  }
+  saveLedger();
+  renderLedger();
+  return rec;
+}
+function renderLedger(){
+  const box = $('ledger');
+  box.style.display = 'block';
+  if(!LEDGER.length){ box.innerHTML = '<div class="d">No cards scanned yet.</div>'; return; }
+  box.innerHTML =
+    '<div class="d" style="margin-bottom:5px">SCANNED · ' + LEDGER.length + '</div>' +
+    LEDGER.slice().reverse().map(e=>
+      '<div style="border-top:1px solid var(--line);padding:6px 0;font-size:12px">' +
+      '<span class="k">' + e.id + '</span> ' +
+      '<span class="d">' + e.dhash + '</span><br>' +
+      '<span class="d">foil ' + e.foilScore + ' · bright ' + e.brightness +
+      ' · aspect ' + e.aspect + (e.codes ? ' · <span class="k">' + e.codes + '</span>' : '') +
+      '</span></div>').join('') +
+    '<div class="v20row"></div>';
+}
+function toCSV(){
+  const cols = ['id','scanned','dhash','aspect','brightness','foilScore','busyness',
+                'avgColour','palette','codes','name','set','number','player','notes'];
+  const esc = v => '"' + String(v == null ? '' : v).replace(/"/g,'""') + '"';
+  return cols.join(',') + '\n' +
+         LEDGER.map(r=> cols.map(c=>esc(r[c])).join(',')).join('\n');
+}
+function download(name, text, mime){
+  const a = document.createElement('a');
+  a.download = name;
+  a.href = 'data:' + (mime||'text/plain') + ';charset=utf-8,' + encodeURIComponent(text);
+  a.click();
+}
+
+$('csv').onclick = ()=>{
+  if(!LEDGER.length){ alert('Nothing scanned yet.'); return; }
+  download('silouttes-scans.csv', toCSV(), 'text/csv');
+};
+$('json').onclick = ()=>{
+  if(!LEDGER.length){ alert('Nothing scanned yet.'); return; }
+  /* the shape the builder can open: a catalogue of scanned cards */
+  download('silouttes-catalogue.json', JSON.stringify({
+    kind:'silouttes.catalogue', version:1,
+    exported:new Date().toISOString(),
+    count:LEDGER.length, cards:LEDGER
+  }, null, 2), 'application/json');
+};
+$('wipe').onclick = ()=>{
+  if(!confirm('Delete all ' + LEDGER.length + ' scans from this browser?')) return;
+  LEDGER = []; saveLedger(); renderLedger();
+};
+if(LEDGER.length) renderLedger();
+
+/* ── live camera ─────────────────────────────────────────────── */
+$('start').onclick = async ()=>{
+  if(!detector){ alert('This browser has no native barcode decoder — try the photo option, or use Chrome on Android.'); return; }
+  try{
+    stream = await navigator.mediaDevices.getUserMedia({
+      video:{ facingMode:{ ideal:'environment' }, width:{ ideal:1920 } }, audio:false });
+  }catch(e){ alert('Camera refused: ' + e.message); return; }
+  const v = $('vid');
+  v.srcObject = stream; v.style.display = 'block';
+  await v.play();
+  $('start').style.display = 'none';
+  $('stop').style.display = 'block';
+  const tick = async ()=>{
+    if(!stream) return;
+    try{
+      const found = await detector.detect(v);
+      found.forEach(b=> add(b.format, b.rawValue, 'live camera'));
+    }catch(e){ /* frames can fail mid-stream; keep going */ }
+    raf = requestAnimationFrame(tick);
+  };
+  tick();
+};
+$('stop').onclick = ()=>{
+  if(stream){ stream.getTracks().forEach(t=>t.stop()); stream = null; }
+  cancelAnimationFrame(raf);
+  $('vid').style.display = 'none';
+  $('stop').style.display = 'none';
+  $('start').style.display = 'block';
+};
+
+/* ── a still photo or an exported PNG ────────────────────────── */
+$('file').onchange = async e=>{
+  const f = e.target.files && e.target.files[0];
+  if(!f) return;
+  const img = new Image();
+  img.onload = async ()=>{
+    const cv = $('shot');
+    const scale = Math.min(1, 1600 / Math.max(img.width, img.height));
+    cv.width = Math.round(img.width * scale);
+    cv.height = Math.round(img.height * scale);
+    cv.style.display = 'block';
+    cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+
+    /* find the card and flatten it before anything else looks at it */
+    let target = cv, note = '';
+    const det = detectCard(cv);
+    if(det.ok){
+      const flat = flattenCard(cv, det.corners, 500);
+      if(flat){
+        target = flat;
+        $('flat').style.display = 'block';
+        $('flat').innerHTML = '<div class="d" style="margin-bottom:5px">FLATTENED · ' +
+          'corners found, perspective removed — everything below reads this, not the photo</div>';
+        flat.style.maxWidth = '210px';
+        flat.style.borderRadius = '6px';
+        $('flat').appendChild(flat);
+        note = ' (flattened)';
+      }
+    } else {
+      $('flat').style.display = 'block';
+      $('flat').innerHTML = '<div class="w" style="font-size:12px">Could not find the card: ' +
+        det.why + '</div><div class="d" style="font-size:12px;margin-top:4px">Reading the raw ' +
+        'photo instead, which still works for barcodes but makes the picture fingerprint ' +
+        'unreliable.</div>';
+    }
+    showPicHash(target);
+    window.__lastFlat = target;
+
+    /* decode first so any codes land in the same record */
+    let codes = [];
+    if(detector){
+      try{
+        const f = await detector.detect(target);
+        codes = f.map(b=>b.format + ':' + b.rawValue);
+        f.forEach(b=> add(b.format, b.rawValue, 'photo' + note));
+      }catch(err){}
+    }
+    /* now hunt for OUR encodings — the ones no browser knows */
+    const mo = readMorse(target);
+    if(mo.ok){
+      codes.push('morse:' + mo.text);
+      add('MORSE', mo.text, 'our own encoding, read off the card' +
+          ' · ' + mo.bands + ' bands, unit ' + mo.unit + 'px');
+    }
+
+    if(!codes.length)
+      add('—', 'No standard barcode on this card, and no Morse marks found. Most sports ' +
+               'cards have nothing on the front to decode, so this is normal — the ' +
+               'fingerprint below is how they get identified.' +
+               (mo.why ? ' (Morse: ' + mo.why + ')' : ''),
+          'photo' + note);
+    /* if any decoded value carries a manifest, follow it */
+    for(const cv2 of codes){
+      const man = parseManifest(cv2);
+      if(!man) continue;
+      const res = await readByManifest(target, man);
+      showManifest(res, man);
+      if(res.assembled) codes.push("manifest:" + res.assembled);
+      break;
+    }
+    const rec = recordScan(target, codes);
+    $('recid').textContent = rec.id;
+    $('recid').style.display = 'inline';
+    if(!detector){
+      add('—', 'No native decoder on this browser, so the picture cannot be read here. ' +
+                'The image loaded fine; it is the decoding that is missing.', 'photo');
+      return;
+    }
+    try{
+      const found = await detector.detect(window.__lastFlat || cv);
+      if(!found.length)
+        add('—', 'No standard barcode found in this image. If the card carries a DAVID ' +
+                 'grid, Morse marks, punch holes or Braille, that is expected — nothing ' +
+                 'reads those yet.', 'photo');
+      found.forEach(b=> add(b.format, b.rawValue, 'photo'));
+    }catch(err){ add('error', err.message, 'photo'); }
+    URL.revokeObjectURL(img.src);
+  };
+  img.src = URL.createObjectURL(f);
+};
+</script>
+
+<style>
+/* ── Ludex-style card sheet ──────────────────────────────────────
+   Their app is clean because the card detail is ONE surface: image
+   left, identity right, two dropdowns, one number that matters, and
+   two buttons at the bottom that are the only things you ever press.
+   No panel-within-panel. Copying that discipline, not their pixels. */
+#cnWrap .cnrow{display:flex;gap:11px;align-items:flex-start}
+#cnWrap .cnart{width:104px;flex:0 0 104px;border-radius:7px;background:#000;
+  border:1px solid var(--line);aspect-ratio:63/88;object-fit:cover}
+#cnWrap .cnname{font-weight:700;font-size:15px;line-height:1.25;color:var(--ink)}
+#cnWrap .cnset{color:var(--dim);font-size:12px;margin-top:2px}
+#cnWrap .cnfield{margin-top:8px}
+#cnWrap .cnlab{color:var(--dim);font-size:10.5px;letter-spacing:1.1px;
+  text-transform:uppercase;margin-bottom:3px}
+#cnWrap select{width:100%;font:600 13px var(--mono);background:#141b26;color:var(--ink);
+  border:1px solid #39404a;border-radius:7px;padding:9px 8px}
+#cnWrap .cnest{font-weight:700;font-size:21px;color:var(--ok);letter-spacing:.4px}
+#cnWrap .cnpill{display:inline-block;font-size:10.5px;letter-spacing:.6px;padding:2px 7px;
+  border:1px solid var(--line);border-radius:99px;color:var(--dim);margin:3px 4px 0 0}
+#cnWrap .cnbar{display:flex;gap:7px;margin-top:10px}
+#cnWrap .cnbar button{margin-top:0}
+#cnWrap .cnalt{display:flex;gap:9px;align-items:center;border-top:1px solid var(--line);
+  padding:7px 0;cursor:pointer}
+#cnWrap .cnalt img{width:34px;border-radius:4px;background:#000}
+#cnWrap .cnsrc{font-size:11px;color:var(--dim);margin-top:9px;
+  border-top:1px solid var(--line);padding-top:7px}
+#cnColl .cnitem{display:flex;gap:9px;align-items:center;border-top:1px solid var(--line);padding:7px 0}
+#cnColl .cnitem img{width:30px;border-radius:4px;background:#000}
+</style>
+
+<div class="card" id="cnWrap">
+  <h1 style="font-size:13px">Card intelligence</h1>
+  <div class="sub" style="margin-bottom:9px">Point it at a card, or type a name. Pulls the
+    real record — set, number, printing, artist, market price — from public card databases,
+    then fills a listing for you.</div>
+  <input id="cnQ" placeholder="card name, or scan one above"
+    style="width:100%;font:14px var(--mono);background:#141b26;color:var(--ink);
+    border:1px solid #39404a;border-radius:8px;padding:11px">
+  <button id="cnGo" class="go">Identify</button>
+  <div id="cnOut" style="margin-top:10px"></div>
+</div>
+
+<div class="card" id="cnColl" style="display:none">
+  <h1 style="font-size:13px">Collection</h1>
+  <div id="cnCollHead" class="sub"></div>
+  <div id="cnCollList"></div>
+  <button id="cnCollCsv">↓ Export collection CSV</button>
+  <button id="cnCollWipe">Clear collection</button>
+</div>
+
+<script>
+/* ══════════════════════════════════════════════════════════════
+   CARDNET — identify a card, price it, hand it to a listing
+   ══════════════════════════════════════════════════════════════
+   Modelled on what Ludex does well, built on what a static page can
+   actually reach. Two public databases answer from the browser with
+   no key and no server: Scryfall for Magic, TCGdex for Pokemon. Both
+   verified live before this was written — Scryfall returned the exact
+   Turtle-Duck card, set, number, artist, printing and price in 169ms.
+
+   WHAT WE CANNOT DO, said plainly rather than faked:
+     · No sold-price history and no 7D/1M/1Y chart. Scryfall publishes
+       a current market price, not a time series. A chart here would
+       be a drawing, not data.
+     · No sports cards. There is no free public sports-card database;
+       that is exactly the moat Ludex has built and it is a real one.
+     · No graded-slab values. Those depend on population reports and
+       auction records we have no access to.
+     · Listing on eBay for real needs OAuth and a server. What we do
+       instead is fill the listing completely and hand it over.
+   ══════════════════════════════════════════════════════════════ */
+(()=>{
+'use strict';
+const $ = id => document.getElementById(id);
+const esc = s => String(s==null?'':s).replace(/[&<>"]/g,
+  c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* Raw-condition multipliers off Near Mint. These are the hobby's
+   customary spreads, not measured market data, and the panel says so
+   rather than dressing a convention up as a quote. */
+const COND = [
+  ['NM',  'Near Mint',        1.00],
+  ['LP',  'Lightly Played',   0.85],
+  ['MP',  'Moderately Played',0.70],
+  ['HP',  'Heavily Played',   0.50],
+  ['DMG', 'Damaged',          0.35]
+];
+
+let CUR = null;        // current normalised record
+let ALTS = [];         // alternate matches, for "not this card?"
+let PRINTS = [];       // every printing/parallel of the current card
+let COLL = [];
+try{ COLL = JSON.parse(localStorage.getItem('cardnet.collection')||'[]'); }catch(e){ COLL = []; }
+
+const money = v => (v==null || v==='') ? null : Number(v);
+const fmt = v => v==null ? '—' : ('$' + v.toFixed(2));
+
+/* ── normalise both databases onto one shape ─────────────────── */
+function fromScryfall(c){
+  return {
+    src:'Scryfall', srcUrl:c.scryfall_uri, id:c.id,
+    name:c.name,
+    set:c.set_name, setCode:(c.set||'').toUpperCase(),
+    year:(c.released_at||'').slice(0,4),
+    number:c.collector_number, rarity:c.rarity, artist:c.artist,
+    type:c.type_line, game:'Magic: The Gathering',
+    image:(c.image_uris&&(c.image_uris.normal||c.image_uris.small)) ||
+          (c.card_faces&&c.card_faces[0].image_uris&&c.card_faces[0].image_uris.normal) || '',
+    finishes:c.finishes||['nonfoil'],
+    prices:{ nonfoil:money(c.prices&&c.prices.usd),
+             foil:money(c.prices&&c.prices.usd_foil),
+             etched:money(c.prices&&c.prices.usd_etched) },
+    buy:c.purchase_uris||{},
+    printsUri:c.prints_search_uri,
+    extra:[ c.promo?'Promo':null, c.full_art?'Full art':null,
+            c.reprint?'Reprint':null, c.digital?'Digital':null ].filter(Boolean)
+  };
+}
+function fromTcgdex(c, full){
+  const f = full||c;
+  return {
+    src:'TCGdex', srcUrl:'https://www.tcgdex.net/', id:c.id,
+    name:c.name,
+    set:(f.set&&f.set.name)||'', setCode:((f.set&&f.set.id)||'').toUpperCase(),
+    year:((f.set&&f.set.releaseDate)||'').slice(0,4),
+    number:f.localId||'', rarity:f.rarity||'', artist:f.illustrator||'',
+    type:f.category||'', game:'Pokémon TCG',
+    image:(c.image||f.image) ? ((c.image||f.image)+'/high.webp') : '',
+    finishes:['nonfoil'],
+    prices:{ nonfoil:null, foil:null, etched:null },
+    buy:{}, printsUri:null, extra:[]
+  };
+}
+
+/* ── the lookups ─────────────────────────────────────────────── */
+async function jget(url){
+  const r = await fetch(url);
+  const t = await r.text();
+  if(!t) throw new Error('empty response');
+  return JSON.parse(t);
+}
+
+async function search(q){
+  const out = { hits:[], notes:[] };
+  /* Magic first: exact-ish name, then a fuzzy search for alternates */
+  try{
+    const j = await jget('https://api.scryfall.com/cards/search?unique=cards&q=' +
+                         encodeURIComponent(q));
+    if(j.data && j.data.length) out.hits.push(...j.data.slice(0,8).map(fromScryfall));
+  }catch(e){ /* 404 from Scryfall just means no Magic card by that name */ }
+  if(!out.hits.length){
+    try{
+      const j = await jget('https://api.scryfall.com/cards/named?fuzzy=' + encodeURIComponent(q));
+      if(j.id) out.hits.push(fromScryfall(j));
+    }catch(e){}
+  }
+  /* Pokemon second */
+  try{
+    const j = await jget('https://api.tcgdex.net/v2/en/cards?name=' + encodeURIComponent(q));
+    if(Array.isArray(j) && j.length){
+      const top = j.slice(0,4);
+      const full = await Promise.all(top.map(c =>
+        jget('https://api.tcgdex.net/v2/en/cards/'+encodeURIComponent(c.id)).catch(()=>null)));
+      top.forEach((c,i)=> out.hits.push(fromTcgdex(c, full[i])));
+    }
+  }catch(e){}
+  if(!out.hits.length) out.notes.push('No match in Magic or Pokémon. '+
+    'Sports cards are not covered — there is no free public database for them.');
+  return out;
+}
+
+async function loadPrints(rec){
+  PRINTS = [];
+  if(!rec.printsUri) return;
+  try{
+    const j = await jget(rec.printsUri);
+    PRINTS = (j.data||[]).map(fromScryfall);
+  }catch(e){}
+}
+
+/* ── estimate: printing × condition, with the range shown ────── */
+function estimate(){
+  if(!CUR) return null;
+  const fin = $('cnFin') ? $('cnFin').value : 'nonfoil';
+  const cd  = $('cnCond') ? $('cnCond').value : 'NM';
+  const mult = (COND.find(c=>c[0]===cd)||[,,1])[2];
+  const base = CUR.prices[fin];
+  if(base == null) return null;
+  /* A single number pretends to a precision nobody has. Ludex shows a
+     range and so do we: plus or minus 18 percent around the
+     condition-adjusted market price. */
+  const mid = base * mult;
+  return { low: mid*0.82, high: mid*1.18, mid, base, mult, fin, cd };
+}
+
+/* ── the sheet ───────────────────────────────────────────────── */
+function render(){
+  const o = $('cnOut');
+  if(!CUR){ o.innerHTML = ''; return; }
+  const est = estimate();
+  const finOpts = ['nonfoil','foil','etched']
+    .filter(f => CUR.finishes.includes(f) || CUR.prices[f] != null)
+    .map(f=>'<option value="'+f+'">' +
+      ({nonfoil:'Non-foil',foil:'Foil',etched:'Etched'}[f]) +
+      (CUR.prices[f]!=null ? ' · $'+CUR.prices[f].toFixed(2) : ' · no price') +
+      '</option>').join('') || '<option value="nonfoil">Non-foil</option>';
+
+  o.innerHTML =
+   '<div class="cnrow">' +
+     (CUR.image ? '<img class="cnart" src="'+esc(CUR.image)+'" alt="">'
+                : '<div class="cnart"></div>') +
+     '<div style="flex:1;min-width:0">' +
+       '<div class="cnname">'+esc(CUR.name)+'</div>' +
+       '<div class="cnset">'+esc(CUR.year||'')+' '+esc(CUR.set)+
+         (CUR.number?' · #'+esc(CUR.number):'')+'</div>' +
+       '<div style="margin-top:4px">' +
+         (CUR.rarity?'<span class="cnpill">'+esc(CUR.rarity)+'</span>':'') +
+         (CUR.artist?'<span class="cnpill">'+esc(CUR.artist)+'</span>':'') +
+         CUR.extra.map(e=>'<span class="cnpill">'+esc(e)+'</span>').join('') +
+       '</div>' +
+     '</div>' +
+   '</div>' +
+
+   '<div class="cnfield"><div class="cnlab">Printing</div>' +
+     '<select id="cnFin">'+finOpts+'</select></div>' +
+
+   (PRINTS.length>1 ? '<div class="cnfield"><div class="cnlab">Other printings ('+
+      PRINTS.length+')</div><select id="cnPrint">' +
+      PRINTS.map((p,i)=>'<option value="'+i+'"'+(p.id===CUR.id?' selected':'')+'>'+
+        esc((p.year||'')+' '+p.set+' #'+p.number)+
+        (p.prices.nonfoil!=null?' · $'+p.prices.nonfoil.toFixed(2):'')+
+        '</option>').join('') + '</select></div>' : '') +
+
+   '<div class="cnfield"><div class="cnlab">Condition</div>' +
+     '<select id="cnCond">'+COND.map(c=>'<option value="'+c[0]+'">'+c[1]+
+       ' · ×'+c[2].toFixed(2)+'</option>').join('')+'</select></div>' +
+
+   '<div class="cnfield"><div class="cnlab">Estimate</div>' +
+     (est ? '<div class="cnest">'+fmt(est.low)+' – '+fmt(est.high)+'</div>' +
+            '<div class="d" style="font-size:11.5px;margin-top:3px">' +
+            fmt(est.base)+' market for this printing, ×'+est.mult.toFixed(2)+
+            ' for '+est.cd+', shown ±18%. Condition multipliers are the hobby\'s '+
+            'customary spreads, not measured sales.</div>'
+          : '<div class="w">No published price for this printing.</div>') +
+   '</div>' +
+
+   '<div class="cnbar">' +
+     '<button id="cnAdd" class="go" style="flex:1">＋ Add to collection</button>' +
+     '<button id="cnList" style="flex:1">Build listing</button>' +
+   '</div>' +
+   (Object.keys(CUR.buy).length
+     ? '<div class="cnbar">' + Object.entries(CUR.buy).slice(0,2).map(([k,v])=>
+         '<button style="flex:1" onclick="window.open('+JSON.stringify(v)+
+         ',\'_blank\',\'noopener\')">Buy on '+esc(k)+'</button>').join('') + '</div>'
+     : '') +
+
+   (ALTS.length>1 ? '<div class="cnfield"><div class="cnlab">Not this card?</div>' +
+      ALTS.slice(0,6).map((a,i)=>'<div class="cnalt" data-alt="'+i+'">' +
+        (a.image?'<img src="'+esc(a.image)+'">':'<div style="width:34px"></div>') +
+        '<div style="flex:1;min-width:0"><div style="font-weight:600">'+esc(a.name)+'</div>' +
+        '<div class="d" style="font-size:11.5px">'+esc((a.year||'')+' '+a.set+
+        (a.number?' #'+a.number:''))+'</div></div></div>').join('') + '</div>' : '') +
+
+   '<div class="cnsrc">Source: <a href="'+esc(CUR.srcUrl)+'" target="_blank" rel="noopener">'+
+     esc(CUR.src)+'</a> · '+esc(CUR.game)+'. Live public data, no account, no server. '+
+     'No sold-price history or graded values — those are not published free anywhere, '+
+     'so this panel does not invent them.</div>';
+
+  const fin = $('cnFin'), cond = $('cnCond'), pr = $('cnPrint');
+  if(fin)  fin.onchange  = render;
+  if(cond) cond.onchange = render;
+  if(pr)   pr.onchange   = ()=>{ CUR = PRINTS[+pr.value]; render(); };
+  const add = $('cnAdd'), lst = $('cnList');
+  if(add) add.onclick = addToCollection;
+  if(lst) lst.onclick = buildListing;
+  o.querySelectorAll('[data-alt]').forEach(el=>{
+    el.onclick = async ()=>{ CUR = ALTS[+el.dataset.alt];
+      await loadPrints(CUR); render(); };
+  });
+}
+
+/* ── collection ──────────────────────────────────────────────── */
+function saveColl(){
+  try{ localStorage.setItem('cardnet.collection', JSON.stringify(COLL)); }catch(e){}
+  renderColl();
+}
+function addToCollection(){
+  const est = estimate();
+  COLL.push({ name:CUR.name, set:CUR.set, year:CUR.year, number:CUR.number,
+    game:CUR.game, image:CUR.image, src:CUR.src, srcUrl:CUR.srcUrl,
+    finish:$('cnFin')?$('cnFin').value:'nonfoil',
+    cond:$('cnCond')?$('cnCond').value:'NM',
+    low:est?+est.low.toFixed(2):null, high:est?+est.high.toFixed(2):null,
+    at:new Date().toISOString(),
+    serial:(window.CARD && window.CARD.serial) || null });
+  saveColl();
+}
+function renderColl(){
+  if(!COLL.length){ $('cnColl').style.display='none'; return; }
+  $('cnColl').style.display='block';
+  const lo = COLL.reduce((s,c)=>s+(c.low||0),0), hi = COLL.reduce((s,c)=>s+(c.high||0),0);
+  $('cnCollHead').innerHTML = '<b class="k">'+fmt(lo)+' – '+fmt(hi)+'</b> estimated · '+
+    COLL.length+' card'+(COLL.length===1?'':'s');
+  $('cnCollList').innerHTML = COLL.map((c,i)=>
+    '<div class="cnitem">' + (c.image?'<img src="'+esc(c.image)+'">':'') +
+    '<div style="flex:1;min-width:0"><div style="font-weight:600">'+esc(c.name)+'</div>' +
+    '<div class="d" style="font-size:11.5px">'+esc((c.year||'')+' '+c.set)+
+      ' · '+esc(c.finish)+' · '+esc(c.cond)+
+      (c.serial?' · <span class="k">card '+esc(c.serial)+'</span>':'')+'</div></div>' +
+    '<div style="text-align:right"><div class="k">'+fmt(c.low)+'</div>' +
+    '<button data-del="'+i+'" style="width:auto;padding:3px 8px;margin-top:3px;font-size:11px">remove</button>' +
+    '</div></div>').join('');
+  $('cnCollList').querySelectorAll('[data-del]').forEach(b=>{
+    b.onclick = ()=>{ COLL.splice(+b.dataset.del,1); saveColl(); };
+  });
+}
+
+/* ── listing, filled the way Ludex fills one ─────────────────── */
+function buildListing(){
+  const est = estimate();
+  const fin = $('cnFin')?$('cnFin').value:'nonfoil';
+  const cd  = $('cnCond')?$('cnCond').value:'NM';
+  const condName = (COND.find(c=>c[0]===cd)||[,'Near Mint'])[1];
+  const title = [CUR.year, CUR.set, CUR.name, CUR.number?('#'+CUR.number):'',
+                 fin==='foil'?'Foil':'', cd].filter(Boolean).join(' ').slice(0,80);
+  const serial = (window.CARD && window.CARD.serial) || null;
+  const body = [
+    CUR.name,
+    '',
+    'Set: ' + CUR.set + (CUR.setCode?' ('+CUR.setCode+')':''),
+    'Year: ' + (CUR.year||'—'),
+    'Card number: ' + (CUR.number||'—'),
+    'Rarity: ' + (CUR.rarity||'—'),
+    'Artist: ' + (CUR.artist||'—'),
+    'Printing: ' + fin,
+    'Condition: ' + condName + ' (' + cd + ')',
+    est ? ('Market reference: ' + fmt(est.base) + ' for this printing') : '',
+    est ? ('Asking range: ' + fmt(est.low) + ' – ' + fmt(est.high)) : '',
+    '',
+    serial ? ('SILOUTTES shadow-box card, serial ' + serial +
+              '. The serial is carried in the card itself and can be re-read with the ' +
+              'SILOUTTES reader at highscores.live — provenance travels with the object, ' +
+              'not with this listing.') : '',
+    '',
+    'Reference data: ' + CUR.src + ' — ' + CUR.srcUrl
+  ].filter(x=>x!==undefined).join('\n');
+
+  const cat = CUR.game === 'Magic: The Gathering' ? '38292 (CCG Individual Cards)'
+            : CUR.game === 'Pokémon TCG' ? '183454 (Pokémon Individual Cards)'
+            : '—';
+  const sell = 'https://www.ebay.com/sl/sell?' +
+    'title=' + encodeURIComponent(title);
+
+  $('cnOut').insertAdjacentHTML('beforeend',
+    '<div class="cnfield" style="border-top:1px solid var(--line);padding-top:9px">' +
+    '<div class="cnlab">Listing — filled, yours to check</div>' +
+    '<div class="d" style="font-size:11.5px;margin-bottom:5px">Title '+title.length+
+      '/80 chars · suggested eBay category '+esc(cat)+'</div>' +
+    '<textarea id="cnLTitle" rows="2" style="width:100%;font:12px var(--mono);'+
+      'background:#141b26;color:var(--ink);border:1px solid #39404a;border-radius:7px;'+
+      'padding:8px">'+esc(title)+'</textarea>' +
+    '<textarea id="cnLBody" rows="12" style="width:100%;margin-top:6px;font:12px var(--mono);'+
+      'background:#141b26;color:var(--ink);border:1px solid #39404a;border-radius:7px;'+
+      'padding:8px">'+esc(body)+'</textarea>' +
+    '<div class="cnbar">' +
+      '<button id="cnCopy" style="flex:1">Copy listing</button>' +
+      '<button id="cnEbay" style="flex:1">Open eBay Sell</button>' +
+    '</div>' +
+    '<div class="d" style="font-size:11.5px;margin-top:5px">Real one-tap listing needs an '+
+      'eBay OAuth token and a server to hold it. A page served from static hosting cannot '+
+      'do that safely, so this fills everything and hands it over rather than pretending.'+
+    '</div></div>');
+  $('cnCopy').onclick = ()=>{
+    const t = $('cnLTitle').value + '\n\n' + $('cnLBody').value;
+    (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject())
+      .then(()=>{ $('cnCopy').textContent = 'Copied ✓'; })
+      .catch(()=>{ $('cnLBody').select(); $('cnCopy').textContent = 'Select + copy'; });
+  };
+  $('cnEbay').onclick = ()=> window.open(sell, '_blank', 'noopener');
+}
+
+/* ── entry points ────────────────────────────────────────────── */
+async function lookup(q){
+  q = String(q||'').trim();
+  if(!q) return;
+  $('cnOut').innerHTML = '<div class="d">Identifying “'+esc(q)+'” …</div>';
+  CUR = null; ALTS = []; PRINTS = [];
+  let res;
+  try{ res = await search(q); }
+  catch(e){ $('cnOut').innerHTML = '<div class="b">Lookup failed: '+esc(e.message)+
+    '</div><div class="d" style="font-size:11.5px">Offline, or the database is down. '+
+    'Nothing here is cached, so there is nothing to show.</div>'; return; }
+  if(!res.hits.length){
+    $('cnOut').innerHTML = '<div class="w">'+esc(res.notes[0]||'No match.')+'</div>';
+    return;
+  }
+  ALTS = res.hits;
+  CUR = res.hits[0];
+  await loadPrints(CUR);
+  render();
+}
+
+$('cnGo').onclick = ()=> lookup($('cnQ').value);
+$('cnQ').addEventListener('keydown', e=>{ if(e.key==='Enter') lookup($('cnQ').value); });
+$('cnCollWipe').onclick = ()=>{ COLL = []; saveColl(); };
+$('cnCollCsv').onclick = ()=>{
+  const head = 'name,set,year,number,game,finish,condition,low,high,serial,source\n';
+  const rows = COLL.map(c=>[c.name,c.set,c.year,c.number,c.game,c.finish,c.cond,
+    c.low,c.high,c.serial||'',c.src]
+    .map(v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const b = new Blob([head+rows], {type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(b); a.download = 'collection.csv'; a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
+};
+
+window.CARDNET = { lookup, get current(){ return CUR; },
+  get collection(){ return COLL; }, search, estimate, COND };
+renderColl();
+})();
+</script>
+
+<script>
+/* ══════════════════════════════════════════════════════════════
+   WIRING — the scanner feeds the intelligence panel
+   ══════════════════════════════════════════════════════════════
+   The whole point of Ludex is that you never type anything: the
+   camera sees a card and the record appears. We get there by a
+   different road. Ludex has to GUESS the card from pixels, which is
+   why their moat is a trained model and a licensed database. Our
+   cards do not need guessing — they carry their own identity in the
+   code, so the reader is told, not left to infer.
+
+   Three feeds, in order of confidence:
+     1. A SILOUTTES manifest carrying a title — exact, no guessing.
+     2. Any decoded text that reads like a name — high confidence.
+     3. A GS1 serial with no name — identity without a catalogue
+        entry, so the panel says so instead of inventing a match.
+
+   Wrapped rather than edited. The original functions run untouched
+   and this hangs off the end of them, so nothing that worked before
+   can break here.
+   ══════════════════════════════════════════════════════════════ */
+(()=>{
+'use strict';
+if(typeof add !== 'function' || !window.CARDNET) return;
+
+/* A decoded value worth looking up: not a bare URL, not a number,
+   not a hex blob. A card name has letters and spaces and is short. */
+function nameish(v){
+  const s = String(v||'').trim();
+  if(!s || s.length > 60) return null;
+  /* A GS1 Digital Link is an identity, not a name. Its last path
+     segment is the serial — "SB-0007" became the search term "SB 0007"
+     and produced a confident "no match" for a card the reader had
+     already identified perfectly. If the value parses as a code, it
+     is a code, and the serial branch below handles it. */
+  if(typeof identify === 'function' && identify(s)) return null;
+  if(/^https?:\/\//i.test(s)){
+    /* a URL can still carry a name in its last path segment */
+    const seg = decodeURIComponent(s.split(/[?#]/)[0].split('/').filter(Boolean).pop()||'');
+    return /^[A-Za-z][A-Za-z0-9 ,'’&:.\-]{2,}$/.test(seg.replace(/[-_]/g,' '))
+      ? seg.replace(/[-_]/g,' ') : null;
+  }
+  if(!/[A-Za-z]/.test(s)) return null;
+  if(/^[0-9a-f]{8,}$/i.test(s)) return null;
+  return /^[A-Za-z][A-Za-z0-9 ,'’&:.\-]{2,}$/.test(s) ? s : null;
+}
+
+let asked = null;
+function offer(q, why){
+  if(!q || q === asked) return;
+  asked = q;
+  const box = document.getElementById('cnQ');
+  if(box) box.value = q;
+  const out = document.getElementById('cnOut');
+  if(out) out.innerHTML = '<div class="d">Scanned ' + why +
+    ' — looking up “' + q.replace(/</g,'&lt;') + '” …</div>';
+  document.getElementById('cnWrap').scrollIntoView({behavior:'smooth', block:'nearest'});
+  window.CARDNET.lookup(q);
+}
+
+const origAdd = add;
+window.add = function(fmt, value, how){
+  const r = origAdd.apply(this, arguments);
+  try{
+    const n = nameish(value);
+    if(n) offer(n, 'a ' + fmt);
+  }catch(e){}
+  return r;
+};
+
+/* A manifest may name the card outright — that beats guessing. */
+if(typeof showManifest === 'function'){
+  const origMan = showManifest;
+  window.showManifest = function(res, man){
+    const r = origMan.apply(this, arguments);
+    try{
+      const t = (man && (man.title || man.name)) ||
+                (res && res.find && (res.find(x=>x.fmt==='title')||{}).value);
+      if(t) offer(String(t), 'the card manifest');
+    }catch(e){}
+    return r;
+  };
+}
+
+/* A serial with no catalogue name: say what we have and what we do
+   not, rather than firing a hopeless search. */
+if(typeof showIdentity === 'function'){
+  const origId = showIdentity;
+  window.showIdentity = function(c){
+    const r = origId.apply(this, arguments);
+    try{
+      /* `let CARD` at script scope is NOT window.CARD — let and const
+         make script-scoped bindings, never properties of the global
+         object, so the collection was silently recording every card
+         with a null serial. Publish it deliberately. */
+      if(c) window.CARD = c;
+      /* THE PART LUDEX CANNOT DO, because their cards are not theirs.
+         They identify a card by recognising pixels — a trained model
+         and a licensed catalogue, which is a real moat and an
+         expensive one. Ours do not need recognising: the builder can
+         write the card's name into the same link that carries the
+         serial, as ?n=. So the card states what it is, exactly, and
+         the reader goes straight to the record with nothing to guess
+         and nothing to get wrong. */
+      const named = c && c.url && /[?&]n=([^&#]+)/.exec(c.url);
+      if(named){
+        offer(decodeURIComponent(named[1].replace(/\+/g,' ')), 'the card itself');
+        return r;
+      }
+      if(c && c.serial && !window.CARDNET.current){
+        const out = document.getElementById('cnOut');
+        if(out && !out.innerHTML.trim()){
+          out.innerHTML = '<div class="w">Card ' + String(c.serial).replace(/</g,'&lt;') +
+            ' identified by its serial.</div>' +
+            '<div class="d" style="font-size:11.5px;margin-top:4px">A serial says WHICH ' +
+            'card this is; it does not say what the card is OF. No public catalogue maps ' +
+            'a private serial to a title, so type the name above and the record will ' +
+            'attach to this serial when you add it to the collection.</div>';
+        }
+      }
+    }catch(e){}
+    return r;
+  };
+}
+})();
+</script>
