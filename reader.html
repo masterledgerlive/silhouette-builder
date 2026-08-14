@@ -1,0 +1,540 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>SILOUTTES Reader — highscores.live</title>
+<style>
+:root{ --bg:#0b0f14; --ink:#e8edf5; --dim:#8b94a3; --ok:#2dd4bf; --warn:#e0a94a;
+       --bad:#ff5d5d; --line:#242c38; --mono:ui-monospace,SFMono-Regular,Menlo,monospace; }
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.55 var(--mono);
+     padding:14px;padding-bottom:env(safe-area-inset-bottom)}
+h1{font-size:15px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ok);margin:0 0 2px}
+.sub{color:var(--dim);font-size:12px;margin-bottom:12px}
+.card{border:1px solid var(--line);border-radius:10px;padding:11px;margin-bottom:10px}
+button{font:600 14px var(--mono);background:#1b2230;color:var(--ink);
+       border:1px solid #39404a;border-radius:8px;padding:12px 14px;width:100%;margin-top:7px}
+button.go{background:var(--ok);color:#06131a;border:none}
+video,canvas{width:100%;border-radius:8px;background:#000;display:block}
+#hits div{border-top:1px solid var(--line);padding:7px 0}
+.k{color:var(--ok);font-weight:700}
+.w{color:var(--warn)} .b{color:var(--bad)} .d{color:var(--dim)}
+a{color:var(--ok)}
+label{display:block;margin-top:7px}
+input[type=file]{width:100%;font:12px var(--mono);color:var(--dim);margin-top:5px}
+</style>
+
+<h1>SILOUTTES Reader</h1>
+<div class="sub">Reads a card. Separate from the builder on purpose — the builder is 3.8&nbsp;MB
+and has no business loading on a phone.</div>
+
+<div class="card">
+  <div id="cap" class="d">checking what this device can do…</div>
+</div>
+
+<div class="card">
+  <button id="start" class="go">▶ Start camera</button>
+  <button id="stop" style="display:none">■ Stop</button>
+  <label class="d">…or read a photo / an exported PNG:
+    <input type="file" id="file" accept="image/*">
+  </label>
+  <video id="vid" playsinline muted style="display:none;margin-top:9px"></video>
+  <canvas id="shot" style="display:none;margin-top:9px"></canvas>
+</div>
+
+<div class="card">
+  <div class="d" style="margin-bottom:4px;">FOUND</div>
+  <div id="hits" class="d">nothing yet</div>
+</div>
+
+<div class="card" id="flat" style="display:none"></div>
+
+<div class="card" id="pichash" style="display:none"></div>
+
+<div class="card" id="idcard" style="display:none">
+  <div class="d" style="margin-bottom:4px;">CARD IDENTITY</div>
+  <div id="ident"></div>
+  <div id="vault" style="display:none;margin-top:9px;border-top:1px solid var(--line);padding-top:9px">
+    <div class="w" style="font-size:12px">🔒 This card has a vaulted section.</div>
+    <div class="d" style="font-size:12px;margin:4px 0">
+      The key is not in the photograph. It is under the scratch panel on the card itself,
+      which is the whole point — see below.
+    </div>
+    <input id="vkey" placeholder="claim key from under the panel"
+      style="width:100%;font:14px var(--mono);padding:10px;border-radius:8px;
+             border:1px solid #39404a;background:#11161d;color:var(--ink);margin-top:5px">
+    <button id="vgo">Unlock</button>
+    <div id="vout" style="margin-top:7px"></div>
+  </div>
+</div>
+
+<div class="card" style="font-size:12px;border-color:#5a3a3a">
+  <b class="b">READ THIS BEFORE TRUSTING A PHOTO.</b><br><br>
+  A photograph cannot prove an object. Anything printed can be photocopied, and the copy
+  scans <i>identically</i> — same QR, same serial, same everything. So "one picture documents
+  the card's legitimacy" is not true on its own, and it is worth knowing that now rather than
+  after a dispute.<br><br>
+  <b class="k">What does work, and it is the design you were already reaching for:</b><br>
+  1 · The <b>serial is public</b> — printed, scannable, identifies which card this is.<br>
+  2 · The <b>claim key is secret</b> — printed <i>under the scratch panel</i>, so it is not in
+  any photograph of an unopened card.<br>
+  3 · The <b>ledger is authoritative</b> — the first person to redeem that key owns it. A
+  photocopy scans the same and claims nothing, because the key was already spent.<br><br>
+  That is why the scratch panel matters. It is not decoration — it is the half of the system
+  that a camera cannot capture. The picture proves <i>which</i> card; the sealed key proves
+  <i>this</i> card.<br><br>
+  <span class="d">You said the constant "can be mimicked" — that instinct was right, and it is
+  exactly why the key has to be rotatable on transfer. On sale the seller reveals the key, the
+  buyer redeems it, and the ledger issues a new one. The old key is dead the moment it is
+  used.</span>
+</div>
+
+<div class="card d" style="font-size:12px">
+  <b class="k">What this can and cannot read.</b><br><br>
+  The standard symbologies — QR, UPC, EAN, Code&nbsp;128, Data&nbsp;Matrix, PDF417, Aztec —
+  are decoded by the browser itself, with no library downloaded at all. That is the honest
+  answer to "is there already a system": yes, and it is already on the phone.<br><br>
+  <b class="w">The DAVID colour grid, Morse marks, punch holes and Braille are NOT readable
+  here yet.</b> They are our own encodings, so no browser and no app knows them. Reading one
+  from a photo needs a step nothing has built yet: find the card in the picture, work out its
+  corners, undo the perspective, and only then sample the cells. That is the next real piece
+  of work, and it is a genuine piece of work — not a switch to flip.<br><br>
+  Google Lens did not miss your hidden data. It OCR'd the card text and image-searched the
+  artwork, because that is all Lens does. To Lens a colour grid is texture.
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const hits = $('hits');
+let detector = null, stream = null, raf = 0, seen = new Set();
+
+/* ── what does this device actually support? ────────────────── */
+(async function capability(){
+  const lines = [];
+  if('BarcodeDetector' in window){
+    try{
+      const fmts = await BarcodeDetector.getSupportedFormats();
+      detector = new BarcodeDetector({ formats: fmts });
+      lines.push('<span class="k">✓ Native barcode decoding available.</span>');
+      lines.push('Formats: ' + fmts.join(', '));
+      lines.push('<span class="d">Zero bytes downloaded — this is built into the browser.</span>');
+    }catch(e){
+      lines.push('<span class="b">✖ BarcodeDetector present but refused to start: '+e.message+'</span>');
+    }
+  } else {
+    lines.push('<span class="w">✖ No native barcode decoding on this browser.</span>');
+    lines.push('That means iPhone, or Firefox. Apple has still not shipped the ' +
+      'Barcode Detection API, so Safari cannot do this without a WebAssembly ' +
+      'library — about 300&nbsp;KB, loaded only on this page, never in the builder.');
+    lines.push('<span class="d">On this device: use the stock Camera app for QR codes. ' +
+      'It works, it just is not something a web page can reach.</span>');
+  }
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia)
+    lines.push('<span class="b">✖ No camera access from this browser.</span>');
+  $('cap').innerHTML = lines.join('<br>');
+})();
+
+/* ── results ─────────────────────────────────────────────────── */
+function add(fmt, value, how){
+  const key = fmt + '|' + value;
+  if(seen.has(key)) return;
+  seen.add(key);
+  if(hits.textContent === 'nothing yet') hits.innerHTML = '';
+  const isURL = /^https?:\/\//i.test(value);
+  const el = document.createElement('div');
+  el.innerHTML = '<span class="k">' + fmt + '</span> <span class="d">· ' + how + '</span><br>' +
+    (isURL ? '<a href="' + value.replace(/"/g,'&quot;') + '" target="_blank" rel="noopener">' +
+               value.replace(/</g,'&lt;') + '</a>'
+           : '<span style="word-break:break-all">' + value.replace(/</g,'&lt;') + '</span>');
+  hits.prepend(el);
+  if(navigator.vibrate) navigator.vibrate(40);
+  const id = identify(value);
+  if(id) showIdentity(id);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   CARD IDENTITY
+   A GS1 Digital Link carries the product number and serial in the
+   path: /01/<gtin>/21/<serial>. That is a published convention, so
+   a retail system reads it too — the card is not speaking a private
+   language just to us.
+   ══════════════════════════════════════════════════════════════ */
+function crc32(s){
+  let c = 0xFFFFFFFF;
+  for(let i=0;i<s.length;i++){
+    c ^= s.charCodeAt(i);
+    for(let k=0;k<8;k++) c = (c>>>1) ^ (0xEDB88320 & -(c & 1));
+  }
+  return (c ^ 0xFFFFFFFF) >>> 0;
+}
+const hex8 = v => '0x' + (v>>>0).toString(16).padStart(8,'0');
+
+let CARD = null;
+function identify(value){
+  const m = String(value).match(/\/01\/(\d{8,14})(?:\/21\/([^/?#]+))?/);
+  if(!m) return null;
+  return { gtin:m[1], serial:m[2] || null, url:value };
+}
+function showIdentity(c){
+  CARD = c;
+  $('idcard').style.display = 'block';
+  const rows = [
+    ['Product (GTIN)', c.gtin],
+    ['Serial', c.serial || '<span class="w">none — this is a product code, not a unique card</span>'],
+    ['Fingerprint', c.serial ? hex8(crc32(c.gtin + '|' + c.serial)) : '—']
+  ];
+  $('ident').innerHTML = rows.map(r=>
+    '<div style="display:flex;gap:8px"><span class="d" style="min-width:100px">'+r[0]+
+    '</span><span class="k">'+r[1]+'</span></div>').join('') +
+    '<div class="d" style="margin-top:7px;font-size:12px">' +
+      (c.serial
+        ? 'This identifies <b>which</b> card. It does not prove <b>this</b> card — see the red panel.'
+        : 'No serial in the code, so every card in the run scans the same. Add /21/&lt;serial&gt; to make each one unique.') +
+    '</div>';
+  if(c.serial) $('vault').style.display = 'block';
+}
+
+/* ── the vault, demonstrated for real ────────────────────────────
+   The vaulted blob is XOR-scrambled with a keystream seeded from the
+   claim key and the serial, with a CRC32 over the plaintext. A wrong
+   key produces bytes whose CRC does not match, so it fails loudly
+   instead of returning plausible rubbish.
+
+   Stated plainly: this is obfuscation, not AES. It proves the
+   handshake works. Real money needs the key checked server-side
+   against a ledger, because anything a phone can verify offline, a
+   forger can also verify offline while guessing. */
+function seed(key, serial){
+  let h = 0x811c9dc5;
+  const s = key + '|' + serial;
+  for(let i=0;i<s.length;i++){ h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
+  return h >>> 0 || 0x2545f491;
+}
+function keystream(sd, n){
+  let x = sd >>> 0; const o = new Uint8Array(n);
+  for(let i=0;i<n;i++){ x^=x<<13; x>>>=0; x^=x>>>17; x^=x<<5; x>>>=0; o[i]=x&255; }
+  return o;
+}
+function vaultSeal(text, key, serial){
+  const b = new TextEncoder().encode(text);
+  const ks = keystream(seed(key, serial), b.length);
+  const out = new Uint8Array(b.length);
+  for(let i=0;i<b.length;i++) out[i] = b[i] ^ ks[i];
+  return { blob: out, crc: crc32(text) };
+}
+function vaultOpen(blob, crc, key, serial){
+  const ks = keystream(seed(key, serial), blob.length);
+  const out = new Uint8Array(blob.length);
+  for(let i=0;i<blob.length;i++) out[i] = blob[i] ^ ks[i];
+  const text = new TextDecoder().decode(out);
+  return crc32(text) === crc ? { ok:true, text } : { ok:false };
+}
+
+/* a demo vault so the handshake can be exercised without a server */
+let DEMO = null;
+function armDemo(serial){
+  DEMO = vaultSeal(
+    'VAULTED · card ' + serial + '\n' +
+    'creator: David Jeffords\n' +
+    'edition: 1 of 1\n' +
+    'unlocked at ' + new Date().toISOString().slice(0,10),
+    'CLAIM-0001', serial);
+}
+$('vgo').onclick = ()=>{
+  if(!CARD || !CARD.serial) return;
+  if(!DEMO) armDemo(CARD.serial);
+  const key = $('vkey').value.trim();
+  const r = vaultOpen(DEMO.blob, DEMO.crc, key, CARD.serial);
+  $('vout').innerHTML = r.ok
+    ? '<span class="k">✓ Unlocked.</span><pre style="white-space:pre-wrap;margin:5px 0 0">' +
+      r.text.replace(/</g,'&lt;') + '</pre>' +
+      '<div class="d" style="font-size:12px;margin-top:6px">The key is now spent. On a real ' +
+      'ledger this transfers ownership and issues a fresh key to the buyer.</div>'
+    : '<span class="b">✖ Wrong key.</span> <span class="d">The CRC over the decrypted bytes ' +
+      'does not match, so it refuses rather than handing back rubbish that looks like data. ' +
+      'This demo card opens with <b>CLAIM-0001</b>.</span>';
+};
+
+/* ══════════════════════════════════════════════════════════════
+   IDENTIFY BY PICTURE — how real card scanners actually work
+   Delver Lens, TCGplayer, ManaBox and the rest do not read a code.
+   They: find the card outline, flatten the perspective, then compute
+   a PERCEPTUAL HASH of the artwork and look it up. New cards need no
+   new code — only a new row in the database.
+
+   dHash below: shrink to 9×8 grey, compare each pixel to its right
+   neighbour, one bit per comparison, 64 bits total. Two photos of the
+   same card land within a few bits of each other; different cards are
+   far apart. Crude, tiny, and genuinely what the field uses.
+   ══════════════════════════════════════════════════════════════ */
+function dHash(src){
+  const W = 9, H = 8;
+  const c = document.createElement('canvas');
+  c.width = W; c.height = H;
+  const x = c.getContext('2d', { willReadFrequently:true });
+  x.drawImage(src, 0, 0, W, H);
+  const d = x.getImageData(0, 0, W, H).data;
+  const grey = [];
+  for(let i=0;i<W*H;i++){
+    const p = i*4;
+    grey.push(0.299*d[p] + 0.587*d[p+1] + 0.114*d[p+2]);
+  }
+  let bits = '';
+  for(let r=0;r<H;r++)
+    for(let col=0;col<W-1;col++)
+      bits += grey[r*W+col] < grey[r*W+col+1] ? '1' : '0';
+  let hex = '';
+  for(let i=0;i<64;i+=4) hex += parseInt(bits.slice(i,i+4),2).toString(16);
+  return { bits, hex };
+}
+function hamming(a, b){
+  let n = 0;
+  for(let i=0;i<Math.min(a.length,b.length);i++) if(a[i] !== b[i]) n++;
+  return n;
+}
+/* a stand-in for the real database. In production this is one row per
+   card: hash, name, set, market price, and the manifest URL. */
+const LIBRARY = [];
+function identifyByPicture(src){
+  const h = dHash(src);
+  let best = null;
+  LIBRARY.forEach(e=>{
+    const dist = hamming(h.bits, e.bits);
+    if(!best || dist < best.dist) best = { dist, entry:e };
+  });
+  return { hash:h, best };
+}
+function showPicHash(src){
+  const r = identifyByPicture(src);
+  const box = $('pichash');
+  box.style.display = 'block';
+  let verdict;
+  if(!r.best)
+    verdict = '<span class="w">No reference library loaded here.</span> ' +
+      '<span class="d">This is the piece that needs a server: one row per card holding ' +
+      'this hash, the name, the set and the manifest. Match on nearest hash and every card ' +
+      'ever printed becomes identifiable — including ones with no code on them at all.</span>';
+  else if(r.best.dist <= 10)
+    verdict = '<span class="k">Match: ' + r.best.entry.name + '</span> ' +
+      '<span class="d">(' + r.best.dist + ' bits different — under 10 is the usual threshold)</span>';
+  else
+    verdict = '<span class="w">Nearest is ' + r.best.entry.name + ' at ' + r.best.dist +
+      ' bits — too far. That is a card the library has not seen.</span>';
+  box.innerHTML =
+    '<div class="d" style="margin-bottom:4px">PICTURE FINGERPRINT</div>' +
+    '<div><span class="d" style="min-width:100px;display:inline-block">dHash</span>' +
+    '<span class="k">' + r.hash.hex + '</span></div>' +
+    '<div style="margin-top:6px;font-size:12px">' + verdict + '</div>' +
+    '<div class="d" style="margin-top:7px;font-size:12px">' +
+    'Photographed at an angle this drifts, because the hash is taken over whatever shape ' +
+    'the camera saw. Real scanners fix that by finding the card corners and flattening the ' +
+    'perspective first — <b>the same step the DAVID grid needs</b>. Build it once, both work.' +
+    '</div>';
+}
+
+/* ══════════════════════════════════════════════════════════════
+   FIND THE CARD AND FLATTEN IT
+   The step every real scanner does first, and the one this project
+   has been missing since the beginning. Photograph a card at an
+   angle and it is a trapezoid; nothing downstream works properly on
+   a trapezoid. Hashes drift, grids sample the wrong cells, barcodes
+   skew.
+
+   No OpenCV, no library. Estimate the background from the picture's
+   own border, mark everything unlike it as card, then take the four
+   extreme corners — the pixel furthest along x+y is the bottom
+   right, furthest along x−y is the top right, and so on. That trick
+   finds a rotated rectangle without any contour tracing at all.
+
+   Then solve the eight-parameter homography from those corners to a
+   clean rectangle and resample. Same maths a scanner uses.
+   ══════════════════════════════════════════════════════════════ */
+function detectCard(src){
+  const W = 240, H = Math.max(1, Math.round(src.height * (240/src.width)));
+  const c = document.createElement('canvas');
+  c.width = W; c.height = H;
+  const x = c.getContext('2d', { willReadFrequently:true });
+  x.drawImage(src, 0, 0, W, H);
+  const d = x.getImageData(0,0,W,H).data;
+  const at = (i,j)=>{ const p = (j*W+i)*4; return [d[p],d[p+1],d[p+2]]; };
+
+  /* background = median of the outer frame */
+  const edge = [];
+  for(let i=0;i<W;i++){ edge.push(at(i,0)); edge.push(at(i,H-1)); }
+  for(let j=0;j<H;j++){ edge.push(at(0,j)); edge.push(at(W-1,j)); }
+  const med = k =>{ const v = edge.map(e=>e[k]).sort((a,b)=>a-b); return v[v.length>>1]; };
+  const bg = [med(0), med(1), med(2)];
+
+  /* anything far enough from the background is card */
+  const THRESH = 60;
+  let sumP = null, difP = null, sumM = null, difM = null, n = 0;
+  for(let j=0;j<H;j++) for(let i=0;i<W;i++){
+    const p = at(i,j);
+    const dist = Math.abs(p[0]-bg[0]) + Math.abs(p[1]-bg[1]) + Math.abs(p[2]-bg[2]);
+    if(dist < THRESH) continue;
+    n++;
+    const s = i + j, f = i - j;
+    if(!sumP || s > sumP.s) sumP = { s, i, j };     // bottom-right
+    if(!sumM || s < sumM.s) sumM = { s, i, j };     // top-left
+    if(!difP || f > difP.f) difP = { f, i, j };     // top-right
+    if(!difM || f < difM.f) difM = { f, i, j };     // bottom-left
+  }
+  const coverage = n / (W*H);
+  if(n < 500 || coverage > 0.98)
+    return { ok:false, why: coverage > 0.98
+      ? 'the whole frame is the same colour as the card — no border to find. Put the card '+
+        'on a contrasting surface and leave a margin around it.'
+      : 'could not separate a card from the background. Needs a plain surface that is not '+
+        'the same colour as the card.' };
+
+  const k = src.width / W;                          // back to full resolution
+  const pt = o => [o.i*k, o.j*k];
+  return { ok:true, coverage,
+    corners:{ tl:pt(sumM), tr:pt(difP), br:pt(sumP), bl:pt(difM) } };
+}
+
+/* solve an 8-parameter homography mapping the output rectangle back
+   into the source image, so each output pixel knows where to sample */
+function solveH(dst, src){
+  const A = [], b = [];
+  for(let i=0;i<4;i++){
+    const [u,v] = dst[i], [x,y] = src[i];
+    A.push([u, v, 1, 0, 0, 0, -u*x, -v*x]); b.push(x);
+    A.push([0, 0, 0, u, v, 1, -u*y, -v*y]); b.push(y);
+  }
+  /* Gaussian elimination with partial pivoting */
+  for(let col=0; col<8; col++){
+    let piv = col;
+    for(let r=col+1;r<8;r++) if(Math.abs(A[r][col]) > Math.abs(A[piv][col])) piv = r;
+    if(Math.abs(A[piv][col]) < 1e-9) return null;
+    [A[col], A[piv]] = [A[piv], A[col]];
+    [b[col], b[piv]] = [b[piv], b[col]];
+    for(let r=0;r<8;r++){
+      if(r === col) continue;
+      const f = A[r][col] / A[col][col];
+      if(!f) continue;
+      for(let cc=col; cc<8; cc++) A[r][cc] -= f * A[col][cc];
+      b[r] -= f * b[col];
+    }
+  }
+  return b.map((v,i)=> v / A[i][i]);
+}
+
+function flattenCard(src, corners, outW){
+  const AR = 88.9 / 63.5;                            // trading card aspect
+  const W = outW || 500, H = Math.round(W * AR);
+  const dst = [[0,0],[W,0],[W,H],[0,H]];
+  const s = [corners.tl, corners.tr, corners.br, corners.bl];
+  const h = solveH(dst, s);
+  if(!h) return null;
+
+  const sc = document.createElement('canvas');
+  sc.width = src.width; sc.height = src.height;
+  sc.getContext('2d').drawImage(src, 0, 0);
+  const sd = sc.getContext('2d', { willReadFrequently:true })
+               .getImageData(0,0,src.width,src.height).data;
+
+  const out = document.createElement('canvas');
+  out.width = W; out.height = H;
+  const oi = out.getContext('2d').createImageData(W, H);
+
+  for(let v=0; v<H; v++) for(let u=0; u<W; u++){
+    const den = h[6]*u + h[7]*v + 1;
+    const sx = Math.round((h[0]*u + h[1]*v + h[2]) / den);
+    const sy = Math.round((h[3]*u + h[4]*v + h[5]) / den);
+    const o = (v*W+u)*4;
+    if(sx < 0 || sy < 0 || sx >= src.width || sy >= src.height){ oi.data[o+3] = 255; continue; }
+    const p = (sy*src.width + sx)*4;
+    oi.data[o]   = sd[p];
+    oi.data[o+1] = sd[p+1];
+    oi.data[o+2] = sd[p+2];
+    oi.data[o+3] = 255;
+  }
+  out.getContext('2d').putImageData(oi, 0, 0);
+  return out;
+}
+
+/* ── live camera ─────────────────────────────────────────────── */
+$('start').onclick = async ()=>{
+  if(!detector){ alert('This browser has no native barcode decoder — try the photo option, or use Chrome on Android.'); return; }
+  try{
+    stream = await navigator.mediaDevices.getUserMedia({
+      video:{ facingMode:{ ideal:'environment' }, width:{ ideal:1920 } }, audio:false });
+  }catch(e){ alert('Camera refused: ' + e.message); return; }
+  const v = $('vid');
+  v.srcObject = stream; v.style.display = 'block';
+  await v.play();
+  $('start').style.display = 'none';
+  $('stop').style.display = 'block';
+  const tick = async ()=>{
+    if(!stream) return;
+    try{
+      const found = await detector.detect(v);
+      found.forEach(b=> add(b.format, b.rawValue, 'live camera'));
+    }catch(e){ /* frames can fail mid-stream; keep going */ }
+    raf = requestAnimationFrame(tick);
+  };
+  tick();
+};
+$('stop').onclick = ()=>{
+  if(stream){ stream.getTracks().forEach(t=>t.stop()); stream = null; }
+  cancelAnimationFrame(raf);
+  $('vid').style.display = 'none';
+  $('stop').style.display = 'none';
+  $('start').style.display = 'block';
+};
+
+/* ── a still photo or an exported PNG ────────────────────────── */
+$('file').onchange = async e=>{
+  const f = e.target.files && e.target.files[0];
+  if(!f) return;
+  const img = new Image();
+  img.onload = async ()=>{
+    const cv = $('shot');
+    const scale = Math.min(1, 1600 / Math.max(img.width, img.height));
+    cv.width = Math.round(img.width * scale);
+    cv.height = Math.round(img.height * scale);
+    cv.style.display = 'block';
+    cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+
+    /* find the card and flatten it before anything else looks at it */
+    let target = cv, note = '';
+    const det = detectCard(cv);
+    if(det.ok){
+      const flat = flattenCard(cv, det.corners, 500);
+      if(flat){
+        target = flat;
+        $('flat').style.display = 'block';
+        $('flat').innerHTML = '<div class="d" style="margin-bottom:5px">FLATTENED · ' +
+          'corners found, perspective removed — everything below reads this, not the photo</div>';
+        flat.style.maxWidth = '210px';
+        flat.style.borderRadius = '6px';
+        $('flat').appendChild(flat);
+        note = ' (flattened)';
+      }
+    } else {
+      $('flat').style.display = 'block';
+      $('flat').innerHTML = '<div class="w" style="font-size:12px">Could not find the card: ' +
+        det.why + '</div><div class="d" style="font-size:12px;margin-top:4px">Reading the raw ' +
+        'photo instead, which still works for barcodes but makes the picture fingerprint ' +
+        'unreliable.</div>';
+    }
+    showPicHash(target);
+    window.__lastFlat = target;
+    if(!detector){
+      add('—', 'No native decoder on this browser, so the picture cannot be read here. ' +
+                'The image loaded fine; it is the decoding that is missing.', 'photo');
+      return;
+    }
+    try{
+      const found = await detector.detect(window.__lastFlat || cv);
+      if(!found.length)
+        add('—', 'No standard barcode found in this image. If the card carries a DAVID ' +
+                 'grid, Morse marks, punch holes or Braille, that is expected — nothing ' +
+                 'reads those yet.', 'photo');
+      found.forEach(b=> add(b.format, b.rawValue, 'photo'));
+    }catch(err){ add('error', err.message, 'photo'); }
+    URL.revokeObjectURL(img.src);
+  };
+  img.src = URL.createObjectURL(f);
+};
+</script>
