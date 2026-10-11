@@ -10,7 +10,6 @@
   var statusEl = document.getElementById('status');
   var sealBtn = document.getElementById('sealBtn');
   var sealOut = document.getElementById('sealOut');
-  var locBox = document.getElementById('locations');
 
   var memory = null, inst = null, W = 320, H = 200, t0 = 0;
   var keys = {}, inputLog = [], frameCount = 0, tics = 0, booted = false;
@@ -106,15 +105,6 @@
     return Array.from(new Uint8Array(d)).map(function (b) { return b.toString(16).padStart(2, '0'); }).join('');
   }
 
-  function addLocationButton(tx, tag) {
-    var a = document.createElement('a');
-    a.href = 'https://sepolia.basescan.org/tx/' + tx;
-    a.target = '_blank'; a.rel = 'noopener';
-    a.className = 'locbtn';
-    a.textContent = 'RUN ' + tag + ' → ' + tx.slice(0, 10) + '…' + tx.slice(-6);
-    locBox.appendChild(a);
-  }
-
   async function sealRun() {
     if (!booted) { sealOut.textContent = 'Boot the game first.'; return; }
     sealBtn.disabled = true;
@@ -137,8 +127,20 @@
       });
       var j = await r.json();
       if (!r.ok) throw new Error((j && j.error) || ('HTTP ' + r.status));
-      addLocationButton(j.txHash, runHash.slice(0, 6).toUpperCase());
-      sealOut.textContent = 'Sealed. This run now lives on-chain — see its location button below.';
+      var txHash = j.txHash || j.tx_hash || j.hash;
+      if (!txHash) throw new Error('relay answered without a tx hash');
+      window.ArcadeProof.addRun({
+        tag: runHash.slice(0, 6).toUpperCase(),
+        tx: txHash,
+        chain: window.ArcadeProof.chainFrom(j),
+        injectId: j.injectId || j.inject_id || j.id || null,
+        hitchId: j.hitchId || j.hitch_id || j.hitch || null,
+        runHash: runHash,
+        payload: payload,
+        tics: tics, frames: frameCount, inputs: inputLog.length,
+        sealedAt: new Date().toISOString()
+      });
+      sealOut.textContent = 'Sealed. This run now lives on-chain — its location card is saved below (survives tab close).';
       inputLog = [];
     } catch (err) {
       sealOut.textContent = 'Seal failed: ' + err.message +
