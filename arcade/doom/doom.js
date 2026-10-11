@@ -148,5 +148,10 @@
   }
   sealBtn.addEventListener('click', sealRun);
 
-  boot().catch(function (err) { setStatus('Boot failed: ' + err.message); });
+  var started = false;
+  window.startDoom = function () {
+    if (started) return;
+    started = true;
+    boot().catch(function (err) { setStatus('Boot failed: ' + err.message); });
+  };
 })();
