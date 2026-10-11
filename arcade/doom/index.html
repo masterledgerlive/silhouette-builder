@@ -42,6 +42,20 @@
   .locbtn:hover { box-shadow:0 0 16px var(--pink); }
   .free { text-align:center; color:var(--pink); letter-spacing:.2em; margin-bottom:20px;
           font-size:.9rem; text-shadow:0 0 10px var(--pink); }
+  .wrow { display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:12px; }
+  .wbtn { font-family:inherit; padding:10px 20px; letter-spacing:.1em; font-size:.82rem;
+          background:transparent; color:var(--neon); border:1px solid var(--neon);
+          border-radius:999px; cursor:pointer; }
+  .wbtn:hover:not(:disabled) { box-shadow:0 0 14px var(--neon); }
+  .wbtn:disabled { opacity:.4; cursor:default; }
+  .wbtn.big { background:var(--neon); color:#0a0a18; font-weight:bold; }
+  .waddr { color:#c9c9e8; font-size:.85rem; }
+  .whint { color:#66668a; font-size:.78rem; }
+  .finsline { color:var(--pink); font-size:1rem; letter-spacing:.1em; }
+  .finsline b { font-size:1.3rem; }
+  #payToken, #payAmt { font-family:inherit; background:#0d0d22; color:#e8e8f5;
+          border:1px solid #33336a; border-radius:8px; padding:10px; font-size:.85rem; }
+  #payAmt { width:110px; }
   footer { text-align:center; color:#66668a; font-size:.8rem; margin-top:36px; line-height:2; }
 </style>
 </head>
@@ -53,9 +67,35 @@
     <div class="sub">SEALED · PLAYABLE · 1993</div>
   </header>
 
-  <div class="free">FREE PLAY WHILE WE BUILD — 1 FIN WHEN THE COIN SLOT OPENS</div>
+  <div class="free">1 FIN = 1 PLAY — CONNECT · VERIFY · PAY</div>
 
-  <div class="cabinet">
+  <div class="panel" id="walletPanel">
+    <h2>WALLET — LOGIN TO PLAY</h2>
+    <div class="wrow">
+      <button id="connectBtn" class="wbtn">CONNECT WALLET</button>
+      <span id="wAddr" class="waddr">not connected</span>
+      <span id="wVerified" class="waddr"></span>
+    </div>
+    <div class="wrow">
+      <button id="verifyBtn" class="wbtn">VERIFY (SIGN-IN)</button>
+      <span class="whint">proves you own the wallet — no gas, just a signature</span>
+    </div>
+    <div class="wrow">
+      <select id="payToken"></select>
+      <input id="payAmt" type="number" min="0" step="any" placeholder="amount">
+      <button id="payBtn" class="wbtn">PAY → EARN FINS</button>
+    </div>
+    <div class="whint" id="moonNote"></div>
+    <div class="wrow">
+      <span class="finsline">FINS: <b id="finsBal">0</b></span>
+      <button id="playBtn" class="wbtn big" disabled>INSERT 1 FIN — PLAY DOOM</button>
+      <span class="whint" id="playHint"></span>
+    </div>
+    <div id="wNote" class="whint"></div>
+    <div class="whint" style="margin-top:8px">TEST MODE: the treasury is David's own wallet — right now you are paying yourself. Base mainnet.</div>
+  </div>
+
+  <div class="cabinet" id="cabinet" style="display:none">
     <canvas id="screen" width="320" height="200"></canvas>
     <div id="status">Warming up the cabinet…</div>
     <div class="controls">
@@ -100,6 +140,7 @@
   </footer>
 
 </div>
+<script src="wallet.js"></script>
 <script src="doom.js"></script>
 </body>
 </html>
