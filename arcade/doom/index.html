@@ -91,6 +91,16 @@
 
   <div class="free">1 FIN = 1 PLAY — CONNECT · VERIFY · PAY</div>
 
+  <div class="panel" id="freeBar" style="display:none;border-color:#fbbf24">
+    <h2 style="color:#fbbf24">FREE PLAY — TEST MODE</h2>
+    <div class="whint" style="color:#c9c9e8;line-height:1.8">No wallet, no fins, nothing written on-chain. SEAL is switched off,
+      so free runs never reach the inject relay and spend no gas. VERIFY NOW still works.</div>
+    <div class="wrow" style="margin-top:12px">
+      <button id="freePlayBtn" class="wbtn big" style="background:#fbbf24">PLAY FREE</button>
+      <button id="freeEndBtn" class="wbtn">END FREE PLAY</button>
+    </div>
+  </div>
+
   <div class="panel" id="walletPanel">
     <h2>WALLET — LOGIN TO PLAY</h2>
     <div class="wrow">
@@ -114,6 +124,10 @@
       <span class="whint" id="playHint"></span>
     </div>
     <div id="wNote" class="whint"></div>
+    <div id="wDeep" class="wrow" style="display:none;margin-top:8px"></div>
+    <div class="wrow" style="margin-top:8px">
+      <button id="freeTryBtn" class="wbtn" style="border-color:#fbbf24;color:#fbbf24">TRY FREE PLAY (no seal)</button>
+    </div>
     <div class="whint" style="margin-top:8px">TEST MODE: the treasury is David's own wallet — right now you are paying yourself. Base mainnet.</div>
   </div>
 
@@ -192,6 +206,7 @@
   </footer>
 
 </div>
+<script src="free.js"></script>
 <script src="wallet.js"></script>
 <script src="proof.js"></script>
 <script src="doom.js"></script>
