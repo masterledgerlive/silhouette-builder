@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DOOM — Sealed &amp; Playable · Arcades of Time</title>
+<style>
+  :root { --neon:#22d3ee; --pink:#f0f; --bg:#0a0a18; --panel:#12122a; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:var(--bg); color:#e8e8f5; font-family:'Courier New',monospace;
+         background-image:radial-gradient(circle at 50% 0%, #1a1a3a 0%, var(--bg) 60%); }
+  .wrap { max-width:900px; margin:0 auto; padding:28px 20px 60px; }
+  header { text-align:center; margin-bottom:20px; }
+  h1 { font-size:clamp(1.8rem,5vw,2.8rem); color:var(--neon); letter-spacing:.12em;
+       text-shadow:0 0 18px var(--neon); }
+  .sub { color:var(--pink); letter-spacing:.25em; margin-top:6px; font-size:.85rem;
+         text-shadow:0 0 12px var(--pink); }
+  .cabinet { background:#000; border:3px solid var(--neon); border-radius:16px;
+             padding:18px; box-shadow:0 0 40px #0af5; margin-bottom:24px; text-align:center; }
+  #screen { width:100%; max-width:640px; image-rendering:pixelated; image-rendering:crisp-edges;
+            background:#000; border-radius:6px; }
+  #status { margin-top:12px; color:var(--neon); min-height:1.4em; font-size:.95rem; }
+  .controls { margin-top:10px; color:#8888aa; font-size:.8rem; line-height:1.9; }
+  .controls b { color:#c9c9e8; }
+  .panel { background:var(--panel); border:1px solid #2a2a5a; border-radius:14px;
+           padding:24px; margin-bottom:24px; }
+  h2 { color:var(--neon); letter-spacing:.15em; margin-bottom:14px; font-size:1.05rem; }
+  .proof { font-size:.82rem; line-height:2; color:#b9b9d8; word-break:break-all; }
+  .proof b { color:#fff; }
+  .proof .lbl { color:var(--pink); }
+  a { color:var(--neon); }
+  #sealBtn { display:inline-block; margin-top:6px; padding:14px 34px; font-family:inherit;
+             font-size:1rem; letter-spacing:.15em; color:#0a0a18; background:var(--neon);
+             border:none; border-radius:999px; cursor:pointer; font-weight:bold; }
+  #sealBtn:disabled { opacity:.5; cursor:wait; }
+  #sealBtn:hover:not(:disabled) { box-shadow:0 0 24px var(--neon); }
+  #sealOut { margin-top:12px; color:#c9c9e8; font-size:.9rem; min-height:1.4em; }
+  #locations { margin-top:14px; display:flex; flex-wrap:wrap; gap:10px; }
+  .locbtn { display:inline-block; padding:10px 18px; border:1px solid var(--pink);
+            border-radius:999px; color:var(--pink); text-decoration:none; font-size:.82rem;
+            letter-spacing:.06em; }
+  .locbtn:hover { box-shadow:0 0 16px var(--pink); }
+  .free { text-align:center; color:var(--pink); letter-spacing:.2em; margin-bottom:20px;
+          font-size:.9rem; text-shadow:0 0 10px var(--pink); }
+  footer { text-align:center; color:#66668a; font-size:.8rem; margin-top:36px; line-height:2; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>DOOM</h1>
+    <div class="sub">SEALED · PLAYABLE · 1993</div>
+  </header>
+
+  <div class="free">FREE PLAY WHILE WE BUILD — 1 FIN WHEN THE COIN SLOT OPENS</div>
+
+  <div class="cabinet">
+    <canvas id="screen" width="320" height="200"></canvas>
+    <div id="status">Warming up the cabinet…</div>
+    <div class="controls">
+      <b>Arrows</b> move · <b>Ctrl</b> fire · <b>Space</b> use/open · <b>Shift</b> run ·
+      <b>, / .</b> strafe · <b>Tab</b> map · <b>Enter</b> select · <b>Esc</b> menu
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>SEAL YOUR RUN</h2>
+    <p style="color:#b9b9d8; font-size:.9rem; line-height:1.7; margin-bottom:12px">
+      Every run can live on-chain. Your inputs are hashed into a run claim and
+      injected through the Guardian pathway — the button it creates is the
+      run's on-chain location, relayed by code injection.</p>
+    <button id="sealBtn">SEAL THIS RUN ⛓</button>
+    <div id="sealOut"></div>
+    <div id="locations"></div>
+  </div>
+
+  <div class="panel">
+    <h2>WHERE THIS CODE LIVES — PROOFS</h2>
+    <div class="proof">
+      <span class="lbl">SEALED QUILT BLOB</span><br>
+      <b>df8a82beb4ad1fe6e412fbd2a5f5c4b0785bb49b785782023aa43a1906062a18</b><br>
+      <span class="lbl">doom.wasm</span> <b>8edfe49a7583fd975199969302d8e9adcf8e714d0af72bf3e672f991fd810faa</b><br>
+      <span class="lbl">doom1.wad (shareware)</span> <b>1d7d43be501e67d927e415e0b8f3e29c3bf33075e859721816f652a526cac771</b><br>
+      <span class="lbl">MANIFEST MERKLE ROOT</span><br>
+      <b>ba89d5f302e3f8b53e2514cd142b3777754afe637d94fbec87291e27f61b46cf</b><br>
+      <span class="lbl">SEAL TRANSACTION</span><br>
+      <b>0x646610e26c7557ad53ab6a1560ba27a79a0c17cd0be694979aaaccab8808ec78</b>
+      <a target="_blank" rel="noopener" href="https://sepolia.basescan.org/tx/0x646610e26c7557ad53ab6a1560ba27a79a0c17cd0be694979aaaccab8808ec78">view →</a><br>
+      <span class="lbl">CHAIN</span> <b>Base Sepolia · block 47956932</b><br><br>
+      The bytes you are playing were recovered from the sealed shards and are
+      byte-identical to the manifest above. Anyone can re-fetch, re-encode, and
+      compare — that's the proof, not our word.
+    </div>
+  </div>
+
+  <footer>
+    Arcades of Time · the cabinet seals itself as you play<br>
+    <a href="../">← back to the arcade</a>
+  </footer>
+
+</div>
+<script src="doom.js"></script>
+</body>
+</html>
