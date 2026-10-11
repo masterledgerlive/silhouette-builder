@@ -106,6 +106,14 @@
   }
 
   async function sealRun() {
+    // FREE PLAY never writes on-chain: no relay call, no gas.
+    if (window.ArcadeFree && window.ArcadeFree.on) {
+      sealOut.textContent = 'Free play — SEAL is off. Nothing was sent on-chain.'; return;
+    }
+    // Real SEAL only for a run started with a paid fin from a verified wallet.
+    if (!window.ArcadeWallet || !window.ArcadeWallet.paidSession) {
+      sealOut.textContent = 'SEAL needs a real play: connect, verify and insert 1 fin first.'; return;
+    }
     if (!booted) { sealOut.textContent = 'Boot the game first.'; return; }
     sealBtn.disabled = true;
     sealOut.textContent = 'Sealing this run on-chain via the Guardian pathway…';
