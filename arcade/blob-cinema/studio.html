@@ -115,9 +115,23 @@ document.getElementById('filepick').addEventListener('change', e=>{
   r.readAsArrayBuffer(f);
 });
 async function loadUrl(){
-  const u=document.getElementById('urlpick').value.trim(); if(!u) return;
+  let u=document.getElementById('urlpick').value.trim(); if(!u) return;
   log('Pulling from URL…');
-  try{const r=await fetch(u); fileData=new Uint8Array(await r.arrayBuffer()); fileName=u.split('/').pop()||'video.mp4';
+  try{
+    // Auto-resolve archive.org details pages to the actual video file
+    const am=u.match(/archive\.org\/details\/([^\/\?]+)/);
+    if(am){
+      log('Archive.org page detected — finding the video file…');
+      const meta=await (await fetch('https://archive.org/metadata/'+am[1])).json();
+      const vids=(meta.files||[]).filter(f=>/\.(mp4|webm|ogv)$/i.test(f.name)&&parseInt(f.size)>1024*1024)
+        .sort((a,b)=>parseInt(a.size)-parseInt(b.size));
+      if(!vids.length){log('No video files found on that Archive.org page','err');return;}
+      // pick the smallest MP4 (prefer h264/mp4)
+      const mp4=vids.find(f=>/\.mp4$/i.test(f.name))||vids[0];
+      u='https://archive.org/download/'+am[1]+'/'+encodeURIComponent(mp4.name);
+      log('Found: '+mp4.name+' ('+(parseInt(mp4.size)/1024/1024).toFixed(0)+' MB)','ok');
+    }
+    const r=await fetch(u); fileData=new Uint8Array(await r.arrayBuffer()); fileName=u.split('/').pop()||'video.mp4';
     document.getElementById('fileinfo').textContent='📁 '+fileName+' ('+(fileData.length/1024/1024).toFixed(1)+' MB)';
     document.getElementById('gobtn').disabled=false; log('Pulled '+fileData.length+' bytes','ok');
   }catch(e){log('Failed: '+e.message+' (URL may block cross-site fetching)','err');}
