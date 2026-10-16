@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>REF TEST</title>
+<style>body{background:#07070f;color:#e8e8ff;font-family:monospace;padding:16px;max-width:700px;margin:0 auto}
+.panel{background:#0b0b1a;border:1px solid #26264d;border-radius:12px;padding:14px;margin:12px 0}
+.ok{color:#00ffa3}.bad{color:#ff5470}.dim{color:#8a8ab0}
+button{background:#00ffa3;border:0;border-radius:8px;padding:10px 14px;font-weight:700;cursor:pointer;font-family:inherit}
+video{width:100%;max-width:420px;background:#000;border-radius:8px}</style></head>
+<body>
+<h2>REF TEST — can this browser MSE-append a known-good fMP4?</h2>
+<div class="panel"><button id="go" onclick="run()">▶ RUN</button><div id="out" style="margin-top:10px"></div></div>
+<div class="panel"><video id="v" controls playsinline></video></div>
+<script>
+const AGG='https://aggregator.walrus-testnet.walrus.space';
+const REF='YSEjUoS5xWLL988Fyyctw6O-LO0I5_Qtta4TPgnGKbU';
+const MIME='audio/mp4; codecs="mp4a.40.2"';
+function log(h){const d=document.createElement('div');d.innerHTML=h;document.getElementById('out').appendChild(d);}
+async function run(){
+  document.getElementById('go').disabled=true;
+  log('<span class="dim">MSE supported: '+MediaSource.isTypeSupported(MIME)+'</span>');
+  try{
+    const r=await fetch(AGG+'/v1/blobs/'+REF);
+    const buf=new Uint8Array(await r.arrayBuffer());
+    log('<span class="dim">fetched '+buf.length+' bytes of reference fMP4</span>');
+    const v=document.getElementById('v');
+    const ms=new MediaSource();
+    v.src=URL.createObjectURL(ms);
+    await new Promise((res,rej)=>{ms.addEventListener('sourceopen',res,{once:true});setTimeout(()=>rej(new Error('no sourceopen')),10000);});
+    log('<span class="dim">sourceopen fired</span>');
+    const sb=ms.addSourceBuffer(MIME);
+    log('<span class="dim">SourceBuffer created</span>');
+    await new Promise((res,rej)=>{
+      sb.addEventListener('updateend',()=>res(),{once:true});
+      sb.addEventListener('error',()=>rej(new Error('sb-error')),{once:true});
+      sb.appendBuffer(buf);
+    });
+    log('<span class="ok">✓ APPEND ACCEPTED — readyState='+v.readyState+' buffered='+(v.buffered.length?v.buffered.end(0).toFixed(2)+'s':'none')+'</span>');
+    ms.endOfStream();
+    v.play().catch(()=>{});
+    setTimeout(()=>{log('<span class="dim">after 3s: currentTime='+v.currentTime.toFixed(2)+' readyState='+v.readyState+' videoError='+(v.error?'code '+v.error.code:'none')+'</span>');},3000);
+  }catch(e){
+    const v=document.getElementById('v');
+    log('<span class="bad">✗ FAILED: '+e.message+' videoError='+(v.error?'code '+v.error.code:'none')+' readyState='+v.readyState+'</span>');
+  }
+}
+</script></body></html>
