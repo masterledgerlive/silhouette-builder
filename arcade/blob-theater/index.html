@@ -83,8 +83,15 @@
 
   <div class="panel">
     <h2 class="sec">FINDER · DECODER · PLAYER</h2>
-    <p>Press it. The reader fetches each blob, shows the scrambled bytes, applies the key, pulls the <b>embedded message</b> (the hidden next-location + proof) out of the ciphertext, verifies it, and moves on — leader following leader.</p>
-    <p style="margin:12px 0"><button class="btn" id="walkbtn" onclick="walk()">▶ WALK THE CHAIN</button></p>
+    <p><b>Walk the chain</b> verifies every section, then plays. <b style="color:var(--neon)">Stream it live</b> plays in real time — each fragment decrypted and fed to the player the instant it lands, no waiting for the whole file. That's the long-movie / live-TV simulation.</p>
+    <p style="margin:12px 0">
+      <button class="btn" id="walkbtn" onclick="walk()">▶ WALK THE CHAIN</button>
+      <button class="btn" id="streambtn" onclick="stream()" style="background:var(--pink); box-shadow:0 0 24px #f0f6;">▶ STREAM IT LIVE</button>
+    </p>
+    <div class="card" id="pipeline" style="display:none">
+      <div class="row"><b style="color:var(--neon)">LIVE PIPELINE</b> <span class="lbl">— stored → pulled → unscrambled → fragments → player</span></div>
+      <div class="row mono" id="pipestats" style="font-size:.85rem"></div>
+    </div>
     <div id="log"></div>
   </div>
 
@@ -164,37 +171,60 @@ function card(n, html) {
   return el;
 }
 
+function pipe(pulled, descrambled, verified, bufferedMB) {
+  document.getElementById('pipeline').style.display = '';
+  document.getElementById('pipestats').innerHTML =
+    `STORED 12 blobs &nbsp;→&nbsp; PULLED <b>${pulled}/12</b> &nbsp;→&nbsp; UNSCRAMBLED <b>${descrambled}/12</b> &nbsp;→&nbsp; FRAGMENTS VERIFIED <b>${verified}/12</b> &nbsp;→&nbsp; BUFFERED <b>${bufferedMB.toFixed(1)} MB</b>`;
+}
+
+// One section through the whole journey: stored -> pulled -> unscrambled -> fragment + proof.
+async function revealSection(n, id, key) {
+  const res = await fetch(`${AGG}/v1/blobs/${id}`);
+  if (!res.ok) throw new Error('fetch failed: ' + res.status);
+  const cipher = new Uint8Array(await res.arrayBuffer());
+  const nonce = cipher.slice(0, 24), box = cipher.slice(24);
+  const keyUsed = bytesToHex(key);
+  const plain = nacl.secretbox.open(box, nonce, key);
+  if (!plain) throw new Error('decrypt failed at section ' + n);
+  const nl = plain.indexOf(10);
+  const header = JSON.parse(td.decode(plain.slice(0, nl)));
+  const media = plain.slice(nl + 1);
+  const h = await sha256hex(media);
+  if (h !== header.proof.section_sha256) throw new Error('proof mismatch at section ' + n);
+  return {media, header, cipherLen: cipher.length, cipherPreview: shortHex(cipher, 24), keyUsed};
+}
+
+function renderCard(n, id, r, extra) {
+  card(n, `
+    <div class="row"><span class="lbl">blob (stored):</span> <a class="mono blobid" target="_blank" rel="noopener" href="${AGG}/v1/blobs/${id}">${id}</a></div>
+    <div class="row"><span class="lbl">pulled → scrambled:</span> <span class="mono cipher">${r.cipherLen} bytes — ${r.cipherPreview}</span></div>
+    <div class="row"><span class="lbl">unscrambled with key:</span> <span class="mono">${r.keyUsed.slice(0,32)}…</span> <span class="lbl">(derived, copy of a copy)</span></div>
+    <div class="row"><span class="lbl">✉ embedded message pulled from the ciphertext:</span></div>
+    <div class="embedded">${JSON.stringify(r.header, null, 1)}</div>
+    <div class="row"><span class="lbl">fragment proof:</span> <span class="ok">✓ hash verified</span> &nbsp; <span class="lbl">next:</span> ${r.header.next_blob ? '<span class="mono blobid">' + r.header.next_blob.slice(0,24) + '…</span>' : '<b>END OF CHAIN</b>'}</div>${extra || ''}`);
+}
+
+function lockButtons(walk, stream, wt, st) {
+  const w = document.getElementById('walkbtn'), s = document.getElementById('streambtn');
+  w.disabled = walk; s.disabled = stream;
+  if (wt) w.textContent = wt;
+  if (st) s.textContent = st;
+}
+
 async function walk() {
-  const btn = document.getElementById('walkbtn');
-  btn.disabled = true; btn.textContent = 'WALKING…';
+  lockButtons(true, true, 'WALKING…', null);
   document.getElementById('log').innerHTML = '';
   try {
     let key = hexToBytes(KEY_HEX);
     const parts = [];
+    let buffered = 0;
     for (let n = 0; n < BLOBS.length; n++) {
       const id = BLOBS[n];
       card(n + 1, `<div class="row"><span class="lbl">fetching blob…</span> <span class="mono blobid">${id.slice(0,24)}…</span></div>`);
-      const res = await fetch(`${AGG}/v1/blobs/${id}`);
-      if (!res.ok) throw new Error('fetch failed: ' + res.status);
-      const cipher = new Uint8Array(await res.arrayBuffer());
-      const nonce = cipher.slice(0, 24), box = cipher.slice(24);
-      const keyUsed = bytesToHex(key);
-      const plain = nacl.secretbox.open(box, nonce, key);
-      if (!plain) throw new Error('decrypt failed at section ' + (n + 1));
-      const nl = plain.indexOf(10);
-      const header = JSON.parse(td.decode(plain.slice(0, nl)));
-      const media = plain.slice(nl + 1);
-      const h = await sha256hex(media);
-      const proofOk = h === header.proof.section_sha256;
-      if (!proofOk) throw new Error('proof mismatch at section ' + (n + 1));
-      parts.push(media);
-      card(n + 1, `
-        <div class="row"><span class="lbl">blob:</span> <a class="mono blobid" target="_blank" rel="noopener" href="${AGG}/v1/blobs/${id}">${id}</a></div>
-        <div class="row"><span class="lbl">scrambled bytes in:</span> <span class="mono cipher">${cipher.length} bytes — ${shortHex(cipher, 24)}</span></div>
-        <div class="row"><span class="lbl">key used to convert:</span> <span class="mono">${keyUsed.slice(0,32)}…</span> <span class="lbl">(derived, copy of a copy)</span></div>
-        <div class="row"><span class="lbl">✉ embedded message pulled from the ciphertext:</span></div>
-        <div class="embedded">${JSON.stringify(header, null, 1)}</div>
-        <div class="row"><span class="lbl">proof:</span> <span class="ok">✓ section hash verified</span> &nbsp; <span class="lbl">next:</span> ${header.next_blob ? '<span class="mono blobid">' + header.next_blob.slice(0,24) + '…</span>' : '<b>END OF CHAIN</b>'}</div>`);
+      const r = await revealSection(n + 1, id, key);
+      parts.push(r.media); buffered += r.media.length;
+      pipe(n + 1, n + 1, n + 1, buffered / 1048576);
+      renderCard(n + 1, id, r, '');
       key = await deriveKey(key);
     }
     const blob = new Blob(parts, {type: 'video/mp4'});
@@ -205,10 +235,53 @@ async function walk() {
       ? '<span class="badge ok">✓ MATCH — THE MESSAGE WAS EMBEDDED, PULLED, AND REASSEMBLED</span>'
       : '<span class="badge bad">✗ MISMATCH</span>';
     if (match) document.getElementById('player').src = URL.createObjectURL(blob);
-    btn.textContent = match ? '✓ CHAIN COMPLETE — PRESS PLAY BELOW' : 'FAILED';
+    lockButtons(false, false, match ? '✓ CHAIN COMPLETE — PRESS PLAY BELOW' : '▶ RETRY THE WALK', '▶ STREAM IT LIVE');
   } catch (e) {
     card('!', `<div class="row" style="color:#f87171"><b>ERROR:</b> ${e.message}</div>`);
-    btn.disabled = false; btn.textContent = '▶ RETRY THE WALK';
+    lockButtons(false, false, '▶ RETRY THE WALK', '▶ STREAM IT LIVE');
+  }
+}
+
+// STREAM IT LIVE — the long-movie / live-TV simulation. Each fragment is
+// decrypted and fed to the player the instant it lands. No waiting.
+async function stream() {
+  lockButtons(true, true, null, 'STREAMING…');
+  document.getElementById('log').innerHTML = '';
+  const video = document.getElementById('player');
+  try {
+    const ms = new MediaSource();
+    video.src = URL.createObjectURL(ms);
+    await new Promise((res, rej) => {
+      ms.addEventListener('sourceopen', res, {once: true});
+      setTimeout(() => rej(new Error('media source did not open')), 10000);
+    });
+    if (!MediaSource.isTypeSupported('video/mp4; codecs="avc1.64001f, mp4a.40.2"'))
+      throw new Error('this browser cannot stream this codec via MSE');
+    const sb = ms.addSourceBuffer('video/mp4; codecs="avc1.64001f, mp4a.40.2"');
+    const append = (buf) => new Promise((res, rej) => {
+      const onEnd = () => { sb.removeEventListener('updateend', onEnd); res(); };
+      sb.addEventListener('updateend', onEnd);
+      sb.addEventListener('error', rej, {once: true});
+      sb.appendBuffer(buf);
+    });
+    let key = hexToBytes(KEY_HEX), buffered = 0, started = false;
+    for (let n = 0; n < BLOBS.length; n++) {
+      const id = BLOBS[n];
+      card(n + 1, `<div class="row"><span class="lbl">pulling blob…</span> <span class="mono blobid">${id.slice(0,24)}…</span></div>`);
+      const r = await revealSection(n + 1, id, key);
+      buffered += r.media.length;
+      pipe(n + 1, n + 1, n + 1, buffered / 1048576);
+      renderCard(n + 1, id, r,
+        `<div class="row"><span class="lbl">stream:</span> <span class="ok">✓ fragment appended to the live buffer — playing without waiting</span></div>`);
+      await append(r.media);
+      if (!started) { started = true; video.play().catch(() => {}); }
+      key = await deriveKey(key);
+    }
+    ms.endOfStream();
+    lockButtons(false, false, '▶ WALK THE CHAIN', '✓ LIVE — PLAYED STRAIGHT OFF THE CHAIN');
+  } catch (e) {
+    card('!', `<div class="row" style="color:#f87171"><b>STREAM ERROR:</b> ${e.message}</div>`);
+    lockButtons(false, false, '▶ WALK THE CHAIN', '▶ RETRY STREAM');
   }
 }
 </script>
