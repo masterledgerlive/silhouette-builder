@@ -211,6 +211,10 @@ setInterval(() => {
 }, 500);
 video.addEventListener('waiting', () => { document.getElementById('stall').style.display = ''; });
 video.addEventListener('playing', () => { document.getElementById('stall').style.display = 'none'; });
+video.addEventListener('error', () => {
+  const ve = video.error;
+  logLine(`<span style="color:var(--red)">video element error: code=${ve ? ve.code : '?'}${ve && ve.message ? ' ' + ve.message : ''} (4 = format not supported here)</span>`);
+});
 
 async function playMovie() {
   if (running) return;
@@ -236,8 +240,15 @@ async function playMovie() {
     const append = buf => new Promise((res, rej) => {
       const on = () => { sb.removeEventListener('updateend', on); res(); };
       sb.addEventListener('updateend', on);
-      sb.addEventListener('error', rej, {once: true});
-      sb.appendBuffer(buf);
+      sb.addEventListener('error', () => {
+        const ve = video.error;
+        rej(new Error('the player buffer rejected section ' + n + '\'s data (SourceBuffer error). ' +
+          'video.error=' + (ve ? ve.code + '/' + (ve.message || 'no message') : 'none') +
+          ' readyState=' + video.readyState + ' networkState=' + video.networkState +
+          ' — this is the device telling us what it dislikes; report this text.'));
+      }, {once: true});
+      try { sb.appendBuffer(buf); }
+      catch (err) { sb.removeEventListener('updateend', on); rej(err); }
     });
     let id = BLOB0, key = hexToBytes(KEY0), n = 0, buffered = 0, started = false, total = NSEC;
     while (true) {
@@ -283,9 +294,10 @@ async function playMovie() {
     logLine(`<span class="ok">✓ COMPLETE — ${n} sections, ${(buffered / 1048576).toFixed(1)} MB, every hash verified. This page never held a single frame.</span>`);
     document.getElementById('progtext').textContent = `done — ${n} sections · ${(buffered / 1048576).toFixed(1)} MB · all from the chain`;
   } catch (e) {
-    showFail(e.message);
-    logLine(`<span style="color:var(--red)">⛔ halted: ${e.message}</span>`);
-    now(`<span style="color:var(--red)">⛔ halted at the chain break — see below.</span>`);
+    const msg = (e && e.message) ? e.message : ('something threw a non-error value: ' + String(e));
+    showFail(msg);
+    logLine(`<span style="color:var(--red)">⛔ halted: ${msg}</span>`);
+    now(`<span style="color:var(--red)">⛔ halted — the reason is logged below. quote it back to me.</span>`);
   }
   running = false;
   lock(false, false, !breakMode);
