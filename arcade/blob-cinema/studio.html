@@ -69,6 +69,7 @@ input[type=text]{background:#0b0b1a;border:1px solid #33336a;color:#e8e8ff;borde
   <div class="step" id="s-play">
     <h3>▶️ PLAY <span class="st"></span></h3>
     <p><span class="kid">The player needs only the first piece's location + key.</span> It fetches piece 1, unlocks it, checks its <span class="tip" title="SHA-256: a digital fingerprint. We hash each piece and compare. If even one bit changed, the fingerprint won't match and we know it's corrupted.">fingerprint</span>, plays it, then follows the pointer to piece 2. While you watch, it's already fetching ahead.</p>
+    <p><span class="kid">🔑 Share key:</span> <span class="tip" title="One opaque code that holds the starting blob + key, double-encoded so humans can't read the location. The player decodes it. Share this — never the raw blob ID.">one key to share</span>, generated as soon as piece 1 is up — even while the rest uploads.</p>
   </div>
 </div>
 
@@ -217,6 +218,17 @@ async function runStudio(){
     blobIds[idx]=bid;
     document.getElementById('upcount').textContent=idx+1;
     log('⬆ Piece '+(idx+1)+'/'+sections.length+' up: '+bid.slice(0,16)+'…','ok');
+    
+    // Generate share key as soon as piece 1 is up (even during upload)
+    if(idx===0){
+      const shareRaw=bid+':'+bytesToHex(keys[0]);
+      const shareKey='bc1_'+btoa(shareRaw).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+      log('🔑 SHARE KEY (copy now — works even while uploading): '+shareKey,'warn');
+      const sk=document.createElement('div');
+      sk.style.cssText='background:#141007;border:1px solid #ffb020;border-radius:8px;padding:10px;margin:8px 0';
+      sk.innerHTML='<b>🔑 SHARE KEY</b> <span class="lbl">(share this — one key starts the film)</span><br><span class="mono" style="font-size:.85rem">'+shareKey+'</span><br><button class="btn ghost" style="margin-top:6px;padding:8px 12px;font-size:.8rem" onclick="navigator.clipboard.writeText(\''+shareKey+'\')">📋 COPY</button>';
+      document.getElementById('result').prepend(sk);
+    }
     
     // DOWNLOAD + DECRYPT + PLAY (the real round-trip proof)
     try{
