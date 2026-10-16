@@ -52,6 +52,7 @@ a{color:var(--neon)}
 
 <div class="panel">
   <h2 class="sec">THE SCREENING ROOM</h2>
+  <div class="warn" style="border-color:#ffaa00;color:#ffcc66;margin-bottom:10px">⏳ SELF-DESTRUCTING FILM — these blobs live on the Walrus <b>testnet</b> (1-day epochs, stored for 5). They dissolve in <b id="doom" style="font-size:18px">…</b>. After that: no blob, no movie.</div>
   <button class="btn" id="playbtn" onclick="playMovie()">▶ PLAY THE MOVIE</button>
   <button class="btn red" id="breakbtn" onclick="armBreak()">🔴 BREAK THE CHAIN</button>
   <button class="btn ghost" id="restorebtn" onclick="restoreChain()" disabled>↩ RESTORE THE CHAIN</button>
@@ -150,6 +151,21 @@ function deriveKey(keyBytes) {
 
 document.getElementById('b0').textContent = BLOB0;
 document.getElementById('k0').textContent = KEY0;
+
+// self-destruct countdown: blobs stored 2026-10-16 ~01:22 EDT for 5 testnet epochs (1 day each)
+const DOOM_TS = 1792560120000;
+function tickDoom(){
+  const el = document.getElementById('doom');
+  if(!el) return;
+  let ms = DOOM_TS - Date.now();
+  if(ms <= 0){ el.textContent = '0 — dissolved'; el.style.color = '#ff5470'; return; }
+  const d = Math.floor(ms/86400000); ms -= d*86400000;
+  const h = Math.floor(ms/3600000); ms -= h*3600000;
+  const m = Math.floor(ms/60000); ms -= m*60000;
+  const s = Math.floor(ms/1000);
+  el.textContent = d+'d '+h+'h '+m+'m '+s+'s';
+}
+tickDoom(); setInterval(tickDoom, 1000);
 
 // timeline strip
 const strip = document.getElementById('strip');
