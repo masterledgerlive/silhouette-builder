@@ -216,6 +216,21 @@ video.addEventListener('error', () => {
   logLine(`<span style="color:var(--red)">video element error: code=${ve ? ve.code : '?'}${ve && ve.message ? ' ' + ve.message : ''} (4 = format not supported here)</span>`);
 });
 
+function findMoovEnd(b) {
+  // walk top-level MP4 boxes; return the byte offset just past 'moov'
+  let off = 0;
+  while (off + 8 <= b.length) {
+    const size = (b[off] * 16777216) + (b[off + 1] << 16) + (b[off + 2] << 8) + b[off + 3];
+    const type = String.fromCharCode(b[off + 4], b[off + 5], b[off + 6], b[off + 7]);
+    if (size < 8) break;
+    if (type === 'moov') return off + size;
+    if (type === 'mdat') break;
+    off += size;
+    if (off > 300000) break;
+  }
+  return 0;
+}
+
 async function playMovie() {
   if (running) return;
   running = true;
@@ -275,7 +290,14 @@ async function playMovie() {
       now(`<span class="stage">③ DECRYPTED</span> <span class="mono">${media.length.toLocaleString()}b</span> → <span class="stage">④ HASH ✓</span> checking…`);
       const h = await sha256hex(media);
       if (h !== header.proof.section_sha256) throw new Error(`section ${n}: proof mismatch — tampered section, playback halted.`);
-      await append(media);
+      // iPhone quirk: feed the init segment (ftyp+moov) as its own append first,
+      // then the media. Desktop Chrome accepts it combined; iOS often doesn't.
+      let chunks = [media];
+      if (n === 1) {
+        const ie = findMoovEnd(media);
+        if (ie > 0 && ie < media.length) chunks = [media.slice(0, ie), media.slice(ie)];
+      }
+      for (const c of chunks) await append(c);
       buffered += media.length;
       total = header.total || total;
       if (breakMode && !breakAt && total) breakAt = Math.max(2, Math.floor(total / 2));
