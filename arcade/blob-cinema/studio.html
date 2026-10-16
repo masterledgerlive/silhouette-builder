@@ -74,8 +74,13 @@ input[type=text]{background:#0b0b1a;border:1px solid #33336a;color:#e8e8ff;borde
 
 <div class="panel">
   <h2 class="sec">3. MAKE IT HAPPEN</h2>
-  <button class="btn" id="gobtn" onclick="runStudio()" disabled>🚀 CUT → LOCK → SCATTER → LINK</button>
+  <button class="btn" id="gobtn" onclick="runStudio()" disabled>🚀 CUT → LOCK → SCATTER → PLAY LIVE</button>
   <div class="prog"><i id="progbar"></i></div>
+  <div id="livewrap" style="display:none;margin:10px 0">
+    <div class="lbl">🎬 <b style="color:#00ffa3">LIVE</b> — playing from Walrus as it ingests. <span id="livestat"></span></div>
+    <video id="livevid" controls playsinline style="width:100%;border-radius:8px;background:#000;margin-top:6px"></video>
+    <div class="lbl" style="margin-top:4px">Uploaded: <b id="upcount" style="color:#ffb020">0</b> | Playing: <b id="playcount" style="color:#00ffa3">0</b> | Buffer: <b id="bufstat">0s</b></div>
+  </div>
   <div class="log" id="log"></div>
   <div class="bloblist" id="blobs"></div>
   <div id="result"></div>
@@ -153,8 +158,9 @@ async function runStudio(){
   if(!fileData) return;
   document.getElementById('gobtn').disabled=true;
   document.getElementById('log').innerHTML=''; document.getElementById('blobs').innerHTML=''; document.getElementById('result').innerHTML='';
+  document.getElementById('livewrap').style.display='block';
   const redundant=document.getElementById('redundant').checked;
-  const te=new TextEncoder();
+  const te=new TextEncoder(), td=new TextDecoder();
   
   // STEP 1: CUT
   setStep('s-cut','active'); log('✂️ Cutting '+fileName+' into pieces…');
@@ -170,7 +176,7 @@ async function runStudio(){
   }
   if(sections[sections.length-1][1]<fileData.length) sections[sections.length-1][1]=fileData.length;
   log('Cut into '+sections.length+' pieces (never splitting a fragment)','ok');
-  setStep('s-cut','done'); prog(0.2);
+  setStep('s-cut','done'); prog(0.1);
   
   // STEP 2: LOCK (derive keys)
   setStep('s-lock','active'); log('🔒 Making the key chain…');
@@ -179,48 +185,90 @@ async function runStudio(){
   for(let k=1;k<sections.length;k++) keys.push(sha256bytes(new Uint8Array([...keys[k-1], ...te.encode('|next')])));
   log('Master key + '+sections.length+' chained keys ready','ok');
   log('🔑 MASTER (save this!): '+bytesToHex(master),'warn');
-  setStep('s-lock','done'); prog(0.3);
+  setStep('s-lock','done'); prog(0.15);
   
-  // STEP 3+4: SCATTER + LINK (reverse order)
-  setStep('s-scatter','active'); setStep('s-link','active');
-  log('🌐 Uploading '+(redundant?'2 copies of ':'')+'each piece (last first, so we can link them)…');
-  const blobIds=new Array(sections.length); const blobIds2=new Array(sections.length);
-  for(let idx=sections.length-1; idx>=0; idx--){
+  // SETUP live player (MSE)
+  const vid=document.getElementById('livevid');
+  const ms=new (window.MediaSource||window.ManagedMediaSource)();
+  vid.src=URL.createObjectURL(ms);
+  let sb=null, playerReady=false;
+  const MIME='video/mp4; codecs="avc1.64001f, mp4a.40.2"';
+  await new Promise(res=>{ms.addEventListener('sourceopen',()=>{sb=ms.addSourceBuffer(MIME);res();},{once:true});});
+  
+  // STEP 3+4: SCATTER (forward) + PLAY LIVE
+  setStep('s-scatter','active'); setStep('s-link','active'); setStep('s-play','active');
+  log('🌐 Uploading forward — watch it play as it ingests!…');
+  const blobIds=new Array(sections.length);
+  let played=0;
+  
+  for(let idx=0; idx<sections.length; idx++){
     const [s,e]=sections[idx]; const media=fileData.slice(s,e);
     const msha=bytesToHex(sha256bytes(media));
-    const header={n:idx+1,total:sections.length,proof:{section_sha256:msha},next_blob:idx+1<sections.length?blobIds[idx+1]:null};
+    // Forward chain: each links BACK to previous (we don't know next yet)
+    const header={n:idx+1,total:sections.length,proof:{section_sha256:msha},prev_blob:idx>0?blobIds[idx-1]:null};
     const plain=new Uint8Array([...te.encode(JSON.stringify(header)+'\n'), ...media]);
     const cipher=lockPiece(plain, keys[idx]);
-    // upload
+    
+    // UPLOAD
     const r=await fetch(PUB+'/v1/blobs?epochs=5',{method:'PUT',body:cipher});
     const info=await r.json();
     const bid=(info.newlyCreated||info.alreadyCertified||{}).blobObject?.blobId;
     if(!bid){log('❌ Upload failed for piece '+(idx+1),'err');document.getElementById('gobtn').disabled=false;return;}
     blobIds[idx]=bid;
-    let extra='';
-    if(redundant){
-      const r2=await fetch(PUB+'/v1/blobs?epochs=5',{method:'PUT',body:cipher});
-      const info2=await r2.json(); const bid2=(info2.newlyCreated||info2.alreadyCertified||{}).blobObject?.blobId;
-      blobIds2[idx]=bid2; extra=' (+copy2: '+bid2.slice(0,12)+'…)';
+    document.getElementById('upcount').textContent=idx+1;
+    log('⬆ Piece '+(idx+1)+'/'+sections.length+' up: '+bid.slice(0,16)+'…','ok');
+    
+    // DOWNLOAD + DECRYPT + PLAY (the real round-trip proof)
+    try{
+      const dr=await fetch(AGG+'/v1/blobs/'+bid);
+      const dcipher=new Uint8Array(await dr.arrayBuffer());
+      const plain2=nacl.secretbox.open(dcipher.slice(24),dcipher.slice(0,24),keys[idx]);
+      if(!plain2) throw new Error('decrypt failed');
+      // split header + media
+      let nl=0; while(plain2[nl]!==10) nl++;
+      const hdr=JSON.parse(td.decode(plain2.slice(0,nl)));
+      const med=plain2.slice(nl+1);
+      // verify hash
+      if(bytesToHex(sha256bytes(med))!==hdr.proof.section_sha256) throw new Error('hash mismatch');
+      // append to player
+      await new Promise((res,rej)=>{
+        sb.addEventListener('updateend',res,{once:true});
+        sb.addEventListener('error',rej,{once:true});
+        sb.appendBuffer(med);
+      });
+      played++;
+      document.getElementById('playcount').textContent=played;
+      log('▶ Piece '+(idx+1)+' verified & playing (from Walrus, not local!)','ok');
+      if(played===1){vid.play().catch(()=>{});log('🎬 Playback started — watching while ingesting!','ok');}
+      // update buffer stat
+      if(vid.buffered.length>0){
+        const buf=vid.buffered.end(vid.buffered.length-1)-vid.currentTime;
+        document.getElementById('bufstat').textContent=buf.toFixed(1)+'s';
+      }
+      document.getElementById('livestat').textContent='piece '+played+'/'+sections.length+' playing';
+    }catch(err){
+      log('⚠ Piece '+(idx+1)+' round-trip failed: '+err.message+' (continuing upload)','warn');
     }
-    log('Piece '+(idx+1)+'/'+sections.length+': '+bid.slice(0,20)+'…'+extra,'ok');
+    
     const bd=document.createElement('div');
-    bd.innerHTML='<b>Piece '+(idx+1)+'</b><br><span class="mono">📍 '+bid+'</span>'+(redundant?'<br><span class="mono">📍 copy2: '+blobIds2[idx]+'</span>':'');
+    bd.innerHTML='<b>Piece '+(idx+1)+'</b> <span class="ok">⬆up ▶playing</span><br><span class="mono">📍 '+bid+'</span>';
     document.getElementById('blobs').prepend(bd);
-    prog(0.3+0.6*(sections.length-idx)/sections.length);
+    prog(0.15+0.8*(idx+1)/sections.length);
   }
-  setStep('s-scatter','done'); setStep('s-link','done'); prog(0.95);
   
-  // STEP 5: PLAY
-  setStep('s-play','active');
-  const ticket={blob:blobIds[0], key:bytesToHex(keys[0]), nsec:sections.length, name:fileName};
-  // Save film to localStorage registry
-  const reg=JSON.parse(localStorage.getItem('blobcinema_films')||'[]');
-  reg.push({title:fileName, file:fileName, dur:'?', nsec:sections.length, blob:ticket.blob, key:ticket.key, blurb:'Uploaded from Studio'});
-  localStorage.setItem('blobcinema_films', JSON.stringify(reg));
-  log('🎉 Done! Your film lives on Walrus.','ok');
+  setStep('s-scatter','done'); setStep('s-link','done');
+  // end of stream
+  if(ms.readyState==='open'){try{ms.endOfStream();}catch(e){}}
   setStep('s-play','done'); prog(1);
-  document.getElementById('result').innerHTML='<div class="panel" style="border-color:#00ffa3"><h2 class="sec">🎬 YOUR FILM IS LIVE</h2><p>First piece: <span class="mono">'+ticket.blob+'</span></p><p>Key: <span class="mono">'+ticket.key+'</span></p><p class="lbl">We saved it to your device. Open the cinema to watch:</p><a class="btn" href="./?studio='+encodeURIComponent(ticket.blob)+'">▶ WATCH NOW</a></div>';
+  
+  // Save
+  const ticket={blob:blobIds[0], key:bytesToHex(keys[0]), nsec:sections.length, name:fileName};
+  const reg=JSON.parse(localStorage.getItem('blobcinema_films')||'[]');
+  reg.push({title:fileName, file:fileName, dur:'?', nsec:sections.length, blob:ticket.blob, key:ticket.key, blurb:'Uploaded from Studio (live ingest)'});
+  localStorage.setItem('blobcinema_films', JSON.stringify(reg));
+  log('🎉 Done! '+played+'/'+sections.length+' pieces played live from Walrus during ingest.','ok');
+  document.getElementById('livestat').textContent='complete — '+played+'/'+sections.length+' played live';
+  document.getElementById('result').innerHTML='<div class="panel" style="border-color:#00ffa3"><h2 class="sec">🎬 YOUR FILM IS LIVE</h2><p>First piece: <span class="mono">'+ticket.blob+'</span></p><p>Share key: <span class="mono">'+ticket.key+'</span></p><p class="lbl">Share the key — others can watch from the same chain.</p></div>';
   document.getElementById('gobtn').disabled=false;
 }
 </script></body></html>
