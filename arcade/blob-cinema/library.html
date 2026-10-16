@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BLOB CINEMA — Now Showing</title>
+<style>
+:root{--amber:#ffb300;--grn:#00ffa3;--red:#ff5470;--dim:#8a8ab0}
+body{background:#07070f;color:#e8e8ff;font-family:ui-monospace,Menlo,Consolas,monospace;padding:16px;max-width:800px;margin:0 auto}
+h1{font-size:1.4rem;margin-bottom:2px}
+.dim{color:var(--dim);font-size:.85rem}
+.panel{background:#0b0b1a;border:1px solid #26264d;border-radius:12px;padding:14px;margin:12px 0}
+.next{border:2px solid var(--amber);background:#141007}
+.next h2{color:var(--amber);margin:0 0 6px;font-size:1rem}
+.film{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #1c1c34}
+.film:last-child{border-bottom:0}
+.film .t{font-weight:700}
+.film .m{font-size:.78rem;color:var(--dim);margin-top:3px}
+.status{font-weight:700;white-space:nowrap;font-size:.85rem}
+.status.live{color:var(--grn)}
+.status.dead{color:var(--red)}
+.count{font-size:1.1rem;color:var(--amber);font-weight:700}
+a.btn{display:inline-block;background:#00ffa3;color:#03231a;border-radius:8px;padding:8px 14px;font-weight:700;text-decoration:none;font-family:inherit;font-size:.85rem;margin-top:6px}
+a.btn.dead{background:#333;color:#888;pointer-events:none}
+.note{font-size:.8rem;color:var(--dim);margin-top:14px}
+</style></head>
+<body>
+<h1>🎬 BLOB CINEMA — Now Showing</h1>
+<div class="dim">Every film here exists only as chained encrypted blobs on the Walrus testnet. When the blobs dissolve, the film is gone. No blob, no movie.</div>
+
+<div class="panel next" id="nextpanel" style="display:none">
+  <h2>⏳ NEXT TO DISSOLVE</h2>
+  <div id="nextfilm" style="font-weight:700;font-size:1.05rem"></div>
+  <div class="count" id="nextcount">…</div>
+</div>
+
+<div class="panel">
+  <h2 style="margin:0 0 8px;font-size:1rem">📽 THE MARQUEE</h2>
+  <div id="films"></div>
+</div>
+
+<div class="note">Status is checked live: the page pings each film's first blob. <b style="color:var(--grn)">ACTIVE</b> = blob answers. <b style="color:var(--red)">DISSOLVED</b> = blob gone, film unplayable. Expiry is ~5 days from upload (Walrus testnet: 1-day epochs × 5).</div>
+
+<script>
+const AGG='https://aggregator.walrus-testnet.walrus.space';
+const FILMS=[
+  {title:'Big Buck Bunny', file:'bbb-fmp4-fixed.mp4', nsec:78, size:'78.2 MB',
+   blob:'OVuOKEkRA6OW7-Ud8hqVze3S8YBBnhzu-sdKP5duOKI',
+   uploaded: Date.UTC(2026,9,16,5,22,0), // 01:22 EDT Oct 16
+   page:'./'},
+  {title:'Sliders — Season 5 Trailer', file:'sliders-fmp4.mp4', nsec:3, size:'2.2 MB',
+   blob:'q1YXNjhyTJJFfG5s4070SNFjKBoQd2b_KkDWmNASelU',
+   uploaded: Date.UTC(2026,9,16,5,52,0), // 01:52 EDT Oct 16
+   page:'./sliders.html'},
+];
+const EPOCH_MS = 86400000, EPOCHS = 5;
+
+function fmt(ms){
+  if(ms<=0) return 'dissolved';
+  const d=Math.floor(ms/86400000); ms-=d*86400000;
+  const h=Math.floor(ms/3600000); ms-=h*3600000;
+  const m=Math.floor(ms/60000);
+  return d+'d '+h+'h '+m+'m';
+}
+
+async function check(f){
+  // live ping: does the first blob still answer?
+  try{
+    const r=await fetch(AGG+'/v1/blobs/'+f.blob,{method:'GET'});
+    // we only need the status; abort the body
+    return r.ok;
+  }catch(e){ return false; }
+}
+
+async function render(){
+  const wrap=document.getElementById('films');
+  let soonest=null;
+  for(const f of FILMS){
+    f.expiry = f.uploaded + EPOCHS*EPOCH_MS;
+    f.alive = await check(f);
+    const left = f.expiry - Date.now();
+    const div=document.createElement('div');
+    div.className='film';
+    div.innerHTML =
+      '<div><div class="t">'+f.title+'</div>'+
+      '<div class="m">'+f.file+' · '+f.nsec+' sections · '+f.size+'</div>'+
+      '<div class="m">'+(f.alive ? 'dissolves in <b style="color:var(--amber)">'+fmt(left)+'</b>' : 'dissolved')+'</div>'+
+      '<a class="btn'+(f.alive?'':' dead')+'" href="'+f.page+'">'+(f.alive?'▶ WATCH':'✕ GONE')+'</a></div>'+
+      '<div class="status '+(f.alive?'live':'dead')+'">'+(f.alive?'● ACTIVE':'○ DISSOLVED')+'</div>';
+    wrap.appendChild(div);
+    if(f.alive && (!soonest || f.expiry < soonest.expiry)) soonest=f;
+  }
+  if(soonest){
+    document.getElementById('nextpanel').style.display='block';
+    document.getElementById('nextfilm').textContent=soonest.title;
+    const el=document.getElementById('nextcount');
+    const tick=()=>{
+      const ms=soonest.expiry-Date.now();
+      el.textContent = ms>0 ? fmt(ms)+' remaining' : 'dissolving…';
+    };
+    tick(); setInterval(tick,30000);
+  }
+}
+render();
+</script></body></html>
