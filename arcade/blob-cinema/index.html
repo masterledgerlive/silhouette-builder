@@ -357,6 +357,17 @@ async function playMovie() {
       catch (err) { sb.removeEventListener('updateend', on); rej(err); }
     });
     let id = BLOB0, key = hexToBytes(KEY0), n = 0, buffered = 0, started = false, total = NSEC;
+    // Fallback: if BLOB0 is gone, try manifest head (same key, moved blobs)
+    async function resolveHead() {
+      if (!_film.manifest) return null;
+      try {
+        const mr = await fetch(_film.manifest + '?v=' + Date.now());
+        if (!mr.ok) return null;
+        const man = await mr.json();
+        const s1 = man.sections.find(s => s.n === 1);
+        return s1 ? s1.blob : null;
+      } catch (e) { return null; }
+    }
     while (true) {
       n++;
       let fid = id;
@@ -365,7 +376,17 @@ async function playMovie() {
       setBlock(n, 'pull');
       now(`<span class="stage">① PULL</span> <span class="mono">section ${n} ←</span><br><span class="mono" style="font-size:.72rem">${url}</span>`);
       const t0 = performance.now();
-      const res = await fetch(url);
+      let res = await fetch(url);
+      // Fallback for section 1: if BLOB0 gone, consult manifest (same key, new location)
+      if (!res.ok && n === 1 && _film.manifest) {
+        now(`<span class="stage">🔍 SEARCH</span> <span class="mono">section 1 not at ${fid.slice(0,16)}... — consulting manifest for moved chain (same key)</span>`);
+        const head = await resolveHead();
+        if (head && head !== fid) {
+          now(`<span class="stage">📍 FOUND</span> <span class="mono">manifest points to ${head.slice(0,16)}... — same key, new location</span>`);
+          id = head; fid = head;
+          res = await fetch(`${AGG}/v1/blobs/${fid}`);
+        }
+      }
       if (!res.ok) throw new Error(
         `section ${n}: HTTP ${res.status} — that blob does not exist. ` +
         `No blob, no movie. This page holds no video; without the chain there is nothing to play.`);
