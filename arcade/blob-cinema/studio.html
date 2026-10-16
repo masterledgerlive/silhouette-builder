@@ -28,6 +28,22 @@ input[type=text]{background:#0b0b1a;border:1px solid #33336a;color:#e8e8ff;borde
 .prog i{display:block;height:100%;background:var(--neon);width:0%;transition:width .3s}
 .bloblist{font-size:.75rem;margin:6px 0}
 .bloblist div{margin:3px 0;padding:6px;background:#05050f;border-radius:6px}
+.strip{display:flex;flex-wrap:wrap;gap:3px;margin:6px 0;max-height:120px;overflow-y:auto}
+.chip{min-width:24px;height:24px;font-size:.62rem;display:inline-flex;align-items:center;justify-content:center;border-radius:4px;background:#1a1a33;color:#8a8ab0;padding:0 3px}
+.chip.up{background:#ffb020;color:#000;animation:blink 1s infinite}
+.chip.ok{background:#1a4d8f;color:#fff}
+.chip.get{background:#7a4dff;color:#fff}
+.chip.play{background:#00ffa3;color:#000;font-weight:700}
+@keyframes blink{50%{opacity:.35}}
+.wireitem{border-left:2px solid #1a4d8f;padding-left:6px}
+.wireitem .mono{color:#9fd0ff}
+details.receipt{margin-top:4px;font-size:.68rem}
+details.receipt summary{cursor:pointer;color:#4da3ff}
+details.receipt pre{background:#02020a;padding:8px;border-radius:6px;overflow-x:auto;white-space:pre-wrap;word-break:break-all}
+.myfile{border:1px solid #26264d;border-radius:8px;padding:10px;margin:8px 0;background:#0b0b1a}
+.myfile .row{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:.78rem;margin:2px 0}
+.toggle{cursor:pointer;user-select:none}
+.toggle.on{color:#00ffa3}.toggle.off{color:#ff5470}
 </style></head>
 <body>
 <h1>🎬 BLOB CINEMA STUDIO</h1>
@@ -71,6 +87,11 @@ input[type=text]{background:#0b0b1a;border:1px solid #33336a;color:#e8e8ff;borde
     <p><span class="kid">The player needs only the first piece's location + key.</span> It fetches piece 1, unlocks it, checks its <span class="tip" title="SHA-256: a digital fingerprint. We hash each piece and compare. If even one bit changed, the fingerprint won't match and we know it's corrupted.">fingerprint</span>, plays it, then follows the pointer to piece 2. While you watch, it's already fetching ahead.</p>
     <p><span class="kid">🔑 Share key:</span> <span class="tip" title="One opaque code that holds the starting blob + key, double-encoded so humans can't read the location. The player decodes it. Share this — never the raw blob ID.">one key to share</span>, generated as soon as piece 1 is up — even while the rest uploads.</p>
   </div>
+  
+  <div class="step" id="s-keep">
+    <h3>♾️ KEEP <span class="st"></span></h3>
+    <p><span class="kid">Every piece carries an expiry date.</span> One hour before a piece dies, the <span class="tip" title="A small robot on Kodakai's computer that watches expiry dates. When a piece has under 1 hour left, the keeper locks a fresh copy with the same key (new random nonce = new blob ID) and points the film at it. The film never blinks.">keeper</span> makes a fresh locked copy (same key, new nonce → new blob ID) and points the film at it. Turn <b>auto-renew OFF</b> and the keeper stands down — the pieces die on schedule, permanently.</p>
+  </div>
 </div>
 
 <div class="panel">
@@ -80,11 +101,22 @@ input[type=text]{background:#0b0b1a;border:1px solid #33336a;color:#e8e8ff;borde
   <div id="livewrap" style="display:none;margin:10px 0">
     <div class="lbl">🎬 <b style="color:#00ffa3">LIVE</b> — playing from Walrus as it ingests. <span id="livestat"></span></div>
     <video id="livevid" controls playsinline style="width:100%;border-radius:8px;background:#000;margin-top:6px"></video>
-    <div class="lbl" style="margin-top:4px">Uploaded: <b id="upcount" style="color:#ffb020">0</b> | Playing: <b id="playcount" style="color:#00ffa3">0</b> | Buffer: <b id="bufstat">0s</b></div>
+    <div class="lbl" style="margin-top:4px">Uploaded: <b id="upcount" style="color:#ffb020">0</b> | Playing: <b id="playcount" style="color:#00ffa3">0</b> | Buffer: <b id="bufstat">0s</b> | ⚡ <b id="speedstat">0 MB/s</b></div>
+    <div class="lbl" style="margin-top:6px">Piece stack <span class="lbl">(watch each block get pulled)</span>:</div>
+    <div id="strip" class="strip"></div>
   </div>
   <div class="log" id="log"></div>
+  <div class="panel" style="margin:10px 0">
+    <h2 class="sec">📡 WIRE-TAP <span class="lbl">every byte, every proof, live</span></h2>
+    <div class="log" id="wire" style="max-height:280px"><div class="lbl">Waiting for first upload…</div></div>
+  </div>
   <div class="bloblist" id="blobs"></div>
   <div id="result"></div>
+</div>
+
+<div class="panel">
+  <h2 class="sec">🗂 MY FILES <span class="lbl">every ingest, with expiry</span></h2>
+  <div id="myfiles" class="lbl">No files yet — ingest one above.</div>
 </div>
 
 <script>
@@ -111,6 +143,51 @@ let fileData=null, fileName='';
 function log(msg, cls){const d=document.createElement('div');if(cls)d.className=cls;d.textContent=msg;document.getElementById('log').appendChild(d);d.scrollIntoView();}
 function setStep(id, st){const el=document.getElementById(id);el.className='step '+st;el.querySelector('.st').textContent=st==='active'?'⏳ WORKING…':st==='done'?'✅ DONE':'';}
 function prog(p){document.getElementById('progbar').style.width=(p*100)+'%';}
+
+// === Wire-tap: every byte, every proof, live ===
+function wire(html, cls){const w=document.getElementById('wire');const d=document.createElement('div');d.className='wireitem '+(cls||'');d.innerHTML=html;w.prepend(d);while(w.children.length>120)w.removeChild(w.lastChild);}
+const EPOCHS=5, EPOCH_MS=24*3600*1000; // testnet epoch ≈ 1 day
+function fmtMB(n){return (n/1048576).toFixed(2)+' MB';}
+function fmtDT(ts){const d=new Date(ts);return d.toLocaleDateString()+' '+d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});}
+function fmtLeft(ts){const ms=ts-Date.now();if(ms<=0)return '💀 EXPIRED';const s=Math.floor(ms/1000),d=Math.floor(s/86400),h=Math.floor(s%86400/3600),m=Math.floor(s%3600/60);return d>0?d+'d '+h+'h left':h>0?h+'h '+m+'m left':m+'m '+ (s%60)+'s left';}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;');}
+// piece stack chips
+function renderStrip(n){const s=document.getElementById('strip');s.innerHTML='';for(let i=0;i<n;i++){const c=document.createElement('span');c.className='chip q';c.id='chip'+i;c.title='piece '+(i+1);c.textContent=i+1;s.appendChild(c);}}
+function setChip(i,st){const c=document.getElementById('chip'+i);if(c)c.className='chip '+st;}
+// rolling upload speed
+let upSamples=[];
+function tickSpeed(bytes){const now=performance.now();upSamples.push([now,bytes]);}
+setInterval(()=>{const now=performance.now();upSamples=upSamples.filter(s=>now-s[0]<4000);const b=upSamples.reduce((a,s)=>a+s[1],0);const el=document.getElementById('speedstat');if(el)el.textContent=(b/4/1048576).toFixed(2)+' MB/s';},500);
+// === My Files registry (localStorage) ===
+function getFiles(){try{return JSON.parse(localStorage.getItem('blobcinema_myfiles')||'[]');}catch(e){return[];}}
+function saveFiles(f){localStorage.setItem('blobcinema_myfiles',JSON.stringify(f));}
+function renderMyFiles(){
+  const f=getFiles(), box=document.getElementById('myfiles');
+  if(!f.length){box.innerHTML='<span class="lbl">No files yet — ingest one above.</span>';return;}
+  box.innerHTML=f.map((r,i)=>{
+    const exp=r.expiresAt?fmtDT(r.expiresAt)+' ('+fmtLeft(r.expiresAt)+')':'unknown';
+    const tgl=r.autoRenew?'<span class="toggle on" onclick="toggleRenew('+i+')">♾️ AUTO-RENEW: ON</span>':'<span class="toggle off" onclick="toggleRenew('+i+')">💀 AUTO-RENEW: OFF — will die</span>';
+    const kp=r.keeper==='active'?'<span class="ok">🤖 keeper active</span>':r.keeper==='bundle'?'<span class="warn">📦 bundle ready — send to Kodakai to activate keeper</span>':'<span class="lbl">keeper: not set up</span>';
+    return '<div class="myfile"><div class="row"><b>🎬 '+esc(r.title)+'</b><span class="lbl">'+r.pieces+' pieces · '+fmtMB(r.bytes)+'</span></div>'
+      +'<div class="row"><span>📍 <span class="mono">'+esc(r.blob0.slice(0,20))+'…</span></span><span>⏳ expires ≈ '+exp+'</span></div>'
+      +'<div class="row">'+tgl+'<span>'+kp+'</span></div>'
+      +'<div class="row"><button class="btn ghost" style="padding:6px 10px;font-size:.75rem" onclick="downloadBundle('+i+')">📦 KEEPER BUNDLE</button>'
+      +'<button class="btn ghost" style="padding:6px 10px;font-size:.75rem" onclick="navigator.clipboard.writeText(\''+r.share+'\')">🔑 COPY SHARE KEY</button></div></div>';
+  }).join('');
+}
+function toggleRenew(i){const f=getFiles();f[i].autoRenew=!f[i].autoRenew;saveFiles(f);renderMyFiles();log((f[i].autoRenew?'♾️ Auto-renew ON for ':'💀 Auto-renew OFF for ')+f[i].title+(f[i].autoRenew?' — keeper will copy 1h before expiry.':' — keeper stands down; pieces die on schedule.'),'warn');}
+function downloadBundle(i){
+  const f=getFiles(), r=f[i];
+  const bundle={film:r.title, type:'remote', epochs:r.epochs||EPOCHS, auto_renew:r.autoRenew,
+    manifest_repo_path:'arcade/blob-cinema/'+r.title.replace(/[^a-z0-9]+/gi,'-').toLowerCase()+'-manifest.json',
+    pieces:r.receipts.map(p=>({n:p.n, blob_id:p.blob, blob_id2:p.blob2||null, key_hex:p.keyHex, expires_at:p.expiresAt}))};
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([JSON.stringify(bundle,null,1)],{type:'application/json'}));
+  a.download=r.title.replace(/[^a-z0-9]+/gi,'-')+'.keeper.json'; a.click();
+  f[i].keeper='bundle'; saveFiles(f); renderMyFiles();
+  log('📦 Keeper bundle downloaded. Send it to Kodakai (attach in chat) and the keeper will copy this film 1h before expiry, forever.','warn');
+}
+renderMyFiles(); setInterval(renderMyFiles, 30000);
 
 document.getElementById('filepick').addEventListener('change', e=>{
   const f=e.target.files[0]; if(!f) return;
@@ -204,8 +281,11 @@ async function runStudio(){
   setStep('s-scatter','active'); setStep('s-link','active'); setStep('s-play','active');
   log('🌐 Uploading forward — watch it play as it ingests!…');
   const blobIds=new Array(sections.length);
-  let played=0;
+  const receipts=[];
+  let played=0, shareKey='';
+  renderStrip(sections.length);
   
+  const tStart=Date.now();
   for(let idx=0; idx<sections.length; idx++){
     const [s,e]=sections[idx]; const media=fileData.slice(s,e);
     const msha=bytesToHex(sha256bytes(media));
@@ -214,19 +294,39 @@ async function runStudio(){
     const plain=new Uint8Array([...te.encode(JSON.stringify(header)+'\n'), ...media]);
     const cipher=lockPiece(plain, keys[idx]);
     
-    // UPLOAD
-    const r=await fetch(PUB+'/v1/blobs?epochs=5',{method:'PUT',body:cipher});
+    // UPLOAD (instrumented: timing, receipt, expiry)
+    setChip(idx,'up');
+    wire('⬆ <b>#'+(idx+1)+'</b> PUT /v1/blobs?epochs='+EPOCHS+' · '+fmtMB(cipher.length)+' locked bytes → Walrus…');
+    const t0=performance.now();
+    const r=await fetch(PUB+'/v1/blobs?epochs='+EPOCHS,{method:'PUT',body:cipher});
     const info=await r.json();
-    const bid=(info.newlyCreated||info.alreadyCertified||{}).blobObject?.blobId;
-    if(!bid){log('❌ Upload failed for piece '+(idx+1),'err');document.getElementById('gobtn').disabled=false;return;}
-    blobIds[idx]=bid;
+    const t1=performance.now();
+    const ms=t1-t0, kbs=(cipher.length/1024)/(ms/1000);
+    const nc=info.newlyCreated, ac=info.alreadyCertified, bo=((nc||ac||{}).blobObject)||{};
+    const bid=bo.blobId;
+    if(!bid){setChip(idx,'q');log('❌ Upload failed for piece '+(idx+1),'err');wire('❌ <b>#'+(idx+1)+'</b> upload failed','err');document.getElementById('gobtn').disabled=false;return;}
+    const rcpt={blob:bid, suiObject:bo.id||null, startEpoch:(bo.storage||{}).startEpoch??null, endEpoch:(bo.storage||{}).endEpoch??(ac||{}).endEpoch??null, cost:(nc||{}).cost??null, dedup:!!ac&&!nc, ms:Math.round(ms), kbs:Math.round(kbs), keyHex:bytesToHex(keys[idx]), n:idx+1, blob2:null};
+    rcpt.expiresAt=(rcpt.startEpoch!=null&&rcpt.endEpoch!=null)?Date.now()+(rcpt.endEpoch-rcpt.startEpoch)*EPOCH_MS:null;
+    // REDUNDANCY: real second copy = fresh nonce → different ciphertext → different blob ID
+    if(redundant){
+      const cipher2=lockPiece(plain, keys[idx]);
+      wire('⬆ <b>#'+(idx+1)+'</b> copy 2: fresh nonce → different bytes → different blob…');
+      const r2=await fetch(PUB+'/v1/blobs?epochs='+EPOCHS,{method:'PUT',body:cipher2});
+      const info2=await r2.json();
+      const b2=((((info2.newlyCreated||info2.alreadyCertified)||{}).blobObject)||{}).blobId;
+      if(b2&&b2!==bid){rcpt.blob2=b2;tickSpeed(cipher2.length);wire('⬆ <b>#'+(idx+1)+'</b> copy 2 up: <span class="mono">'+b2.slice(0,20)+'…</span>','ok');}
+    }
+    blobIds[idx]=bid; receipts.push(rcpt); tickSpeed(cipher.length);
+    setChip(idx,'ok');
     document.getElementById('upcount').textContent=idx+1;
-    log('⬆ Piece '+(idx+1)+'/'+sections.length+' up: '+bid.slice(0,16)+'…','ok');
+    log('⬆ Piece '+(idx+1)+'/'+sections.length+' up in '+rcpt.ms+'ms ('+rcpt.kbs+' KB/s): '+bid.slice(0,16)+'…','ok');
+    wire('⬆ <b>#'+(idx+1)+'</b> '+fmtMB(cipher.length)+' → '+rcpt.ms+'ms · '+rcpt.kbs+' KB/s<br>📍 <span class="mono">'+bid+'</span><br>🗓 epoch '+rcpt.startEpoch+'→'+rcpt.endEpoch+(rcpt.expiresAt?' · dies ≈ '+fmtDT(rcpt.expiresAt):'')+(rcpt.suiObject?'<br>⛓ Sui obj <span class="mono">'+rcpt.suiObject.slice(0,18)+'…</span>':'')+(rcpt.cost!=null?'<br>💰 '+rcpt.cost+' FROST (testnet)':'')+(rcpt.dedup?'<br>♻️ dedup: bytes already on Walrus':'')
+      +'<details class="receipt"><summary>receipt JSON</summary><pre>'+esc(JSON.stringify(info,null,1)).slice(0,1500)+'</pre></details>','ok');
     
     // Generate share key as soon as piece 1 is up (even during upload)
     if(idx===0){
       const shareRaw=bid+':'+bytesToHex(keys[0]);
-      const shareKey='bc1_'+btoa(shareRaw).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+      shareKey='bc1_'+btoa(shareRaw).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
       log('🔑 SHARE KEY (copy now — works even while uploading): '+shareKey,'warn');
       const sk=document.createElement('div');
       sk.style.cssText='background:#141007;border:1px solid #ffb020;border-radius:8px;padding:10px;margin:8px 0';
@@ -235,9 +335,19 @@ async function runStudio(){
     }
     
     // DOWNLOAD + DECRYPT + PLAY (the real round-trip proof)
+    setChip(idx,'get');
     try{
-      const dr=await fetch(AGG+'/v1/blobs/'+bid);
-      const dcipher=new Uint8Array(await dr.arrayBuffer());
+      const tryIds=[bid].concat(rcpt.blob2?[rcpt.blob2]:[]);
+      let dcipher=null, usedBid=bid;
+      for(const tb of tryIds){
+        try{
+          const dr=await fetch(AGG+'/v1/blobs/'+tb);
+          if(!dr.ok) continue;
+          dcipher=new Uint8Array(await dr.arrayBuffer()); usedBid=tb; break;
+        }catch(e){}
+      }
+      if(!dcipher) throw new Error('fetch failed'+(rcpt.blob2?' (both copies)':''));
+      if(usedBid!==bid) wire('🔁 <b>#'+(idx+1)+'</b> primary copy missed — pulled backup copy instead','warn');
       const plain2=nacl.secretbox.open(dcipher.slice(24),dcipher.slice(0,24),keys[idx]);
       if(!plain2) throw new Error('decrypt failed');
       // split header + media
@@ -253,7 +363,9 @@ async function runStudio(){
         sb.appendBuffer(med);
       });
       played++;
+      setChip(idx,'play');
       document.getElementById('playcount').textContent=played;
+      wire('▶ <b>#'+(idx+1)+'</b> pulled from Walrus → decrypted → fingerprint ✓ → playing','ok');
       log('▶ Piece '+(idx+1)+' verified & playing (from Walrus, not local!)','ok');
       if(played===1){vid.play().catch(()=>{});log('🎬 Playback started — watching while ingesting!','ok');}
       // update buffer stat
@@ -263,7 +375,9 @@ async function runStudio(){
       }
       document.getElementById('livestat').textContent='piece '+played+'/'+sections.length+' playing';
     }catch(err){
+      setChip(idx,'ok');
       log('⚠ Piece '+(idx+1)+' round-trip failed: '+err.message+' (continuing upload)','warn');
+      wire('⚠ <b>#'+(idx+1)+'</b> pull failed: '+esc(err.message)+' — upload continues','warn');
     }
     
     const bd=document.createElement('div');
@@ -277,14 +391,33 @@ async function runStudio(){
   if(ms.readyState==='open'){try{ms.endOfStream();}catch(e){}}
   setStep('s-play','done'); prog(1);
   
-  // Save
+  // Save — full film record with proofs + expiry
+  const totalMs=Date.now()-tStart;
+  const expList=receipts.map(p=>p.expiresAt).filter(Boolean);
+  const minExp=expList.length?Math.min(...expList):null;
   const ticket={blob:blobIds[0], key:bytesToHex(keys[0]), nsec:sections.length, name:fileName};
+  const film={title:fileName, pieces:sections.length, bytes:fileData.length, uploadedAt:Date.now(),
+    expiresAt:minExp, epochs:EPOCHS, autoRenew:true, keeper:'none', share:shareKey,
+    blob0:blobIds[0], key0:bytesToHex(keys[0]), receipts:receipts};
+  const myf=getFiles(); myf.push(film); saveFiles(myf); renderMyFiles();
+  // legacy compat for the main player
   const reg=JSON.parse(localStorage.getItem('blobcinema_films')||'[]');
   reg.push({title:fileName, file:fileName, dur:'?', nsec:sections.length, blob:ticket.blob, key:ticket.key, blurb:'Uploaded from Studio (live ingest)'});
   localStorage.setItem('blobcinema_films', JSON.stringify(reg));
+  setStep('s-keep','done');
   log('🎉 Done! '+played+'/'+sections.length+' pieces played live from Walrus during ingest.','ok');
+  log('💾 SAVED & STORED: '+fmtMB(fileData.length)+' in '+(totalMs/1000).toFixed(1)+'s ('+Math.round(fileData.length/1024/(totalMs/1000))+' KB/s avg)','ok');
+  if(minExp) log('⏳ This film dies ≈ '+fmtDT(minExp)+' ('+fmtLeft(minExp)+') unless the keeper copies it.','warn');
+  wire('💾 <b>FILE COMPLETE</b> — '+sections.length+' pieces · '+fmtMB(fileData.length)+' · '+(totalMs/1000).toFixed(1)+'s · avg '+Math.round(fileData.length/1024/(totalMs/1000))+' KB/s'+(minExp?'<br>⏳ whole film expires ≈ '+fmtDT(minExp)+' ('+fmtLeft(minExp)+')':''),'ok');
   document.getElementById('livestat').textContent='complete — '+played+'/'+sections.length+' played live';
-  document.getElementById('result').innerHTML='<div class="panel" style="border-color:#00ffa3"><h2 class="sec">🎬 YOUR FILM IS LIVE</h2><p>First piece: <span class="mono">'+ticket.blob+'</span></p><p>Share key: <span class="mono">'+ticket.key+'</span></p><p class="lbl">Share the key — others can watch from the same chain.</p></div>';
+  const idx0=myf.length-1;
+  document.getElementById('result').innerHTML='<div class="panel" style="border-color:#00ffa3"><h2 class="sec">💾 SAVED & STORED</h2>'
+    +'<p>'+sections.length+' pieces · '+fmtMB(fileData.length)+' · assembled live from Walrus in '+(totalMs/1000).toFixed(1)+'s.</p>'
+    +'<p>📍 First piece: <span class="mono">'+ticket.blob+'</span></p>'
+    +'<p>🔑 Share key: <span class="mono" style="font-size:.8rem">'+shareKey+'</span></p>'
+    +(minExp?'<p>⏳ Expires ≈ <b>'+fmtDT(minExp)+'</b> ('+fmtLeft(minExp)+'). <span class="lbl">Auto-renew is ON — see MY FILES below.</span></p>':'')
+    +'<p><button class="btn ghost" style="padding:8px 12px;font-size:.8rem" onclick="downloadBundle('+idx0+')">📦 KEEPER BUNDLE — keep this film alive forever</button></p>'
+    +'<p class="lbl">The keeper watches the expiry and makes a fresh locked copy 1 hour before death — same key, new nonce, new blob ID. Turn auto-renew OFF in MY FILES and the film dies on schedule, permanently.</p></div>';
   document.getElementById('gobtn').disabled=false;
 }
 </script></body></html>
