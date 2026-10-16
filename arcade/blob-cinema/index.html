@@ -42,7 +42,12 @@ a{color:var(--neon)}
 </head>
 <body>
 <h1><span class="tick">◉</span> BLOB CINEMA</h1>
-<p class="lbl">Big Buck Bunny — the full 10-minute film — playing from <b>encrypted Walrus blobs and nothing else</b>. No video file on this server, no CDN, no cache. One blob location and one test key walk the whole chain.</p>
+<p class="lbl" id="filmtagline">Select a film — each plays from <b>encrypted Walrus blobs and nothing else</b>. No video file on this server, no CDN, no cache.</p>
+
+<div class="panel">
+  <h2 class="sec">📽 NOW SHOWING <input id="filmsearch" placeholder="search films…" style="float:right;background:#0b0b1a;border:1px solid #33336a;color:#e8e8ff;border-radius:6px;padding:6px 10px;font-family:inherit;font-size:.8rem" oninput="renderFilms()"></h2>
+  <div id="filmgrid" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px"></div>
+</div>
 
 <div class="proofstrip">
   <b class="ok">PROOF:</b> this page contains <b>0 bytes</b> of video. View source — the only handoff is one blob location + one test key, printed below. Delete any blob mid-chain and the movie stops dead. That is the whole point.
@@ -58,7 +63,7 @@ a{color:var(--neon)}
   <button class="btn ghost" id="restorebtn" onclick="restoreChain()" disabled>↩ RESTORE THE CHAIN</button>
   <div id="streambadge"></div>
 
-  <h2 class="sec" style="margin-top:14px">CHAIN TIMELINE — 78 SECTIONS</h2>
+  <h2 class="sec" style="margin-top:14px">CHAIN TIMELINE — <span id="nseclabel">78</span> SECTIONS</h2>
   <div id="stripwrap"><div id="strip"></div><div id="playhead"></div></div>
   <div class="stripkey">
     <span><span class="dot" style="background:#2a2a3d"></span>on Walrus</span>
@@ -92,10 +97,23 @@ a{color:var(--neon)}
 </script>
 <script>
 const AGG = 'https://aggregator.walrus-testnet.walrus.space';
-const BLOB0 = 'OVuOKEkRA6OW7-Ud8hqVze3S8YBBnhzu-sdKP5duOKI';
-const KEY0 = 'e9cc374bae3e64e303c00c87cb872193b58fc0abc98cc89d335983e7773a5c15';
+// Film registry: add new films here. BLOB0/KEY0 are public (on the page anyway).
+const FILMS = {
+  bbb: {title:'Big Buck Bunny', file:'bbb-fmp4-fixed.mp4', dur:'10:34', nsec:78,
+    blob:'OVuOKEkRA6OW7-Ud8hqVze3S8YBBnhzu-sdKP5duOKI',
+    key:'e9cc374bae3e64e303c00c87cb872193b58fc0abc98cc89d335983e7773a5c15',
+    blurb:'CC-BY 3.0 Blender Foundation · 78 encrypted sections'},
+  sliders: {title:'Sliders — Season 5 Trailer', file:'sliders-fmp4.mp4', dur:'1:31', nsec:3,
+    blob:'q1YXNjhyTJJFfG5s4070SNFjKBoQd2b_KkDWmNASelU',
+    key:'5027f96bbbd3761dd109de51cf0fb229001c0649c85c268a69cfe434930561c2',
+    blurb:'Fan trailer by Peha (2001) · 3 encrypted sections'},
+};
+const _fid = (new URLSearchParams(location.search).get('film')||'bbb');
+const _film = FILMS[_fid] || FILMS.bbb;
+let BLOB0 = _film.blob;
+let KEY0 = _film.key;
+let NSEC = _film.nsec;
 const MIME = 'video/mp4; codecs="avc1.64001f, mp4a.40.2"';
-const NSEC = 78;
 
 const hexToBytes = h => new Uint8Array(h.match(/../g).map(b => parseInt(b, 16)));
 const bytesToHex = b => Array.from(b).map(x => x.toString(16).padStart(2, '0')).join('');
@@ -148,6 +166,25 @@ function deriveKey(keyBytes) {
   m.set(keyBytes); m.set(te.encode('|next'), keyBytes.length);
   return sha256bytes(m);
 }
+
+// film browser
+function renderFilms(){
+  const q=(document.getElementById('filmsearch').value||'').toLowerCase();
+  const g=document.getElementById('filmgrid'); g.innerHTML='';
+  Object.entries(FILMS).forEach(([id,f])=>{
+    if(q && !(f.title.toLowerCase().includes(q)||f.file.toLowerCase().includes(q))) return;
+    const d=document.createElement('div');
+    const active = id===_fid;
+    d.style.cssText='background:'+(active?'#0f2f22':'#0b0b1a')+';border:1px solid '+(active?'#00ffa3':'#26264d')+';border-radius:10px;padding:10px 12px;min-width:200px;flex:1;cursor:pointer';
+    d.innerHTML='<div style="font-weight:700">'+f.title+'</div><div class="lbl" style="font-size:.75rem">'+f.dur+' · '+f.nsec+' sections<br>'+f.blurb+'</div>'+(active?'<div style="color:#00ffa3;font-size:.75rem;margin-top:4px">▶ NOW PLAYING</div>':'');
+    d.onclick=()=>{ if(id!==_fid) location.search='?film='+id; };
+    g.appendChild(d);
+  });
+}
+// set film-specific header
+document.getElementById('filmtagline').innerHTML='<b>'+_film.title+'</b> — playing from <b>encrypted Walrus blobs and nothing else</b>. '+_film.blurb+'.';
+document.getElementById('nseclabel').textContent=NSEC;
+renderFilms();
 
 document.getElementById('b0').textContent = BLOB0;
 document.getElementById('k0').textContent = KEY0;
