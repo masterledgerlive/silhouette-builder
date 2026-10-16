@@ -166,17 +166,21 @@ async function runStudio(){
   // STEP 1: CUT
   setStep('s-cut','active'); log('✂️ Cutting '+fileName+' into pieces…');
   const moofs=findMoofs(fileData);
-  if(moofs.length===0){log('❌ No video fragments found. Is this a fragmented MP4? Try converting with: ffmpeg -i input.mp4 -c copy -movflags frag_keyframe+empty_moov+default_base_moof out.mp4','err');setStep('s-cut','');document.getElementById('gobtn').disabled=false;return;}
-  log('Found '+moofs.length+' video fragments','ok');
   const TARGET=1024*1024; const sections=[]; let start=0, i=0;
-  while(i<moofs.length){
-    let j=i;
-    while(j<moofs.length){const end=j+1<moofs.length?moofs[j+1]:fileData.length; if(end-start>=TARGET&&j>i) break; j++;}
-    const end=j<moofs.length?moofs[j]:fileData.length;
-    sections.push([start,end]); start=end; i=j; if(i>=moofs.length) break;
+  if(moofs.length===0){
+    log('No moof fragments — using 1MB chunks instead. Piece 1 carries the file header (init segment); later pieces are pure data. Playback reassembles them in order.','ok');
+    for(let s=0;s<fileData.length;s+=TARGET) sections.push([s,Math.min(s+TARGET,fileData.length)]);
+  } else {
+    log('Found '+moofs.length+' video fragments','ok');
+    while(i<moofs.length){
+      let j=i;
+      while(j<moofs.length){const end=j+1<moofs.length?moofs[j+1]:fileData.length; if(end-start>=TARGET&&j>i) break; j++;}
+      const end=j<moofs.length?moofs[j]:fileData.length;
+      sections.push([start,end]); start=end; i=j; if(i>=moofs.length) break;
+    }
+    if(sections[sections.length-1][1]<fileData.length) sections[sections.length-1][1]=fileData.length;
+    log('Cut into '+sections.length+' pieces (never splitting a fragment)','ok');
   }
-  if(sections[sections.length-1][1]<fileData.length) sections[sections.length-1][1]=fileData.length;
-  log('Cut into '+sections.length+' pieces (never splitting a fragment)','ok');
   setStep('s-cut','done'); prog(0.1);
   
   // STEP 2: LOCK (derive keys)
