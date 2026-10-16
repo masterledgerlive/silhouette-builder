@@ -387,9 +387,33 @@ async function playMovie() {
       now(`<span class="stage">④ ✓</span> <span class="mono">section ${n}/${total} verified + buffered</span> → <span class="stage">⑤ NEXT</span> <span class="mono" style="font-size:.72rem">${header.next_blob ? 'location revealed from inside the ciphertext' : 'END OF CHAIN'}</span>`);
       logLine(`<span class="mono">#${n}/${total} · http 200 · ${cipher.length.toLocaleString()}b · hash ✓ · next ${header.next_blob ? 'revealed' : '—'}</span>`);
       if (!started) { started = true; video.play().catch(() => {}); }
-      if (!header.next_blob) break;
-      id = header.next_blob;
-      key = await deriveKey(key);
+      // Follow the leader: next_blob (premade chain) OR manifest poll (live forward chain)
+      if (header.next_blob) {
+        id = header.next_blob;
+        key = await deriveKey(key);
+      } else if (_fid==='shared') {
+        // Live forward chain: poll manifest for next section
+        // (Robin Hood manifest; genericize later via share key metadata)
+        let nextBlob=null;
+        for(let tries=0; tries<12 && !nextBlob; tries++){
+          try{
+            const mr=await fetch('./rh-manifest.json?v='+Date.now());
+            if(mr.ok){
+              const man=await mr.json();
+              const sec=man.sections.find(s=>s.n===n+1);
+              if(sec) nextBlob=sec.blob;
+            }
+          }catch(e){}
+          if(!nextBlob && tries<11) await new Promise(r=>setTimeout(r,5000)); // wait 5s, retry
+        }
+        if(!nextBlob){
+          now(`<span class="stage">⏳ WAITING</span> <span class="mono">section ${n+1} not yet uploaded — the chain is still being built. Keep this page open.</span>`);
+          break;
+        }
+        id=nextBlob;
+        key=await deriveKey(key);
+        now(`<span class="stage">⑤ NEXT</span> <span class="mono">section ${n+1} found in live manifest</span>`);
+      } else break;
     }
     try { ms.endOfStream(); } catch (e) {}
     setBar(n, n, buffered / 1048576);
