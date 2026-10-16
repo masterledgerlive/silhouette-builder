@@ -39,6 +39,8 @@
   .badge.bad { border:2px solid #f87171; color:#f87171; }
   .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:8px; margin-top:10px; }
   .grid a { font-size:.72rem; background:#0d0d22; border:1px solid #33336a; border-radius:8px; padding:8px; text-decoration:none; }
+  .bloblink { font-size:.72rem; background:#0d0d22; border:1px solid #33336a; border-radius:8px; padding:8px; color:var(--ink); cursor:pointer; font-family:inherit; text-align:left; }
+  .bloblink:active { border-color:var(--neon); }
   .note { font-size:.78rem; color:#8b8bb8; margin-top:12px; }
   #log { max-height:none; }
 </style>
@@ -70,8 +72,14 @@
 
   <div class="panel">
     <h2 class="sec">THE 12 BLOBS — THE DATA IN THEM</h2>
-    <p>Each link opens the raw ciphertext on the Walrus aggregator. What lives there is scrambled noise — until the right key walks the chain.</p>
+    <p>Each blob holds scrambled noise — until the right key walks the chain. Tap one and the page pulls its actual stored bytes live and shows them below.</p>
     <div class="grid" id="blobgrid"></div>
+    <p class="lbl" style="margin-top:8px">tap any blob — the page pulls its actual stored bytes and shows them below. no download, no new tab.</p>
+  </div>
+
+  <div class="panel" id="inspector" style="display:none">
+    <h2 class="sec">BLOB INSPECTOR — THE ACTUAL STORED DATA</h2>
+    <div id="inspectbody"></div>
   </div>
 
   <div class="panel">
@@ -88,6 +96,7 @@
       <button class="btn" id="walkbtn" onclick="walk()">▶ WALK THE CHAIN</button>
       <button class="btn" id="streambtn" onclick="stream()" style="background:var(--pink); box-shadow:0 0 24px #f0f6;">▶ STREAM IT LIVE</button>
     </p>
+    <div id="streambadge" style="margin:8px 0"></div>
     <div class="card" id="pipeline" style="display:none">
       <div class="row"><b style="color:var(--neon)">LIVE PIPELINE</b> <span class="lbl">— stored → pulled → unscrambled → fragments → player</span></div>
       <div class="row mono" id="pipestats" style="font-size:.85rem"></div>
@@ -156,7 +165,45 @@ document.getElementById('blob1link').textContent = BLOBS[0];
 document.getElementById('keyhex').textContent = KEY_HEX;
 document.getElementById('expsha').textContent = FULL_SHA;
 document.getElementById('blobgrid').innerHTML = BLOBS.map((b, i) =>
-  `<a target="_blank" rel="noopener" href="${AGG}/v1/blobs/${b}">blob ${i+1}/12<br><span class="blobid">${b.slice(0,18)}…</span></a>`).join('');
+  `<button class="bloblink" onclick="inspectBlob('${b}')">blob ${i+1}/12<br><span class="blobid">${b.slice(0,18)}…</span></button>`).join('');
+
+// BLOB INSPECTOR — pull the actual stored bytes and show them. this is the
+// answer to "show me the data": size, sha256 of the stored ciphertext,
+// head + tail hex. runs live against the aggregator, every tap.
+async function inspectBlob(id) {
+  const panel = document.getElementById('inspector');
+  const body = document.getElementById('inspectbody');
+  panel.style.display = '';
+  body.innerHTML = `<div class="row"><span class="lbl">pulling the stored bytes…</span></div>`;
+  panel.scrollIntoView({behavior:'smooth', block:'nearest'});
+  try {
+    const res = await fetch(`${AGG}/v1/blobs/${id}`);
+    if (!res.ok) throw new Error('http ' + res.status);
+    const buf = new Uint8Array(await res.arrayBuffer());
+    const h = await sha256hex(buf);
+    body.innerHTML = `
+      <div class="row"><span class="lbl">blob:</span> <span class="mono blobid" style="font-size:.75rem">${id}</span></div>
+      <div class="row"><span class="lbl">bytes actually stored:</span> <span class="mono">${buf.length.toLocaleString()}</span> <span class="lbl">· http</span> <span class="mono">${res.status}</span> <span class="lbl">· fetched just now, live</span></div>
+      <div class="row"><span class="lbl">sha256 of the stored bytes:</span><br><span class="mono" style="font-size:.75rem">${h}</span></div>
+      <div class="row"><span class="lbl">head (first bytes, hex):</span><br><span class="mono cipher" style="font-size:.75rem">${shortHex(buf, 48)}</span></div>
+      <div class="row"><span class="lbl">tail (last bytes, hex):</span><br><span class="mono cipher" style="font-size:.75rem">${shortHex(buf.slice(-96), 48)}</span></div>
+      <div class="row"><span class="ok">✓ this is the real encrypted data sitting on Walrus. try to read it — you can't. that's the point.</span></div>
+      <div class="row"><span class="lbl">don't trust the page? verify it yourself:</span><br><span class="mono" style="font-size:.72rem">curl ${AGG}/v1/blobs/${id} | sha256sum</span><br><span class="lbl">→ must print the hash above.</span></div>`;
+  } catch (e) {
+    body.innerHTML = `<div class="row" style="color:#f87171"><b>could not pull the blob:</b> ${e.message}</div>`;
+  }
+}
+
+// STREAM CAPABILITY — honest badge. iPhone Safari hides window.MediaSource
+// and only exposes ManagedMediaSource (iOS 17.1+), so `new MediaSource()`
+// throws there. say so up front instead of failing silently.
+(function streamBadge() {
+  const MS = window.MediaSource || window.ManagedMediaSource;
+  const ok = !!(MS && MS.isTypeSupported && MS.isTypeSupported('video/mp4; codecs="avc1.64001f, mp4a.40.2"'));
+  document.getElementById('streambadge').innerHTML = ok
+    ? '<span class="ok">✓ this browser has a streaming API — STREAM IT LIVE should work here</span>'
+    : '<span class="lbl">⚠ no streaming API in this browser (most iPhones hide it) — STREAM may fail here. WALK THE CHAIN works fully on this phone; true streaming works in desktop Chrome / Shadow PC.</span>';
+})();
 fetch(AGG + '/v1/blobs/' + BLOBS[0]).then(r => r.arrayBuffer()).then(buf => {
   const b = new Uint8Array(buf);
   document.getElementById('strangerhex').textContent = 'ciphertext [' + b.length + ' bytes]: ' + shortHex(b, 48);
@@ -196,7 +243,7 @@ async function revealSection(n, id, key) {
 
 function renderCard(n, id, r, extra) {
   card(n, `
-    <div class="row"><span class="lbl">blob (stored):</span> <a class="mono blobid" target="_blank" rel="noopener" href="${AGG}/v1/blobs/${id}">${id}</a></div>
+    <div class="row"><span class="lbl">blob (stored):</span> <button class="bloblink" style="font-size:.72rem; padding:6px 8px" onclick="inspectBlob('${id}')">${id.slice(0,28)}… — tap to see its actual data</button></div>
     <div class="row"><span class="lbl">pulled → scrambled:</span> <span class="mono cipher">${r.cipherLen} bytes — ${r.cipherPreview}</span></div>
     <div class="row"><span class="lbl">unscrambled with key:</span> <span class="mono">${r.keyUsed.slice(0,32)}…</span> <span class="lbl">(derived, copy of a copy)</span></div>
     <div class="row"><span class="lbl">✉ embedded message pulled from the ciphertext:</span></div>
@@ -249,14 +296,18 @@ async function stream() {
   document.getElementById('log').innerHTML = '';
   const video = document.getElementById('player');
   try {
-    const ms = new MediaSource();
+    // iPhone Safari hides window.MediaSource — use ManagedMediaSource there.
+    const MS = window.MediaSource || window.ManagedMediaSource;
+    if (!MS) throw new Error('no streaming API in this browser (most iPhones hide it). WALK THE CHAIN works fully here — true streaming needs desktop Chrome or Shadow PC.');
+    const ms = new MS();
+    video.disableRemotePlayback = true; // required for ManagedMediaSource on iPhone
     video.src = URL.createObjectURL(ms);
     await new Promise((res, rej) => {
       ms.addEventListener('sourceopen', res, {once: true});
       setTimeout(() => rej(new Error('media source did not open')), 10000);
     });
-    if (!MediaSource.isTypeSupported('video/mp4; codecs="avc1.64001f, mp4a.40.2"'))
-      throw new Error('this browser cannot stream this codec via MSE');
+    if (!MS.isTypeSupported('video/mp4; codecs="avc1.64001f, mp4a.40.2"'))
+      throw new Error('this browser cannot stream this codec');
     const sb = ms.addSourceBuffer('video/mp4; codecs="avc1.64001f, mp4a.40.2"');
     const append = (buf) => new Promise((res, rej) => {
       const onEnd = () => { sb.removeEventListener('updateend', onEnd); res(); };
