@@ -112,6 +112,11 @@ const FILMS = {
     blob:'q1YXNjhyTJJFfG5s4070SNFjKBoQd2b_KkDWmNASelU',
     key:'5027f96bbbd3761dd109de51cf0fb229001c0649c85c268a69cfe434930561c2',
     blurb:'Fan trailer by Peha (2001) · 3 encrypted sections'},
+  robinhood: {title:'Robin Hood (1986 VHS)', file:'robinhood-fmp4.mp4', dur:'~90 min', nsec:222,
+    blob:'FtpTqKV6EGMty348J3oKEwA16FoF9U5vfVyKgBzVy_Y',
+    key:'0a74be9a2d4bec0e154240fea330c9f701a987807514b3620277250e571cc3ea',
+    blurb:'Archive.org VHS rip · 222 encrypted sections · live chain',
+    manifest:'./rh-manifest.json'},
 };
 const _fid = (new URLSearchParams(location.search).get('film')||'bbb');
 let _film = FILMS[_fid];
@@ -391,9 +396,30 @@ async function playMovie() {
       if (header.next_blob) {
         id = header.next_blob;
         key = await deriveKey(key);
-      } else if (_fid==='shared') {
+      } else if (_film.manifest) {
         // Live forward chain: poll manifest for next section
-        // (Robin Hood manifest; genericize later via share key metadata)
+        let nextBlob=null;
+        const manUrl=_film.manifest;
+        for(let tries=0; tries<12 && !nextBlob; tries++){
+          try{
+            const mr=await fetch(manUrl+'?v='+Date.now());
+            if(mr.ok){
+              const man=await mr.json();
+              const sec=man.sections.find(s=>s.n===n+1);
+              if(sec) nextBlob=sec.blob;
+            }
+          }catch(e){}
+          if(!nextBlob && tries<11) await new Promise(r=>setTimeout(r,5000));
+        }
+        if(!nextBlob){
+          now(`<span class="stage">⏳ WAITING</span> <span class="mono">section ${n+1} not yet uploaded — the chain is still being built. Keep this page open.</span>`);
+          break;
+        }
+        id=nextBlob;
+        key=await deriveKey(key);
+        now(`<span class="stage">⑤ NEXT</span> <span class="mono">section ${n+1} found in live manifest</span>`);
+      } else if (_fid==='shared') {
+        // Shared film without registry entry: try default manifest
         let nextBlob=null;
         for(let tries=0; tries<12 && !nextBlob; tries++){
           try{
@@ -404,7 +430,7 @@ async function playMovie() {
               if(sec) nextBlob=sec.blob;
             }
           }catch(e){}
-          if(!nextBlob && tries<11) await new Promise(r=>setTimeout(r,5000)); // wait 5s, retry
+          if(!nextBlob && tries<11) await new Promise(r=>setTimeout(r,5000));
         }
         if(!nextBlob){
           now(`<span class="stage">⏳ WAITING</span> <span class="mono">section ${n+1} not yet uploaded — the chain is still being built. Keep this page open.</span>`);
