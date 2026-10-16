@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BUILD MONITOR</title>
+<style>body{background:#07070f;color:#e8e8ff;font-family:monospace;padding:16px;max-width:700px;margin:0 auto;text-align:center}
+h2{margin-bottom:4px}.dim{color:#8a8ab0;font-size:13px}
+#strip{display:flex;flex-wrap:wrap;gap:3px;justify-content:center;margin:16px 0}
+.blk{width:22px;height:22px;border-radius:4px;background:#1a1a2e;border:1px solid #2a2a4a;font-size:9px;display:flex;align-items:center;justify-content:center;color:#555}
+.blk.done{background:#00ffa3;border-color:#00ffa3;color:#00331f;font-weight:700}
+#bar{height:10px;background:#1a1a2e;border-radius:5px;overflow:hidden;margin:12px 0}
+#fill{height:100%;background:#00ffa3;width:0%;transition:width .5s}
+.big{font-size:28px;font-weight:700;margin:8px 0}</style></head>
+<body>
+<h2>🔨 CHAIN BUILD MONITOR</h2>
+<div class="dim">fixed film (stereo audio) → 78 encrypted sections → Walrus testnet</div>
+<div class="big"><span id="done">–</span> / <span id="total">–</span></div>
+<div id="bar"><div id="fill"></div></div>
+<div id="strip"></div>
+<div class="dim" id="note">refreshes every 10s</div>
+<script>
+async function poll(){
+  try{
+    const r=await fetch('build-progress.json?v='+Date.now());
+    const p=await r.json();
+    document.getElementById('done').textContent=p.done;
+    document.getElementById('total').textContent=p.total;
+    document.getElementById('fill').style.width=(100*p.done/p.total)+'%';
+    const strip=document.getElementById('strip');
+    strip.innerHTML='';
+    p.sections.forEach(s=>{
+      const d=document.createElement('div');
+      d.className='blk'+(s.done?' done':'');
+      d.textContent=s.n;
+      d.title='section '+s.n+(s.done?' ✓ '+s.bytes+' bytes':' …pending');
+      strip.appendChild(d);
+    });
+    if(p.done>=p.total) document.getElementById('note').textContent='✓ build complete — the cinema page will be updated next';
+  }catch(e){}
+}
+poll(); setInterval(poll,10000);
+</script></body></html>
