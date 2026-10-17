@@ -38,6 +38,9 @@ input{background:#0b0b1a;border:1px solid #33336a;color:#e8e8ff;border-radius:6p
   <h2 style="margin:0 0 8px">💾 SAVED STREAMS <span class="lbl">completed, verified, reblobbed before expiry — forever</span></h2>
   <input id="search" placeholder="search streams…" style="width:40%" oninput="render()">
   <button class="btn" onclick="loadLibrary()">🔄 refresh</button>
+  <button class="btn" onclick="recoverByLink()">➕ recover by link</button>
+  <button class="btn" onclick="exportLib()">📥 backup</button>
+  <div class="lbl" style="margin:6px 0">Videos live in this browser's storage. <b>Nothing is lost</b> — every shared video's manifest is on Walrus forever. If a video's missing here, hit <b>➕ recover by link</b> and paste its share link.</div>
   <div id="streams"><span class="lbl">loading…</span></div>
 </div>
 
@@ -127,6 +130,38 @@ function renderLive(live){
   ).join(''):'<span class="lbl">no live streams right now — <a href="./live.html">start one</a></span>';
 }
 function render(){
+/* Recover a video by pasting its share/watch/premiere link.
+   Fetches the manifest from Walrus, re-adds it to this browser's library.
+   Nothing is ever lost — the manifest lives on-chain. */
+async function recoverByLink(){
+  const link=prompt('Paste the share / watch / premiere link:');
+  if(!link) return;
+  try{
+    const m=link.match(/watch=([^#&]+)#([0-9a-fA-F]{64})/);
+    if(!m) throw new Error('could not parse link — need ?watch=<blob>#<key>');
+    const [_, mbid, keyHex]=m;
+    const r=await fetch('https://aggregator.walrus-testnet.walrus.space/v1/blobs/'+mbid);
+    if(!r.ok) throw new Error('manifest fetch HTTP '+r.status);
+    const man=await r.json();
+    if(!man.chunks) throw new Error('not a video manifest');
+    const lib=JSON.parse(localStorage.getItem('bloblive_library')||'[]');
+    const title=prompt('Title for this video:', man.title||'recovered-video')||'recovered-video';
+    lib.unshift({id:'recovered-'+Date.now(),title: title+' ♻️',at:man.created_at||Date.now(),
+      chunks:man.chunks.length,liveKey:keyHex,blobs:man.chunks,manifest:mbid});
+    localStorage.setItem('bloblive_library',JSON.stringify(lib.slice(0,100)));
+    alert('✅ Recovered "'+title+'" ('+man.chunks.length+' chunks) into your library!');
+    loadLibrary();
+  }catch(e){ alert('❌ recover failed: '+e.message); }
+}
+/* Backup the library to a JSON file — restore on any device */
+function exportLib(){
+  const lib=localStorage.getItem('bloblive_library')||'[]';
+  const blob=new Blob([lib],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='blob-cinema-library.json';
+  a.click();
+}
   const q=($('search').value||'').toLowerCase();
   const list=library.streams.filter(s=>(s.title||'').toLowerCase().includes(q));
   $('streams').innerHTML=list.length?list.map((s,idx)=>{
