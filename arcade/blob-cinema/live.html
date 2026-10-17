@@ -150,7 +150,7 @@ async function getSource(){
 
 /* ---------- broadcaster ---------- */
 function stage(id,on){ $(id).classList.toggle('on',!!on); }
-function manLog(html){ const el=$('manifestlog'); if(el.querySelector('.lbl')&&chunks.length<=1)el.innerHTML=''; const d=document.createElement('div'); d.innerHTML=html; el.prepend(d); }
+function manLog(html){ const el=$('manifestlog'); if(el.querySelector('.lbl')&&chunks.filter(c=>c).length<=1)el.innerHTML=''; const d=document.createElement('div'); d.innerHTML=html; el.prepend(d); }
 /* Prove the blobs are really on Walrus: fetch one from the aggregator, decrypt, compare. */
 async function verifyChain(){
   const ok=chunks.filter(c=>c.ok);
@@ -208,9 +208,12 @@ async function goLive(){
     stage('st-man',true);
     const entry={n:idx,type:isInit?'init':'media',blob:blobId,keyIdx:idx,keyHex:hex(key).slice(0,16)+'…',
       capturedAt:capAt,putMs:Math.round(putMs),bytes:cipher.length,ok,title:$('livetitle').value||'untitled live'};
-    chunks.push(entry); cipherChunks[idx]=cipher;
+    /* CRITICAL: handlers complete OUT OF ORDER (PUTs take 10-60s, chunks fire every 2s).
+       MUST insert by index, not push — else the viewer gets chunk 5 when it asks for chunk 0. */
+    chunks[idx]=entry; cipherChunks[idx]=cipher;
+    const doneCount=chunks.filter(c=>c).length;
     manLog(`<span class="ok">🧱 #${idx}</span> <span class="mono">${String(blobId).slice(0,20)}…</span> ${isInit?'<b>INIT</b>':''} 🔑K<sub>${idx}</sub> 📤${Math.round(putMs)}ms 📦${(cipher.length/1024).toFixed(0)}KB ${new Date(capAt).toLocaleTimeString()}`);
-    $('broadstat').innerHTML=`chunks <b>${chunks.length}</b> · last PUT <b>${Math.round(putMs)}ms</b> · e2e lag ≈ <b>${((Date.now()-capAt)/1000).toFixed(1)}s</b>`;
+    $('broadstat').innerHTML=`chunks <b>${doneCount}</b> · last PUT <b>${Math.round(putMs)}ms</b> · e2e lag ≈ <b>${((Date.now()-capAt)/1000).toFixed(1)}s</b>`;
     ['st-cap','st-enc','st-put','st-man'].forEach(s=>setTimeout(()=>stage(s,false),600));
     pumpViewers();
   };
@@ -357,11 +360,12 @@ async function stopLive(){
   if(speaking&&speechRec) speechRec.stop();
   $('gobtn').disabled=false; $('stopbtn').disabled=true;
   clearInterval(testTimer);
-  manLog('<span class="ok">⏹ STOPPED</span> — moving '+chunks.length+' chunks into the forever library (fresh nonces, keeper-backed)…');
+  manLog('<span class="ok">⏹ STOPPED</span> — moving '+chunks.filter(c=>c).length+' chunks into the forever library (fresh nonces, keeper-backed)…');
   const title=$('livetitle').value||('live-'+new Date().toISOString().slice(0,16));
   const lib=JSON.parse(localStorage.getItem('bloblive_library')||'[]');
-  const rec={title,at:Date.now(),chunks:chunks.length,captions:captions.length,
-    liveKey:hex(liveKey),blobs:chunks.filter(c=>c.ok).map(c=>({n:c.n,blob:c.blob,keyIdx:c.keyIdx}))};
+  const solid=chunks.filter(c=>c);
+  const rec={title,at:Date.now(),chunks:solid.length,captions:captions.length,
+    liveKey:hex(liveKey),blobs:solid.filter(c=>c.ok).map(c=>({n:c.n,blob:c.blob,keyIdx:c.keyIdx}))};
   lib.unshift(rec); localStorage.setItem('bloblive_library',JSON.stringify(lib));
   renderLibrary();
   manLog(`<span class="ok">📚 LIBRARY</span> "${title}" saved — ${rec.blobs.length} blobs, ${captions.length} captions. Re-copy with fresh nonces → keeper watches it.`);
