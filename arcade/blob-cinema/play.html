@@ -30,6 +30,21 @@ video{width:100%;max-width:800px;background:#000;border-radius:8px}
 const GH='https://arcade.highscores.live/arcade/blob-cinema';
 const AGG='https://aggregator.walrus-testnet.walrus.space';
 const $=id=>document.getElementById(id);
+/* Try autoplay; if the browser (esp. in-app webviews like X) blocks it,
+   show a big TAP TO PLAY overlay instead of a dead video. */
+function tryPlay(v){
+  const p=v.play();
+  if(p&&p.catch) p.catch(()=>{
+    if(v.dataset.tapShown) return;
+    v.dataset.tapShown='1';
+    const ov=document.createElement('div');
+    ov.style.cssText='position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.6);z-index:5;cursor:pointer';
+    ov.innerHTML='<div style="font-size:3rem;background:#6C5CE7;border-radius:50%;width:90px;height:90px;display:flex;align-items:center;justify-content:center">▶</div>';
+    ov.onclick=()=>{ v.play().catch(()=>{}); ov.remove(); };
+    v.parentElement.style.position='relative';
+    v.parentElement.appendChild(ov);
+  });
+}
 const hex=b=>Array.from(b).map(x=>x.toString(16).padStart(2,'0')).join('');
 const bhex=h=>new Uint8Array(h.match(/../g).map(x=>parseInt(x,16)));
 // minimal sha256 (pure JS, HTTP-safe) for key derivation
@@ -148,13 +163,13 @@ async function startPhone(){
         _phoneStarted=true;
         v.src=URL.createObjectURL(new Blob(buf,{type:mime}));
         v.controls=true;
-        v.play().catch(()=>{});
+        tryPlay(v);
       } else if(_phoneStarted&&ok%6===0){
         // refresh with more data every 6 chunks
         const t=v.currentTime;
         v.src=URL.createObjectURL(new Blob(buf,{type:mime}));
         v.currentTime=t;
-        v.play().catch(()=>{});
+        tryPlay(v);
       }
     }catch(e){ skipped++; if(reasons.length<5) reasons.push(`chunk ${i}: ${e.message}`); }
   }
@@ -168,11 +183,11 @@ async function startPhone(){
     const t=v.currentTime;
     v.src=URL.createObjectURL(new Blob(buf,{type:mime}));
     try{ v.currentTime=t; }catch(e){}
-    v.play().catch(()=>{});
+    tryPlay(v);
   } else {
     v.src=URL.createObjectURL(new Blob(buf,{type:mime}));
     v.controls=true;
-    v.play().catch(()=>{});
+    tryPlay(v);
   }
   v.addEventListener('timeupdate',()=>{
     const idx=Math.floor(v.currentTime/2);
