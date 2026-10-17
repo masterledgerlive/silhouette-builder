@@ -144,6 +144,7 @@ function render(){
       <span class="mono" style="font-size:.75rem">🔑 ${String(key).slice(0,32)}…</span><br>
       <a class="btn go" href="./play.html?id=${s.id}#${key}">▶ open player + run decoder</a>
       <button class="btn" onclick="shareStream('${s.id}')">🔗 share link</button>
+      <button class="btn" onclick="diagnose('${s.id}')">🔍 diagnose</button>
       <button class="btn warn" onclick="reblob('${s.id}')">🔄 reblob now</button>
       <button class="btn" onclick="downloadProof('${s.id}')">📜 proof</button>
       ${s.status==='local-only'?'<span class="lbl">· local only — send the .livestream.json to Kodakai to publish + keeper-watch</span>':''}
@@ -159,6 +160,30 @@ function shareStream(id){
   const link=location.origin+location.pathname.replace('reblob.html','play.html')+'?id='+id+'#'+key;
   const el=$('share-'+id);
   el.innerHTML=`<br>🔗 <input readonly style="width:60%" value="${link}" onclick="this.select()" id="shl-${id}"> <button class="btn" style="font-size:.8rem" onclick="copyText('shl-${id}')">📋 copy</button><br><span style="font-size:.75rem">Anyone opening this watches from the blockchain — key in fragment, never hits our server.</span>`;
+}
+/* Diagnose: check every blob in a stream, report exactly what's wrong */
+async function diagnose(id){
+  const s=library.streams.find(x=>x.id===id);
+  const out=$('share-'+id)||$('reblob-'+id);
+  if(!s||!out) return;
+  out.innerHTML='<br>🔍 diagnosing…<br>';
+  const blobs=s.blobs||[];
+  if(!blobs.length){ out.innerHTML+='✗ no blobs in this entry'; return; }
+  let ok=0, failed=0, bad=0;
+  const problems=[];
+  for(let i=0;i<Math.min(blobs.length,5);i++){
+    const b=blobs[i];
+    if(!b.blob||b.blob.startsWith('PUT-FAILED')){ bad++; problems.push(`chunk ${b.n}: ${b.blob||'no blob ID'}`); continue; }
+    try{
+      const r=await fetch('https://aggregator.walrus-testnet.walrus.space/v1/blobs/'+b.blob,{method:'HEAD'});
+      if(r.ok) ok++; else { failed++; problems.push(`chunk ${b.n}: HTTP ${r.status}`); }
+    }catch(e){ failed++; problems.push(`chunk ${b.n}: ${e.message}`); }
+  }
+  const key=s.liveKey||s.live_key||'';
+  out.innerHTML=`<br>🔍 <b>diagnosis:</b> ${blobs.length} chunks, checked 5: ${ok} reachable, ${failed} failed, ${bad} bad IDs<br>`+
+    (key.length>=64?'✓ key present':'✗ <b>key MISSING</b>')+'<br>'+
+    (problems.length?problems.map(p=>'· '+p).join('<br>'):'✓ all checked blobs reachable')+
+    `<br><span class="lbl">full check would test all ${blobs.length}</span>`;
 }
 function copyText(id){ const el=$(id); el.select(); try{ navigator.clipboard.writeText(el.value); }catch(e){ document.execCommand('copy'); } }
 async function reblob(id){
