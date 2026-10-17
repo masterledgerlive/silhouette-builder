@@ -79,6 +79,8 @@ input,select{background:#0b0b1a;border:1px solid #33336a;color:#e8e8ff;border-ra
     <input id="sharelink" readonly style="width:70%" onclick="this.select()">
     <button class="btn" onclick="copyShare()">📋 copy</button>
     <div class="lbl" style="margin-top:4px">The key travels in the URL fragment (never hits our server). The manifest lives on Walrus.</div>
+    <div style="margin-top:6px"><button class="btn" style="font-size:.8rem" onclick="openSnapshot()">📸 make snapshot → chain follower</button>
+    <span class="lbl" style="font-size:.75rem">condense this stream into a fast index blob for the infinite player</span></div>
   </div>
   <div style="display:flex;gap:12px;margin-top:10px;flex-wrap:wrap">
     <div style="flex:1;min-width:220px"><span class="lbl">live source (muted preview)</span><br><video id="preview" muted playsinline></video><canvas id="testcanvas" width="640" height="360" style="width:100%;border-radius:8px;background:#000"></canvas></div>
@@ -695,6 +697,7 @@ async function shareLive(){
       body:new TextEncoder().encode(JSON.stringify(manifest))});
     const j=await r.json();
     const mbid=(j.newlyCreated||j.alreadyCertified).blobObject.blobId;
+    lastManifestBlob=mbid;
     const link=location.origin+location.pathname.replace('live.html','watch.html')+'?watch='+mbid+'#'+hex(liveKey);
     $('sharelink').value=link; $('sharebox').style.display='block';
     manLog('<span class="ok">🔗 SHARE</span> manifest on Walrus: <span class="mono">'+mbid.slice(0,20)+'…</span>');
@@ -703,6 +706,14 @@ async function shareLive(){
 }
 function copyShare(){ $('sharelink').select(); document.execCommand('copy');
   try{ navigator.clipboard.writeText($('sharelink').value); }catch(e){} }
+/* Snapshot shortcut → chain follower, pre-filled with this stream */
+let lastManifestBlob=null;
+function openSnapshot(){
+  const m=$('sharelink').value.match(/watch=([^#]+)#([0-9a-fA-F]+)/);
+  let url='./follow.html';
+  if(m) url+='?snap-manifest='+m[1]+'&snap-key='+m[2];
+  window.open(url,'_blank');
+}
 function shareWindow(wi){
   // share link for a specific window position (delay) — same stream, different key view
   if(!live||!liveKey){ alert('go live first, then share'); return; }
