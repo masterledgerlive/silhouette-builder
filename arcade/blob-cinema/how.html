@@ -330,7 +330,7 @@ async function finishFirst(manual){
   if(!chunks.length){
     say(`😢 <b>No chunks were captured.</b> The recorder didn't produce any video — try again, and make sure the camera preview is showing before you hit record.`);
     tlog('finishFirst: 0 chunks, aborting save');
-    $('b-wrap').textContent='⏹ stop & wrap'; $('b-wrap').disabled=false;
+    $('b-stop').textContent='⏹ stop & wrap'; $('b-stop').disabled=false;
     return;
   }
   // FAST WRAP: save locally FIRST (instant), publish to Walrus in background.
@@ -345,7 +345,7 @@ async function finishFirst(manual){
     tlog('saved to local library (instant)');
   }catch(e){ tlog('library save: '+e.message); }
   say(`✅ <b>WRAPPED!</b> ${chunks.length} chunks saved. Publishing to the chain in the background — your video is already in the library!`);
-  $('b-wrap').textContent='✅ wrapped!'; $('b-wrap').disabled=false;
+  $('b-stop').textContent='✅ wrapped!'; $('b-stop').disabled=false;
   // show share link immediately using local data
   const localLink=location.origin+location.pathname.replace('how.html','play.html')+'?id='+localId+'#'+liveKeyHex;
   $('livelink').value=localLink;
