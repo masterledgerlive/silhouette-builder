@@ -220,7 +220,23 @@ async function makeSnapshot(){
       method:'nacl-secretbox/sha256-chain-v1',
       chunks:man.chunks.filter(c=>c&&c.blob).map(c=>({n:c.n,blob:c.blob,keyIdx:c.keyIdx??c.n,bytes:c.bytes||0})),
       proof:'sha256(unlock|'+man.chunks.map(c=>c.blob).join(',').slice(0,64)+')',
-      prev_snapshot:null, next_snapshot:null
+      prev_snapshot:null, next_snapshot:null,
+      /* TAIL — community memory riding with every snapshot.
+         Plug-and-play: anyone can read it, anyone can add to it.
+         When blobs expire, the reblob policy here says what to do. */
+      tail:{
+        v:1,
+        system:'blob-cinema tail v1 — every snapshot carries its community',
+        reblob:{ policy:'auto', last_reblob:0, count:0,
+          note:'when blobs near expiry, re-encrypt with fresh nonces (same keys) and publish a new snapshot generation' },
+        community:{
+          artifacts:[],    // {name, blob, votes} — things the community voted into the system
+          game_assets:[],  // {kind:'skin'|'weapon'|'layover', name, blob} — arcade shared assets
+          channels:[],     // {name, locator, method} — other broadcasters' chains
+          votes:{}         // open votes: {proposal_id: {yes, no, ends_at}}
+        },
+        memory:'each snapshot is a memory — agents traverse the tail to learn the chain'
+      }
     };
     // compute real proof
     const kc=bhex(key); let ph=await sha256hex(new Uint8Array([...kc,...new TextEncoder().encode(man.chunks.map(c=>c.blob).join(''))]));
