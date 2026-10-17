@@ -112,13 +112,18 @@ function startMSE(){
   ms=new MediaSource(); v.src=URL.createObjectURL(ms);
   ms.addEventListener('sourceopen',()=>{ sb=ms.addSourceBuffer('video/webm;codecs=vp9'); playLoop(); });
 }
-/* Phone playback: download every chunk, decrypt, concat into one blob URL */
+/* Phone playback: download every chunk, decrypt, concat into one blob URL.
+   Plays progressively — starts as soon as the first chunk lands, no waiting. */
+let _phoneStarted=false;
 async function startPhone(){
   const v=$('v');
   const buf=[]; let ok=0, skipped=0;
   const reasons=[];
   const total=manifest.chunks.length;
-  const mime=(manifest.mime||'video/webm').split(';')[0];
+  // detect mime from first decrypted chunk's magic bytes (manifest.mime may be missing on old streams)
+  let mime=((manifest&&manifest.mime)||'').split(';')[0];
+  _phoneStarted=false;
+  v.muted=true; // allow autoplay on iOS; user can unmute via controls
   for(let i=0;i<total;i++){
     const c=manifest.chunks[i];
     $('pos').textContent=`chunk ${i+1} / ${total}`;
@@ -131,7 +136,26 @@ async function startPhone(){
       const cipher=new Uint8Array(await r.arrayBuffer());
       const plain=unwrap(cipher,key);
       if(!plain) throw new Error('decrypt failed — wrong key?');
-      buf.push(new Uint8Array(plain)); ok++;
+      const bytes=new Uint8Array(plain);
+      if(!mime){
+        // sniff: MP4 ftyp vs WebM EBML
+        mime=(bytes[4]===0x66&&bytes[5]===0x74&&bytes[6]===0x79&&bytes[7]===0x70)?'video/mp4':
+             (bytes[0]===0x1A&&bytes[1]===0x45&&bytes[2]===0xDF&&bytes[3]===0xA3)?'video/webm':'video/mp4';
+      }
+      buf.push(bytes); ok++;
+      // start playing as soon as we have the first chunk — don't wait for all
+      if(!_phoneStarted&&ok>=1){
+        _phoneStarted=true;
+        v.src=URL.createObjectURL(new Blob(buf,{type:mime}));
+        v.controls=true;
+        v.play().catch(()=>{});
+      } else if(_phoneStarted&&ok%6===0){
+        // refresh with more data every 6 chunks
+        const t=v.currentTime;
+        v.src=URL.createObjectURL(new Blob(buf,{type:mime}));
+        v.currentTime=t;
+        v.play().catch(()=>{});
+      }
     }catch(e){ skipped++; if(reasons.length<5) reasons.push(`chunk ${i}: ${e.message}`); }
   }
   if(!ok){
@@ -139,11 +163,17 @@ async function startPhone(){
     if(window.errcatch) errcatch('play-phone: 0 chunks playable','startPhone');
     return;
   }
-  const blob=new Blob(buf,{type:mime});
-  v.src=URL.createObjectURL(blob);
-  v.controls=true;
-  v.play().catch(()=>{});
-  // captions still work — show on timeupdate
+  // final refresh with everything
+  if(_phoneStarted){
+    const t=v.currentTime;
+    v.src=URL.createObjectURL(new Blob(buf,{type:mime}));
+    try{ v.currentTime=t; }catch(e){}
+    v.play().catch(()=>{});
+  } else {
+    v.src=URL.createObjectURL(new Blob(buf,{type:mime}));
+    v.controls=true;
+    v.play().catch(()=>{});
+  }
   v.addEventListener('timeupdate',()=>{
     const idx=Math.floor(v.currentTime/2);
     const cap=(manifest.captions||[]).find(x=>x.chunk===idx);
