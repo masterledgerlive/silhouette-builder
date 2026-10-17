@@ -55,7 +55,17 @@ let manifest=null, keyChain=[], playIdx=0, ms=null, sb=null, playing=false;
 <script src="./nacl-min.js"></script>
 <script>
 async function deriveKey(prev){ const h=await sha256hex(new Uint8Array([...prev,...new TextEncoder().encode('|next')])); return bhex(h); }
-async function keyAt(i){ while(keyChain.length<=i) keyChain.push(await deriveKey(keyChain[keyChain.length-1])); return keyChain[i]; }
+let _keyLock=Promise.resolve();
+async function keyAt(i){
+  // serialize: concurrent callers must not interleave the derive+push loop,
+  // or duplicate keys shift every index and chunks decrypt with the wrong key
+  const p=_keyLock.then(async()=>{
+    while(keyChain.length<=i) keyChain.push(await deriveKey(keyChain[keyChain.length-1]));
+    return keyChain[i];
+  });
+  _keyLock=p.catch(()=>{});
+  return p;
+}
 function unwrap(cipher,key){ const dec=nacl.secretbox.open(cipher.slice(24),cipher.slice(0,24),key); return dec?new Uint8Array(dec):null; }
 async function load(){
   const id=new URLSearchParams(location.search).get('id');
