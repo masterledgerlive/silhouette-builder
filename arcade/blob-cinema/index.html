@@ -412,7 +412,8 @@ function mseSanitize(u8){
             nb.set(out.subarray(c.off, c.off+12), 0);
             nb[0]=(ns>>>24)&255; nb[1]=(ns>>>16)&255; nb[2]=(ns>>>8)&255; nb[3]=ns&255;
             nb[9]=(nf>>>16)&255; nb[10]=(nf>>>8)&255; nb[11]=nf&255;
-            nb.set(out.subarray(c.off+24, c.off+c.size), 12); // track_ID + tail (base_data_offset dropped)
+            nb.set(out.subarray(c.off+12, c.off+16), 12); // track_ID (kept!)
+            nb.set(out.subarray(c.off+24, c.off+c.size), 16); // tail after base_data_offset (dropped)
             cparts.push(nb); tsize -= 8; continue;
           }
         }
@@ -531,8 +532,8 @@ async function playMovie() {
       // MSE legality: some fragmentations carry tfhd base-data-offset, which
       // this device's buffer hard-rejects. Rewrite to moof-relative addressing.
       const clean = mseSanitize(media);
-      if (clean !== media) now(`<span class="stage">🔧 MSE-FIX</span> <span class="mono">section ${n}: stripped ${media.length-clean.length}b of absolute tfhd offsets → MSE-legal fragments</span>`);
-      else now(`<span class="stage">🔍 SCAN</span> <span class="mono">section ${n}: sanitize found nothing to fix — ${media.length}b, head=[${Array.from(media.slice(4,32)).map(x=>String.fromCharCode(x)).join('').replace(/[^a-z]/g,'?')}], dbg=${window._sdbg||'?'}</span>`);
+      if (clean !== media) { const m1=`<span class="stage">🔧 MSE-FIX</span> <span class="mono">section ${n}: stripped ${media.length-clean.length}b of absolute tfhd offsets → MSE-legal fragments</span>`; now(m1); logLine(m1); }
+      else { const m2=`<span class="stage">🔍 SCAN</span> <span class="mono">section ${n}: sanitize found nothing to fix — ${media.length}b, dbg=${window._sdbg||'?'}</span>`; now(m2); logLine(m2); }
       // iPhone quirk: feed the init segment (ftyp+moov) as its own append first,
       // then the media. Desktop Chrome accepts it combined; iOS often doesn't.
       let chunks = [clean];
