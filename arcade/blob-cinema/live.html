@@ -48,7 +48,7 @@ input,select{background:#0b0b1a;border:1px solid #33336a;color:#e8e8ff;border-ra
     <button class="btn red" id="stopbtn" onclick="stopLive()" disabled>⏹ STOP + MOVE TO LIBRARY</button>
   </div>
   <div style="display:flex;gap:12px;margin-top:10px;flex-wrap:wrap">
-    <div style="flex:1;min-width:220px"><span class="lbl">live source (muted preview)</span><br><video id="preview" muted playsinline></video><canvas id="testcanvas" width="640" height="360" style="display:none"></canvas></div>
+    <div style="flex:1;min-width:220px"><span class="lbl">live source (muted preview)</span><br><video id="preview" muted playsinline></video><canvas id="testcanvas" width="640" height="360" style="width:100%;border-radius:8px;background:#000"></canvas></div>
     <div style="flex:2;min-width:260px">
       <span class="lbl">pipeline — watch each chunk get laid down</span>
       <div class="pipe">
@@ -160,11 +160,14 @@ async function goLive(){
   $('preview').srcObject=liveStream;
   liveKey=nacl.randomBytes(32); keyChain=[liveKey]; chunks=[]; captions=[]; nChunk=0;
   $('livekey').textContent=hex(liveKey);
+  const hasAudio=liveStream.getAudioTracks().length>0;
+  liveMime=pickMime(hasAudio);
+  manLog('<span class="lbl">codec probe: '+probeCodecs()+'</span>');
+  manLog('<span class="ok">🎞 using '+liveMime+'</span> (audio track: '+(hasAudio?'yes':'no')+')');
   tStart=Date.now(); live=true;
   $('gobtn').disabled=true; $('stopbtn').disabled=false;
   buildWindows();
-  const mime=pickMime();
-  recorder=new MediaRecorder(liveStream,{mimeType:mime,videoBitsPerSecond:900000});
+  recorder=new MediaRecorder(liveStream,{mimeType:liveMime,videoBitsPerSecond:900000});
   let first=true;
   recorder.ondataavailable=async ev=>{
     if(!live||!ev.data||!ev.data.size) return;
@@ -200,10 +203,26 @@ async function goLive(){
 }
 function wrapChunk(nonce,key,raw){ const c=nacl.secretbox(raw,nonce,key); const out=new Uint8Array(24+c.length); out.set(nonce); out.set(c,24); return out; }
 function unwrapChunk(cipher,key){ return nacl.secretbox.open(cipher.slice(24),cipher.slice(0,24),key); }
-function pickMime(){
-  const c=['video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm'];
-  for(const m of c) if(window.MediaRecorder&&MediaRecorder.isTypeSupported(m)) return m;
-  return '';
+/* Pick ONE mime type that (a) MediaRecorder can produce, (b) MSE can consume,
+   and (c) matches the stream's actual tracks. Recorder and viewers MUST use the
+   same string, or Chrome detaches the SourceBuffer. */
+let liveMime='';
+function pickMime(hasAudio){
+  const opts=hasAudio
+    ? ['video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus']
+    : ['video/webm;codecs=vp9','video/webm;codecs=vp8'];
+  for(const m of opts)
+    if(window.MediaRecorder&&MediaRecorder.isTypeSupported(m)&&window.MediaSource&&MediaSource.isTypeSupported(m)) return m;
+  for(const m of opts)
+    if(window.MediaRecorder&&MediaRecorder.isTypeSupported(m)) return m;
+  return 'video/webm';
+}
+function probeCodecs(){
+  const out=[];
+  ['video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm','video/mp4'].forEach(m=>{
+    out.push(m+' rec:'+(window.MediaRecorder&&MediaRecorder.isTypeSupported(m))+' mse:'+(window.MediaSource&&MediaSource.isTypeSupported(m)));
+  });
+  return out.join(' | ');
 }
 
 /* ---------- viewers: 4 windows, 4 derived keys ----------
@@ -225,12 +244,11 @@ function buildWindows(){
     const ms=new MediaSource(); v.src=URL.createObjectURL(ms);
     const w={wi,delay:d,v,ms,sb:null,nextN:0,pumping:false,gotInit:false,errs:0};
     viewers.push(w);
-    // NOTE: plain 'video/webm' — no codec string. Chrome sniffs the real codecs
-    // from the init segment. A hardcoded vp9/opus string on video-only data
-    // makes Chrome detach the SourceBuffer ("removed from parent media source").
+    // Use the SAME fully-specified mime the recorder used — probed to be
+    // supported by both MediaRecorder and MSE on this browser.
     ms.addEventListener('sourceopen',()=>{
       try{
-        w.sb=ms.addSourceBuffer('video/webm');
+        w.sb=ms.addSourceBuffer(liveMime||'video/webm;codecs=vp9,opus');
         w.sb.addEventListener('error',ev=>{ wstat(w,'⚠ SourceBuffer error — '+ms.readyState); });
         pumpViewer(w);
       }catch(e){ wstat(w,'⚠ SourceBuffer setup failed: '+(e.message||e)); }
