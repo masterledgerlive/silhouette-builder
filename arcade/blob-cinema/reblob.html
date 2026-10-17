@@ -90,10 +90,28 @@ async function loadLibrary(){
       }
     }
   }catch(e){}
+  /* PUBLIC CHANNELS: genesis blobs anyone can read — the living server.
+     I (the agent) can fetch these too. No localStorage, no gatekeeping. */
   try{
-    const r=await fetch(GH+'/live-guide.json?v='+Date.now());
-    if(r.ok){ const g=await r.json(); renderLive(g.live_now||[]); }
-  }catch(e){ renderLive([]); }
+    const r=await fetch(GH+'/public-channels.json?v='+Date.now());
+    if(r.ok){
+      const pc=await r.json();
+      for(const ch of (pc.channels||[])){
+        try{
+          const gr=await fetch('https://aggregator.walrus-testnet.walrus.space/v1/blobs/'+ch.genesis);
+          if(!gr.ok) continue;
+          const g=await gr.json();
+          (g.videos||[]).forEach(v=>{
+            if(!library.streams.find(x=>x.manifest===v.manifest)){
+              library.streams.unshift({id:'pub-'+v.manifest.slice(0,12),title:v.title+' 🌐',
+                at:v.at,chunks:v.chunks,liveKey:v.liveKey||'',blobs:[],manifest:v.manifest,
+                status:'public',expires_at:v.at/1000+5*86400,channel:ch.name});
+            }
+          });
+        }catch(e){}
+      }
+    }
+  }catch(e){}
   render();
 }
 function fmtLeft(sec){
