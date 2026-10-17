@@ -136,7 +136,7 @@ async function load(){
 }
 async function startPhone(total){
   const v=$('v'), buf=[];
-  let ok=0, skipped=0, mime='', started=false;
+  let ok=0, skipped=0, mime='';
   const errs=[];
   for(let i=0;i<total;i++){
     const c=manifest.chunks[i];
@@ -154,20 +154,17 @@ async function startPhone(total){
       const bytes=new Uint8Array(plain);
       if(!mime) mime=(bytes[4]===0x66&&bytes[5]===0x74&&bytes[6]===0x79&&bytes[7]===0x70)?'video/mp4':(bytes[0]===0x1A&&bytes[1]===0x45&&bytes[2]===0xDF&&bytes[3]===0xA3)?'video/webm':'video/mp4';
       buf.push(bytes); ok++;
-      if(!started&&ok>=1){
-        started=true;
-        v.src=URL.createObjectURL(new Blob(buf,{type:mime}));
-        v.muted=true;
-        tryPlay(v);
-      } else if(started&&ok%6===0){
-        const t=v.currentTime;
-        v.src=URL.createObjectURL(new Blob(buf,{type:mime}));
-        try{ v.currentTime=t; }catch(e){}
-      }
     }catch(e){
       skipped++;
       if(errs.length<5) errs.push(`chunk ${i}: ${e.message}`);
     }
+  }
+  // All chunks decrypted — now build the video ONCE (no mid-load src swaps)
+  if(ok>0){
+    $('stat').textContent=`✓ building video from ${ok} chunks…`;
+    v.src=URL.createObjectURL(new Blob(buf,{type:mime}));
+    v.muted=true;
+    tryPlay(v);
   }
   $('stat').innerHTML=`✓ 📱 playing ${ok}/${total} chunks as one video (${skipped} skipped)`+(errs.length?'<br>'+errs.join('<br>'):'');
   if(!ok&&window.errcatch) errcatch('play-phone: 0 chunks playable','startPhone');
