@@ -32,6 +32,7 @@ input,select{background:#0b0b1a;border:1px solid #33336a;color:#e8e8ff;border-ra
 </style>
 </head>
 <body>
+<script src="./errcatch.js"></script>
 <h1><span class="tick">◉</span> BLOB CINEMA LIVE <span class="lbl">real-time video → encrypted blobs → the chain. RTMP-style, on Walrus.</span></h1>
 <p class="lbl">One live key. Four windows, four derived keys, one stream. Every 2 seconds a chunk is captured, locked, and laid into a blob — watch it happen, with the lag measured live. <a href="./index.html">← theater</a> · <a href="./studio.html">studio</a></p>
 
@@ -262,7 +263,13 @@ async function verifyChain(){
 async function goLive(){
   if(live) return;
   try{ liveStream=await getSource(); }
-  catch(e){ alert('source failed: '+e.message+' — use Test pattern.'); return; }
+  catch(e){
+    const msg='source failed: '+e.message+' — use Test pattern.';
+    if(window.errcatch) errcatch(msg,'goLive:getSource'); else alert(msg);
+    manLog('<span style="color:#ff5470">✗ '+msg+'</span>');
+    return;
+  }
+  try{
   $('preview').srcObject=liveStream;
   liveKey=nacl.randomBytes(32); keyChain=[liveKey]; chunks=[]; cipherChunks=[]; captions=[]; nChunk=0;
   streamId='live-'+new Date().toISOString().slice(0,16).replace(/[:-]/g,'')+'-'+Math.random().toString(36).slice(2,7);
@@ -310,6 +317,13 @@ async function goLive(){
   };
   recorder.start(CHUNK_MS);
   manLog('<span class="ok">🔴 LIVE</span> — laying chunks into blobs every '+(CHUNK_MS/1000)+'s…');
+  }catch(e){
+    const msg='goLive failed: '+(e.message||e);
+    if(window.errcatch) errcatch(msg,'goLive');
+    manLog('<span style="color:#ff5470">✗ '+msg+'</span>');
+    live=false;
+    $('gobtn').disabled=false; $('stopbtn').disabled=true;
+  }
 }
 function wrapChunk(nonce,key,raw){ const c=nacl.secretbox(raw,nonce,key); const out=new Uint8Array(24+c.length); out.set(nonce); out.set(c,24); return out; }
 function unwrapChunk(cipher,key){ return nacl.secretbox.open(cipher.slice(24),cipher.slice(0,24),key); }
