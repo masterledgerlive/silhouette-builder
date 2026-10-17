@@ -99,17 +99,20 @@ function startMSE(){
 async function playLoop(){
   if(playing) return; playing=true;
   const v=$('v');
+  let played=0, skipped=0;
+  const skipReasons=[];
   while(playIdx<manifest.chunks.length){
     const c=manifest.chunks[playIdx];
     $('pos').textContent=`chunk ${playIdx+1} / ${manifest.chunks.length}`;
     $('stat').textContent='fetching chunk '+(playIdx+1)+'…';
     try{
+      if(!c.blob||c.blob.startsWith('PUT-FAILED')) throw new Error('bad blob ID: '+String(c.blob).slice(0,30));
       const key=await keyAt(c.keyIdx??c.n);
       const r=await fetch(AGG+'/v1/blobs/'+c.blob);
-      if(!r.ok) throw new Error('fetch '+r.status);
+      if(!r.ok) throw new Error('Walrus HTTP '+r.status);
       const cipher=new Uint8Array(await r.arrayBuffer());
       const plain=unwrap(cipher,key);
-      if(!plain) throw new Error('decrypt failed');
+      if(!plain) throw new Error('decrypt failed — wrong key?');
       await new Promise((res,rej)=>{
         const on=()=>{sb.removeEventListener('updateend',on);res();};
         sb.addEventListener('updateend',on);
@@ -118,12 +121,22 @@ async function playLoop(){
       // captions
       const cap=(manifest.captions||[]).find(x=>x.chunk===playIdx);
       if(cap) $('caption').textContent='💬 '+cap.text;
-      playIdx++;
+      playIdx++; played++;
       v.play().catch(()=>{});
-      $('stat').textContent='playing…';
-    }catch(e){ $('stat').textContent='⚠ '+e.message+' (skipping)'; playIdx++; }
+      $('stat').textContent='playing… ('+played+' ok'+(skipped?', '+skipped+' skipped':'')+')';
+    }catch(e){
+      skipped++;
+      if(skipReasons.length<5) skipReasons.push(`chunk ${playIdx}: ${e.message}`);
+      $('stat').innerHTML='⚠ '+e.message+' (skipping)<br><span style="font-size:.75rem">'+skipReasons.join('<br>')+'</span>';
+      playIdx++;
+    }
   }
-  $('stat').textContent='✓ finished';
+  if(played===0){
+    $('stat').innerHTML='✗ <b>0 chunks played.</b><br>'+skipReasons.map(r=>'· '+r).join('<br>');
+    if(window.errcatch) errcatch('play: 0 chunks playable','playLoop');
+  } else {
+    $('stat').textContent=`✓ finished — ${played} played, ${skipped} skipped`;
+  }
 }
 function scrub(pct){
   // jump to chunk (DVR scrub — re-init required for simplicity: reload from chunk)
