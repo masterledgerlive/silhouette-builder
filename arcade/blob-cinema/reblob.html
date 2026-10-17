@@ -72,6 +72,24 @@ async function loadLibrary(){
       }
     });
   }catch(e){}
+  /* GENESIS auto-discovery: the first block holds every video.
+     Library reads it — no manual adding, chain reaction. */
+  try{
+    const gid=localStorage.getItem('blob-genesis-id');
+    if(gid){
+      const r=await fetch('https://aggregator.walrus-testnet.walrus.space/v1/blobs/'+gid);
+      if(r.ok){
+        const g=await r.json();
+        if(g.videos) g.videos.forEach(v=>{
+          if(!library.streams.find(x=>x.manifest===v.manifest)){
+            library.streams.unshift({id:'genesis-'+v.manifest.slice(0,12),title:v.title+' 🧬',
+              at:v.at,chunks:v.chunks,liveKey:'',blobs:[],manifest:v.manifest,
+              status:'genesis',expires_at:v.at/1000+5*86400});
+          }
+        });
+      }
+    }
+  }catch(e){}
   try{
     const r=await fetch(GH+'/live-guide.json?v='+Date.now());
     if(r.ok){ const g=await r.json(); renderLive(g.live_now||[]); }
