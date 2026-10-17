@@ -323,6 +323,8 @@ async function finishFirst(manual){
       localStorage.setItem('bloblive_library',JSON.stringify(lib.slice(0,50)));
       tlog('saved to local library');
     }catch(e){ tlog('library save: '+e.message); }
+    // update genesis — the first block indexes this video for auto-discovery
+    await updateGenesis({manifest:mbid,title:'my-first-video ⭐',chunks:chunks.length,at:Date.now(),liveKey:hex(liveKey)});
   }catch(e){ pubErr=e.message; tlog('PUBLISH FAILED: '+e.message); if(window.errcatch) errcatch(e.message,'finishFirst:publish'); }
   try{ if(stream) stream.getTracks().forEach(t=>t.stop()); }catch(e){}
   $('sticky').style.display='none';
@@ -378,6 +380,49 @@ async function genieVerify(what){
   }
   tlog('GENIE VERIFY ['+what+'] OK');
   return true;
+}
+/* ---------- GENESIS ----------
+   Your personal first block. Holds every video you've made.
+   The library reads this automatically — no manual adding, no lost videos.
+   Each update publishes a NEW genesis blob (Walrus blobs are immutable);
+   the pointer moves forward. This is the domino that starts the chain reaction. */
+const GENESIS_KEY='blob-genesis-id';
+async function getGenesis(){
+  const gid=localStorage.getItem(GENESIS_KEY);
+  if(!gid) return null;
+  try{
+    const r=await fetch(AGG+'/v1/blobs/'+gid);
+    if(!r.ok) return null;
+    return await r.json();
+  }catch(e){ return null; }
+}
+async function updateGenesis(video){
+  // video: {manifest, title, chunks, at, liveKey}
+  try{
+    let g=await getGenesis();
+    if(!g){
+      g={v:1,type:'blob-genesis',creator:{pubkey:'anon',name:'anon'},
+        videos:[],created_at:Date.now(),prev:null};
+      tlog('genesis: creating first block');
+    }
+    // skip duplicates
+    if(g.videos.some(v=>v.manifest===video.manifest)){ tlog('genesis: already indexed'); return; }
+    const prevId=localStorage.getItem(GENESIS_KEY)||null;
+    g.prev=prevId;
+    g.videos.unshift({manifest:video.manifest,title:video.title,chunks:video.chunks,at:video.at});
+    g.videos=g.videos.slice(0,100);
+    g.updated_at=Date.now();
+    const r=await fetch(PUB+'/v1/blobs?epochs=5',{method:'PUT',
+      body:new TextEncoder().encode(JSON.stringify(g))});
+    const j=await r.json();
+    const gid=(j.newlyCreated||j.alreadyCertified).blobObject.blobId;
+    localStorage.setItem(GENESIS_KEY,gid);
+    tlog('genesis: updated → '+gid.slice(0,24)+'… ('+g.videos.length+' videos)');
+    say(`🧬 <b>Genesis updated!</b> Your first block now holds ${g.videos.length} video${g.videos.length>1?'s':''}. The library will find them automatically — chain reaction!`);
+  }catch(e){
+    tlog('genesis update failed: '+e.message);
+    if(window.errcatch) errcatch(e.message,'updateGenesis');
+  }
 }
 </script>
 </body></html>
