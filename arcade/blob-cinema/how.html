@@ -106,6 +106,22 @@ body.teach #teacher{display:block}
 <a href="./live-now.html">📡 live now</a>
 <a href="../index.html">🕹 arcade</a>
 </div>
+<!-- persistent bottom nav — every page, always there -->
+<nav id="bnav">
+<a href="./how.html">🎬<span>make</span></a>
+<a href="./premiere.html">▶<span>watch</span></a>
+<a href="./live-now.html">📡<span>live</span></a>
+<a href="./follow.html">🔗<span>follow</span></a>
+<a href="./reblob.html">📚<span>library</span></a>
+<a href="../index.html">🕹<span>arcade</span></a>
+</nav>
+<style>
+#bnav{position:fixed;bottom:0;left:0;right:0;z-index:50;background:#141428;border-top:2px solid #6C5CE7;display:flex;justify-content:space-around;padding:6px 4px calc(6px + env(safe-area-inset-bottom))}
+#bnav a{color:#b0b0e0;text-decoration:none;font-size:1.3rem;display:flex;flex-direction:column;align-items:center;min-width:52px}
+#bnav a span{font-size:.6rem;margin-top:2px}
+#bnav a:active{color:#fff}
+body{padding-bottom:70px}
+</style>
 </div>
 
 <script>
@@ -213,6 +229,10 @@ async function makeFirst(){
     }catch(e){ tlog(`chunk#${idx}: PUT FAILED ${e.message}`); }
   };
   recorder.start(2000);
+  // genie verifies the recording actually started
+  setTimeout(()=>genieVerify('recording'),3000);
+  // genie re-verifies every 30s during recording
+  const verifyInt=setInterval(()=>{ if(done){clearInterval(verifyInt);return;} genieVerify('chunks'); },30000);
   timerInt=setInterval(()=>{
     secs++;
     $('rectime').textContent=`🔴 ${Math.floor(secs/60)}:${String(secs%60).padStart(2,'0')} / 3:00`;
@@ -220,34 +240,53 @@ async function makeFirst(){
   },1000);
 }
 
-/* share DURING recording — native share sheet, never leaves the screen */
+/* share DURING recording — native share sheet, never leaves the screen.
+   ALWAYS shows the link as fallback. Timeout on Walrus so it can't hang. */
 async function shareLiveNow(){
   if(!chunks.length){ say(`⏳ <b>Hold on!</b> No chunks uploaded yet — give it a few seconds, then share.`); return; }
-  $('b-sharelive').textContent='⏳ publishing…'; $('b-sharelive').disabled=true;
+  const btn=$('b-sharelive');
+  btn.textContent='⏳ publishing…'; btn.disabled=true;
   say(`📡 <b>Publishing your live link…</b>`);
+  let wlink=null, mbid=null;
   try{
     const manifest={v:1,type:'blob-manifest',title:'live-now',created_at:Date.now(),
-      method:'nacl-secretbox/sha256-chain-v1',chunks:chunks,live:true,
+      method:'nacl-secretbox/sha256-chain-v1',chunks:chunks.map(c=>({...c})),live:true,
       tail:{v:1,community:{artifacts:[],game_assets:[],channels:[],votes:{}},reblob:{policy:'auto',count:0}}};
-    const r=await fetch(PUB+'/v1/blobs?epochs=5',{method:'PUT',body:new TextEncoder().encode(JSON.stringify(manifest))});
+    // timeout: Walrus PUTs hang sometimes — 30s max
+    const ctrl=new AbortController();
+    const to=setTimeout(()=>ctrl.abort(),30000);
+    const r=await fetch(PUB+'/v1/blobs?epochs=5',{method:'PUT',signal:ctrl.signal,
+      body:new TextEncoder().encode(JSON.stringify(manifest))});
+    clearTimeout(to);
+    if(!r.ok) throw new Error('Walrus HTTP '+r.status);
     const j=await r.json();
-    const mbid=(j.newlyCreated||j.alreadyCertified).blobObject.blobId;
+    mbid=(j.newlyCreated||j.alreadyCertified).blobObject.blobId;
     window._livembid=mbid;
-    const wlink=location.origin+location.pathname.replace('how.html','premiere.html')+'?watch='+mbid+'#'+hex(liveKey);
+    wlink=location.origin+location.pathname.replace('how.html','premiere.html')+'?watch='+mbid+'#'+hex(liveKey);
     tlog('LIVE MANIFEST = '+mbid);
-    // native share sheet — stays on screen, uses his channels
-    if(navigator.share){
-      try{
-        await navigator.share({title:'🎬 watch me LIVE on the blockchain!',text:'I\'m live on BLOB CINEMA — no servers, just math. Watch:',url:wlink});
-        say(`📡 <b>Shared!</b> Keep recording — friends are watching <b>right now</b>!`);
-      }catch(e){ /* user cancelled */ say(`📡 <b>Link ready!</b> The share sheet closed — tap share again anytime to resend.`); }
-    } else {
-      $('livelink').value=wlink;
-      $('sharelive').style.display='block';
-      say(`📡 <b>LIVE!</b> Link's below — copy and send! Friends watch <b>right now</b>.`);
+  }catch(e){
+    say(`😢 <b>Publish failed:</b> ${e.message}. Your chunks are still safe on Walrus — try share again in a few seconds.`);
+    tlog('shareLiveNow FAILED: '+e.message);
+    if(window.errcatch) errcatch(e.message,'shareLiveNow');
+    btn.textContent='📡 share live link'; btn.disabled=false;
+    return;
+  }
+  // ALWAYS show the link box (fallback even when native share works)
+  $('livelink').value=wlink;
+  $('sharelive').style.display='block';
+  $('sharelive').scrollIntoView({behavior:'smooth',block:'nearest'});
+  // try native share sheet
+  if(navigator.share){
+    try{
+      await navigator.share({title:'🎬 watch me LIVE on the blockchain!',text:'I\'m live on BLOB CINEMA — no servers, just math. Watch:',url:wlink});
+      say(`📡 <b>Shared!</b> Link's also in the green box below — keep recording, friends are watching <b>right now</b>!`);
+    }catch(e){
+      say(`📡 <b>Link's ready in the green box!</b> Copy it and send it anywhere — friends watch <b>right now</b>.`);
     }
-  }catch(e){ say(`😢 share failed: ${e.message}`); if(window.errcatch) errcatch(e.message,'shareLiveNow'); }
-  $('b-sharelive').textContent='📡 share live link'; $('b-sharelive').disabled=false;
+  } else {
+    say(`📡 <b>LIVE!</b> Link's in the green box — copy and send! Friends watch <b>right now</b>.`);
+  }
+  btn.textContent='📡 share live link'; btn.disabled=false;
 }
 
 async function finishFirst(manual){
@@ -310,6 +349,35 @@ function addStep(id,title,detail){
   }
   el.classList.add('done');
   el.innerHTML=`<div class="h">${title}</div><div class="d">${detail}</div>`;
+}
+/* ---------- GENIE VERIFICATION ----------
+   The genie doesn't just narrate — it CHECKS. Called at key moments.
+   Reports what's real, flags what's wrong. */
+async function genieVerify(what){
+  const issues=[];
+  if(what==='recording'){
+    if(!recorder) issues.push('recorder not running');
+    else if(recorder.state!=='recording') issues.push('recorder state: '+recorder.state);
+    if(!stream) issues.push('no media stream');
+    else { const vt=stream.getVideoTracks(); if(!vt.length||vt[0].readyState!=='live') issues.push('video track dead'); }
+    if(!liveKey) issues.push('no live key!');
+  }
+  if(what==='chunks'){
+    if(!chunks.length) issues.push('0 chunks uploaded — check network/Walrus');
+    const bad=chunks.filter(c=>!c.blob||!c.blob.length);
+    if(bad.length) issues.push(bad.length+' chunks missing blob IDs');
+  }
+  if(what==='share'){
+    if(!window._livembid) issues.push('no live manifest published yet');
+  }
+  if(issues.length){
+    say(`🔍 <b>Genie check — problems found:</b><br>· ${issues.join('<br>· ')}<br><span style="color:#ffb347">I'm on it — check the teacher log below.</span>`);
+    tlog('GENIE VERIFY ['+what+'] ISSUES: '+issues.join('; '));
+    if(window.errcatch) errcatch('genie verify ['+what+']: '+issues.join('; '),'genieVerify');
+    return false;
+  }
+  tlog('GENIE VERIFY ['+what+'] OK');
+  return true;
 }
 </script>
 </body></html>
