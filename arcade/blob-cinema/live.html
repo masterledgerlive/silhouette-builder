@@ -558,6 +558,7 @@ async function watchMode(manifestBlob,keyHex){
     startViewers();
   }catch(e){ manLog('<span style="color:#ff5470">✗ watch failed: '+e.message+'</span>'); }
 }
+function renderLibrary(){
   const q=($('libsearch').value||'').toLowerCase();
   const lib=JSON.parse(localStorage.getItem('bloblive_library')||'[]').filter(r=>r.title.toLowerCase().includes(q));
   $('liblist').innerHTML=lib.length?lib.map(r=>{
