@@ -40,8 +40,9 @@ input,select{background:#0b0b1a;border:1px solid #33336a;color:#e8e8ff;border-ra
   <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
     <select id="srcsel">
       <option value="test">🎨 Test pattern (no permissions)</option>
-      <option value="cam">📷 Webcam</option>
-      <option value="screen">🖥 Screen share</option>
+      <option value="cam">📷 Webcam + mic</option>
+      <option value="screen">🖥 Screen / window / tab — pick any game window to record gameplay</option>
+      <option value="screen-video">🎮 Game window (video only, no system audio)</option>
     </select>
     <input id="livetitle" placeholder="stream title…" style="flex:1;min-width:140px">
     <button class="btn go" id="gobtn" onclick="goLive()">🔴 GO LIVE</button>
@@ -146,8 +147,17 @@ async function getSource(){
   const kind=$('srcsel').value;
   if(kind==='test') return startTestPattern();
   if(kind==='cam') return await navigator.mediaDevices.getUserMedia({video:{width:640},audio:true});
+  if(kind==='screen-video') return await navigator.mediaDevices.getDisplayMedia({video:true,audio:false});
   return await navigator.mediaDevices.getDisplayMedia({video:true,audio:true});
 }
+// autostart from arcade hub: ?autostart=screen&title=...
+(function(){
+  const q=new URLSearchParams(location.search);
+  const as=q.get('autostart'), ti=q.get('title');
+  if(ti) $('livetitle').value=ti;
+  if(as){ $('srcsel').value=(as==='screen-video')?'screen-video':'screen';
+    setTimeout(()=>{ if(!live) goLive(); },1200); }
+})();
 
 /* ---------- broadcaster ---------- */
 function stage(id,on){ $(id).classList.toggle('on',!!on); }
