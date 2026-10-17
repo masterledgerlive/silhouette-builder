@@ -319,10 +319,14 @@ async function shareLiveNow(){
 }
 
 async function finishFirst(manual){
-  if(done) return; done=true;
+  // Reset done if stuck from a previous failed attempt
+  if(done){ done=false; }
+  done=true;
   // immediate visible feedback — button works NOW
-  $('b-stop').textContent='⏳ wrapping…'; $('b-stop').disabled=true;
-  $('b-sharelive').disabled=true;
+  const bstop=$('b-stop');
+  if(bstop){ bstop.textContent='⏳ wrapping…'; bstop.disabled=true; }
+  const bshare=$('b-sharelive');
+  if(bshare) bshare.disabled=true;
   clearInterval(timerInt);
   say(`⏹️ <b>Wrapping up!</b> Stopping the camera first, then publishing…`);
   try{ if(recorder&&recorder.state!=='inactive') recorder.stop(); }catch(e){ tlog('recorder.stop: '+e.message); }
