@@ -220,10 +220,11 @@ async function makeFirst(){
   },1000);
 }
 
-/* share DURING recording — publish current manifest so friends watch live */
+/* share DURING recording — native share sheet, never leaves the screen */
 async function shareLiveNow(){
   if(!chunks.length){ say(`⏳ <b>Hold on!</b> No chunks uploaded yet — give it a few seconds, then share.`); return; }
-  say(`📡 <b>Publishing your live link…</b> Friends opening it see everything so far — and the replay grows as you keep recording!`);
+  $('b-sharelive').textContent='⏳ publishing…'; $('b-sharelive').disabled=true;
+  say(`📡 <b>Publishing your live link…</b>`);
   try{
     const manifest={v:1,type:'blob-manifest',title:'live-now',created_at:Date.now(),
       method:'nacl-secretbox/sha256-chain-v1',chunks:chunks,live:true,
@@ -232,23 +233,35 @@ async function shareLiveNow(){
     const j=await r.json();
     const mbid=(j.newlyCreated||j.alreadyCertified).blobObject.blobId;
     window._livembid=mbid;
-    const link=location.origin+location.pathname.replace('how.html','play.html')+'?id=live#'+hex(liveKey);
-    // store manifest id in the link via a tiny redirect trick: use watch-style link instead
-    const wlink=location.origin+location.pathname.replace('how.html','watch.html')+'?watch='+mbid+'#'+hex(liveKey);
-    $('livelink').value=wlink;
-    $('sharelive').style.display='block';
+    const wlink=location.origin+location.pathname.replace('how.html','premiere.html')+'?watch='+mbid+'#'+hex(liveKey);
     tlog('LIVE MANIFEST = '+mbid);
-    say(`📡 <b>LIVE!</b> Link's in the green box — copy it, send it! Friends watch <b>right now</b>. Keep recording — the link keeps working, and the final replay has everything.`);
+    // native share sheet — stays on screen, uses his channels
+    if(navigator.share){
+      try{
+        await navigator.share({title:'🎬 watch me LIVE on the blockchain!',text:'I\'m live on BLOB CINEMA — no servers, just math. Watch:',url:wlink});
+        say(`📡 <b>Shared!</b> Keep recording — friends are watching <b>right now</b>!`);
+      }catch(e){ /* user cancelled */ say(`📡 <b>Link ready!</b> The share sheet closed — tap share again anytime to resend.`); }
+    } else {
+      $('livelink').value=wlink;
+      $('sharelive').style.display='block';
+      say(`📡 <b>LIVE!</b> Link's below — copy and send! Friends watch <b>right now</b>.`);
+    }
   }catch(e){ say(`😢 share failed: ${e.message}`); if(window.errcatch) errcatch(e.message,'shareLiveNow'); }
+  $('b-sharelive').textContent='📡 share live link'; $('b-sharelive').disabled=false;
 }
 
 async function finishFirst(manual){
   if(done) return; done=true;
+  // immediate visible feedback — button works NOW
+  $('b-stop').textContent='⏳ wrapping…'; $('b-stop').disabled=true;
+  $('b-sharelive').disabled=true;
   clearInterval(timerInt);
-  try{recorder.stop();}catch(e){}
+  say(`⏹️ <b>Wrapping up!</b> Stopping the camera first, then publishing…`);
+  try{ if(recorder&&recorder.state!=='inactive') recorder.stop(); }catch(e){ tlog('recorder.stop: '+e.message); }
   if(tint) clearInterval(tint);
-  say(`⏹️ <b>Wrapping up!</b> ${manual?'You stopped it':'3 minutes!'} — publishing the final treasure map with <b>everything</b>, sewing on the backpack, and filing it in the library <b>forever</b>.`);
-  await wait(3000); // last chunks land
+  say(`⏹️ <b>Camera off!</b> ${chunks.length} chunks captured. Publishing your treasure map…`);
+  await wait(2500); // last chunks land
+  let mbid=null, pubErr=null;
   try{
     const manifest={v:1,type:'blob-manifest',title:'my-first-video',created_at:Date.now(),
       method:'nacl-secretbox/sha256-chain-v1',chunks:chunks,
@@ -256,27 +269,36 @@ async function finishFirst(manual){
       tail:{v:1,system:'first video — pure math, no magic',
         community:{artifacts:[],game_assets:[{kind:'badge',name:'first-video-star',note:'made in kid teacher mode'}],channels:[],votes:{}},
         reblob:{policy:'auto',count:0,note:'keeper moves these before expiry — forever'}}};
+    say(`📋 <b>Publishing…</b> ${chunks.length} chunks going into the treasure map…`);
     const r=await fetch(PUB+'/v1/blobs?epochs=5',{method:'PUT',body:new TextEncoder().encode(JSON.stringify(manifest))});
+    if(!r.ok) throw new Error('Walrus HTTP '+r.status);
     const j=await r.json();
-    const mbid=(j.newlyCreated||j.alreadyCertified).blobObject.blobId;
+    mbid=(j.newlyCreated||j.alreadyCertified).blobObject.blobId;
     tlog('FINAL MANIFEST = '+mbid+'\nPROOF = '+manifest.proof);
-    window._finallink=location.origin+location.pathname.replace('how.html','watch.html')+'?watch='+mbid+'#'+hex(liveKey);
+    window._finallink=location.origin+location.pathname.replace('how.html','premiere.html')+'?watch='+mbid+'#'+hex(liveKey);
     // save to local library
     try{
       const lib=JSON.parse(localStorage.getItem('bloblive_library')||'[]');
       lib.unshift({id:'first-'+Date.now(),title:'my-first-video ⭐',at:Date.now(),chunks:chunks.length,liveKey:hex(liveKey),
         blobs:chunks,manifest:mbid});
       localStorage.setItem('bloblive_library',JSON.stringify(lib.slice(0,50)));
-    }catch(e){}
-  }catch(e){ window._finallink='(publish failed: '+e.message+')'; }
-  if(stream) stream.getTracks().forEach(t=>t.stop());
+      tlog('saved to local library');
+    }catch(e){ tlog('library save: '+e.message); }
+  }catch(e){ pubErr=e.message; tlog('PUBLISH FAILED: '+e.message); if(window.errcatch) errcatch(e.message,'finishFirst:publish'); }
+  try{ if(stream) stream.getTracks().forEach(t=>t.stop()); }catch(e){}
   $('sticky').style.display='none';
   $('recording').style.display='none';
   $('result').style.display='block';
   window.scrollTo(0,0);
-  $('resulttext').innerHTML=`<b>${chunks.length} chunks. ${Math.round(chunks.reduce((a,c)=>a+c.bytes,0)/1024)}KB. Pure math.</b><br><br>Every 2 seconds: <b>captured → locked with K_n → uploaded to Walrus</b>.<br>Keys grew by <b>K_(n+1) = SHA256(K_n ‖ "|next")</b>.<br>Treasure map published. Backpack sewn on. Filed in your library.<br><br>As long as reblob keeps moving them, this lives <b>forever</b>. ♾️<br>No genie. No magic. Just math you can check.`;
-  $('resultlinks').innerHTML=`<div class="kid">🔗 <span style="font-family:monospace;font-size:.75rem;word-break:break-all">${window._finallink}</span></div>`;
-  say(`🎉 <b>FOREVER!</b> ${chunks.length} chunks on the blockchain, in your library. That link replays it <b>anytime</b> — prove it to anyone. <b>No magic. Just math.</b> 🎬`);
+  if(mbid){
+    $('resulttext').innerHTML=`<b style="color:#7CFF6B">✅ SAVED!</b><br><br><b>${chunks.length} chunks. ${Math.round(chunks.reduce((a,c)=>a+c.bytes,0)/1024)}KB. Pure math.</b><br><br>Every 2 seconds: <b>captured → locked with K_n → uploaded to Walrus</b>.<br>Keys grew by <b>K_(n+1) = SHA256(K_n ‖ "|next")</b>.<br>Treasure map: <span style="font-family:monospace;font-size:.7rem;word-break:break-all">${mbid}</span><br><br>As long as reblob keeps moving them, this lives <b>forever</b>. ♾️<br>No genie. No magic. Just math you can check.`;
+    $('resultlinks').innerHTML=`<div class="kid">🔗 <span style="font-family:monospace;font-size:.75rem;word-break:break-all">${window._finallink}</span></div>`;
+    say(`🎉 <b>SAVED FOREVER!</b> ${chunks.length} chunks, treasure map published, in your library. That link replays it <b>anytime</b>. <b>No magic. Just math.</b> 🎬`);
+  } else {
+    $('resulttext').innerHTML=`<b style="color:#ff5470">⚠️ Recording stopped, but publishing failed.</b><br><br>${chunks.length} chunks were captured and uploaded individually (they're on Walrus!), but the treasure map didn't publish: ${pubErr}<br><br>Your chunks are safe — each has its own blob ID. Try again and it'll work.`;
+    $('resultlinks').innerHTML=`<div class="kid">chunk blobs: ${chunks.map(c=>c.blob.slice(0,12)+'…').join(', ')}</div>`;
+    say(`⚠️ <b>Stopped!</b> Chunks are safe on Walrus, but the map didn't publish. Your video pieces are NOT lost.`);
+  }
 }
 
 function addStep(id,title,detail){
