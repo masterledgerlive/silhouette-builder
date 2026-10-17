@@ -352,6 +352,12 @@ async function finishFirst(manual){
     }catch(e){ tlog('library save: '+e.message); }
     // update genesis — the first block indexes this video for auto-discovery
     await updateGenesis({manifest:mbid,title:'my-first-video ⭐',chunks:chunks.length,at:Date.now(),liveKey:hex(liveKey)});
+    // show genesis ID for public channel
+    const gid=localStorage.getItem(GENESIS_KEY);
+    if(gid){
+      say(`🌐 <b>Go public?</b> Your genesis (first block) is:<br><code style="font-size:.7rem;word-break:break-all">${gid}</code><br>Send this to Kodakai to list your videos in the public library — anyone can watch, no share link needed.`);
+      tlog('GENESIS ID (public): '+gid);
+    }
   }catch(e){ pubErr=e.message; tlog('PUBLISH FAILED: '+e.message); if(window.errcatch) errcatch(e.message,'finishFirst:publish'); }
   try{ if(stream) stream.getTracks().forEach(t=>t.stop()); }catch(e){}
   $('sticky').style.display='none';
@@ -436,7 +442,8 @@ async function updateGenesis(video){
     if(g.videos.some(v=>v.manifest===video.manifest)){ tlog('genesis: already indexed'); return; }
     const prevId=localStorage.getItem(GENESIS_KEY)||null;
     g.prev=prevId;
-    g.videos.unshift({manifest:video.manifest,title:video.title,chunks:video.chunks,at:video.at});
+    g.videos.unshift({manifest:video.manifest,title:video.title,chunks:video.chunks,at:video.at,
+      liveKey:video.liveKey||''}); // liveKey included so public channel viewers can watch
     g.videos=g.videos.slice(0,100);
     g.updated_at=Date.now();
     const r=await fetch(PUB+'/v1/blobs?epochs=5',{method:'PUT',
