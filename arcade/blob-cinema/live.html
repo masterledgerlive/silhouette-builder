@@ -564,7 +564,8 @@ async function watchMode(manifestBlob,keyHex){
 function renderLibrary(){
   const q=($('libsearch').value||'').toLowerCase();
   const lib=JSON.parse(localStorage.getItem('bloblive_library')||'[]').filter(r=>r.title.toLowerCase().includes(q));
-  $('liblist').innerHTML=lib.length?lib.map(r=>{
+  $('liblist').innerHTML=lib.length?lib.map((r,idx)=>{
+    if(!r.id) r.id='legacy-'+(r.at||Date.now())+'-'+idx;
     const left=(r.expires_at||0)-Date.now()/1000;
     const leftTxt=left<0?'<span style="color:#ff5470">⚠ EXPIRED</span>':`<span>⏱ ${Math.floor(left/86400)}d ${Math.floor(left%86400/3600)}h till reblob</span>`;
     const key=r.liveKey||'';
