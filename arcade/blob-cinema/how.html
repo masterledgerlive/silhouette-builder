@@ -138,12 +138,14 @@ let srcKind=null, stream=null, recorder=null, chunks=[], keyChain=[], liveKey=nu
 let nChunk=0, secs=0, timerInt=null, tint=null, fileURL=null, done=false;
 const MAXSECS=180;
 
-async function shaStr(s){ const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s)); return hex(new Uint8Array(b)); }
+async function shaStr(s){ const b=await sha256robust(new TextEncoder().encode(s)); return hex(new Uint8Array(b)); }
 async function shaBytes(u8){
-  const b=await crypto.subtle.digest('SHA-256',u8);
+  const b=await sha256robust(u8);
   return hex(new Uint8Array(b));
 }
 /* STANDARD: K(n+1) = SHA256(raw_bytes(K(n)) + "|next") — must match play.html/watch.html/live.html */
+
+
 async function deriveKey(prev){
   const input=new Uint8Array([...prev,...new TextEncoder().encode('|next')]);
   return bhex(await shaBytes(input));
