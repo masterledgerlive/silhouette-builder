@@ -5,56 +5,50 @@
 <video id="v" controls muted style="width:320px;background:#000"></video>
 <script>
 const out=(t)=>{document.getElementById('out').textContent+=t+'\n';};
+// minimal nacl secretbox stub for diag — uses real crypto via subtle? No, just XOR for format test
+// Actually: we test if ENCRYPT-THEN-DECRYPT preserves bytes exactly
+function xorCrypt(data,keyByte){ const o=new Uint8Array(data.length); for(let i=0;i<data.length;i++)o[i]=data[i]^keyByte; return o; }
 async function run(){
-  out('MediaSource supported: '+!!window.MediaSource);
-  const mimes=['video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm;codecs=vp9,opus','video/webm','video/mp4'];
-  mimes.forEach(m=>out(m+' → rec:'+(window.MediaRecorder&&MediaRecorder.isTypeSupported(m))+' mse:'+(window.MediaSource&&MediaSource.isTypeSupported(m))));
-  // draw pattern
+  out('=== DIAG: record → encrypt → decrypt → append (separate) ===');
   const cv=document.getElementById('cv'),ctx=cv.getContext('2d');let t=0;
   const timer=setInterval(()=>{t+=0.1;ctx.fillStyle='#102';ctx.fillRect(0,0,320,180);
     ctx.fillStyle='hsl('+(t*50%360)+',80%,60%)';ctx.beginPath();ctx.arc(160,90,40+20*Math.sin(t),0,7);ctx.fill();
     ctx.fillStyle='#fff';ctx.fillText('t='+t.toFixed(1),10,20);},50);
   const stream=cv.captureStream(30);
-  out('stream tracks: video='+stream.getVideoTracks().length+' audio='+stream.getAudioTracks().length);
   const mime='video/webm;codecs=vp9';
-  // REPLICATE LIVE: 2000ms timeslice, append each chunk SEPARATELY
   const rec=new MediaRecorder(stream,{mimeType:mime});
   const v=document.getElementById('v');
   const ms=new MediaSource(); v.src=URL.createObjectURL(ms);
   let sb=null, chunkIdx=0, okCount=0, failCount=0;
   ms.addEventListener('sourceopen',()=>{
-    out('sourceopen, readyState='+ms.readyState);
-    try{
-      sb=ms.addSourceBuffer(mime);
-      out('addSourceBuffer OK — now recording 2s chunks, appending separately...');
-      sb.addEventListener('error',()=>out('!! SourceBuffer ERROR event'));
-      rec.start(2000);
-    }catch(e){ out('SETUP FAILED: '+(e.message||e)); }
+    out('sourceopen');
+    try{ sb=ms.addSourceBuffer(mime); out('SB OK'); rec.start(2000); }
+    catch(e){ out('SETUP FAIL: '+(e.message||e)); }
   });
-  ms.addEventListener('sourceclose',()=>out('source CLOSED'));
   rec.ondataavailable=async e=>{
     if(!e.data||!e.data.size) return;
     const idx=chunkIdx++;
-    const buf=new Uint8Array(await e.data.arrayBuffer());
-    const magic=Array.from(buf.slice(0,4)).map(b=>b.toString(16).padStart(2,'0')).join('');
-    out(`chunk #${idx}: ${buf.length} bytes, magic=${magic}${idx===0?' (INIT?)':''}`);
-    if(!sb){ out('no SB yet, skipping'); return; }
-    if(sb.updating){ out('SB busy, skipping chunk '+idx); return; }
+    const raw=new Uint8Array(await e.data.arrayBuffer());
+    // encrypt → decrypt (simulating live.html pipeline)
+    const enc=xorCrypt(raw, 0xAB);
+    const dec=xorCrypt(enc, 0xAB);
+    const same = raw.length===dec.length && raw.every((b,i)=>b===dec[i]);
+    out(`chunk #${idx}: ${raw.length}b, roundtrip ${same?'OK':'CORRUPT'}`);
+    if(!same){ out('FATAL: encrypt/decrypt corrupted data'); return; }
+    if(!sb||sb.updating){ out('skip '+idx); return; }
     try{
       await new Promise((res,rej)=>{
         const on=()=>{sb.removeEventListener('updateend',on);res();};
-        const onErr=()=>{sb.removeEventListener('updateend',on);rej(new Error('SB error event'));};
-        sb.addEventListener('updateend',on); sb.addEventListener('error',onErr);
-        sb.appendBuffer(buf);
+        sb.addEventListener('updateend',on);
+        sb.appendBuffer(dec);
       });
-      okCount++;
-      out(`chunk #${idx} appended OK (${okCount} ok)`);
-      if(idx===0) v.play().then(()=>out('playing!')).catch(e=>out('play: '+e.message));
-    }catch(e){ failCount++; out(`chunk #${idx} FAILED: ${(e.message||e)} (${failCount} fails)`); }
+      okCount++; out(`append #${idx} OK`);
+      if(idx===0) v.play().catch(()=>{});
+    }catch(e){ failCount++; out(`append #${idx} FAIL: ${(e.message||e)}`); }
   };
   await new Promise(r=>setTimeout(r,9000));
   rec.stop(); clearInterval(timer);
-  out(`DONE: ${okCount} appended, ${failCount} failed`);
+  out(`DONE: ${okCount} ok, ${failCount} failed`);
 }
 run();
 </script></body></html>
