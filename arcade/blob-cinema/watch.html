@@ -79,27 +79,46 @@ async function load(){
   const keyHex=location.hash.slice(1);
   if(!mbid||!keyHex||keyHex.length<64){ $('stat').textContent='bad link — need ?watch=<blob>#<key>'; return; }
   $('sharelink').value=location.href;
+  const errs=[];
   try{
     $('stat').textContent='fetching manifest from Walrus…';
     const r=await fetch(AGG+'/v1/blobs/'+mbid);
+    if(!r.ok) throw new Error('manifest fetch failed: HTTP '+r.status+' — blob '+mbid.slice(0,16)+'… may have expired');
     manifest=await r.json();
+    if(!manifest.chunks||!manifest.chunks.length) throw new Error('manifest has no chunks');
     $('title').textContent='📡 '+manifest.title;
     keyChain=[bhex(keyHex)];
     $('keymain').textContent=keyHex.slice(0,32)+'…';
     $('stat').textContent='fetching '+manifest.chunks.length+' chunks…';
-    // fetch all chunks
+    // fetch all chunks with detailed error tracking
     for(const c of manifest.chunks){
+      if(!c.blob||c.blob.startsWith('PUT-FAILED')){
+        errs.push(`chunk ${c.n}: bad blob ID (${String(c.blob).slice(0,30)})`);
+        chunks[c.n]={n:c.n,ok:false,why:'bad-blob-id'};
+        continue;
+      }
       try{
         const cr=await fetch(AGG+'/v1/blobs/'+c.blob);
+        if(!cr.ok){ errs.push(`chunk ${c.n}: Walrus HTTP ${cr.status}`); chunks[c.n]={n:c.n,ok:false,why:'http-'+cr.status}; continue; }
         const cipher=new Uint8Array(await cr.arrayBuffer());
+        if(cipher.length<25){ errs.push(`chunk ${c.n}: blob too small (${cipher.length}b)`); chunks[c.n]={n:c.n,ok:false,why:'too-small'}; continue; }
         chunks[c.n]={n:c.n,blob:c.blob,keyIdx:c.keyIdx,type:c.type,ok:true};
         cipherChunks[c.n]=cipher;
-      }catch(e){ chunks[c.n]={n:c.n,ok:false}; }
+      }catch(e){ errs.push(`chunk ${c.n}: ${e.message}`); chunks[c.n]={n:c.n,ok:false,why:e.message}; }
     }
     const ok=chunks.filter(c=>c&&c.ok).length;
-    $('stat').textContent='✓ '+ok+' chunks from the chain — playing…';
+    if(ok===0){
+      $('stat').innerHTML='✗ <b>0 chunks playable.</b> Reasons:<br>'+errs.slice(0,8).map(e=>'· '+e).join('<br>')+(errs.length>8?`<br>…+${errs.length-8} more`:'');
+      if(window.errcatch) errcatch('watch: 0/'+manifest.chunks.length+' chunks playable','load');
+      return;
+    }
+    $('stat').textContent='✓ '+ok+'/'+manifest.chunks.length+' chunks from the chain'+(errs.length?` (${errs.length} failed — see below)`:'')+' — playing…';
+    if(errs.length) $('stat').innerHTML+='<br><span style="font-size:.75rem">'+errs.slice(0,5).map(e=>'· '+e).join('<br>')+'</span>';
     buildViewers();
-  }catch(e){ $('stat').textContent='✗ '+e.message; }
+  }catch(e){
+    $('stat').textContent='✗ '+e.message;
+    if(window.errcatch) errcatch(e.message,'watch:load');
+  }
 }
 function buildViewers(){
   // main player (no delay)
