@@ -95,6 +95,7 @@ const AGG='https://aggregator.walrus-testnet.walrus.space', PUB='https://publish
 const CHUNK_MS=2000;
 let live=false, recorder=null, liveStream=null, testTimer=null;
 let liveKey=null, keyChain=[], chunks=[], captions=[], nChunk=0, tStart=0;
+let streamId=null;
 /* cipherChunks[i] = the exact encrypted bytes PUT to Walrus for chunk i.
    Viewers decrypt from memory (instant, zero network); the blobs are still
    really on Walrus (see manifest) and "verify from chain" fetches one live. */
@@ -175,6 +176,7 @@ async function goLive(){
   catch(e){ alert('source failed: '+e.message+' — use Test pattern.'); return; }
   $('preview').srcObject=liveStream;
   liveKey=nacl.randomBytes(32); keyChain=[liveKey]; chunks=[]; cipherChunks=[]; captions=[]; nChunk=0;
+  streamId='live-'+new Date().toISOString().slice(0,16).replace(/[:-]/g,'')+'-'+Math.random().toString(36).slice(2,7);
   $('livekey').textContent=hex(liveKey);
   const hasAudio=liveStream.getAudioTracks().length>0;
   liveMime=pickMime(hasAudio);
@@ -314,9 +316,11 @@ async function pumpViewer(w){
         w.v.play().catch(()=>{});
       }catch(e){
         w.errs++;
-        wstat(w,'⚠ '+(e&&e.message?e.message:String(e))+' (retry '+w.errs+')');
-        if(w.errs>8){ wstat(w,'⛔ giving up on chunk '+w.nextN+': '+(e&&e.message?e.message:String(e))); w.nextN++; w.errs=0; }
-        await new Promise(r=>setTimeout(r,1500));
+        // Do NOT retry the same chunk — a partial append + retry = duplicate timestamps = fatal.
+        // Skip it (gap is harmless, duplicate is fatal) and move on.
+        wstat(w,'⚠ skipped chunk '+w.nextN+': '+(e&&e.message?e.message:String(e)).slice(0,80));
+        w.nextN++; w.errs=0;
+        await new Promise(r=>setTimeout(r,300));
       }
     }
   }finally{ w.pumping=false; }
@@ -368,14 +372,28 @@ async function stopLive(){
   const title=$('livetitle').value||('live-'+new Date().toISOString().slice(0,16));
   const lib=JSON.parse(localStorage.getItem('bloblive_library')||'[]');
   const solid=chunks.filter(c=>c);
-  const rec={title,at:Date.now(),chunks:solid.length,captions:captions.length,
-    liveKey:hex(liveKey),blobs:solid.filter(c=>c.ok).map(c=>({n:c.n,blob:c.blob,keyIdx:c.keyIdx}))};
+  const okBlobs=solid.filter(c=>c.ok).map(c=>({n:c.n,blob:c.blob,keyIdx:c.keyIdx,bytes:c.bytes,capturedAt:c.capturedAt}));
+  const rec={id:streamId,title,at:Date.now(),chunks:solid.length,captions:captions.length,
+    liveKey:hex(liveKey),blobs:okBlobs,
+    expires_at:Date.now()/1000+5*86400, // 5 epochs ≈ 5 days; reblob before this
+    proof:{commitment:'sha256(live_key|blob_ids)',note:'hash-commitment, not zk-SNARK'}};
   lib.unshift(rec); localStorage.setItem('bloblive_library',JSON.stringify(lib));
   renderLibrary();
-  manLog(`<span class="ok">📚 LIBRARY</span> "${title}" saved — ${rec.blobs.length} blobs, ${captions.length} captions. Re-copy with fresh nonces → keeper watches it.`);
-  // hand the bundle to the keeper pattern: same keys, fresh nonces (operator runs keeper.py with it)
+  manLog(`<span class="ok">📚 LIBRARY</span> "${title}" saved — ${rec.blobs.length} blobs, ${captions.length} captions. ⏱ reblob before ${new Date(rec.expires_at*1000).toLocaleString()}`);
+  // Full stream manifest for handoff: send to Kodakai → published to GitHub + keeper bundle
+  const fullManifest={id:streamId,title,live_key:hex(liveKey),started_at:tStart/1000,ended_at:Date.now()/1000,
+    chunks:okBlobs,captions:captions,expires_at:rec.expires_at};
+  const dl=document.createElement('a');
+  dl.href=URL.createObjectURL(new Blob([JSON.stringify(fullManifest,null,1)],{type:'application/json'}));
+  dl.download=streamId+'.livestream.json'; dl.textContent='💾 download stream manifest';
+  dl.className='btn'; dl.style.display='inline-block'; dl.style.marginTop='8px'; dl.style.textDecoration='none';
+  $('manifestlog').prepend(dl);
+  const pb=document.createElement('div'); pb.className='lbl'; pb.style.marginTop='6px';
+  pb.innerHTML='📤 Send the <b>'+streamId+'.livestream.json</b> to Kodakai → publishes to the <a href="./reblob.html">Reblob Forever Library</a> + keeper auto-reblob watches it. <a href="./reblob.html">📚 open library</a> · <a href="./play.html?id='+streamId+'">▶ play (local)</a>';
+  $('manifestlog').prepend(pb);
+  // keeper bundle (legacy handoff)
   const bundle={film:title+' (live)',type:'remote',epochs:5,auto_renew:true,
-    pieces:rec.blobs.map(b=>({n:b.n,blob_id:b.blob,key_hex:'',expires_at:Date.now()/1000+5*86400}))};
+    pieces:okBlobs.map(b=>({n:b.n,blob_id:b.blob,key_hex:'',expires_at:Date.now()/1000+5*86400}))};
   const blob=new Blob([JSON.stringify(bundle,null,1)],{type:'application/json'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
   a.download=title.replace(/\W+/g,'-')+'.keeper.json'; a.textContent='📦 download keeper bundle';
@@ -385,9 +403,11 @@ async function stopLive(){
 function renderLibrary(){
   const q=($('libsearch').value||'').toLowerCase();
   const lib=JSON.parse(localStorage.getItem('bloblive_library')||'[]').filter(r=>r.title.toLowerCase().includes(q));
-  $('liblist').innerHTML=lib.length?lib.map(r=>
-    `<div class="mono" style="padding:8px;background:#0b0b1a;border-radius:8px;margin:6px 0">📼 <b>${r.title}</b> · ${new Date(r.at).toLocaleString()} · ${r.chunks} chunks · ${r.captions} captions · 🔑<span style="font-size:.7rem">${r.liveKey.slice(0,16)}…</span></div>`
-  ).join(''):'<span class="lbl">no saved streams yet.</span>';
+  $('liblist').innerHTML=lib.length?lib.map(r=>{
+    const left=(r.expires_at||0)-Date.now()/1000;
+    const leftTxt=left<0?'<span style="color:#ff5470">⚠ EXPIRED</span>':`<span>⏱ ${Math.floor(left/86400)}d ${Math.floor(left%86400/3600)}h till reblob</span>`;
+    return `<div class="mono" style="padding:8px;background:#0b0b1a;border-radius:8px;margin:6px 0">📼 <b>${r.title}</b> · ${new Date(r.at).toLocaleString()} · ${r.chunks} chunks · ${leftTxt} · 🔑<span style="font-size:.7rem">${r.liveKey.slice(0,16)}…</span> <a href="./play.html?id=${r.id}" style="color:#7CFF6B">▶ play</a></div>`;
+  }).join(''):'<span class="lbl">no saved streams yet.</span>';
 }
 renderLibrary();
 </script>
