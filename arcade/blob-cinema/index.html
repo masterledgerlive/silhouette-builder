@@ -395,7 +395,7 @@ function mseSanitize(u8){
     }
     if (k > 0) moofs.push({b, k});
   }
-  if (!moofs.length) return u8;
+  if (!moofs.length) { window._sdbg = 'topkids=' + kids(0, u8.length).map(b=>b.type+':'+b.size).slice(0,6).join(','); return u8; }
   let out = u8;
   for (let mi = moofs.length-1; mi >= 0; mi--) {  // back-to-front: earlier offsets stay valid
     const {b, k} = moofs[mi];
@@ -532,6 +532,7 @@ async function playMovie() {
       // this device's buffer hard-rejects. Rewrite to moof-relative addressing.
       const clean = mseSanitize(media);
       if (clean !== media) now(`<span class="stage">🔧 MSE-FIX</span> <span class="mono">section ${n}: stripped ${media.length-clean.length}b of absolute tfhd offsets → MSE-legal fragments</span>`);
+      else now(`<span class="stage">🔍 SCAN</span> <span class="mono">section ${n}: sanitize found nothing to fix — ${media.length}b, head=[${Array.from(media.slice(4,32)).map(x=>String.fromCharCode(x)).join('').replace(/[^a-z]/g,'?')}], dbg=${window._sdbg||'?'}</span>`);
       // iPhone quirk: feed the init segment (ftyp+moov) as its own append first,
       // then the media. Desktop Chrome accepts it combined; iOS often doesn't.
       let chunks = [clean];
