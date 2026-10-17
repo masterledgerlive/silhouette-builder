@@ -327,6 +327,60 @@ async function finishFirst(manual){
   say(`⏹️ <b>Wrapping up!</b> Stopping the camera first, then publishing…`);
   try{ if(recorder&&recorder.state!=='inactive') recorder.stop(); }catch(e){ tlog('recorder.stop: '+e.message); }
   if(tint) clearInterval(tint);
+  if(!chunks.length){
+    say(`😢 <b>No chunks were captured.</b> The recorder didn't produce any video — try again, and make sure the camera preview is showing before you hit record.`);
+    tlog('finishFirst: 0 chunks, aborting save');
+    $('b-wrap').textContent='⏹ stop & wrap'; $('b-wrap').disabled=false;
+    return;
+  }
+  // FAST WRAP: save locally FIRST (instant), publish to Walrus in background.
+  // The user sees "done" immediately; the chain catches up.
+  const liveKeyHex=hex(liveKey);
+  const localId='first-'+Date.now();
+  try{
+    const lib=JSON.parse(localStorage.getItem('bloblive_library')||'[]');
+    lib.unshift({id:localId,title:'my-first-video ⭐',at:Date.now(),chunks:chunks.length,liveKey:liveKeyHex,
+      blobs:chunks,manifest:null}); // manifest fills in when Walrus publish completes
+    localStorage.setItem('bloblive_library',JSON.stringify(lib.slice(0,50)));
+    tlog('saved to local library (instant)');
+  }catch(e){ tlog('library save: '+e.message); }
+  say(`✅ <b>WRAPPED!</b> ${chunks.length} chunks saved. Publishing to the chain in the background — your video is already in the library!`);
+  $('b-wrap').textContent='✅ wrapped!'; $('b-wrap').disabled=false;
+  // show share link immediately using local data
+  const localLink=location.origin+location.pathname.replace('how.html','play.html')+'?id='+localId+'#'+liveKeyHex;
+  $('livelink').value=localLink;
+  $('sharelive').style.display='block';
+  // Background: publish manifest to Walrus (don't block UI)
+  (async()=>{
+    try{
+      const manifest={v:1,type:'blob-manifest',title:'my-first-video',created_at:Date.now(),
+        method:'nacl-secretbox/sha256-chain-v1',chunks:chunks,
+        proof:'sha256:'+(await shaStr(liveKeyHex+chunks.map(c=>c.blob).join(''))).slice(0,32),
+        tail:{v:1,system:'first video — pure math, no magic',
+          community:{artifacts:[],game_assets:[{kind:'badge',name:'first-video-star',note:'made in kid teacher mode'}],channels:[],votes:{}},
+          reblob:{policy:'auto',count:0,note:'keeper moves these before expiry — forever'}}};
+      tlog('background: publishing manifest…');
+      const r=await fetch(PUB+'/v1/blobs?epochs=5',{method:'PUT',body:new TextEncoder().encode(JSON.stringify(manifest))});
+      if(!r.ok) throw new Error('Walrus HTTP '+r.status);
+      const j=await r.json();
+      const mbid=(j.newlyCreated||j.alreadyCertified).blobObject.blobId;
+      tlog('FINAL MANIFEST = '+mbid);
+      // update library entry with manifest ID
+      try{
+        const lib=JSON.parse(localStorage.getItem('bloblive_library')||'[]');
+        const e=lib.find(x=>x.id===localId);
+        if(e){ e.manifest=mbid; localStorage.setItem('bloblive_library',JSON.stringify(lib)); }
+      }catch(e){}
+      // update genesis in background
+      await updateGenesis({manifest:mbid,title:'my-first-video ⭐',chunks:chunks.length,at:Date.now(),liveKey:liveKeyHex});
+      const gid=localStorage.getItem(GENESIS_KEY);
+      if(gid) say(`🌐 <b>Chain updated!</b> Manifest: <code style="font-size:.7rem">${mbid.slice(0,24)}…</code><br>Genesis: <code style="font-size:.7rem">${gid.slice(0,24)}…</code>`);
+    }catch(e){
+      tlog('background publish failed: '+e.message);
+      say(`⚠️ <b>Background publish failed:</b> ${e.message}<br>Your video is safe in the local library. Try the share link — it uses local data.`);
+    }
+  })();
+  return; // don't fall through to old blocking code
   say(`⏹️ <b>Camera off!</b> ${chunks.length} chunks captured. Publishing your treasure map…`);
   await wait(2500); // last chunks land
   let mbid=null, pubErr=null;
