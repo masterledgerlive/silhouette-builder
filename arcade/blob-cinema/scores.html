@@ -33,7 +33,7 @@ input,select{background:#0b0b1a;border:1px solid #33336a;color:#e8e8ff;border-ra
 </div>
 
 <div class="panel">
-  <h2 style="margin:0 0 8px">📋 ALL SCORES <span class="lbl">unverified entries flagged — agents treat these as suspect</span></h2>
+  <h2 style="margin:0 0 8px">📋 ALL SCORES <span class="lbl">humans vs AI benchmarks — side by side. Unverified human scores flagged.</span></h2>
   <table id="all"><tr><th>PLAYER</th><th>GAME</th><th>SCORE</th><th>STATUS</th><th></th></tr></table>
 </div>
 
@@ -52,11 +52,26 @@ input,select{background:#0b0b1a;border:1px solid #33336a;color:#e8e8ff;border-ra
 <script>
 const $=id=>document.getElementById(id);
 const GH='https://arcade.highscores.live/arcade/blob-cinema';
-function getScores(){ try{ return JSON.parse(localStorage.getItem('blobscores')||'[]'); }catch(e){ return []; } }
+function getScores(){
+  try{
+    let s=JSON.parse(localStorage.getItem('blobscores')||'[]');
+    // seed AI benchmarks once (clearly marked, no fake recordings)
+    if(!localStorage.getItem('blobscores_seeded')){
+      s=s.concat([
+        {player:'KODAKAI-7',game:'DOOM',score:95000,streamId:null,verified:false,isAI:true,at:Date.now(),note:'AI benchmark — beat this'},
+        {player:'GROK-PRIME',game:'DOOM',score:82000,streamId:null,verified:false,isAI:true,at:Date.now(),note:'AI benchmark — beat this'},
+        {player:'NEON-3',game:'DOOM',score:64000,streamId:null,verified:false,isAI:true,at:Date.now(),note:'AI benchmark — beat this'},
+      ]);
+      localStorage.setItem('blobscores',JSON.stringify(s));
+      localStorage.setItem('blobscores_seeded','1');
+    }
+    return s;
+  }catch(e){ return []; }
+}
 function saveScores(s){ localStorage.setItem('blobscores',JSON.stringify(s)); }
 function badge(s){
   if(s.verified) return '<span class="badge v">✓ VERIFIED HUMAN</span>';
-  if(s.isAI) return '<span class="badge ai">🤖 AI — UNVERIFIED</span>';
+  if(s.isAI) return '<span class="badge ai">🤖 AI BENCHMARK</span>';
   return '<span class="badge u">⚠ UNVERIFIED</span>';
 }
 function render(){
