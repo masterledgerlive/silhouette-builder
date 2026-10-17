@@ -2,42 +2,60 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Arcades of Time — highscores.live/arcade</title>
 <style>
-  :root { --neon:#22d3ee; --pink:#f0f; --bg:#0a0a18; --panel:#12122a; }
+  :root { --neon:#22d3ee; --pink:#f0f; --bg:#0a0a18; --panel:#12122a; --gold:#ffd76b; --green:#7CFF6B; --red:#ff5470; }
   * { box-sizing:border-box; margin:0; padding:0; }
   body { background:var(--bg); color:#e8e8f5; font-family:'Courier New',monospace; min-height:100vh;
          background-image:radial-gradient(circle at 50% 0%, #1a1a3a 0%, var(--bg) 60%); }
-  .wrap { max-width:900px; margin:0 auto; padding:32px 20px 60px; }
+  .wrap { max-width:1100px; margin:0 auto; padding:32px 20px 60px; }
   header { text-align:center; margin-bottom:36px; }
   h1 { font-size:clamp(2rem,6vw,3.4rem); color:var(--neon); letter-spacing:.12em;
        text-shadow:0 0 18px var(--neon), 0 0 60px #0af; }
   .sub { color:var(--pink); letter-spacing:.3em; margin-top:8px; text-shadow:0 0 12px var(--pink); }
   .coin { display:inline-block; margin:22px auto 0; padding:10px 26px; border:2px solid var(--neon);
-          border-radius:999px; color:var(--neon); letter-spacing:.2em; animation:pulse 2s infinite; }
+          border-radius:999px; color:var(--neon); letter-spacing:.2em; animation:pulse 2s infinite; cursor:pointer; }
   @keyframes pulse { 50% { box-shadow:0 0 24px var(--neon); } }
-  .panel { background:var(--panel); border:1px solid #2a2a5a; border-radius:14px;
-           padding:28px; margin-bottom:28px; }
-  .finn { display:flex; gap:24px; align-items:center; flex-wrap:wrap; }
-  .finn img { width:220px; border-radius:12px; border:2px solid var(--neon); box-shadow:0 0 24px #0af6; }
-  .finn h2 { color:var(--neon); margin-bottom:10px; }
-  .finn p { line-height:1.7; color:#c9c9e8; }
-  .quote { color:var(--pink); font-style:italic; margin-top:10px; }
+  .panel { background:var(--panel); border:1px solid #2a2a5a; border-radius:14px; padding:28px; margin-bottom:28px; }
   h2.sec { color:var(--neon); letter-spacing:.15em; margin-bottom:18px; }
-  .cab { display:flex; gap:18px; align-items:center; background:#0d0d22; border:1px solid #33336a;
-         border-radius:10px; padding:18px; margin-bottom:14px; }
+  /* ---- desktop ---- */
+  #desktop { position:relative; height:600px; background:#050510; border:2px solid #2a2a5a; border-radius:14px; overflow:hidden;
+             background-image:radial-gradient(circle at 20% 20%, #101038 0%, transparent 50%), radial-gradient(circle at 80% 80%, #301038 0%, transparent 50%); }
+  #iconbar { position:absolute; left:0; top:0; bottom:40px; width:110px; padding:12px 8px; display:flex; flex-direction:column; gap:14px; align-items:center; overflow-y:auto; z-index:5; }
+  .appicon { width:88px; text-align:center; cursor:pointer; padding:8px 4px; border-radius:10px; border:1px solid transparent; }
+  .appicon:hover { background:#1a1a3a; border-color:var(--neon); }
+  .appicon .art { font-size:2.2rem; filter:drop-shadow(0 0 8px #0af); }
+  .appicon .nm { font-size:.68rem; color:#c9c9e8; margin-top:4px; line-height:1.3; }
+  .win { position:absolute; background:#0d0d22; border:2px solid var(--neon); border-radius:10px; box-shadow:0 0 30px #0af5;
+         display:flex; flex-direction:column; min-width:320px; min-height:220px; }
+  .win .titlebar { background:linear-gradient(90deg,#1a1a4a,#0d0d2a); padding:8px 10px; cursor:move; display:flex; align-items:center; gap:8px;
+                   border-bottom:1px solid var(--neon); border-radius:8px 8px 0 0; user-select:none; }
+  .win .titlebar .t { flex:1; font-size:.8rem; color:var(--neon); letter-spacing:.05em; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+  .win .titlebar button { background:#1a1a3a; border:1px solid #33336a; color:#e8e8f5; border-radius:6px; padding:2px 8px; cursor:pointer; font-size:.75rem; }
+  .win .titlebar button.rec { border-color:var(--red); color:var(--red); }
+  .win .titlebar button.rec.on { background:var(--red); color:#fff; animation:pulse 1s infinite; }
+  .win iframe { flex:1; border:0; border-radius:0 0 8px 8px; background:#000; min-height:200px; }
+  .win .resize { position:absolute; right:0; bottom:0; width:20px; height:20px; cursor:nwse-resize;
+                 background:linear-gradient(135deg,transparent 50%,var(--neon) 50%); border-radius:0 0 8px 0; }
+  #taskbar { position:absolute; left:0; right:0; bottom:0; height:40px; background:#0d0d22; border-top:1px solid #2a2a5a;
+             display:flex; align-items:center; gap:8px; padding:0 12px; z-index:10; }
+  #taskbar .tbtn { background:#1a1a3a; border:1px solid #33336a; color:#c9c9e8; border-radius:6px; padding:4px 10px; font-size:.72rem; cursor:pointer; }
+  #taskbar .tbtn.active { border-color:var(--neon); color:var(--neon); }
+  /* ---- cabinets ---- */
+  .cabgrid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:14px; }
+  .cab { background:#0d0d22; border:1px solid #33336a; border-radius:10px; padding:18px; cursor:pointer; transition:.2s; }
+  .cab:hover { border-color:var(--neon); box-shadow:0 0 18px #0af5; transform:translateY(-2px); }
   .cab .art { font-size:2.4rem; }
-  .cab h3 { color:#fff; letter-spacing:.08em; }
-  .cab .yr { color:var(--pink); font-size:.85rem; }
-  .cab p { color:#b9b9d8; font-size:.92rem; line-height:1.6; margin-top:6px; }
-  .badge { display:inline-block; font-size:.72rem; padding:3px 10px; border-radius:999px;
-           border:1px solid var(--neon); color:var(--neon); margin-top:8px; letter-spacing:.1em; }
+  .cab h3 { color:#fff; letter-spacing:.08em; margin:8px 0 4px; font-size:1rem; }
+  .cab .yr { color:var(--pink); font-size:.8rem; }
+  .cab p { color:#b9b9d8; font-size:.85rem; line-height:1.6; margin-top:6px; }
+  .badge { display:inline-block; font-size:.7rem; padding:3px 10px; border-radius:999px; border:1px solid var(--neon); color:var(--neon); margin-top:8px; letter-spacing:.1em; }
   .badge.soon { border-color:#55557a; color:#8888aa; }
+  .badge.off { border-color:var(--gold); color:var(--gold); }
   a { color:var(--neon); }
-  .fins { text-align:center; }
-  .fins .big { font-size:1.6rem; color:var(--pink); text-shadow:0 0 14px var(--pink); margin-bottom:10px; }
   footer { text-align:center; color:#66668a; font-size:.8rem; margin-top:40px; line-height:2; }
+  .hint { color:#8888aa; font-size:.8rem; margin-top:10px; }
 </style>
 </head>
 <body>
@@ -46,88 +64,110 @@
   <header>
     <h1>ARCADES OF TIME</h1>
     <div class="sub">HIGHSCORES.LIVE / ARCADE</div>
-    <div><span class="coin">INSERT FIN TO CONTINUE</span></div>
+    <div><span class="coin" onclick="openApp('live')">🔴 INSERT FIN — GO LIVE</span></div>
   </header>
 
-  <div class="panel finn">
-    <img src="finn.webp" alt="Finn, arcade host">
-    <div style="flex:1; min-width:240px">
-      <h2>MEET FINN</h2>
-      <p>Keeper of the Arcades of Time. Finn takes your fins, walks you to your
-      cabinet, and hands you to each game's historian specialist for the deep
-      story. Every game here is sealed into the chain — recovered, verified,
-      and playable.</p>
-      <p class="quote">"Drop a fin in the slot, pick your era, and let's go."</p>
+  <div class="panel">
+    <h2 class="sec">🖥 MISSION CONTROL <span style="font-size:.8rem;color:#8888aa">— click an icon to open it in a window. Drag the title bar, resize from the corner. Hit 🔴 REC to record any window straight into the blob chain.</span></h2>
+    <div id="desktop">
+      <div id="iconbar"></div>
+      <div id="taskbar"><span style="font-size:.75rem;color:#8888aa">◉ ARCADE OS</span><span id="taskbtns" style="display:flex;gap:8px"></span></div>
     </div>
+    <div class="hint">Tip: open DOOM and hit 🔴 REC — your gameplay gets encrypted and laid into Walrus blobs live, then lands in the <a href="blob-cinema/reblob.html">Reblob Library</a> forever.</div>
   </div>
 
   <div class="panel">
-    <h2 class="sec">CABINETS</h2>
-
-    <div class="cab">
-      <div class="art">👹</div>
-      <div>
-        <h3>DOOM <span class="yr">· 1993 · id Software</span></h3>
-        <p>The first exhibit. Shareware Doom sealed into 14 erasure-coded shards,
-        recovered under fault injection, and booted from the recovered bytes —
-        7/7 proving tests green. Manifest root committed on-chain.</p>
-        <span class="badge">SEALED · PLAYABLE</span><br>
-        <a href="doom/">▶ PLAY IT NOW</a> ·
-        <a href="https://sepolia.basescan.org/tx/0x646610e26c7557ad53ab6a1560ba27a79a0c17cd0be694979aaaccab8808ec78">view the seal →</a>
-      </div>
-    </div>
-
-    <div class="cab">
-      <div class="art">🟧</div>
-      <div>
-        <h3>TETRIS <span class="yr">· 1984 · Alexey Pajitnov</span></h3>
-        <p>Next in the queue. The falling blocks that ate a decade — with its
-        historian specialist and the full story of the rights battle.</p>
-        <span class="badge soon">COMING SOON</span>
-      </div>
-    </div>
-
-    <div class="cab">
-      <div class="art">👾</div>
-      <div>
-        <h3>??? <span class="yr">· you pick the era</span></h3>
-        <p>Every cabinet gets a historian you can ask anything, a side screen
-        for learning and watching while you play, and a fins economy.</p>
-        <span class="badge soon">SUGGESTIONS OPEN</span>
-      </div>
-    </div>
-  </div>
-
-  <div class="panel">
-    <h2 class="sec">PROVING GROUND</h2>
-
-    <div class="cab">
-      <div class="art">◈</div>
-      <div>
-        <h3>BLOB THEATER <span class="yr">· live Walrus test</span></h3>
-        <p>A full episode stored as 12 encrypted Walrus blobs. The page hands you
-        one trigger and nothing else — then walks the chain live in your browser:
-        every blob fetched, every key exposed, every proof verified, the episode
-        reassembled and played from the blobs.</p>
-        <span class="badge">SEALED · PROVEN</span><br>
-        <a href="blob-theater/">▶ WATCH THE PROOF</a>
-      </div>
-    </div>
-  </div>
-
-  <div class="panel fins">
-    <h2 class="sec">FINS</h2>
-    <div class="big">1 fin = 1 nickel</div>
-    <p style="color:#b9b9d8; line-height:1.7">One fin to enter. One fin to continue
-    after death — keep the node forever alive.<br>
-    Struggling? After 40 deaths, continues are free. Your learning is worth more than your fins.</p>
+    <h2 class="sec">CABINETS — EVERYTHING WE BUILT</h2>
+    <div class="cabgrid" id="cabgrid"></div>
   </div>
 
   <footer>
     Arcades of Time · built by Kodakai · receipts, not trust<br>
     <a href="https://highscores.live/">← highscores.live</a>
   </footer>
-
 </div>
+
+<script>
+const APPS=[
+  {id:'doom',art:'👹',name:'DOOM',sub:'1993 · id Software',url:'doom/',desc:'The first exhibit. Shareware Doom sealed into 14 erasure-coded shards, recovered under fault injection, booted from recovered bytes. 7/7 proving tests green.',badge:'SEALED · PLAYABLE',cls:''},
+  {id:'theater',art:'🎬',name:'BLOB CINEMA',sub:'theater',url:'blob-cinema/',desc:'Gertie + Robin Hood, playing from encrypted Walrus blobs. The keeper proof-of-life window shows every blob, key, and countdown live.',badge:'PLAYING NOW',cls:''},
+  {id:'live',art:'🔴',name:'BLOB LIVE',sub:'RTMP on chain',url:'blob-cinema/live.html',desc:'Real-time video → encrypted blobs → 4 windows, 4 derived keys. Broadcast from webcam, screen, or test pattern. The revolution.',badge:'LIVE',cls:''},
+  {id:'studio',art:'🎥',name:'STUDIO',sub:'upload yours',url:'blob-cinema/studio.html',desc:'Wire-tap your upload: every byte, every blob, every receipt, live. Then it lives in the keeper forever.',badge:'BUILD',cls:''},
+  {id:'reblob',art:'📚',name:'REBLOB LIBRARY',sub:'never lose a blob',url:'blob-cinema/reblob.html',desc:'Every stream, every blob, time-left till reblob. Proof bundles, agent guide, play links. Forever.',badge:'FOREVER',cls:''},
+  {id:'play',art:'▶',name:'REPLAY',sub:'DVR',url:'blob-cinema/play.html',desc:'Scrub any saved stream. Captions, timeline, derived keys — catch up to live or wander the past.',badge:'DVR',cls:''},
+  {id:'sliders',art:'🟧',name:'SLIDERS',sub:'prototype',url:'blob-cinema/sliders.html',desc:'Early blob-cinema prototype — a 10-minute movie living only on Walrus. Offshoot, still playable.',badge:'OFFSHOOT',cls:'off'},
+  {id:'bbb',art:'🅱',name:'BBB',sub:'prototype',url:'blob-cinema/bbb.html',desc:'First blob-cinema experiment. Rough, but it proved the chain could hold a movie.',badge:'OFFSHOOT',cls:'off'},
+  {id:'diag',art:'🔧',name:'MSE DIAG',sub:'tool',url:'blob-cinema/mse-diag.html',desc:'The diagnostic that proved the video pipeline. For nerds.',badge:'TOOL',cls:'off'},
+  {id:'theater-old',art:'◈',name:'BLOB THEATER',sub:'original proof',url:'blob-theater/',desc:'The original 12-blob proof. Where it all started.',badge:'ORIGIN',cls:'off'},
+];
+// build icons
+const bar=document.getElementById('iconbar');
+APPS.forEach(a=>{
+  const d=document.createElement('div'); d.className='appicon';
+  d.innerHTML=`<div class="art">${a.art}</div><div class="nm">${a.name}<br><span style="color:#66668a">${a.sub}</span></div>`;
+  d.onclick=()=>openApp(a.id); d.ondblclick=()=>openApp(a.id);
+  bar.appendChild(d);
+});
+// build cabinets
+const grid=document.getElementById('cabgrid');
+APPS.forEach(a=>{
+  const d=document.createElement('div'); d.className='cab'; d.onclick=()=>openApp(a.id);
+  d.innerHTML=`<div class="art">${a.art}</div><h3>${a.name} <span class="yr">· ${a.sub}</span></h3><p>${a.desc}</p><span class="badge ${a.cls}">${a.badge}</span>`;
+  grid.appendChild(d);
+});
+// ---- window manager ----
+let zTop=10, wins={};
+function openApp(id){
+  const a=APPS.find(x=>x.id===id); if(!a) return;
+  if(wins[id]){ focusWin(id); return; }
+  const desk=document.getElementById('desktop');
+  const w=document.createElement('div'); w.className='win'; w.id='win-'+id;
+  const n=Object.keys(wins).length;
+  w.style.left=(130+n*36)+'px'; w.style.top=(20+n*28)+'px';
+  w.style.width='560px'; w.style.height='400px'; w.style.zIndex=++zTop;
+  w.innerHTML=`<div class="titlebar"><span class="t">${a.art} ${a.name}</span>
+    <button class="rec" title="Record this window into the blob chain" onclick="recWin('${id}',this)">🔴 REC</button>
+    <button onclick="minWin('${id}')">_</button><button onclick="closeWin('${id}')">✕</button></div>
+    <iframe src="${a.url}" allow="camera;microphone;display-capture;autoplay"></iframe><div class="resize"></div>`;
+  desk.appendChild(w); wins[id]=w;
+  // taskbar button
+  const tb=document.createElement('button'); tb.className='tbtn active'; tb.id='tb-'+id; tb.textContent=a.art+' '+a.name;
+  tb.onclick=()=>focusWin(id); document.getElementById('taskbtns').appendChild(tb);
+  // drag
+  const bar2=w.querySelector('.titlebar');
+  bar2.onmousedown=e=>{
+    if(e.target.tagName==='BUTTON') return;
+    const sx=e.clientX-w.offsetLeft, sy=e.clientY-w.offsetTop;
+    const mv=ev=>{ w.style.left=Math.max(110,ev.clientX-sx)+'px'; w.style.top=Math.max(0,ev.clientY-sy)+'px'; };
+    const up=()=>{ document.removeEventListener('mousemove',mv); document.removeEventListener('mouseup',up); };
+    document.addEventListener('mousemove',mv); document.addEventListener('mouseup',up);
+  };
+  // resize
+  const rz=w.querySelector('.resize');
+  rz.onmousedown=e=>{
+    e.preventDefault();
+    const sw=w.offsetWidth, sh=w.offsetHeight, sx=e.clientX, sy=e.clientY;
+    const mv=ev=>{ w.style.width=Math.max(320,sw+ev.clientX-sx)+'px'; w.style.height=Math.max(220,sh+ev.clientY-sy)+'px'; };
+    const up=()=>{ document.removeEventListener('mousemove',mv); document.removeEventListener('mouseup',up); };
+    document.addEventListener('mousemove',mv); document.addEventListener('mouseup',up);
+  };
+  w.onmousedown=()=>{ w.style.zIndex=++zTop; focusWin(id); };
+}
+function focusWin(id){ const w=wins[id]; if(!w) return; w.style.display='flex'; w.style.zIndex=++zTop;
+  document.querySelectorAll('.tbtn').forEach(b=>b.classList.remove('active'));
+  const tb=document.getElementById('tb-'+id); if(tb) tb.classList.add('active'); }
+function minWin(id){ const w=wins[id]; if(w) w.style.display='none'; }
+function closeWin(id){ const w=wins[id]; if(w) w.remove(); delete wins[id];
+  const tb=document.getElementById('tb-'+id); if(tb) tb.remove(); }
+// ---- record any window into the blob chain ----
+function recWin(id,btn){
+  // Opens the live broadcaster with screen-share pre-selected.
+  // The browser will ask which window/tab to capture — pick the game window.
+  btn.classList.add('on'); btn.textContent='🔴 REC…';
+  const url='blob-cinema/live.html?autostart=screen&title='+encodeURIComponent(APPS.find(a=>a.id===id).name+' gameplay');
+  window.open(url,'_blank');
+  setTimeout(()=>{ btn.classList.remove('on'); btn.textContent='🔴 REC'; },3000);
+}
+</script>
 </body>
 </html>
