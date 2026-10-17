@@ -1,0 +1,145 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BLOB CINEMA — premiere</title>
+<style>
+*{box-sizing:border-box}
+body{font-family:'Comic Sans MS','Chalkboard SE',system-ui,sans-serif;background:linear-gradient(180deg,#1a1a3a,#0b0b1a);color:#fff;margin:0;min-height:100vh}
+.hero{text-align:center;padding:24px 16px}
+.hero h1{font-size:1.5rem;margin:0}
+.hero p{color:#b0b0e0}
+.stage{max-width:700px;margin:0 auto;padding:16px}
+#intro{background:#1e1e3e;border:3px solid #6C5CE7;border-radius:20px;padding:20px;margin:16px 0}
+#intro .kid{color:#d0d0f0;line-height:1.7}
+#playerwrap{background:#0b0b1a;border-radius:16px;padding:12px;margin:16px 0}
+video{width:100%;border-radius:12px;background:#000;max-height:50vh}
+#chaininfo{background:#0f0f22;border:2px solid #2a2a5a;border-radius:12px;padding:12px;margin:12px 0;font-family:monospace;font-size:.75rem;color:#7CFF6B;white-space:pre-wrap;word-break:break-all}
+#chaininfo .lbl{color:#8888aa;font-family:'Comic Sans MS',sans-serif;font-size:.85rem}
+.btn{background:#6C5CE7;color:#fff;border:none;border-radius:12px;padding:14px 28px;font-size:1.05rem;cursor:pointer;margin:6px}
+.btn.go{background:#2d7a2d}
+#cta{display:none;text-align:center;background:#1e1e3e;border:3px solid #2d7a2d;border-radius:20px;padding:20px;margin:16px 0}
+#status{text-align:center;color:#8888aa;padding:20px}
+.nav{text-align:center;padding:16px}
+.nav a{color:#6C5CE7;margin:0 10px;text-decoration:none}
+</style></head>
+<body>
+<script src="./errcatch.js"></script>
+<script src="./nacl-min.js"></script>
+<div class="hero">
+<h1>🎬 You're watching the blockchain.</h1>
+<p>No servers. No YouTube. Just math.</p>
+</div>
+<div class="stage">
+<div id="intro">
+<div class="kid" id="introtext">
+🧞 <b>Hi! I'm the genie.</b> Someone sent you this video — and it's <b>not on any company's server</b>.<br><br>
+📹 It was recorded in <b>2-second pieces</b>.<br>
+🔒 Each piece was <b>locked</b> with its own key.<br>
+🌊 The locked pieces were thrown into the <b>Walrus ocean</b> (computers worldwide).<br>
+🗝️ Your link carries the <b>first key</b> — the rest unfold by math.<br><br>
+Press <b>play</b>. What you're about to see never touched a server.
+</div>
+<div style="text-align:center;margin-top:12px">
+<button class="btn go" id="b-play" onclick="startPremiere()">▶ PLAY THE BLOCKCHAIN</button>
+</div>
+</div>
+
+<div id="playerwrap" style="display:none">
+<video id="v" playsinline controls></video>
+<div id="chaininfo"><span class="lbl">⛓ chain data — this is what's really happening:</span><div id="chainlog">loading…</div></div>
+</div>
+
+<div id="cta">
+<h2 style="margin-top:0">🎬 Cool, right?</h2>
+<div class="kid" style="color:#d0d0f0;line-height:1.7">You just watched a video <b>live from the blockchain</b>. No YouTube. No server. Pure math.<br><br><b>Now make YOURS.</b> 3 minutes. The genie teaches you every step.</div>
+<button class="btn go" onclick="location.href='./how.html'">🚀 MAKE MY FIRST VIDEO</button>
+</div>
+
+<div id="status"></div>
+<div class="nav"><a href="./how.html">🎬 how it works</a><a href="../index.html">🕹 arcade</a></div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const AGG='https://aggregator.walrus-testnet.walrus.space';
+const bhex=h=>new Uint8Array(h.match(/../g).map(x=>parseInt(x,16)));
+const hex=b=>Array.from(b).map(x=>x.toString(16).padStart(2,'0')).join('');
+const clog=t=>{ $('chainlog').innerHTML+=t+'\n'; };
+let keyChain=[];
+async function shaStr(s){ const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s)); return hex(new Uint8Array(b)); }
+async function deriveKey(prev){ return bhex(await shaStr(hex(prev)+'|next')); }
+let _kl=Promise.resolve();
+async function keyAt(i){ const p=_kl.then(async()=>{ while(keyChain.length<=i) keyChain.push(await deriveKey(keyChain[keyChain.length-1])); return keyChain[i]; }); _kl=p.catch(()=>{}); return p; }
+function unwrap(cipher,key){ const d=nacl.secretbox.open(cipher.slice(24),cipher.slice(0,24),key); return d?new Uint8Array(d):null; }
+function tryPlay(v){
+  v.muted=true;
+  const p=v.play();
+  if(p&&p.catch) p.catch(()=>{
+    if(v.dataset.tapShown) return; v.dataset.tapShown='1';
+    const ov=document.createElement('div');
+    ov.style.cssText='position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.6);z-index:5;cursor:pointer';
+    ov.innerHTML='<div style="font-size:3rem;background:#6C5CE7;border-radius:50%;width:90px;height:90px;display:flex;align-items:center;justify-content:center">▶</div>';
+    ov.onclick=()=>{ v.play().catch(()=>{}); ov.remove(); };
+    v.parentElement.style.position='relative'; v.parentElement.appendChild(ov);
+  });
+}
+
+async function startPremiere(){
+  $('intro').style.display='none';
+  $('playerwrap').style.display='block';
+  $('status').textContent='reading the treasure map…';
+  const q=new URLSearchParams(location.search);
+  const mbid=q.get('watch');
+  const keyHex=location.hash.slice(1);
+  if(!mbid||keyHex.length<64){ $('status').textContent='bad link — need ?watch=<blob>#<key>'; return; }
+  keyChain=[bhex(keyHex)];
+  clog('K_0 = '+keyHex.slice(0,24)+'…');
+  try{
+    const r=await fetch(AGG+'/v1/blobs/'+mbid);
+    if(!r.ok) throw new Error('map HTTP '+r.status);
+    const man=await r.json();
+    const total=man.chunks.length;
+    clog(`treasure map: ${total} boxes`);
+    clog(`proof: ${man.proof||'n/a'}`);
+    if(man.live) clog('🔴 was live — now replaying from the chain');
+    const v=$('v');
+    const buf=[]; let ok=0, mime='';
+    let started=false;
+    for(let i=0;i<total;i++){
+      const c=man.chunks[i];
+      $('status').textContent=`unlocking box ${i+1}/${total}…`;
+      try{
+        const key=await keyAt(c.keyIdx??c.n??i);
+        const cr=await fetch(AGG+'/v1/blobs/'+c.blob);
+        const cipher=new Uint8Array(await cr.arrayBuffer());
+        const plain=unwrap(cipher,key);
+        if(!plain) throw new Error('decrypt failed');
+        const bytes=new Uint8Array(plain);
+        if(!mime) mime=(bytes[4]===0x66&&bytes[5]===0x74&&bytes[6]===0x79&&bytes[7]===0x70)?'video/mp4':'video/webm';
+        buf.push(bytes); ok++;
+        if(i<3||i%10===0) clog(`✓ box #${i} unlocked with K_${c.keyIdx??i} (${(bytes.length/1024).toFixed(0)}KB)`);
+        if(!started&&ok>=1){
+          started=true;
+          v.src=URL.createObjectURL(new Blob(buf,{type:mime}));
+          v.controls=true; tryPlay(v);
+          $('status').textContent='';
+          $('introtext').innerHTML=`🧞 <b>You're watching!</b> Every box is being unlocked live — see the chain data below the video.`;
+          $('intro').style.display='block';
+        } else if(started&&ok%8===0){
+          const t=v.currentTime;
+          v.src=URL.createObjectURL(new Blob(buf,{type:mime}));
+          try{ v.currentTime=t; }catch(e){}
+        }
+      }catch(e){ clog(`✗ box #${i}: ${e.message}`); }
+    }
+    clog(`\n✅ ${ok}/${total} boxes unlocked. Pure math. No servers.`);
+    $('status').textContent='';
+    // show the CTA after video ends (or after 30s)
+    const showCta=()=>{ $('cta').style.display='block'; $('cta').scrollIntoView({behavior:'smooth'}); };
+    v.addEventListener('ended',showCta);
+    setTimeout(showCta,45000);
+  }catch(e){
+    $('status').textContent='✗ '+e.message;
+    if(window.errcatch) errcatch(e.message,'premiere');
+  }
+}
+</script>
+</body></html>
