@@ -206,7 +206,26 @@ async function makeFirst(){
     return;
   }
   liveKey=nacl.randomBytes(32); keyChain=[liveKey];
+  chunks=[]; nChunk=0; done=false; secs=0; // reset all recording state
   tlog('LIVE_KEY = '+hex(liveKey)+'\nK_(n+1) = SHA256(K_n ‖ "|next")');
+  // SELF-TEST: verify key derivation works before recording a single frame.
+  // If this fails, we catch the bug NOW, not after 10 chunks are on Walrus.
+  try{
+    const k1=await keyAt(1), k2=await keyAt(2);
+    const testMsg=new TextEncoder().encode('selftest');
+    const tn=nacl.randomBytes(24);
+    const tc=nacl.secretbox(testMsg,tn,k1);
+    const td=nacl.secretbox.open(tc,tn,k1);
+    if(!td||new TextDecoder().decode(td)!=='selftest') throw new Error('encrypt/decrypt roundtrip failed');
+    const td2=nacl.secretbox.open(tc,tn,k2);
+    if(td2) throw new Error('K_2 decrypted K_1 data — keys not unique!');
+    tlog('SELF-TEST PASS: K_1 encrypts/decrypts, K_2 is distinct');
+  }catch(e){
+    say(`🚨 <b>SELF-TEST FAILED:</b> ${e.message} — recording blocked. Screenshot this!`);
+    tlog('SELF-TEST FAIL: '+e.message);
+    if(window.errcatch) errcatch('selftest: '+e.message,'makeFirst');
+    return;
+  }
   say(`🔑 <b>Key #0 created!</b> From it grows a chain — <b>K_(n+1) = SHA256(K_n ‖ "|next")</b>. Pure math. Each 2-second chunk gets its own key. <b>Recording for 3 minutes</b> — your video stays pinned up top!`);
   addStep('key','🔑 <b>KEY CHAIN</b>',`K_0 = ${hex(liveKey).slice(0,24)}…<br><span style="color:#8888aa">grows: K_1, K_2… one per chunk</span>`);
   // recorder
