@@ -93,8 +93,53 @@ function jumpTo(chunk){
   startMSE();
 }
 function startMSE(){
-  const v=$('v'); ms=new MediaSource(); v.src=URL.createObjectURL(ms);
+  const v=$('v');
+  if(!window.MediaSource){
+    // 📱 phone: no MSE — fetch+decrypt all, concat, play as one video
+    startPhone();
+    return;
+  }
+  ms=new MediaSource(); v.src=URL.createObjectURL(ms);
   ms.addEventListener('sourceopen',()=>{ sb=ms.addSourceBuffer('video/webm;codecs=vp9'); playLoop(); });
+}
+/* Phone playback: download every chunk, decrypt, concat into one blob URL */
+async function startPhone(){
+  const v=$('v');
+  const buf=[]; let ok=0, skipped=0;
+  const reasons=[];
+  const total=manifest.chunks.length;
+  const mime=(manifest.mime||'video/webm').split(';')[0];
+  for(let i=0;i<total;i++){
+    const c=manifest.chunks[i];
+    $('pos').textContent=`chunk ${i+1} / ${total}`;
+    $('stat').textContent=`📱 decrypting ${i+1}/${total}…`;
+    try{
+      if(!c||!c.blob||String(c.blob).startsWith('PUT-FAILED')) throw new Error('bad blob ID');
+      const key=await keyAt(c.keyIdx??c.n??i);
+      const r=await fetch(AGG+'/v1/blobs/'+c.blob);
+      if(!r.ok) throw new Error('Walrus HTTP '+r.status);
+      const cipher=new Uint8Array(await r.arrayBuffer());
+      const plain=unwrap(cipher,key);
+      if(!plain) throw new Error('decrypt failed — wrong key?');
+      buf.push(new Uint8Array(plain)); ok++;
+    }catch(e){ skipped++; if(reasons.length<5) reasons.push(`chunk ${i}: ${e.message}`); }
+  }
+  if(!ok){
+    $('stat').innerHTML='✗ <b>0 chunks playable.</b><br>'+reasons.map(r=>'· '+r).join('<br>');
+    if(window.errcatch) errcatch('play-phone: 0 chunks playable','startPhone');
+    return;
+  }
+  const blob=new Blob(buf,{type:mime});
+  v.src=URL.createObjectURL(blob);
+  v.controls=true;
+  v.play().catch(()=>{});
+  // captions still work — show on timeupdate
+  v.addEventListener('timeupdate',()=>{
+    const idx=Math.floor(v.currentTime/2);
+    const cap=(manifest.captions||[]).find(x=>x.chunk===idx);
+    if(cap) $('caption').textContent='💬 '+cap.text;
+  });
+  $('stat').innerHTML=`✓ 📱 playing ${ok}/${total} chunks as one video`+(skipped?` (${skipped} skipped)<br><span style="font-size:.75rem">${reasons.join('<br>')}</span>`:'');
 }
 async function playLoop(){
   if(playing) return; playing=true;
