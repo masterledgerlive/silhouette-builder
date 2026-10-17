@@ -116,8 +116,9 @@ async function sha256hex(u8){ // pure JS, HTTP-safe
 async function deriveKey(prev){ const h=await sha256hex(new Uint8Array([...prev,...new TextEncoder().encode('|next')])); return bhex(h); }
 async function keyAt(i){ while(keyChain.length<=i) keyChain.push(await deriveKey(keyChain[keyChain.length-1])); return keyChain[i]; }
 
-/* ---------- test pattern source (no permissions) ---------- */
-let actx=null;
+/* ---------- test pattern source (no permissions) ----------
+   VIDEO-ONLY: the Opus audio track (from WebAudio oscillator) makes Chrome's
+   MSE parser detach the SourceBuffer. Video-only VP9 is proven working. */
 function startTestPattern(){
   const cv=$('testcanvas'), ctx=cv.getContext('2d'); let t=0;
   testTimer=setInterval(()=>{
@@ -132,16 +133,7 @@ function startTestPattern(){
     ctx.fillText(new Date().toLocaleTimeString(), 18, 330);
     ctx.fillText('chunk test pattern · t='+t.toFixed(1)+'s', 18, 78);
   },50);
-  const vs=cv.captureStream(30);
-  // add a real audio track so the webm has both A+V (keeps opus/codec path valid)
-  try{
-    actx=actx||new (window.AudioContext||window.webkitAudioContext)();
-    const osc=actx.createOscillator(); osc.type='sine'; osc.frequency.value=220;
-    const gn=actx.createGain(); gn.gain.value=0.03;
-    const dest=actx.createMediaStreamDestination();
-    osc.connect(gn); gn.connect(dest); osc.start();
-    return new MediaStream([...vs.getVideoTracks(),...dest.stream.getAudioTracks()]);
-  }catch(e){ return vs; }
+  return cv.captureStream(30);
 }
 async function getSource(){
   const kind=$('srcsel').value;
