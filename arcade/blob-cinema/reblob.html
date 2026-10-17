@@ -29,6 +29,11 @@ input{background:#0b0b1a;border:1px solid #33336a;color:#e8e8ff;border-radius:6p
 </div>
 
 <div class="panel">
+  <h2 style="margin:0 0 8px">🎬 FILMS <span class="lbl">the originals — keeper-reblobbed, failover chain active</span></h2>
+  <div id="films"><span class="lbl">loading keeper status…</span></div>
+</div>
+
+<div class="panel">
   <h2 style="margin:0 0 8px">💾 SAVED STREAMS <span class="lbl">completed, verified, reblobbed before expiry — forever</span></h2>
   <input id="search" placeholder="search streams…" style="width:40%" oninput="render()">
   <button class="btn" onclick="loadLibrary()">🔄 refresh</button>
@@ -46,6 +51,11 @@ const GH='https://arcade.highscores.live/arcade/blob-cinema';
 const $=id=>document.getElementById(id);
 let library={streams:[]};
 async function loadLibrary(){
+  // 0. Films from keeper-status.json (Gertie, Robin Hood — the originals)
+  try{
+    const r=await fetch(GH+'/keeper-status.json?v='+Date.now());
+    if(r.ok){ const ks=await r.json(); renderFilms(ks.films||{}); }
+  }catch(e){ $('films').innerHTML='<span class="lbl">keeper offline</span>'; }
   try{
     const r=await fetch(GH+'/live-library.json?v='+Date.now());
     if(r.ok){ const g=await r.json(); library.streams=g.streams||[]; }
@@ -68,6 +78,44 @@ function fmtLeft(sec){
   if(sec<0) return 'EXPIRED';
   const d=Math.floor(sec/86400), h=Math.floor(sec%86400/3600), m=Math.floor(sec%3600/60);
   return d>0?`${d}d ${h}h`:(h>0?`${h}h ${m}m`:`${m}m`);
+}
+/* Films: the originals, keeper-managed with failover chains.
+   When the leader blob dies, the player follows the key to the next generation. */
+function renderFilms(films){
+  const order=['gertie','robinhood'];
+  $('films').innerHTML=order.filter(id=>films[id]).map(id=>{
+    const f=films[id];
+    const isGertie=id==='gertie';
+    // expiry: gertie re-copies every 5 min (always fresh), robinhood has expires_at
+    let leftTxt, rbCount;
+    if(isGertie){
+      leftTxt='<span class="countdown" style="color:var(--neon)">♾ ALWAYS FRESH</span> <span class="lbl">re-copied every ~5 min</span>';
+      rbCount=f.moves||0;
+    } else {
+      const left=(f.expires_at||0)-Date.now()/1000;
+      leftTxt=left<0?'<span style="color:var(--red)">⚠ EXPIRED</span>':
+        `<span class="countdown" style="color:${left<86400?'var(--amber)':'var(--neon)'}">⏱ ${fmtLeft(left)}</span> <span class="lbl">till reblob</span>`;
+      rbCount='keeper-managed';
+    }
+    const playUrl=isGertie?'./index.html':'./index.html';
+    const key=(f.key||'').replace('…','');
+    return `<div class="stream">
+      <b>🎬 ${f.title}</b><br>
+      ${leftTxt} · <span class="lbl">🔄 reblobbed <b>${rbCount}x</b></span><br>
+      <span class="mono" style="font-size:.75rem">🔑 ${key.slice(0,32)}… · head: <span style="font-size:.7rem">${(f.head||'').slice(0,20)}…</span></span><br>
+      <span class="lbl">⛓ failover: ${f.how||'same key, fresh nonces → new blob IDs'}</span><br>
+      <a class="btn go" href="${playUrl}">▶ open theater player</a>
+      <button class="btn" onclick="shareFilm('${id}')">🔗 share link</button>
+      <div class="lbl" id="share-film-${id}"></div>
+    </div>`;
+  }).join('')||'<span class="lbl">no films in keeper</span>';
+}
+function shareFilm(id){
+  // Films play in the theater (index.html) — share the theater link.
+  // The key is public for these demo films; the theater loads manifests from GitHub.
+  const link=location.origin+location.pathname.replace('reblob.html','index.html');
+  const el=$('share-film-'+id);
+  el.innerHTML=`<br>🔗 <input readonly style="width:60%" value="${link}" onclick="this.select()" id="shf-${id}"> <button class="btn" style="font-size:.8rem" onclick="copyText('shf-${id}')">📋 copy</button><br><span style="font-size:.75rem">Theater plays from the keeper manifest — always the freshest blobs.</span>`;
 }
 function renderLive(live){
   $('livenow').innerHTML=live.length?live.map(s=>
