@@ -39,6 +39,10 @@ input,select{background:#0b0b1a;border:1px solid #33336a;color:#e8e8ff;border-ra
 <div class="panel">
   <h2 style="margin:0 0 8px">📡 BROADCASTER <span id="recbadge" style="display:none;background:#ff5470;color:#fff;padding:2px 10px;border-radius:999px;font-size:.8rem;animation:blink 1.2s infinite">🔴 RECORDING</span></h2>
   <div id="capcheck" class="lbl" style="margin-bottom:8px;padding:6px;background:#0b0b1a;border-radius:6px">checking browser capabilities…</div>
+  <div style="margin-bottom:8px">
+    <button class="btn" id="pipbtn" onclick="togglePip()" style="font-size:.85rem">🎮 face cam PiP</button>
+    <span class="lbl" style="font-size:.75rem">your face in the corner, gamer-style — baked into the recording</span>
+  </div>
   <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
     <select id="srcsel">
       <option value="test">🎨 Test pattern (no permissions)</option>
@@ -179,8 +183,54 @@ function startTestPattern(){
     ctx.font='20px monospace';
     ctx.fillText(new Date().toLocaleTimeString(), 18, 330);
     ctx.fillText('chunk test pattern · t='+t.toFixed(1)+'s', 18, 78);
+    drawPip(ctx);
   },50);
   return cv.captureStream(30);
+}
+/* ---------- GAMER PiP: your face in a fun box, bottom-left corner ----------
+   Composites camera over the test pattern — like a Twitch stream. The PiP is
+   baked into the recording (it's part of the canvas = part of the blobs). */
+let pipStream=null, pipVideo=null, pipOn=false;
+async function togglePip(){
+  pipOn=!pipOn;
+  const btn=$('pipbtn');
+  if(pipOn){
+    try{
+      pipStream=await navigator.mediaDevices.getUserMedia({video:{width:320},audio:false});
+      pipVideo=document.createElement('video');
+      pipVideo.srcObject=pipStream; pipVideo.muted=true; pipVideo.playsInline=true;
+      await pipVideo.play();
+      btn.textContent='🎮 PiP ON — tap to hide'; btn.style.borderColor='#7CFF6B';
+      manLog('<span class="ok">🎮 gamer PiP live — your face in the corner</span>');
+    }catch(e){
+      pipOn=false;
+      manLog('<span style="color:#ff5470">✗ camera blocked: '+e.message+'</span>');
+      if(window.errcatch) errcatch('pip: '+e.message,'togglePip');
+    }
+  } else {
+    if(pipStream) pipStream.getTracks().forEach(t=>t.stop());
+    pipStream=null; pipVideo=null;
+    btn.textContent='🎮 face cam PiP'; btn.style.borderColor='';
+  }
+}
+/* Draw PiP onto the test canvas each frame — call inside the pattern loop */
+function drawPip(ctx){
+  if(!pipOn||!pipVideo||pipVideo.readyState<2) return;
+  const pw=160, ph=120, px=16, py=360-16-ph;
+  // fun box: rounded rect border with glow
+  ctx.save();
+  ctx.shadowColor='#7CFF6B'; ctx.shadowBlur=12;
+  ctx.strokeStyle='#7CFF6B'; ctx.lineWidth=4;
+  ctx.beginPath(); ctx.roundRect(px-4,py-4,pw+8,ph+8,12); ctx.stroke();
+  ctx.restore();
+  ctx.save();
+  ctx.beginPath(); ctx.roundRect(px,py,pw,ph,8); ctx.clip();
+  // mirror selfie view
+  ctx.translate(px+pw,py); ctx.scale(-1,1);
+  ctx.drawImage(pipVideo,0,0,pw,ph);
+  ctx.restore();
+  ctx.fillStyle='#7CFF6B'; ctx.font='bold 12px monospace';
+  ctx.fillText('● LIVE', px+8, py+18);
 }
 async function getSource(){
   const kind=$('srcsel').value;
@@ -703,6 +753,12 @@ function renderLibrary(){
   }).join(''):'<span class="lbl">no saved streams yet.</span>';
 }
 renderLibrary();
+/* iOS suspends background tabs — warn if the broadcast is live and the page hides */
+document.addEventListener('visibilitychange',()=>{
+  if(document.hidden&&typeof live!=='undefined'&&live){
+    manLog('<span style="color:#ffb347">⚠ tab hidden — iOS may pause the broadcast. Keep this tab open while sharing.</span>');
+  }
+});
 </script>
 <div style="text-align:center;color:#44446a;font-size:.7rem;padding:10px">live build 2026-10-16-fix4-watchmode · <a href="./reblob.html" style="color:#44446a">reblob library</a></div>
 </body>
