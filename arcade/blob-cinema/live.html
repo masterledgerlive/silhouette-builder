@@ -37,7 +37,7 @@ input,select{background:#0b0b1a;border:1px solid #33336a;color:#e8e8ff;border-ra
 <p class="lbl">One live key. Four windows, four derived keys, one stream. Every 2 seconds a chunk is captured, locked, and laid into a blob — watch it happen, with the lag measured live. <a href="./index.html">← theater</a> · <a href="./studio.html">studio</a></p>
 
 <div class="panel">
-  <h2 style="margin:0 0 8px">📡 BROADCASTER</h2>
+  <h2 style="margin:0 0 8px">📡 BROADCASTER <span id="recbadge" style="display:none;background:#ff5470;color:#fff;padding:2px 10px;border-radius:999px;font-size:.8rem;animation:blink 1.2s infinite">🔴 RECORDING</span></h2>
   <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
     <select id="srcsel">
       <option value="test">🎨 Test pattern (no permissions)</option>
@@ -113,6 +113,7 @@ input,select{background:#0b0b1a;border:1px solid #33336a;color:#e8e8ff;border-ra
 const AGG='https://aggregator.walrus-testnet.walrus.space', PUB='https://publisher.walrus-testnet.walrus.space';
 const CHUNK_MS=2000;
 let live=false, recorder=null, liveStream=null, testTimer=null;
+let pendingPUTs=0; // backpressure counter — drop chunks if Walrus can't keep up
 let liveKey=null, keyChain=[], chunks=[], captions=[], nChunk=0, tStart=0;
 let streamId=null;
 /* cipherChunks[i] = the exact encrypted bytes PUT to Walrus for chunk i.
@@ -280,12 +281,21 @@ async function goLive(){
   manLog('<span class="ok">🎞 using '+liveMime+'</span> (audio track: '+(hasAudio?'yes':'no')+')');
   tStart=Date.now(); live=true;
   $('gobtn').disabled=true; $('stopbtn').disabled=false; $('sharebtn').disabled=false;
+  $('recbadge').style.display='inline-block';
   buildWindows();
   recorder=new MediaRecorder(liveStream,{mimeType:liveMime,videoBitsPerSecond:900000});
   let first=true;
   recorder.ondataavailable=async ev=>{
     if(!live||!ev.data||!ev.data.size) return;
     const idx=nChunk++;
+    // BACKPRESSURE: if PUTs are backed up (>6 pending), drop this chunk instead of
+    // growing an unbounded queue. A gap is harmless; a frozen browser is not.
+    if(pendingPUTs>6){
+      manLog(`<span style="color:#ffb347">⏭ dropped chunk #${idx} — PUT backlog (${pendingPUTs} pending), network too slow</span>`);
+      chunks[idx]={n:idx,ok:false,dropped:true};
+      return;
+    }
+    pendingPUTs++;
     const capAt=Date.now();
     stage('st-cap',true);
     const raw=new Uint8Array(await ev.data.arrayBuffer());
@@ -303,6 +313,7 @@ async function goLive(){
       blobId=(j.newlyCreated||j.alreadyCertified).blobObject.blobId; ok=true;
     }catch(e){ blobId='PUT-FAILED:'+e.message; }
     const putMs=performance.now()-t0;
+    pendingPUTs--;
     stage('st-man',true);
     const entry={n:idx,type:isInit?'init':'media',blob:blobId,keyIdx:idx,keyHex:hex(key).slice(0,16)+'…',
       capturedAt:capAt,putMs:Math.round(putMs),bytes:cipher.length,ok,title:$('livetitle').value||'untitled live'};
@@ -474,6 +485,7 @@ async function stopLive(){
   try{recorder.stop();}catch(e){}
   if(speaking&&speechRec) speechRec.stop();
   $('gobtn').disabled=false; $('stopbtn').disabled=true;
+  $('recbadge').style.display='none';
   clearInterval(testTimer);
   if(verifyTimer){ clearInterval(verifyTimer); verifyTimer=null; }
   $('scorepanel').style.display='none';
