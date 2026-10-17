@@ -99,7 +99,8 @@ a{color:var(--neon)}
 
 <div class="panel footer">
   Big Buck Bunny © 2008 Blender Foundation — <a href="https://blender.org">blender.org</a> — CC-BY 3.0.<br>
-  Film stored as 78 encrypted sections on the Walrus testnet (75.8 MB). Playback decrypts + verifies each section in your browser.
+  Film stored as 78 encrypted sections on the Walrus testnet (75.8 MB). Playback decrypts + verifies each section in your browser.<br>
+  <span class="lbl">player build <span class="mono" id="buildver">?</span></span>
 </div>
 
 <script>
@@ -232,6 +233,7 @@ function renderFilms(){
 // set film-specific header
 document.getElementById('filmtagline').innerHTML='<b>'+_film.title+'</b> — playing from <b>encrypted Walrus blobs and nothing else</b>. '+_film.blurb+'.';
 document.getElementById('nseclabel').textContent=NSEC;
+document.getElementById('buildver').textContent='2026-10-16-fix3-tfhd-trackid';
 renderFilms();
 
 document.getElementById('b0').textContent = BLOB0;
