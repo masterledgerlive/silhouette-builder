@@ -398,10 +398,12 @@ async function pumpViewer(w){
         if(c.type==='init'&&!magic.startsWith('1A45DFA3')) throw new Error('chunk 0 is not a valid webm init (magic '+magic+')');
         await sbAppend(w,plain);
         if(c.type==='init') w.gotInit=true;
-        const lag=((Date.now()-c.capturedAt)/1000).toFixed(1);
+        const lag=c.capturedAt?((Date.now()-c.capturedAt)/1000).toFixed(1):null;
         const lagEl=$('lag'+w.wi);
-        lagEl.textContent='⏱ '+lag+'s behind live';
-        lagEl.style.color=lag<10?'var(--neon)':(lag<20?'var(--amber)':'var(--red)');
+        if(lag!==null){
+          lagEl.textContent='⏱ '+lag+'s behind live';
+          lagEl.style.color=lag<10?'var(--neon)':(lag<20?'var(--amber)':'var(--red)');
+        } else { lagEl.textContent='⏱ shared replay'; lagEl.style.color='var(--blue)'; }
         wstat(w,`chunk #${c.n} ✓ from blob · decrypted with K_${c.keyIdx} · ${(c.bytes/1024).toFixed(0)}KB`);
         w.nextN++; w.errs=0;
         w.v.play().catch(()=>{});
@@ -508,7 +510,7 @@ async function shareLive(){
   try{
     const solid=chunks.filter(c=>c&&c.ok);
     const manifest={id:streamId,title:$('livetitle').value||'live',
-      chunks:solid.map(c=>({n:c.n,blob:c.blob,keyIdx:c.keyIdx})),
+      chunks:solid.map(c=>({n:c.n,blob:c.blob,keyIdx:c.keyIdx,type:c.type,capturedAt:c.capturedAt,bytes:c.bytes})),
       published_at:Date.now()};
     const r=await fetch(PUB+'/v1/blobs?epochs=5',{method:'PUT',
       body:new TextEncoder().encode(JSON.stringify(manifest))});
@@ -542,6 +544,7 @@ async function watchMode(manifestBlob,keyHex){
     if(!kh||kh.length<64) throw new Error('no key in link — ask the broadcaster for a fresh share link');
     liveKey=new Uint8Array(kh.match(/../g).map(x=>parseInt(x,16)));
     keyChain=[liveKey];
+    liveMime='video/webm;codecs=vp9'; // watch mode: chunks are VP9 video-only
     $('livetitle').value=manifest.title||'shared stream';
     // load chunks into memory from Walrus
     manLog('📥 fetching '+manifest.chunks.length+' chunks from the chain…');
@@ -550,12 +553,12 @@ async function watchMode(manifestBlob,keyHex){
       try{
         const cr=await fetch(AGG+'/v1/blobs/'+c.blob);
         const cipher=new Uint8Array(await cr.arrayBuffer());
-        chunks[c.n]={n:c.n,blob:c.blob,keyIdx:c.keyIdx,ok:true,bytes:cipher.length};
+        chunks[c.n]={n:c.n,blob:c.blob,keyIdx:c.keyIdx,type:c.type,capturedAt:c.capturedAt,ok:true,bytes:cipher.length};
         cipherChunks[c.n]=cipher;
       }catch(e){ chunks[c.n]={n:c.n,ok:false}; }
     }
     manLog('<span class="ok">✓ '+chunks.filter(c=>c&&c.ok).length+' chunks loaded</span> — starting 4 windows…');
-    startViewers();
+    buildWindows();
   }catch(e){ manLog('<span style="color:#ff5470">✗ watch failed: '+e.message+'</span>'); }
 }
 function renderLibrary(){
