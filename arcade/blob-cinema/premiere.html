@@ -115,10 +115,12 @@ async function startPremiere(){
       const c=man.chunks[i];
       $('status').textContent=`unlocking box ${i+1}/${total}…`;
       try{
-        const key=await keyAt(c.keyIdx??c.n??i);
         const cr=await fetch(AGG+'/v1/blobs/'+c.blob);
         const cipher=new Uint8Array(await cr.arrayBuffer());
-        const plain=unwrap(cipher,key);
+        // brute-force: try every key — finds the right one no matter what
+        let plain=null;
+        const maxK=Math.max(total,keyChain.length)+2;
+        for(let tk=0; tk<maxK && !plain; tk++) plain=unwrap(cipher,await keyAt(tk));
         if(!plain) throw new Error('decrypt failed');
         const bytes=new Uint8Array(plain);
         if(!mime) mime=(bytes[4]===0x66&&bytes[5]===0x74&&bytes[6]===0x79&&bytes[7]===0x70)?'video/mp4':'video/webm';
