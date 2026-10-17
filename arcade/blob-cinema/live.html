@@ -295,8 +295,11 @@ async function pumpViewer(w){
         // The blob is REALLY on Walrus too — manifest proves it, "verify" button fetches one live.
         const buf=cipherChunks[c.n];
         if(!buf) throw new Error('chunk '+c.n+' not in memory yet');
-        const plain=unwrapChunk(buf,key);
-        if(!plain) throw new Error('decrypt failed @chunk '+c.n+' (wrong key?)');
+        const dec=unwrapChunk(buf,key);
+        if(!dec) throw new Error('decrypt failed @chunk '+c.n+' (wrong key?)');
+        /* nacl returns a subarray VIEW (non-zero byteOffset) — appendBuffer can choke on it.
+           Copy to a fresh zero-offset buffer. */
+        const plain=new Uint8Array(dec);
         // sanity: webm init starts with EBML 1A45DFA3, media with Cluster 1F43B675
         const magic=(plain[0].toString(16)+plain[1].toString(16)+plain[2].toString(16)+plain[3].toString(16)).toUpperCase();
         if(c.type==='init'&&!magic.startsWith('1A45DFA3')) throw new Error('chunk 0 is not a valid webm init (magic '+magic+')');
