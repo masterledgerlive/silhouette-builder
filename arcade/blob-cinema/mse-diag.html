@@ -17,32 +17,44 @@ async function run(){
   const stream=cv.captureStream(30);
   out('stream tracks: video='+stream.getVideoTracks().length+' audio='+stream.getAudioTracks().length);
   const mime='video/webm;codecs=vp9';
+  // REPLICATE LIVE: 2000ms timeslice, append each chunk SEPARATELY
   const rec=new MediaRecorder(stream,{mimeType:mime});
-  const chunks=[];
-  rec.ondataavailable=e=>{if(e.data.size)chunks.push(e.data);};
-  rec.start(1000);
-  await new Promise(r=>setTimeout(r,2500));
-  rec.stop();
-  await new Promise(r=>setTimeout(r,500));
-  clearInterval(timer);
-  out('recorded '+chunks.length+' chunks, sizes: '+chunks.map(c=>c.size).join(','));
-  const buf=new Uint8Array(await new Blob(chunks).arrayBuffer());
-  out('total bytes: '+buf.length+', magic: '+Array.from(buf.slice(0,4)).map(b=>b.toString(16).padStart(2,'0')).join(''));
-  // try MSE
   const v=document.getElementById('v');
   const ms=new MediaSource(); v.src=URL.createObjectURL(ms);
+  let sb=null, chunkIdx=0, okCount=0, failCount=0;
   ms.addEventListener('sourceopen',()=>{
     out('sourceopen, readyState='+ms.readyState);
     try{
-      const sb=ms.addSourceBuffer(mime);
-      out('addSourceBuffer OK');
-      sb.addEventListener('updateend',()=>{out('append OK, buffered='+sb.buffered.length);v.play().then(()=>out('playing!')).catch(e=>out('play failed: '+e));});
-      sb.addEventListener('error',()=>out('SourceBuffer ERROR event'));
-      sb.appendBuffer(buf);
-      out('appendBuffer called');
+      sb=ms.addSourceBuffer(mime);
+      out('addSourceBuffer OK — now recording 2s chunks, appending separately...');
+      sb.addEventListener('error',()=>out('!! SourceBuffer ERROR event'));
+      rec.start(2000);
     }catch(e){ out('SETUP FAILED: '+(e.message||e)); }
   });
   ms.addEventListener('sourceclose',()=>out('source CLOSED'));
+  rec.ondataavailable=async e=>{
+    if(!e.data||!e.data.size) return;
+    const idx=chunkIdx++;
+    const buf=new Uint8Array(await e.data.arrayBuffer());
+    const magic=Array.from(buf.slice(0,4)).map(b=>b.toString(16).padStart(2,'0')).join('');
+    out(`chunk #${idx}: ${buf.length} bytes, magic=${magic}${idx===0?' (INIT?)':''}`);
+    if(!sb){ out('no SB yet, skipping'); return; }
+    if(sb.updating){ out('SB busy, skipping chunk '+idx); return; }
+    try{
+      await new Promise((res,rej)=>{
+        const on=()=>{sb.removeEventListener('updateend',on);res();};
+        const onErr=()=>{sb.removeEventListener('updateend',on);rej(new Error('SB error event'));};
+        sb.addEventListener('updateend',on); sb.addEventListener('error',onErr);
+        sb.appendBuffer(buf);
+      });
+      okCount++;
+      out(`chunk #${idx} appended OK (${okCount} ok)`);
+      if(idx===0) v.play().then(()=>out('playing!')).catch(e=>out('play: '+e.message));
+    }catch(e){ failCount++; out(`chunk #${idx} FAILED: ${(e.message||e)} (${failCount} fails)`); }
+  };
+  await new Promise(r=>setTimeout(r,9000));
+  rec.stop(); clearInterval(timer);
+  out(`DONE: ${okCount} appended, ${failCount} failed`);
 }
 run();
 </script></body></html>
