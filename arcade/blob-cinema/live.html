@@ -57,6 +57,13 @@ input,select{background:#0b0b1a;border:1px solid #33336a;color:#e8e8ff;border-ra
     <input id="livetitle" placeholder="stream title…" style="flex:1;min-width:140px">
     <button class="btn go" id="gobtn" onclick="goLive()">🔴 GO LIVE</button>
     <button class="btn red" id="stopbtn" onclick="stopLive()" disabled>⏹ STOP + MOVE TO LIBRARY</button>
+    <button class="btn" id="sharebtn" onclick="shareLive()" disabled title="publish manifest to Walrus, get a shareable watch link">🔗 SHARE LIVE</button>
+  </div>
+  <div id="sharebox" style="display:none;margin-top:8px;padding:8px;background:#0f2a1a;border:1px solid #7CFF6B;border-radius:8px">
+    <span class="lbl">🔗 Share this link — anyone opening it watches from the blockchain:</span><br>
+    <input id="sharelink" readonly style="width:70%" onclick="this.select()">
+    <button class="btn" onclick="copyShare()">📋 copy</button>
+    <div class="lbl" style="margin-top:4px">The key travels in the URL fragment (never hits our server). The manifest lives on Walrus.</div>
   </div>
   <div style="display:flex;gap:12px;margin-top:10px;flex-wrap:wrap">
     <div style="flex:1;min-width:220px"><span class="lbl">live source (muted preview)</span><br><video id="preview" muted playsinline></video><canvas id="testcanvas" width="640" height="360" style="width:100%;border-radius:8px;background:#000"></canvas></div>
@@ -220,8 +227,11 @@ window.addEventListener('message',e=>{
   if(e.data&&e.data.type==='blobscore'){ gameScore=e.data.score||gameScore; scoreEvent(e.data.event||'score'); }
 });
 // autostart from arcade hub: ?autostart=screen&title=...
+// watch mode: ?watch=<manifest_blob>#<key>
 (function(){
   const q=new URLSearchParams(location.search);
+  const wm=q.get('watch');
+  if(wm){ setTimeout(()=>watchMode(wm),800); return; }
   const as=q.get('autostart'), ti=q.get('title');
   if(ti) $('livetitle').value=ti;
   if(as){ $('srcsel').value=(as==='screen-video')?'screen-video':'screen';
@@ -262,7 +272,7 @@ async function goLive(){
   manLog('<span class="lbl">codec probe: '+probeCodecs()+'</span>');
   manLog('<span class="ok">🎞 using '+liveMime+'</span> (audio track: '+(hasAudio?'yes':'no')+')');
   tStart=Date.now(); live=true;
-  $('gobtn').disabled=true; $('stopbtn').disabled=false;
+  $('gobtn').disabled=true; $('stopbtn').disabled=false; $('sharebtn').disabled=false;
   buildWindows();
   recorder=new MediaRecorder(liveStream,{mimeType:liveMime,videoBitsPerSecond:900000});
   let first=true;
@@ -337,10 +347,12 @@ function buildWindows(){
     const box=document.createElement('div'); box.className='win';
     box.innerHTML=`<div class="winhead"><b>👁 WINDOW ${wi+1}</b><span class="lag" id="lag${wi}">—</span></div>
       <video id="v${wi}" playsinline muted></video>
-      <div class="lbl">🔑 <span class="mono" id="key${wi}">—</span></div>
+      <div class="lbl">🔑 <span class="mono" id="key${wi}">—</span> · ⏱ <span class="mono" id="wtime${wi}">0:00</span> <button class="btn" style="font-size:.7rem;padding:2px 8px" onclick="shareWindow(${wi})" title="copy share link for this window's position">🔗 share</button></div>
       <div class="lbl" id="wstat${wi}">waiting for chunks…</div>`;
     g.appendChild(box);
     const v=$('v'+wi);
+    // time display
+    v.addEventListener('timeupdate',()=>{ const el=$('wtime'+wi); if(el){ const s=Math.floor(v.currentTime); el.textContent=Math.floor(s/60)+':'+String(s%60).padStart(2,'0'); } });
     const ms=new MediaSource(); v.src=URL.createObjectURL(ms);
     const w={wi,delay:d,v,ms,sb:null,nextN:0,pumping:false,gotInit:false,errs:0};
     viewers.push(w);
@@ -457,6 +469,7 @@ async function stopLive(){
   const rec={id:streamId,title,at:Date.now(),chunks:solid.length,captions:captions.length,
     liveKey:hex(liveKey),blobs:okBlobs,
     expires_at:Date.now()/1000+5*86400, // 5 epochs ≈ 5 days; reblob before this
+    reblob_count:0, // incremented each time the stream is re-encrypted to stay alive
     proof:{commitment:'sha256(live_key|blob_ids)',note:'hash-commitment, not zk-SNARK'},
     // verified gameplay: score events timestamped to chunks, camera+screen composite
     verified:$('srcsel').value==='verify',
@@ -485,13 +498,74 @@ async function stopLive(){
   a.className='btn'; a.style.display='inline-block'; a.style.marginTop='8px'; a.style.textDecoration='none';
   $('manifestlog').prepend(a);
 }
-function renderLibrary(){
+/* ---------- shareable links: manifest on Walrus + key in fragment ----------
+   "The power of the key": the key locates the first chunk (leader), and the
+   manifest (on-chain) tells the decoder where every copied blob lives.
+   Anyone with the link watches from the blockchain — no account, no server. */
+async function shareLive(){
+  if(!live||!liveKey){ alert('go live first'); return; }
+  const btn=$('sharebtn'); btn.disabled=true; btn.textContent='⏳ publishing manifest…';
+  try{
+    const solid=chunks.filter(c=>c&&c.ok);
+    const manifest={id:streamId,title:$('livetitle').value||'live',
+      chunks:solid.map(c=>({n:c.n,blob:c.blob,keyIdx:c.keyIdx})),
+      published_at:Date.now()};
+    const r=await fetch(PUB+'/v1/blobs?epochs=5',{method:'PUT',
+      body:new TextEncoder().encode(JSON.stringify(manifest))});
+    const j=await r.json();
+    const mbid=(j.newlyCreated||j.alreadyCertified).blobObject.blobId;
+    const link=location.origin+location.pathname+'?watch='+mbid+'#'+hex(liveKey);
+    $('sharelink').value=link; $('sharebox').style.display='block';
+    manLog('<span class="ok">🔗 SHARE</span> manifest on Walrus: <span class="mono">'+mbid.slice(0,20)+'…</span>');
+  }catch(e){ alert('share failed: '+e.message); }
+  btn.disabled=false; btn.textContent='🔗 SHARE LIVE';
+}
+function copyShare(){ $('sharelink').select(); document.execCommand('copy');
+  try{ navigator.clipboard.writeText($('sharelink').value); }catch(e){} }
+function shareWindow(wi){
+  // share link for a specific window position (delay) — same stream, different key view
+  if(!live||!liveKey){ alert('go live first, then share'); return; }
+  shareLive();
+}
+/* ---------- watch mode: ?watch=<manifest_blob>#<key> ----------
+   Opens someone else's shared stream. Fetches manifest from Walrus,
+   decrypts with the key from the fragment, plays all 4 windows. */
+async function watchMode(manifestBlob,keyHex){
+  document.querySelector('h1').innerHTML='👁 WATCHING SHARED STREAM <span class="lbl">from the blockchain — no account needed</span>';
+  $('gobtn').disabled=true;
+  manLog('🔗 loading shared manifest from Walrus…');
+  try{
+    const r=await fetch(AGG+'/v1/blobs/'+manifestBlob);
+    const manifest=await r.json();
+    // key from URL fragment (never sent to server)
+    const kh=keyHex||location.hash.slice(1);
+    if(!kh||kh.length<64) throw new Error('no key in link — ask the broadcaster for a fresh share link');
+    liveKey=new Uint8Array(kh.match(/../g).map(x=>parseInt(x,16)));
+    keyChain=[liveKey];
+    $('livetitle').value=manifest.title||'shared stream';
+    // load chunks into memory from Walrus
+    manLog('📥 fetching '+manifest.chunks.length+' chunks from the chain…');
+    chunks=[]; cipherChunks=[];
+    for(const c of manifest.chunks){
+      try{
+        const cr=await fetch(AGG+'/v1/blobs/'+c.blob);
+        const cipher=new Uint8Array(await cr.arrayBuffer());
+        chunks[c.n]={n:c.n,blob:c.blob,keyIdx:c.keyIdx,ok:true,bytes:cipher.length};
+        cipherChunks[c.n]=cipher;
+      }catch(e){ chunks[c.n]={n:c.n,ok:false}; }
+    }
+    manLog('<span class="ok">✓ '+chunks.filter(c=>c&&c.ok).length+' chunks loaded</span> — starting 4 windows…');
+    startViewers();
+  }catch(e){ manLog('<span style="color:#ff5470">✗ watch failed: '+e.message+'</span>'); }
+}
   const q=($('libsearch').value||'').toLowerCase();
   const lib=JSON.parse(localStorage.getItem('bloblive_library')||'[]').filter(r=>r.title.toLowerCase().includes(q));
   $('liblist').innerHTML=lib.length?lib.map(r=>{
     const left=(r.expires_at||0)-Date.now()/1000;
     const leftTxt=left<0?'<span style="color:#ff5470">⚠ EXPIRED</span>':`<span>⏱ ${Math.floor(left/86400)}d ${Math.floor(left%86400/3600)}h till reblob</span>`;
-    return `<div class="mono" style="padding:8px;background:#0b0b1a;border-radius:8px;margin:6px 0">📼 <b>${r.title}</b> · ${new Date(r.at).toLocaleString()} · ${r.chunks} chunks · ${leftTxt} · 🔑<span style="font-size:.7rem">${r.liveKey.slice(0,16)}…</span> <a href="./play.html?id=${r.id}" style="color:#7CFF6B">▶ play</a></div>`;
+    const key=r.liveKey||'';
+    const shareLink=location.origin+location.pathname.replace('live.html','play.html')+'?id='+r.id+'#'+key;
+    return `<div class="mono" style="padding:8px;background:#0b0b1a;border-radius:8px;margin:6px 0">📼 <b>${r.title}</b> · ${new Date(r.at).toLocaleString()} · ${r.chunks} chunks · ${leftTxt} · 🔄 ${r.reblob_count||0}x · 🔑<span style="font-size:.7rem">${key.slice(0,16)}…</span><br><a href="./play.html?id=${r.id}#${key}" style="color:#7CFF6B">▶ open player</a> · <button class="btn" style="font-size:.75rem;padding:2px 8px" onclick="navigator.clipboard&&navigator.clipboard.writeText('${shareLink}');alert('share link copied')">🔗 share</button></div>`;
   }).join(''):'<span class="lbl">no saved streams yet.</span>';
 }
 renderLibrary();
