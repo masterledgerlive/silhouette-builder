@@ -179,4 +179,21 @@ async function runAll(){
 (function(){let g=[];try{g=JSON.parse(localStorage.getItem('bc-garden')||'[]');}catch(e){}
 if(g.length)$('garden').innerHTML=g.slice().reverse().map(x=>`<div>${x.t.slice(5,16).replace('T',' ')} — <b>${x.pct}%</b> (${x.passed}/${x.total})</div>`).join('');})();
 </script>
+
+<nav id="bnav">
+<a href="./how.html">🎬<span>make</span></a>
+<a href="./premiere.html">▶<span>watch</span></a>
+<a href="./live-now.html">📡<span>live</span></a>
+<a href="./follow.html">🔗<span>follow</span></a>
+<a href="./reblob.html">📚<span>library</span></a>
+<a href="../index.html">🕹<span>arcade</span></a>
+</nav>
+<style>
+#bnav{position:fixed;bottom:0;left:0;right:0;z-index:50;background:#141428;border-top:2px solid #6C5CE7;display:flex;justify-content:space-around;padding:6px 4px calc(6px + env(safe-area-inset-bottom))}
+#bnav a{color:#b0b0e0;text-decoration:none;font-size:1.3rem;display:flex;flex-direction:column;align-items:center;min-width:52px}
+#bnav a span{font-size:.6rem;margin-top:2px}
+#bnav a:active{color:#fff}
+body{padding-bottom:70px}
+</style>
+
 </body></html>
