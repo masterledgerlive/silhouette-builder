@@ -322,9 +322,10 @@ function pumpViewers(){ viewers.forEach(pumpViewer); } // wake all viewers on ne
 function sbAppend(w,buf){ return new Promise((res,rej)=>{ const sb=w.sb;
   if(!sb){ rej(new Error('no SourceBuffer')); return; }
   if(sb.updating){ rej(new Error('SourceBuffer busy — retry')); return; }
+  if(w.v.error){ rej(new Error('video element errored: '+(w.v.error.message||w.v.error.code)+' — SourceBuffer dead')); return; }
   let done=false;
   const on=()=>{ if(done)return; done=true; cleanup(); res(); };
-  const onErr=()=>{ if(done)return; done=true; cleanup(); rej(new Error('SourceBuffer rejected the bytes (codec/init mismatch?)')); };
+  const onErr=()=>{ if(done)return; done=true; cleanup(); rej(new Error('SourceBuffer rejected the bytes (codec/init mismatch?) v.error='+(w.v.error?w.v.error.code:'none'))); };
   const cleanup=()=>{ sb.removeEventListener('updateend',on); sb.removeEventListener('error',onErr); };
   sb.addEventListener('updateend',on); sb.addEventListener('error',onErr);
   try{ sb.appendBuffer(buf); }
