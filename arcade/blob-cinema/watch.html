@@ -173,10 +173,12 @@ async function startPlayer(video,delay,timeEl,keyEl,lagEl){
     }
   });
 }
-/* Phone player: decrypt from `delay` onward, concat, play as one video */
+/* Phone player: decrypt from `delay` onward, play progressively — starts immediately */
 async function startPhonePlayer(video,delay,keyEl){
   const buf=[]; let n=delay, ok=0;
-  const mime=((manifest&&manifest.mime)||'video/webm').split(';')[0];
+  let mime=((manifest&&manifest.mime)||'').split(';')[0];
+  let started=false;
+  video.muted=true;
   while(n<chunks.length){
     const c=chunks[n];
     if(!c){ await new Promise(r=>setTimeout(r,500)); continue; }
@@ -185,15 +187,26 @@ async function startPhonePlayer(video,delay,keyEl){
       const key=await keyAt(c.keyIdx);
       const plain=unwrap(cipherChunks[n],key);
       if(!plain) throw new Error('decrypt');
-      buf.push(new Uint8Array(plain)); ok++;
+      const bytes=new Uint8Array(plain);
+      if(!mime){
+        mime=(bytes[4]===0x66&&bytes[5]===0x74&&bytes[6]===0x79&&bytes[7]===0x70)?'video/mp4':
+             (bytes[0]===0x1A&&bytes[1]===0x45&&bytes[2]===0xDF&&bytes[3]===0xA3)?'video/webm':'video/mp4';
+      }
+      buf.push(bytes); ok++;
       if(keyEl) keyEl.textContent='K_'+c.keyIdx+' 📱';
+      if(!started&&ok>=1){
+        started=true;
+        video.src=URL.createObjectURL(new Blob(buf,{type:mime}));
+        video.controls=true;
+        video.play().catch(()=>{});
+      } else if(started&&ok%6===0){
+        const t=video.currentTime;
+        video.src=URL.createObjectURL(new Blob(buf,{type:mime}));
+        try{ video.currentTime=t; }catch(e){}
+        video.play().catch(()=>{});
+      }
     }catch(e){}
     n++;
-  }
-  if(ok){
-    video.src=URL.createObjectURL(new Blob(buf,{type:mime}));
-    video.controls=true;
-    video.play().catch(()=>{});
   }
 }
 function copyShare(){ $('sharelink').select(); try{ navigator.clipboard.writeText($('sharelink').value); }catch(e){} }
