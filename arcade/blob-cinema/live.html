@@ -38,6 +38,7 @@ input,select{background:#0b0b1a;border:1px solid #33336a;color:#e8e8ff;border-ra
 
 <div class="panel">
   <h2 style="margin:0 0 8px">📡 BROADCASTER <span id="recbadge" style="display:none;background:#ff5470;color:#fff;padding:2px 10px;border-radius:999px;font-size:.8rem;animation:blink 1.2s infinite">🔴 RECORDING</span></h2>
+  <div id="capcheck" class="lbl" style="margin-bottom:8px;padding:6px;background:#0b0b1a;border-radius:6px">checking browser capabilities…</div>
   <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
     <select id="srcsel">
       <option value="test">🎨 Test pattern (no permissions)</option>
@@ -479,7 +480,25 @@ function toggleSpeech(){
   speechRec.start(); speaking=true; $('speechbtn').textContent='⏹ stop';
 }
 
-/* ---------- stop → move to forever library ---------- */
+/* Capability check — runs on load, shows exactly what this browser can do */
+(function(){
+  const el=$('capcheck'); if(!el) return;
+  const out=[];
+  out.push('MediaRecorder: '+(window.MediaRecorder?'✓':'✗ MISSING'));
+  out.push('MediaSource: '+(window.MediaSource?'✓':'✗ MISSING'));
+  if(window.MediaRecorder){
+    const vp9=MediaRecorder.isTypeSupported('video/webm;codecs=vp9');
+    out.push('VP9 record: '+(vp9?'✓':'✗'));
+  }
+  if(window.MediaSource){
+    const mse=MediaSource.isTypeSupported('video/webm;codecs=vp9');
+    out.push('VP9 MSE: '+(mse?'✓':'✗'));
+  }
+  out.push('crypto: '+(window.crypto?'✓':'✗'));
+  const allGood=out.every(s=>!s.includes('✗')&&!s.includes('MISSING'));
+  el.innerHTML='<b>browser check:</b> '+out.join(' · ')+(allGood?'':'<br><span style="color:#ff5470">⚠ this browser cannot do live encoding — try Chrome/Edge on desktop</span>');
+  el.style.borderLeft=allGood?'3px solid #7CFF6B':'3px solid #ff5470';
+})();
 async function stopLive(){
   if(!live) return; live=false;
   try{recorder.stop();}catch(e){}
