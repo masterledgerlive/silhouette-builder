@@ -70,6 +70,9 @@ async function load(){
     if(s) manifest={title:s.title,live_key:s.liveKey,chunks:s.blobs.map(b=>({n:b.n,blob:b.blob,keyIdx:b.keyIdx})),captions:[]};
   }
   if(!manifest){ $('stat').textContent='stream not found'; return; }
+  // key can come from URL fragment (shared link) — fragment never hits the server
+  const fragKey=location.hash.slice(1);
+  if(fragKey&&fragKey.length>=64) manifest.live_key=fragKey;
   $('title').textContent='📼 '+manifest.title;
   keyChain=[bhex(manifest.live_key||manifest.liveKey)];
   $('proof').textContent=`🔑 ${String(manifest.live_key||manifest.liveKey).slice(0,32)}… · ${manifest.chunks.length} chunks · proof: sha256(live_key|chunks)`;
