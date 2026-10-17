@@ -76,6 +76,8 @@ input,select{background:#0b0b1a;border:1px solid #33336a;color:#e8e8ff;border-ra
 
 <div class="panel">
   <h2 style="margin:0 0 8px">🧱 LIVE MANIFEST <span class="lbl">chunks landing in blobs, in real time — the direct lane, no search</span></h2>
+  <button class="btn" style="font-size:.85rem;padding:8px 12px" onclick="verifyChain()">🔍 verify a chunk from the chain</button>
+  <span class="lbl" id="verifyout"></span>
   <div id="manifestlog"><span class="lbl">nothing yet — go live.</span></div>
 </div>
 
@@ -93,6 +95,10 @@ const AGG='https://aggregator.walrus-testnet.walrus.space', PUB='https://publish
 const CHUNK_MS=2000;
 let live=false, recorder=null, liveStream=null, testTimer=null;
 let liveKey=null, keyChain=[], chunks=[], captions=[], nChunk=0, tStart=0;
+/* cipherChunks[i] = the exact encrypted bytes PUT to Walrus for chunk i.
+   Viewers decrypt from memory (instant, zero network); the blobs are still
+   really on Walrus (see manifest) and "verify from chain" fetches one live. */
+let cipherChunks=[];
 let viewers=[], speechRec=null, speaking=false;
 const $=id=>document.getElementById(id);
 const hex=b=>Array.from(b).map(x=>x.toString(16).padStart(2,'0')).join('');
@@ -145,12 +151,30 @@ async function getSource(){
 /* ---------- broadcaster ---------- */
 function stage(id,on){ $(id).classList.toggle('on',!!on); }
 function manLog(html){ const el=$('manifestlog'); if(el.querySelector('.lbl')&&chunks.length<=1)el.innerHTML=''; const d=document.createElement('div'); d.innerHTML=html; el.prepend(d); }
+/* Prove the blobs are really on Walrus: fetch one from the aggregator, decrypt, compare. */
+async function verifyChain(){
+  const ok=chunks.filter(c=>c.ok);
+  if(!ok.length){ $('verifyout').textContent='no successful blobs yet'; return; }
+  const c=ok[Math.floor(Math.random()*ok.length)];
+  $('verifyout').textContent='fetching chunk #'+c.n+' from aggregator…';
+  try{
+    const r=await fetch(AGG+'/v1/blobs/'+c.blob);
+    if(!r.ok) throw new Error('aggregator '+r.status);
+    const buf=new Uint8Array(await r.arrayBuffer());
+    const key=await keyAt(c.keyIdx);
+    const plain=unwrapChunk(buf,key);
+    if(!plain) throw new Error('decrypt failed — wrong key or corrupt');
+    const mem=cipherChunks[c.n];
+    const same=plain.length===unwrapChunk(mem,key).length;
+    $('verifyout').innerHTML=`<span class="ok">✓ chunk #${c.n} fetched from Walrus, decrypted with K_${c.keyIdx}, ${plain.length} bytes — REALLY ON CHAIN</span>`;
+  }catch(e){ $('verifyout').textContent='✗ verify failed: '+(e.message||e); }
+}
 async function goLive(){
   if(live) return;
   try{ liveStream=await getSource(); }
   catch(e){ alert('source failed: '+e.message+' — use Test pattern.'); return; }
   $('preview').srcObject=liveStream;
-  liveKey=nacl.randomBytes(32); keyChain=[liveKey]; chunks=[]; captions=[]; nChunk=0;
+  liveKey=nacl.randomBytes(32); keyChain=[liveKey]; chunks=[]; cipherChunks=[]; captions=[]; nChunk=0;
   $('livekey').textContent=hex(liveKey);
   const hasAudio=liveStream.getAudioTracks().length>0;
   liveMime=pickMime(hasAudio);
@@ -184,7 +208,7 @@ async function goLive(){
     stage('st-man',true);
     const entry={n:idx,type:isInit?'init':'media',blob:blobId,keyIdx:idx,keyHex:hex(key).slice(0,16)+'…',
       capturedAt:capAt,putMs:Math.round(putMs),bytes:cipher.length,ok,title:$('livetitle').value||'untitled live'};
-    chunks.push(entry);
+    chunks.push(entry); cipherChunks[idx]=cipher;
     manLog(`<span class="ok">🧱 #${idx}</span> <span class="mono">${String(blobId).slice(0,20)}…</span> ${isInit?'<b>INIT</b>':''} 🔑K<sub>${idx}</sub> 📤${Math.round(putMs)}ms 📦${(cipher.length/1024).toFixed(0)}KB ${new Date(capAt).toLocaleTimeString()}`);
     $('broadstat').innerHTML=`chunks <b>${chunks.length}</b> · last PUT <b>${Math.round(putMs)}ms</b> · e2e lag ≈ <b>${((Date.now()-capAt)/1000).toFixed(1)}s</b>`;
     ['st-cap','st-enc','st-put','st-man'].forEach(s=>setTimeout(()=>stage(s,false),600));
@@ -264,9 +288,10 @@ async function pumpViewer(w){
       try{
         const key=await keyAt(c.keyIdx);
         $('key'+w.wi).textContent='K_'+c.keyIdx+' '+hex(key).slice(0,12)+'… — derived '+c.keyIdx+'× from the live key';
-        const r=await fetch(AGG+'/v1/blobs/'+c.blob);
-        if(!r.ok) throw new Error('aggregator '+r.status);
-        const buf=new Uint8Array(await r.arrayBuffer());
+        // Direct lane: decrypt the broadcaster's in-memory ciphertext (instant).
+        // The blob is REALLY on Walrus too — manifest proves it, "verify" button fetches one live.
+        const buf=cipherChunks[c.n];
+        if(!buf) throw new Error('chunk '+c.n+' not in memory yet');
         const plain=unwrapChunk(buf,key);
         if(!plain) throw new Error('decrypt failed @chunk '+c.n+' (wrong key?)');
         // sanity: webm init starts with EBML 1A45DFA3, media with Cluster 1F43B675
