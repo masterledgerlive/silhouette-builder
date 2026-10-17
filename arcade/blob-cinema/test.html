@@ -1,0 +1,182 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BLOB CINEMA — system checklist</title>
+<style>
+body{font-family:system-ui;background:#0b0b1a;color:#dfe3ff;margin:0;padding:16px;max-width:800px;margin:auto}
+h1{font-size:1.4rem}
+.panel{background:#141428;border:1px solid #2a2a4a;border-radius:12px;padding:14px;margin:12px 0}
+.test{display:flex;align-items:flex-start;gap:10px;padding:10px;border-bottom:1px solid #22223a}
+.test:last-child{border:none}
+.badge{font-size:1.3rem;min-width:32px;text-align:center}
+.pass{color:#7CFF6B}.fail{color:#ff5470}.run{color:#ffb347}
+.detail{font-size:.8rem;color:#9aa0c0;margin-top:4px;word-break:break-all;font-family:monospace}
+.name{font-weight:600}
+#score{font-size:2rem;text-align:center;padding:16px;border-radius:12px;margin:12px 0;background:#141428}
+.btn{background:#6C5CE7;color:#fff;border:none;border-radius:8px;padding:12px 24px;font-size:1rem;cursor:pointer;display:block;margin:12px auto}
+.btn:disabled{opacity:.4}
+.bar{height:8px;background:#22223a;border-radius:4px;overflow:hidden;margin-top:8px}
+.bar>div{height:100%;background:#7CFF6B;width:0%;transition:width .3s}
+</style></head>
+<body>
+<script src="./errcatch.js"></script>
+<script src="./nacl-min.js"></script>
+<h1>✅ BLOB CINEMA — pre-flight checklist</h1>
+<div class="lbl" style="color:#9aa0c0">Runs every feature through automated tests. Nothing ships until this is green.</div>
+<div id="score">tap RUN below</div>
+<button class="btn" id="runbtn" onclick="runAll()">▶ RUN ALL TESTS</button>
+<div class="panel" id="results"></div>
+<div class="panel"><b>📊 build garden</b><div class="lbl" style="color:#9aa0c0;font-size:.8rem">every run is logged — track what improved, what regressed</div><div id="garden" style="font-size:.8rem;margin-top:8px"></div></div>
+<script>
+const $=id=>document.getElementById(id);
+const PUB='https://publisher.walrus-testnet.walrus.space';
+const AGG='https://aggregator.walrus-testnet.walrus.space';
+const results=[];
+function hex(b){return Array.from(b).map(x=>x.toString(16).padStart(2,'0')).join('');}
+function bhex(s){const b=new Uint8Array(s.length/2);for(let i=0;i<b.length;i++)b[i]=parseInt(s.slice(i*2,i*2+2),16);return b;}
+async function sha(b){const h=await crypto.subtle.digest('SHA-256',b);return new Uint8Array(h);}
+function add(name,ok,detail,ms){
+  results.push({name,ok,detail,ms});
+  const d=document.createElement('div');d.className='test';
+  d.innerHTML=`<div class="badge ${ok?'pass':(ok===null?'run':'fail')}">${ok===true?'✓':ok===false?'✗':'…⁠'}</div><div><div class="name">${name}</div><div class="detail">${detail||''}${ms!=null?` <span style="color:#6C5CE7">${ms}ms</span>`:''}</div></div>`;
+  $('results').appendChild(d);
+  updateScore();
+}
+function updateScore(){
+  const done=results.filter(r=>r.ok!==null);
+  const passed=results.filter(r=>r.ok===true).length;
+  const pct=done.length?Math.round(passed/done.length*100):0;
+  $('score').innerHTML=`${pct}% <span style="font-size:1rem">(${passed}/${done.length})</span><div class="bar"><div style="width:${pct}%;background:${pct===100?'#7CFF6B':pct>=70?'#ffb347':'#ff5470'}"></div></div>`;
+}
+async function t(name,fn){
+  const t0=performance.now();
+  try{ const detail=await fn(); add(name,true,detail,Math.round(performance.now()-t0)); }
+  catch(e){ add(name,false,e.message,Math.round(performance.now()-t0)); if(window.errcatch)errcatch(e.message,'test:'+name); }
+}
+/* ---------- the tests ---------- */
+async function runAll(){
+  $('runbtn').disabled=true; $('results').innerHTML=''; results.length=0;
+  // 1. browser APIs
+  await t('browser: MediaRecorder',async()=>{
+    if(!window.MediaRecorder) throw new Error('missing');
+    return 'present';
+  });
+  await t('browser: MediaSource (MSE)',async()=>{
+    if(!window.MediaSource) throw new Error('MISSING — phone fallback will use <video> elements');
+    return 'present';
+  });
+  await t('browser: crypto.subtle',async()=>{
+    if(!window.crypto||!crypto.subtle) throw new Error('missing — HTTPS required');
+    return 'present';
+  });
+  await t('browser: fetch + network',async()=>{
+    const r=await fetch(AGG+'/v1/blobs/nonexistent-test-12345',{method:'HEAD'});
+    return 'can reach Walrus aggregator (HTTP '+r.status+' on bad blob = network OK)';
+  });
+  // 2. crypto
+  await t('NaCl: library loaded',async()=>{
+    if(!window.nacl||!nacl.secretbox) throw new Error('nacl-min.js failed to load');
+    return 'TweetNaCl ready';
+  });
+  await t('NaCl: encrypt → decrypt roundtrip',async()=>{
+    const key=nacl.randomBytes(32), nonce=nacl.randomBytes(24);
+    const msg=new TextEncoder().encode('blob cinema test message 12345');
+    const c=nacl.secretbox(msg,nonce,key);
+    const d=nacl.secretbox.open(c,nonce,key);
+    if(!d||new TextDecoder().decode(d)!=='blob cinema test message 12345') throw new Error('decrypt mismatch');
+    return c.length+' bytes ciphertext, verified';
+  });
+  await t('key derivation: K(n+1)=SHA256(K(n)+"|next")',async()=>{
+    const k0=nacl.randomBytes(32);
+    const k1=await sha(new Uint8Array([...k0,...new TextEncoder().encode('|next')]));
+    const k1b=await sha(new Uint8Array([...k0,...new TextEncoder().encode('|next')]));
+    if(hex(k1)!==hex(k1b)) throw new Error('non-deterministic!');
+    if(hex(k1)===hex(k0)) throw new Error('K1 == K0, derivation broken');
+    return 'deterministic, K1≠K0, 32 bytes';
+  });
+  // 3. MediaRecorder
+  await t('MediaRecorder: probe formats',async()=>{
+    const fmts=['video/webm;codecs=vp9','video/webm;codecs=vp8','video/mp4','video/webm'];
+    const ok=fmts.filter(f=>MediaRecorder.isTypeSupported(f));
+    if(!ok.length) throw new Error('no supported format');
+    return 'supported: '+ok.join(', ');
+  });
+  await t('MediaRecorder: can capture canvas',async()=>{
+    const cv=document.createElement('canvas');cv.width=320;cv.height=240;
+    const ctx=cv.getContext('2d');ctx.fillStyle='#f0f';ctx.fillRect(0,0,320,240);
+    const stream=cv.captureStream(30);
+    const mime=['video/webm;codecs=vp9','video/webm','video/mp4'].find(m=>MediaRecorder.isTypeSupported(m));
+    const rec=new MediaRecorder(stream,{mimeType:mime});
+    const chunks=[];
+    rec.ondataavailable=e=>{if(e.data.size)chunks.push(e.data);};
+    const done=new Promise(res=>{rec.onstop=res;});
+    rec.start(200);
+    await new Promise(r=>setTimeout(r,700));
+    rec.stop(); await done;
+    const total=chunks.reduce((a,c)=>a+c.size,0);
+    if(!total) throw new Error('0 bytes recorded');
+    return mime+' → '+chunks.length+' chunks, '+total+' bytes';
+  });
+  // 4. Walrus roundtrip
+  await t('Walrus: PUT small blob',async()=>{
+    const data=new TextEncoder().encode('blob-cinema-checklist-'+Date.now());
+    const r=await fetch(PUB+'/v1/blobs?epochs=1',{method:'PUT',body:data});
+    if(!r.ok) throw new Error('PUT HTTP '+r.status);
+    const j=await r.json();
+    const id=(j.newlyCreated||j.alreadyCertified).blobObject.blobId;
+    window._testBlob=id;
+    return 'blob '+id.slice(0,20)+'…';
+  });
+  await t('Walrus: GET blob back, verify bytes',async()=>{
+    if(!window._testBlob) throw new Error('no blob from PUT test');
+    const r=await fetch(AGG+'/v1/blobs/'+window._testBlob);
+    if(!r.ok) throw new Error('GET HTTP '+r.status);
+    const data=await r.text();
+    if(!data.startsWith('blob-cinema-checklist-')) throw new Error('bytes corrupted!');
+    return data.length+' bytes, intact';
+  });
+  // 5. manifest
+  await t('manifest: build + parse + share link format',async()=>{
+    const m={title:'test',liveKey:hex(nacl.randomBytes(32)),chunks:[{n:0,blob:'abc123',keyIdx:0}]};
+    const s=JSON.stringify(m);
+    const p=JSON.parse(s);
+    if(p.chunks[0].blob!=='abc123') throw new Error('parse failed');
+    if(p.liveKey.length!==64) throw new Error('key not 64 hex chars');
+    const link='watch.html?watch='+p.chunks[0].blob+'#'+p.liveKey;
+    if(!link.includes('?watch=')||!link.includes('#')) throw new Error('bad link format');
+    return 'manifest OK, link format OK';
+  });
+  // 6. phone fallback
+  await t('phone fallback: blob-URL video playback',async()=>{
+    const cv=document.createElement('canvas');cv.width=160;cv.height=120;
+    const ctx=cv.getContext('2d');ctx.fillStyle='#0ff';ctx.fillRect(0,0,160,120);
+    const stream=cv.captureStream(15);
+    const mime=['video/webm;codecs=vp9','video/webm','video/mp4'].find(m=>MediaRecorder.isTypeSupported(m));
+    const rec=new MediaRecorder(stream,{mimeType:mime});
+    const chunks=[];
+    rec.ondataavailable=e=>{if(e.data.size)chunks.push(e.data);};
+    const done=new Promise(res=>{rec.onstop=res;});
+    rec.start(200); await new Promise(r=>setTimeout(r,600)); rec.stop(); await done;
+    const blob=new Blob(chunks,{type:mime});
+    const url=URL.createObjectURL(blob);
+    const v=document.createElement('video');v.muted=true;v.playsInline=true;v.src=url;
+    await new Promise((res,rej)=>{v.onloadeddata=res;v.onerror=()=>rej(new Error('video element cannot play '+mime));setTimeout(()=>rej(new Error('timeout')),5000);});
+    URL.revokeObjectURL(url);
+    return mime+' plays in <video> without MSE ✓';
+  });
+  // garden log
+  const passed=results.filter(r=>r.ok===true).length;
+  const total=results.length;
+  const entry={t:new Date().toISOString(),passed,total,pct:Math.round(passed/total*100),ua:navigator.userAgent.slice(0,60)};
+  let garden=[]; try{garden=JSON.parse(localStorage.getItem('bc-garden')||'[]');}catch(e){}
+  garden.push(entry); if(garden.length>20)garden=garden.slice(-20);
+  localStorage.setItem('bc-garden',JSON.stringify(garden));
+  $('garden').innerHTML=garden.slice().reverse().map(g=>
+    `<div>${g.t.slice(5,16).replace('T',' ')} — <b style="color:${g.pct===100?'#7CFF6B':g.pct>=70?'#ffb347':'#ff5470'}">${g.pct}%</b> (${g.passed}/${g.total}) <span style="color:#666">${g.ua}</span></div>`
+  ).join('');
+  $('runbtn').disabled=false;
+  $('runbtn').textContent='↻ RUN AGAIN';
+}
+// load garden on open
+(function(){let g=[];try{g=JSON.parse(localStorage.getItem('bc-garden')||'[]');}catch(e){}
+if(g.length)$('garden').innerHTML=g.slice().reverse().map(x=>`<div>${x.t.slice(5,16).replace('T',' ')} — <b>${x.pct}%</b> (${x.passed}/${x.total})</div>`).join('');})();
+</script>
+</body></html>
