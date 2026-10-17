@@ -162,13 +162,22 @@ async function startPhone(){
     try{
       if(!c||!c.blob||String(c.blob).startsWith('PUT-FAILED')) throw new Error('bad blob ID');
       const ki=c.keyIdx??c.n??i;
-      const key=await keyAt(ki);
       const r=await fetch(AGG+'/v1/blobs/'+c.blob);
       if(!r.ok) throw new Error('Walrus HTTP '+r.status);
       const cipher=new Uint8Array(await r.arrayBuffer());
-      const res=unwrapBoth(cipher,key,keyChainHex[ki]);
-      if(!res.plain) throw new Error('decrypt failed — wrong key?');
-      const plain=res.plain;
+      /* BRUTE-FORCE key search: try every K_0..K_max (std + legacy).
+         The recorder had a key-assignment race; this finds the right key
+         no matter which one was actually used. Foolproof. */
+      let plain=null, foundKi=-1, foundWhich='';
+      const maxK=Math.max(total, keyChain.length, keyChainHex.length)+2;
+      for(let tk=0; tk<maxK && !plain; tk++){
+        const kStd=await keyAt(tk);
+        let res=unwrap(cipher,kStd);
+        if(res){ plain=res; foundKi=tk; foundWhich='std'; break; }
+        if(keyChainHex[tk]){ res=unwrap(cipher,keyChainHex[tk]); if(res){ plain=res; foundKi=tk; foundWhich='legacy'; break; } }
+      }
+      if(!plain) throw new Error('decrypt failed — no key in chain unlocked it');
+      if(foundKi!==ki) console.log(`chunk ${i}: keyIdx said K_${ki}, actually K_${foundKi} (${foundWhich})`);
       const bytes=new Uint8Array(plain);
       if(!mime){
         // sniff: MP4 ftyp vs WebM EBML
@@ -226,13 +235,15 @@ async function playLoop(){
     try{
       if(!c.blob||c.blob.startsWith('PUT-FAILED')) throw new Error('bad blob ID: '+String(c.blob).slice(0,30));
       const ki=c.keyIdx??c.n;
-      const key=await keyAt(ki);
       const r=await fetch(AGG+'/v1/blobs/'+c.blob);
       if(!r.ok) throw new Error('Walrus HTTP '+r.status);
       const cipher=new Uint8Array(await r.arrayBuffer());
-      const res=unwrapBoth(cipher,key,keyChainHex[ki]);
-      if(!res.plain) throw new Error('decrypt failed — wrong key?');
-      const plain=res.plain;
+      let plain=null;
+      const maxK=Math.max(manifest.chunks.length,keyChain.length,keyChainHex.length)+2;
+      for(let tk=0; tk<maxK && !plain; tk++){
+        plain=unwrap(cipher,await keyAt(tk))||(keyChainHex[tk]?unwrap(cipher,keyChainHex[tk]):null);
+      }
+      if(!plain) throw new Error('decrypt failed — no key unlocked it');
       await new Promise((res,rej)=>{
         const on=()=>{sb.removeEventListener('updateend',on);res();};
         sb.addEventListener('updateend',on);
