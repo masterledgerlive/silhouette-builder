@@ -619,7 +619,16 @@ async function shareLive(){
   const btn=$('sharebtn'); btn.disabled=true; btn.textContent='⏳ publishing manifest…';
   try{
     const solid=chunks.filter(c=>c&&c.ok);
-    const manifest={id:streamId,title:$('livetitle').value||'live',
+    if(!solid.length){
+      const failed=chunks.filter(c=>c&&!c.ok).length;
+      const msg=`nothing to share — 0 chunks made it to Walrus${failed?` (${failed} failed)`:''}. Wait for chunks to land (watch the manifest log), then share again.`;
+      if(window.errcatch) errcatch(msg,'shareLive');
+      manLog('<span style="color:#ff5470">✗ '+msg+'</span>');
+      alert(msg);
+      btn.disabled=false; btn.textContent='🔗 SHARE LIVE';
+      return;
+    }
+    const manifest={id:streamId,title:$('livetitle').value||'live',mime:liveMime,
       chunks:solid.map(c=>({n:c.n,blob:c.blob,keyIdx:c.keyIdx,type:c.type,capturedAt:c.capturedAt,bytes:c.bytes})),
       published_at:Date.now()};
     const r=await fetch(PUB+'/v1/blobs?epochs=5',{method:'PUT',
