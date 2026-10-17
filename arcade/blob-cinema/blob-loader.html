@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>🧬 BLOB LOADER — code from the chain</title>
+<style>
+body{background:#07070f;color:#e8e8ff;font-family:system-ui,sans-serif;margin:0;padding:20px;text-align:center}
+.card{background:#141428;border:1px solid #333355;border-radius:12px;padding:24px;margin:20px auto;max-width:500px}
+.btn{background:#6C5CE7;color:#fff;border:none;border-radius:8px;padding:12px 24px;font-size:1rem;cursor:pointer;margin:8px}
+.mono{font-family:monospace;font-size:.7rem;word-break:break-all;color:#8888aa}
+</style>
+</head>
+<body>
+<div class="card" id="loading">
+<h2>🧬 Loading from the blob…</h2>
+<p>The app code lives on Walrus, not on a server.</p>
+<p class="mono" id="blobid"></p>
+<p id="status">Fetching…</p>
+</div>
+<script>
+const AGG='https://aggregator.walrus-testnet.walrus.space';
+// Map of app names to their Walrus code blob IDs
+// Updated whenever code is republished. This is the ONLY thing on GitHub.
+const CODE_BLOBS={
+  'play': 'zwBauuSqMF75xB_OEDTCeZVOB3x4SyxpLerFmXGRKug',
+};
+async function load(){
+  const params=new URLSearchParams(location.search);
+  const app=params.get('app')||'play';
+  const bid=params.get('blob')||CODE_BLOBS[app];
+  const query=location.search;
+  const hash=location.hash;
+  if(!bid){
+    document.getElementById('status').textContent='Unknown app: '+app;
+    return;
+  }
+  document.getElementById('blobid').textContent='blob: '+bid;
+  try{
+    document.getElementById('status').textContent='Fetching code blob…';
+    const r=await fetch(AGG+'/v1/blobs/'+bid);
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const html=await r.text();
+    document.getElementById('status').textContent='Booting…';
+    // Replace the entire document with the blob's HTML, preserving query+hash
+    document.open();
+    document.write(html);
+    document.close();
+    // The blob HTML doesn't know its query/hash — re-apply via history
+    // (apps read location.search/hash on load, so we need to set before they run)
+    // Actually document.write already preserves the URL, so we're fine.
+  }catch(e){
+    document.getElementById('status').textContent='Failed: '+e.message;
+  }
+}
+load();
+</script>
+</body>
+</html>
