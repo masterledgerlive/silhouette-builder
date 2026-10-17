@@ -22,6 +22,7 @@ video{width:100%;max-width:800px;background:#000;border-radius:8px}
   <input type="range" id="timeline" min="0" max="100" value="0" oninput="scrub(this.value)">
   <div><span class="lbl" id="pos">chunk 0 / 0</span> · <span class="lbl" id="stat">loading manifest…</span></div>
   <div class="cap" id="caption"></div>
+  <div id="highlights" style="margin:8px 0"></div>
   <div class="mono" style="font-size:.75rem;margin-top:8px" id="proof"></div>
 </div>
 <script>
@@ -72,6 +73,19 @@ async function load(){
   $('title').textContent='📼 '+manifest.title;
   keyChain=[bhex(manifest.live_key||manifest.liveKey)];
   $('proof').textContent=`🔑 ${String(manifest.live_key||manifest.liveKey).slice(0,32)}… · ${manifest.chunks.length} chunks · proof: sha256(live_key|chunks)`;
+  // verified gameplay badge + score highlights
+  if(manifest.verified) $('proof').innerHTML+='<br><span style="color:#7CFF6B">✅ VERIFIED HUMAN GAMEPLAY — camera + screen composited</span>';
+  if(manifest.finalScore) $('proof').innerHTML+=`<br>🏆 final score: <b>${manifest.finalScore}</b>`;
+  if(manifest.scoreEvents&&manifest.scoreEvents.length){
+    $('highlights').innerHTML='<span class="lbl">🎬 HIGHLIGHTS — click to jump:</span><br>'+manifest.scoreEvents.map((e,i)=>
+      `<button class="btn" style="font-size:.8rem" onclick="jumpTo(${e.chunk})">[${e.t}] ${e.type} → ${e.score}</button>`
+    ).join(' ');
+  }
+  startMSE();
+}
+function jumpTo(chunk){
+  playIdx=Math.max(0,chunk-1);
+  if(ms&&ms.readyState==='open'){ try{ms.endOfStream();}catch(e){} }
   startMSE();
 }
 function startMSE(){
