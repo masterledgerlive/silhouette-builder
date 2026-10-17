@@ -117,6 +117,7 @@ async function deriveKey(prev){ const h=await sha256hex(new Uint8Array([...prev,
 async function keyAt(i){ while(keyChain.length<=i) keyChain.push(await deriveKey(keyChain[keyChain.length-1])); return keyChain[i]; }
 
 /* ---------- test pattern source (no permissions) ---------- */
+let actx=null;
 function startTestPattern(){
   const cv=$('testcanvas'), ctx=cv.getContext('2d'); let t=0;
   testTimer=setInterval(()=>{
@@ -131,7 +132,16 @@ function startTestPattern(){
     ctx.fillText(new Date().toLocaleTimeString(), 18, 330);
     ctx.fillText('chunk test pattern · t='+t.toFixed(1)+'s', 18, 78);
   },50);
-  return cv.captureStream(30);
+  const vs=cv.captureStream(30);
+  // add a real audio track so the webm has both A+V (keeps opus/codec path valid)
+  try{
+    actx=actx||new (window.AudioContext||window.webkitAudioContext)();
+    const osc=actx.createOscillator(); osc.type='sine'; osc.frequency.value=220;
+    const gn=actx.createGain(); gn.gain.value=0.03;
+    const dest=actx.createMediaStreamDestination();
+    osc.connect(gn); gn.connect(dest); osc.start();
+    return new MediaStream([...vs.getVideoTracks(),...dest.stream.getAudioTracks()]);
+  }catch(e){ return vs; }
 }
 async function getSource(){
   const kind=$('srcsel').value;
@@ -196,11 +206,14 @@ function pickMime(){
   return '';
 }
 
-/* ---------- viewers: 4 windows, 4 derived keys ---------- */
-const WIN_DELAY=[0,2,4,6]; // chunks behind live — each window sits at a different key
+/* ---------- viewers: 4 windows, 4 derived keys ----------
+   Each window runs its own MSE pipeline, fetches its own blobs from the
+   aggregator, and decrypts with the key at ITS position in the chain.
+   Window i trails live by WIN_DELAY[i] chunks, so all four windows show
+   DIFFERENT keys (K_live, K_live-2, K_live-4, K_live-6) decrypting one stream. */
+const WIN_DELAY=[0,2,4,6];
 function buildWindows(){
   const g=$('wingrid'); g.innerHTML=''; viewers=[];
-  const mime=pickMime()||'video/webm';
   WIN_DELAY.forEach((d,wi)=>{
     const box=document.createElement('div'); box.className='win';
     box.innerHTML=`<div class="winhead"><b>👁 WINDOW ${wi+1}</b><span class="lag" id="lag${wi}">—</span></div>
@@ -210,42 +223,76 @@ function buildWindows(){
     g.appendChild(box);
     const v=$('v'+wi);
     const ms=new MediaSource(); v.src=URL.createObjectURL(ms);
-    viewers.push({wi,delay:d,v,ms,sb:null,nextN:0,queue:[],busy:false,gotInit:false});
-    ms.addEventListener('sourceopen',()=>{ viewers[wi].sb=ms.addSourceBuffer(mime); pumpViewers(); });
+    const w={wi,delay:d,v,ms,sb:null,nextN:0,pumping:false,gotInit:false,errs:0};
+    viewers.push(w);
+    // NOTE: plain 'video/webm' — no codec string. Chrome sniffs the real codecs
+    // from the init segment. A hardcoded vp9/opus string on video-only data
+    // makes Chrome detach the SourceBuffer ("removed from parent media source").
+    ms.addEventListener('sourceopen',()=>{
+      try{
+        w.sb=ms.addSourceBuffer('video/webm');
+        w.sb.addEventListener('error',ev=>{ wstat(w,'⚠ SourceBuffer error — '+ms.readyState); });
+        pumpViewer(w);
+      }catch(e){ wstat(w,'⚠ SourceBuffer setup failed: '+(e.message||e)); }
+    });
+    ms.addEventListener('sourceended',()=>wstat(w,'⚠ media source ended'));
+    ms.addEventListener('sourceclose',()=>wstat(w,'⚠ media source closed'));
   });
 }
-async function pumpViewers(){
-  for(const w of viewers){
-    if(!w.sb||w.busy) continue;
-    const target=chunks.length-1-w.delay;
-    if(w.nextN>target) continue;
-    w.busy=true;
-    try{
-      while(w.nextN<=target){
-        const c=chunks[w.nextN];
-        if(!c.ok){ w.nextN++; continue; }
+function wstat(w,txt){ const el=$('wstat'+w.wi); if(el) el.textContent=txt; }
+// Serialize: one pump loop per viewer, never re-entered.
+async function pumpViewer(w){
+  if(w.pumping) return; w.pumping=true;
+  try{
+    while(live || w.nextN<=chunks.length-1-w.delay){
+      const target=chunks.length-1-w.delay;
+      if(w.nextN>target){ await new Promise(r=>setTimeout(r,700)); continue; }
+      if(!w.sb){ await new Promise(r=>setTimeout(r,700)); continue; }
+      const c=chunks[w.nextN];
+      if(!c){ await new Promise(r=>setTimeout(r,700)); continue; }
+      if(!c.ok){ w.nextN++; continue; }
+      try{
         const key=await keyAt(c.keyIdx);
-        $('key'+w.wi).textContent='K_'+c.keyIdx+' '+hex(key).slice(0,12)+'… ('+hex(key).slice(0,4)+'… derived '+c.keyIdx+'× from live key)';
-        let r=await fetch(AGG+'/v1/blobs/'+c.blob); let buf=new Uint8Array(await r.arrayBuffer());
+        $('key'+w.wi).textContent='K_'+c.keyIdx+' '+hex(key).slice(0,12)+'… — derived '+c.keyIdx+'× from the live key';
+        const r=await fetch(AGG+'/v1/blobs/'+c.blob);
+        if(!r.ok) throw new Error('aggregator '+r.status);
+        const buf=new Uint8Array(await r.arrayBuffer());
         const plain=unwrapChunk(buf,key);
-        if(!plain) throw new Error('decrypt failed @'+c.n);
-        if(c.type==='init'){ await sbAppend(w,plain); w.gotInit=true; }
-        else { if(!w.gotInit) throw new Error('no init yet'); await sbAppend(w,plain); }
+        if(!plain) throw new Error('decrypt failed @chunk '+c.n+' (wrong key?)');
+        // sanity: webm init starts with EBML 1A45DFA3, media with Cluster 1F43B675
+        const magic=(plain[0].toString(16)+plain[1].toString(16)+plain[2].toString(16)+plain[3].toString(16)).toUpperCase();
+        if(c.type==='init'&&!magic.startsWith('1A45DFA3')) throw new Error('chunk 0 is not a valid webm init (magic '+magic+')');
+        await sbAppend(w,plain);
+        if(c.type==='init') w.gotInit=true;
         const lag=((Date.now()-c.capturedAt)/1000).toFixed(1);
-        $('lag'+w.wi).textContent='⏱ '+lag+'s behind live';
-        $('lag'+w.wi).style.color=lag<8?'var(--neon)':(lag<15?'var(--amber)':'var(--red)');
-        $('wstat'+w.wi).textContent=`chunk #${c.n} ✓ decrypted with K_${c.keyIdx} · ${(c.bytes/1024).toFixed(0)}KB`;
-        w.nextN++;
+        const lagEl=$('lag'+w.wi);
+        lagEl.textContent='⏱ '+lag+'s behind live';
+        lagEl.style.color=lag<10?'var(--neon)':(lag<20?'var(--amber)':'var(--red)');
+        wstat(w,`chunk #${c.n} ✓ from blob · decrypted with K_${c.keyIdx} · ${(c.bytes/1024).toFixed(0)}KB`);
+        w.nextN++; w.errs=0;
+        w.v.play().catch(()=>{});
+      }catch(e){
+        w.errs++;
+        wstat(w,'⚠ '+(e&&e.message?e.message:String(e))+' (retry '+w.errs+')');
+        if(w.errs>8){ wstat(w,'⛔ giving up on chunk '+w.nextN+': '+(e&&e.message?e.message:String(e))); w.nextN++; w.errs=0; }
+        await new Promise(r=>setTimeout(r,1500));
       }
-      w.v.play().catch(()=>{});
-    }catch(e){ $('wstat'+w.wi).textContent='⚠ '+e.message; await new Promise(r=>setTimeout(r,1500)); }
-    w.busy=false;
-  }
+    }
+  }finally{ w.pumping=false; }
 }
+function pumpViewers(){ viewers.forEach(pumpViewer); } // wake all viewers on new chunks
 function sbAppend(w,buf){ return new Promise((res,rej)=>{ const sb=w.sb;
-  const on=()=>{sb.removeEventListener('updateend',on);res();};
-  sb.addEventListener('updateend',on); sb.addEventListener('error',rej,{once:true});
-  try{sb.appendBuffer(buf);}catch(e){sb.removeEventListener('updateend',on);rej(e);} }); }
+  if(!sb){ rej(new Error('no SourceBuffer')); return; }
+  if(sb.updating){ rej(new Error('SourceBuffer busy — retry')); return; }
+  let done=false;
+  const on=()=>{ if(done)return; done=true; cleanup(); res(); };
+  const onErr=()=>{ if(done)return; done=true; cleanup(); rej(new Error('SourceBuffer rejected the bytes (codec/init mismatch?)')); };
+  const cleanup=()=>{ sb.removeEventListener('updateend',on); sb.removeEventListener('error',onErr); };
+  sb.addEventListener('updateend',on); sb.addEventListener('error',onErr);
+  try{ sb.appendBuffer(buf); }
+  catch(e){ cleanup(); rej(e); }
+  setTimeout(()=>{ if(!done){ done=true; cleanup(); rej(new Error('append timed out')); } },15000);
+}); }
 
 /* ---------- captions / AI sublayer ---------- */
 function pushCaption(){
