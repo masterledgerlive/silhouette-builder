@@ -41,8 +41,8 @@ input,select{background:#0b0b1a;border:1px solid #33336a;color:#e8e8ff;border-ra
     <select id="srcsel">
       <option value="test">🎨 Test pattern (no permissions)</option>
       <option value="cam">📷 Webcam + mic</option>
-      <option value="screen">🖥 Screen / window / tab — pick any game window to record gameplay</option>
-      <option value="screen-video">🎮 Game window (video only, no system audio)</option>
+      <option value="screen">🖥 Screen + SYSTEM AUDIO — paired (record gameplay with sound)</option>
+      <option value="screen-video">🎮 Screen video only (no audio)</option>
       <option value="verify">✅ VERIFIED GAME — screen + camera composited (anti-cheat: proves human play)</option>
     </select>
     <div id="scorepanel" style="display:none;margin-top:8px;padding:8px;background:#0f2a1a;border:1px solid #7CFF6B;border-radius:8px">
@@ -516,7 +516,7 @@ async function shareLive(){
       body:new TextEncoder().encode(JSON.stringify(manifest))});
     const j=await r.json();
     const mbid=(j.newlyCreated||j.alreadyCertified).blobObject.blobId;
-    const link=location.origin+location.pathname+'?watch='+mbid+'#'+hex(liveKey);
+    const link=location.origin+location.pathname.replace('live.html','watch.html')+'?watch='+mbid+'#'+hex(liveKey);
     $('sharelink').value=link; $('sharebox').style.display='block';
     manLog('<span class="ok">🔗 SHARE</span> manifest on Walrus: <span class="mono">'+mbid.slice(0,20)+'…</span>');
   }catch(e){ alert('share failed: '+e.message); }
