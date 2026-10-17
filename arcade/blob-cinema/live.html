@@ -42,11 +42,20 @@ input,select{background:#0b0b1a;border:1px solid #33336a;color:#e8e8ff;border-ra
   <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
     <select id="srcsel">
       <option value="test">🎨 Test pattern (no permissions)</option>
-      <option value="cam">📷 Webcam + mic</option>
+      <option value="cam">📷 Camera + mic</option>
       <option value="screen">🖥 Screen + SYSTEM AUDIO — paired (record gameplay with sound)</option>
       <option value="screen-video">🎮 Screen video only (no audio)</option>
       <option value="verify">✅ VERIFIED GAME — screen + camera composited (anti-cheat: proves human play)</option>
     </select>
+    <script>
+    // iOS blocks screen capture entirely — remove those options on phones
+    (function(){
+      if(!navigator.mediaDevices||!navigator.mediaDevices.getDisplayMedia){
+        var s=document.getElementById('srcsel');
+        Array.from(s.options).forEach(o=>{ if(o.value.indexOf('screen')===0||o.value==='verify') o.remove(); });
+      }
+    })();
+    </script>
     <div id="scorepanel" style="display:none;margin-top:8px;padding:8px;background:#0f2a1a;border:1px solid #7CFF6B;border-radius:8px">
       <span class="lbl">🏆 SCORE EVENTS — timestamped into the recording:</span><br>
       <input id="scoreval" type="number" placeholder="score" style="width:100px">
@@ -344,9 +353,12 @@ function unwrapChunk(cipher,key){ return nacl.secretbox.open(cipher.slice(24),ci
    same string, or Chrome detaches the SourceBuffer. */
 let liveMime='';
 function pickMime(hasAudio){
-  const opts=hasAudio
-    ? ['video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus']
-    : ['video/webm;codecs=vp9','video/webm;codecs=vp8'];
+  // On phones without MSE, prefer MP4 — iOS plays it natively in <video>
+  const opts=PHONE_MODE
+    ? ['video/mp4','video/webm;codecs=vp9','video/webm']
+    : hasAudio
+      ? ['video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus']
+      : ['video/webm;codecs=vp9','video/webm;codecs=vp8'];
   for(const m of opts)
     if(window.MediaRecorder&&MediaRecorder.isTypeSupported(m)&&window.MediaSource&&MediaSource.isTypeSupported(m)) return m;
   for(const m of opts)
@@ -367,18 +379,67 @@ function probeCodecs(){
    Window i trails live by WIN_DELAY[i] chunks, so all four windows show
    DIFFERENT keys (K_live, K_live-2, K_live-4, K_live-6) decrypting one stream. */
 const WIN_DELAY=[0,2,4,6];
+/* Phone/no-MSE fallback: concat decrypted chunks → blob URL → plain <video>.
+   Rebuilds the URL every few chunks. No MediaSource needed. */
+const PHONE_MODE=!window.MediaSource;
+async function pumpPhoneViewer(w){
+  if(w.pumping) return; w.pumping=true;
+  const seen=new Set();
+  try{
+    while(live || w.nextN<=chunks.length-1-w.delay){
+      const target=chunks.length-1-w.delay;
+      if(w.nextN>target){ await new Promise(r=>setTimeout(r,700)); continue; }
+      const c=chunks[w.nextN];
+      if(!c){ await new Promise(r=>setTimeout(r,700)); continue; }
+      if(!c.ok||c.dropped){ w.nextN++; continue; }
+      // decrypt this chunk
+      const cipher=cipherChunks[w.nextN];
+      if(!cipher){ await new Promise(r=>setTimeout(r,700)); continue; }
+      try{
+        const key=await keyAt(w.nextN);
+        const dec=unwrapChunk(cipher,key);
+        if(dec){ w.buf.push(new Uint8Array(dec)); seen.add(w.nextN); }
+      }catch(e){ /* skip undecryptable */ }
+      w.nextN++;
+      // rebuild video every 4 chunks
+      if(w.buf.length>=4 && w.buf.length%4===0){
+        try{
+          const blob=new Blob(w.buf,{type:liveMime.split(';')[0]});
+          const url=URL.createObjectURL(blob);
+          const wasT=w.v.currentTime;
+          if(w.url) URL.revokeObjectURL(w.url);
+          w.url=url; w.v.src=url;
+          w.v.play().catch(()=>{});
+          // try to stay near live edge
+          w.v.addEventListener('loadedmetadata',function h(){
+            w.v.removeEventListener('loadedmetadata',h);
+            try{ if(w.v.duration>3) w.v.currentTime=Math.max(0,w.v.duration-1.5); }catch(e){}
+          });
+        }catch(e){ wstat(w,'⚠ phone playback: '+(e.message||e)); }
+      }
+      const lag=((Date.now()-c.capturedAt)/1000).toFixed(1);
+      const el=$('lag'+w.wi); if(el) el.textContent=lag+'s behind';
+      wstat(w,`chunk #${w.nextN-1} ✓ decrypted with K_${w.nextN-1} · ${w.buf.length} segs · phone mode`);
+    }
+  }finally{ w.pumping=false; }
+}
 function buildWindows(){
   const g=$('wingrid'); g.innerHTML=''; viewers=[];
   WIN_DELAY.forEach((d,wi)=>{
     const box=document.createElement('div'); box.className='win';
     box.innerHTML=`<div class="winhead"><b>👁 WINDOW ${wi+1}</b><span class="lag" id="lag${wi}">—</span></div>
-      <video id="v${wi}" playsinline muted></video>
+      <video id="v${wi}" playsinline muted ${PHONE_MODE?'controls':''}></video>
       <div class="lbl">🔑 <span class="mono" id="key${wi}">—</span> · ⏱ <span class="mono" id="wtime${wi}">0:00</span> <button class="btn" style="font-size:.7rem;padding:2px 8px" onclick="shareWindow(${wi})" title="copy share link for this window's position">🔗 share</button></div>
-      <div class="lbl" id="wstat${wi}">waiting for chunks…</div>`;
+      <div class="lbl" id="wstat${wi}">${PHONE_MODE?'📱 phone mode — no MSE, using native playback':'waiting for chunks…'}…</div>`;
     g.appendChild(box);
     const v=$('v'+wi);
-    // time display
     v.addEventListener('timeupdate',()=>{ const el=$('wtime'+wi); if(el){ const s=Math.floor(v.currentTime); el.textContent=Math.floor(s/60)+':'+String(s%60).padStart(2,'0'); } });
+    if(PHONE_MODE){
+      const w={wi,delay:d,v,nextN:0,pumping:false,buf:[],url:null,phone:true};
+      viewers.push(w);
+      keyAt(d).then(k=>{ const el=$('key'+wi); if(el) el.textContent='K_'+d+' '+hex(k).slice(0,12)+'…'; });
+      pumpPhoneViewer(w);
+    } else {
     const ms=new MediaSource(); v.src=URL.createObjectURL(ms);
     const w={wi,delay:d,v,ms,sb:null,nextN:0,pumping:false,gotInit:false,errs:0};
     viewers.push(w);
@@ -393,6 +454,7 @@ function buildWindows(){
     });
     ms.addEventListener('sourceended',()=>wstat(w,'⚠ media source ended'));
     ms.addEventListener('sourceclose',()=>wstat(w,'⚠ media source closed'));
+    }
   });
 }
 function wstat(w,txt){ const el=$('wstat'+w.wi); if(el) el.textContent=txt; }
@@ -496,8 +558,11 @@ function toggleSpeech(){
   }
   out.push('crypto: '+(window.crypto?'✓':'✗'));
   const allGood=out.every(s=>!s.includes('✗')&&!s.includes('MISSING'));
-  el.innerHTML='<b>browser check:</b> '+out.join(' · ')+(allGood?'':'<br><span style="color:#ff5470">⚠ this browser cannot do live encoding — try Chrome/Edge on desktop</span>');
-  el.style.borderLeft=allGood?'3px solid #7CFF6B':'3px solid #ff5470';
+  const phoneMode=!window.MediaSource;
+  el.innerHTML='<b>browser check:</b> '+out.join(' · ')+
+    (phoneMode?'<br><span style="color:#7CFF6B">📱 phone mode — no MSE, will use native &lt;video&gt; playback'+(window.MediaRecorder?'':' <b>but MediaRecorder is also missing — cannot record</b>')+'</span>'
+    :allGood?'':'<br><span style="color:#ff5470">⚠ this browser cannot do live encoding — try Chrome/Edge on desktop</span>');
+  el.style.borderLeft=(allGood||phoneMode)?'3px solid #7CFF6B':'3px solid #ff5470';
 })();
 async function stopLive(){
   if(!live) return; live=false;
