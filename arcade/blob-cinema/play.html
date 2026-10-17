@@ -109,6 +109,11 @@ async function load(){
   const id=new URLSearchParams(location.search).get('id');
   const keyHex=location.hash.slice(1);
   if(!id){ $('stat').textContent='no stream id'; return; }
+  if(!keyHex){
+    $('stat').innerHTML='⚠️ <b>No key in link.</b><br>This link is missing the decryption key (the #part). Ask the sender for the full link.';
+    $('title').textContent='missing key';
+    return;
+  }
   // try localStorage first (library), then GitHub
   try{
     const lib=JSON.parse(localStorage.getItem('bloblive_library')||'[]');
