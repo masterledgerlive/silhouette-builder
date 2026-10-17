@@ -128,7 +128,9 @@ function renderLive(live){
 function render(){
   const q=($('search').value||'').toLowerCase();
   const list=library.streams.filter(s=>(s.title||'').toLowerCase().includes(q));
-  $('streams').innerHTML=list.length?list.map(s=>{
+  $('streams').innerHTML=list.length?list.map((s,idx)=>{
+    // Backfill ID for streams saved before IDs existed
+    if(!s.id) s.id='legacy-'+(s.at||Date.now())+'-'+idx;
     const left=(s.expires_at||0)-Date.now()/1000;
     const cls=left<0?'':(left<86400?'expiring':'');
     const leftTxt=left<0?'<span style="color:var(--red)">⚠ EXPIRED — reblob to revive</span>':
