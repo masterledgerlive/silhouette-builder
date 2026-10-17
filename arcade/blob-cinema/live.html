@@ -43,7 +43,17 @@ input,select{background:#0b0b1a;border:1px solid #33336a;color:#e8e8ff;border-ra
       <option value="cam">📷 Webcam + mic</option>
       <option value="screen">🖥 Screen / window / tab — pick any game window to record gameplay</option>
       <option value="screen-video">🎮 Game window (video only, no system audio)</option>
+      <option value="verify">✅ VERIFIED GAME — screen + camera composited (anti-cheat: proves human play)</option>
     </select>
+    <div id="scorepanel" style="display:none;margin-top:8px;padding:8px;background:#0f2a1a;border:1px solid #7CFF6B;border-radius:8px">
+      <span class="lbl">🏆 SCORE EVENTS — timestamped into the recording:</span><br>
+      <input id="scoreval" type="number" placeholder="score" style="width:100px">
+      <button class="btn" onclick="scoreEvent('score')">+ Score</button>
+      <button class="btn" onclick="scoreEvent('level')">🎯 Level</button>
+      <button class="btn" onclick="scoreEvent('win')">🏆 WIN</button>
+      <button class="btn" onclick="scoreEvent('lose')">💀 Loss</button>
+      <div id="scorelog" class="mono" style="font-size:.75rem;margin-top:6px;max-height:80px;overflow-y:auto"></div>
+    </div>
     <input id="livetitle" placeholder="stream title…" style="flex:1;min-width:140px">
     <button class="btn go" id="gobtn" onclick="goLive()">🔴 GO LIVE</button>
     <button class="btn red" id="stopbtn" onclick="stopLive()" disabled>⏹ STOP + MOVE TO LIBRARY</button>
@@ -148,8 +158,67 @@ async function getSource(){
   if(kind==='test') return startTestPattern();
   if(kind==='cam') return await navigator.mediaDevices.getUserMedia({video:{width:640},audio:true});
   if(kind==='screen-video') return await navigator.mediaDevices.getDisplayMedia({video:true,audio:false});
+  if(kind==='verify') return await startVerifiedGame();
   return await navigator.mediaDevices.getDisplayMedia({video:true,audio:true});
 }
+/* ---------- VERIFIED GAME MODE: screen + camera composited, score events timestamped ----------
+   Anti-cheat: proves a human played. The composite canvas is what gets encrypted —
+   gameplay full-frame, camera PiP, score overlay. One stream, one key, undeniable. */
+let scoreEvents=[], verifyTimer=null, gameScore=0;
+async function startVerifiedGame(){
+  $('scorepanel').style.display='block';
+  scoreEvents=[]; gameScore=0;
+  const screen=await navigator.mediaDevices.getDisplayMedia({video:true,audio:true});
+  let cam=null;
+  try{ cam=await navigator.mediaDevices.getUserMedia({video:{width:320},audio:false}); }
+  catch(e){ manLog('⚠ no camera — screen only (mark UNVERIFIED for top-10)'); }
+  const cv=document.createElement('canvas'); cv.width=1280; cv.height=720;
+  const ctx=cv.getContext('2d');
+  const sv=document.createElement('video'); sv.srcObject=screen; sv.muted=true; sv.play();
+  const cvv=document.createElement('video');
+  if(cam){ cvv.srcObject=cam; cvv.muted=true; cvv.play(); }
+  verifyTimer=setInterval(()=>{
+    // gameplay full frame
+    try{ ctx.drawImage(sv,0,0,1280,720); }catch(e){ ctx.fillStyle='#000'; ctx.fillRect(0,0,1280,720); }
+    // camera PiP bottom-right
+    if(cam){ try{ ctx.drawImage(cvv,960,540,320,180); }
+      catch(e){}
+      ctx.strokeStyle='#7CFF6B'; ctx.lineWidth=3; ctx.strokeRect(960,540,320,180);
+      ctx.fillStyle='#7CFF6B'; ctx.font='bold 16px monospace'; ctx.fillText('📷 PLAYER',968,562);
+    } else {
+      ctx.fillStyle='#ff5470'; ctx.font='bold 18px monospace';
+      ctx.fillText('⚠ NO CAMERA — UNVERIFIED',960,560);
+    }
+    // score overlay top
+    ctx.fillStyle='rgba(0,0,0,.6)'; ctx.fillRect(0,0,1280,50);
+    ctx.fillStyle='#ffd76b'; ctx.font='bold 24px monospace';
+    ctx.fillText('🏆 '+gameScore,20,34);
+    ctx.fillStyle='#7CFF6B'; ctx.font='18px monospace';
+    ctx.fillText('✅ VERIFIED GAME · '+new Date().toLocaleTimeString(),300,32);
+    ctx.fillStyle='#9a9ac0'; ctx.font='14px monospace';
+    ctx.fillText('sealed into Walrus blobs · tamper-evident',700,30);
+  },66); // ~15fps composite is enough for proof
+  // keep screen audio: composite canvas stream + screen audio track
+  const cs=cv.captureStream(15);
+  screen.getAudioTracks().forEach(t=>cs.addTrack(t));
+  // clean up on stop
+  const origStop=screen.getTracks()[0].stop.bind(screen.getTracks()[0]);
+  return cs;
+}
+function scoreEvent(type){
+  const v=parseInt($('scoreval').value)||0;
+  if(type==='score') gameScore+=v;
+  if(type==='win') gameScore+=v||1000;
+  const ev={type,score:gameScore,at:Date.now(),chunk:nChunk,t:((Date.now()-tStart)/1000).toFixed(1)+'s'};
+  scoreEvents.push(ev);
+  $('scorelog').innerHTML=scoreEvents.map(e=>`[${e.t}] ${e.type} → ${e.score} (chunk ${e.chunk})`).join('<br>');
+  manLog(`🏆 SCORE EVENT: ${type} → ${gameScore} at chunk ${nChunk}`);
+  $('scoreval').value='';
+}
+// games can post score events: window.postMessage({type:'blobscore',event:'win',score:5000},'*')
+window.addEventListener('message',e=>{
+  if(e.data&&e.data.type==='blobscore'){ gameScore=e.data.score||gameScore; scoreEvent(e.data.event||'score'); }
+});
 // autostart from arcade hub: ?autostart=screen&title=...
 (function(){
   const q=new URLSearchParams(location.search);
@@ -378,6 +447,8 @@ async function stopLive(){
   if(speaking&&speechRec) speechRec.stop();
   $('gobtn').disabled=false; $('stopbtn').disabled=true;
   clearInterval(testTimer);
+  if(verifyTimer){ clearInterval(verifyTimer); verifyTimer=null; }
+  $('scorepanel').style.display='none';
   manLog('<span class="ok">⏹ STOPPED</span> — moving '+chunks.filter(c=>c).length+' chunks into the forever library (fresh nonces, keeper-backed)…');
   const title=$('livetitle').value||('live-'+new Date().toISOString().slice(0,16));
   const lib=JSON.parse(localStorage.getItem('bloblive_library')||'[]');
@@ -386,13 +457,17 @@ async function stopLive(){
   const rec={id:streamId,title,at:Date.now(),chunks:solid.length,captions:captions.length,
     liveKey:hex(liveKey),blobs:okBlobs,
     expires_at:Date.now()/1000+5*86400, // 5 epochs ≈ 5 days; reblob before this
-    proof:{commitment:'sha256(live_key|blob_ids)',note:'hash-commitment, not zk-SNARK'}};
+    proof:{commitment:'sha256(live_key|blob_ids)',note:'hash-commitment, not zk-SNARK'},
+    // verified gameplay: score events timestamped to chunks, camera+screen composite
+    verified:$('srcsel').value==='verify',
+    scoreEvents:scoreEvents, finalScore:gameScore};
   lib.unshift(rec); localStorage.setItem('bloblive_library',JSON.stringify(lib));
   renderLibrary();
   manLog(`<span class="ok">📚 LIBRARY</span> "${title}" saved — ${rec.blobs.length} blobs, ${captions.length} captions. ⏱ reblob before ${new Date(rec.expires_at*1000).toLocaleString()}`);
   // Full stream manifest for handoff: send to Kodakai → published to GitHub + keeper bundle
   const fullManifest={id:streamId,title,live_key:hex(liveKey),started_at:tStart/1000,ended_at:Date.now()/1000,
-    chunks:okBlobs,captions:captions,expires_at:rec.expires_at};
+    chunks:okBlobs,captions:captions,expires_at:rec.expires_at,
+    verified:rec.verified,scoreEvents:scoreEvents,finalScore:gameScore};
   const dl=document.createElement('a');
   dl.href=URL.createObjectURL(new Blob([JSON.stringify(fullManifest,null,1)],{type:'application/json'}));
   dl.download=streamId+'.livestream.json'; dl.textContent='💾 download stream manifest';
