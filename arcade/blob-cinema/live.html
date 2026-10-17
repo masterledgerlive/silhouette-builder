@@ -352,7 +352,19 @@ async function goLive(){
   manLog('<span class="lbl">codec probe: '+probeCodecs()+'</span>');
   manLog('<span class="ok">🎞 using '+liveMime+'</span> (audio track: '+(hasAudio?'yes':'no')+')');
   tStart=Date.now(); live=true;
+  /* creator identity: persistent Ed25519 keypair in localStorage — signs beacons
+     so viewers know the ORIGINAL creator vs re-uploaded copies */
+  let creatorKp;
+  try{
+    const sk=localStorage.getItem('blob-creator-sk');
+    if(sk) creatorKp=nacl.sign.keyPair.fromSecretKey(bhex(sk));
+    else { creatorKp=nacl.sign.keyPair(); localStorage.setItem('blob-creator-sk',hex(creatorKp.secretKey)); }
+  }catch(e){ creatorKp=nacl.sign.keyPair(); }
+  window._creatorKp=creatorKp;
   $('gobtn').disabled=true; $('stopbtn').disabled=false; $('sharebtn').disabled=false;
+  // publish live beacon + heartbeat
+  publishBeacon(true);
+  beaconTimer=setInterval(()=>publishBeacon(true),30000);
   $('recbadge').style.display='inline-block';
   buildWindows();
   recorder=new MediaRecorder(liveStream,{mimeType:liveMime,videoBitsPerSecond:900000});
@@ -630,6 +642,8 @@ async function stopLive(){
   if(!live) return; live=false;
   try{recorder.stop();}catch(e){}
   if(speaking&&speechRec) speechRec.stop();
+  if(beaconTimer){ clearInterval(beaconTimer); beaconTimer=null; }
+  publishBeacon(false); // mark beacon ended — no false "live"
   $('gobtn').disabled=false; $('stopbtn').disabled=true;
   $('recbadge').style.display='none';
   clearInterval(testTimer);
@@ -706,8 +720,34 @@ async function shareLive(){
 }
 function copyShare(){ $('sharelink').select(); document.execCommand('copy');
   try{ navigator.clipboard.writeText($('sharelink').value); }catch(e){} }
-/* Snapshot shortcut → chain follower, pre-filled with this stream */
-let lastManifestBlob=null;
+/* ---------- LIVE BEACON ----------
+   Published on GO LIVE, heartbeat every 30s, marked ended on STOP.
+   The live directory (live-now.html) reads these — heartbeat < 5min = LIVE.
+   Signed with the creator's Ed25519 key so viewers know the original. */
+let beaconTimer=null, beaconBlob=null, lastManifestBlob=null;
+async function publishBeacon(isLive){
+  try{
+    const kp=window._creatorKp; if(!kp) return;
+    const title=$('livetitle').value||streamId;
+    const beacon={
+      v:1, type:'live-beacon',
+      stream_id:streamId, title,
+      creator:{ name:'anon', pubkey:hex(kp.publicKey) },
+      manifest:lastManifestBlob, // may be null until first SHARE
+      chunks:chunks.filter(c=>c&&c.ok).length,
+      heartbeat:Date.now(), is_live:isLive,
+      watch:lastManifestBlob?('./watch.html?watch='+lastManifestBlob+'#'+hex(liveKey)):(location.href)
+    };
+    // sign (stream_id + title + heartbeat)
+    const msg=new TextEncoder().encode(beacon.stream_id+'|'+beacon.title+'|'+beacon.heartbeat);
+    beacon.creator.signature=hex(nacl.sign.detached(msg,kp.secretKey));
+    const r=await fetch(PUB+'/v1/blobs?epochs=3',{method:'PUT',
+      body:new TextEncoder().encode(JSON.stringify(beacon))});
+    const j=await r.json();
+    beaconBlob=(j.newlyCreated||j.alreadyCertified).blobObject.blobId;
+    if(isLive) manLog('<span class="lbl">📡 beacon live: <span class="mono">'+beaconBlob.slice(0,16)+'…</span></span>');
+  }catch(e){ /* beacon is best-effort */ }
+}
 function openSnapshot(){
   const m=$('sharelink').value.match(/watch=([^#]+)#([0-9a-fA-F]+)/);
   let url='./follow.html';
