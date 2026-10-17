@@ -59,12 +59,71 @@
 </style>
 </head>
 <body>
+<!-- DOS MODE — for the early-generation kids. Toggle in header. -->
+<div id="dosmode" style="display:none">
+<div id="dosterm"></div>
+<div id="dosinput-line">C:\ARCADE&gt; <input id="dosinput" autocomplete="off" spellcheck="false"></div>
+</div>
+<style>
+#dosmode{position:fixed;inset:0;z-index:100;background:#000;color:#0f0;font-family:'Courier New',monospace;padding:20px;overflow-y:auto}
+#dosterm{white-space:pre-wrap;font-size:14px;line-height:1.5;min-height:60vh}
+#dosinput-line{font-size:14px;margin-top:10px}
+#dosinput{background:#000;border:none;color:#0f0;font-family:inherit;font-size:14px;width:70%;outline:none}
+.doslink{color:#0ff;cursor:pointer;text-decoration:underline}
+</style>
+<script>
+/* DOS MODE — directory-style arcade for the DOS kids */
+const DOSAPPS=[
+ ['BLOB LIVE','🔴 RTMP on chain','blob-cinema/live.html'],
+ ['CHAIN FOLLOWER','🔗 infinite player','blob-cinema/follow.html'],
+ ['HOW IT WORKS','🧒 kid teacher','blob-cinema/how.html'],
+ ['PREMIERE','▶ first-watch','blob-cinema/premiere.html'],
+ ['LIVE NOW','📡 who is live','blob-cinema/live-now.html'],
+ ['REBLOB LIBRARY','📚 forever','blob-cinema/reblob.html'],
+ ['HALL OF SCORES','🏆 verified','blob-cinema/scores.html'],
+ ['STUDIO','🎥 upload','blob-cinema/studio.html'],
+ ['BLOB THEATER','🎬 films','blob-cinema/index.html'],
+ ['MSE DIAG','🔧 diagnostics','blob-cinema/mse-diag.html'],
+];
+function dosPrint(t){ const d=document.getElementById('dosterm'); d.innerHTML+=t+'\n'; d.parentElement.scrollTop=1e6; }
+function dosDir(){
+  dosPrint(' Volume in drive C is ARCADE');
+  dosPrint(' Directory of C:\\ARCADE\\BLOB-CINEMA\n');
+  DOSAPPS.forEach((a,i)=>{ dosPrint(`<span class="doslink" onclick="location.href='${a[2]}'">${a[0].padEnd(16)}</span> ${a[1]}`); });
+  dosPrint(`\n     ${DOSAPPS.length} app(s)    ∞ bytes free`);
+  dosPrint(' Chain: K_(n+1) = SHA256(K_n ‖ "|next") — pure math.');
+}
+function dosHelp(){ dosPrint('Commands: DIR, HELP, CLS, EXIT, or click a program name.'); }
+function toggleDos(){
+  const d=document.getElementById('dosmode');
+  const on=d.style.display==='none';
+  d.style.display=on?'block':'none';
+  if(on&&!d.dataset.booted){ d.dataset.booted='1';
+    dosPrint('BLOB CINEMA DOS v1.0');
+    dosPrint('(C) 2026 Arcades of Time. No servers were harmed.\n');
+    dosDir();
+  }
+  if(on) setTimeout(()=>document.getElementById('dosinput').focus(),100);
+}
+document.getElementById('dosinput').addEventListener('keydown',e=>{
+  if(e.key!=='Enter') return;
+  const cmd=e.target.value.trim().toUpperCase();
+  dosPrint('C:\\ARCADE&gt; '+e.target.value);
+  e.target.value='';
+  if(cmd==='DIR') dosDir();
+  else if(cmd==='HELP'||cmd==='?') dosHelp();
+  else if(cmd==='CLS') document.getElementById('dosterm').innerHTML='';
+  else if(cmd==='EXIT') toggleDos();
+  else if(cmd) dosPrint(`Bad command or file name: "${cmd}" — try DIR`);
+});
+</script>
 <div class="wrap">
 
   <header>
     <h1>ARCADES OF TIME</h1>
     <div class="sub">HIGHSCORES.LIVE / ARCADE</div>
-    <div><span class="coin" onclick="openApp('live')">🔴 INSERT FIN — GO LIVE</span></div>
+    <div><span class="coin" onclick="openApp('live')">🔴 INSERT FIN — GO LIVE</span>
+    <span class="coin" onclick="toggleDos()" style="background:#0a0a0a;border-color:#0f0;color:#0f0">💾 DOS MODE</span></div>
   </header>
 
   <div class="panel">
