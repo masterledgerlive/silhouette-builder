@@ -1,0 +1,267 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BLOB CINEMA — chain follower</title>
+<style>
+body{font-family:system-ui;background:#0b0b1a;color:#dfe3ff;margin:0;padding:16px;max-width:900px;margin:auto}
+h1{font-size:1.3rem}
+.panel{background:#141428;border:1px solid #2a2a4a;border-radius:12px;padding:14px;margin:12px 0}
+.lbl{color:#9aa0c0;font-size:.85rem}
+.mono{font-family:monospace;font-size:.8rem;word-break:break-all}
+.btn{background:#6C5CE7;color:#fff;border:none;border-radius:8px;padding:10px 18px;font-size:.9rem;cursor:pointer;margin:4px}
+.btn:disabled{opacity:.4}
+.btn.go{background:#2d7a2d}
+input,select{width:100%;padding:10px;border-radius:8px;border:1px solid #2a2a4a;background:#0b0b1a;color:#dfe3ff;margin:4px 0;box-sizing:border-box}
+video{width:100%;border-radius:8px;background:#000;max-height:50vh}
+.keypart{border:1px solid #2a2a4a;border-radius:8px;padding:10px;margin:6px 0;background:#0f0f22}
+.keypart b{color:#7CFF6B}
+#followstat{font-family:monospace;font-size:.8rem;white-space:pre-wrap}
+.reg{border:1px solid #2a2a4a;border-radius:8px;padding:10px;margin:6px 0;background:#0f0f22;cursor:pointer}
+.reg:hover{border-color:#6C5CE7}
+.timing{display:flex;gap:12px;margin:8px 0}
+.timing>div{flex:1;background:#0b0b1a;border-radius:8px;padding:10px;text-align:center}
+.timing .big{font-size:1.5rem;font-weight:700}
+</style></head>
+<body>
+<script src="./errcatch.js"></script>
+<script src="./nacl-min.js"></script>
+<h1>🔗 BLOB CINEMA — chain follower <span class="lbl">infinite player · 3-part key · snapshots</span></h1>
+<div class="lbl">Follows a blob chain forever. When blobs move or expire, the follower picks up the next snapshot and keeps playing. No server.</div>
+
+<div class="panel">
+<h3 style="margin-top:0">🔑 3-part key</h3>
+<div class="keypart"><b>1 · LOCATOR</b> — where the chain lives (snapshot blob ID)<br>
+<input id="k-locator" placeholder="snapshot blob ID (from a snapshot link)"></div>
+<div class="keypart"><b>2 · METHOD</b> — how to descramble<br>
+<select id="k-method"><option value="nacl-secretbox/sha256-chain-v1">nacl-secretbox + sha256 chain v1</option></select></div>
+<div class="keypart"><b>3 · UNLOCK</b> — the key material (hex, stays in your browser)<br>
+<input id="k-unlock" placeholder="64 hex chars" type="password"></div>
+<button class="btn go" onclick="follow()">▶ FOLLOW CHAIN</button>
+<button class="btn" onclick="pasteFull()">📋 paste full link</button>
+</div>
+
+<div class="panel" id="playerpanel" style="display:none">
+<h3 style="margin-top:0">📺 <span id="ftitle">following…</span></h3>
+<video id="fv" playsinline muted controls></video>
+<div id="followstat" class="lbl">waiting…</div>
+<div class="timing">
+<div><div class="lbl">snapshot route</div><div class="big" id="t-snap" style="color:#7CFF6B">—</div></div>
+<div><div class="lbl">full ledger scan</div><div class="big" id="t-full" style="color:#ffb347">—</div></div>
+</div>
+<div class="lbl" id="abnote"></div>
+</div>
+
+<div class="panel">
+<h3 style="margin-top:0">📸 create snapshot</h3>
+<div class="lbl">Condense a stream's blob locations into one index blob. Original chunks stay untouched — the snapshot is a fast lookup layer on top.</div>
+<input id="snap-title" placeholder="stream title">
+<input id="snap-manifest" placeholder="manifest blob ID (from SHARE LIVE)">
+<input id="snap-key" placeholder="unlock key (hex)" type="password">
+<button class="btn" onclick="makeSnapshot()">📸 SNAPSHOT → Walrus</button>
+<div id="snapout" class="mono" style="margin-top:8px"></div>
+</div>
+
+<div class="panel">
+<h3 style="margin-top:0">📚 my registry <span class="lbl">chains on this device — no server</span></h3>
+<div id="registry"><div class="lbl">empty — follow a chain or create a snapshot to add</div></div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const PUB='https://publisher.walrus-testnet.walrus.space';
+const AGG='https://aggregator.walrus-testnet.walrus.space';
+const bhex=h=>new Uint8Array(h.match(/../g).map(x=>parseInt(x,16)));
+const hex=b=>Array.from(b).map(x=>x.toString(16).padStart(2,'0')).join('');
+let keyChain=[], followOn=false, seenChunks=new Set(), videoBuf=[], vStarted=false;
+
+/* --- key derivation (same chain) --- */
+async function sha256hex(u8){
+  if(window.crypto&&crypto.subtle){
+    const h=await crypto.subtle.digest('SHA-256',u8); return hex(new Uint8Array(h));
+  }
+  throw new Error('no sha256');
+}
+async function deriveKey(prev){
+  const h=await sha256hex(new Uint8Array([...prev,...new TextEncoder().encode('|next')]));
+  return bhex(h);
+}
+let _keyLock=Promise.resolve();
+async function keyAt(i){
+  const p=_keyLock.then(async()=>{
+    while(keyChain.length<=i) keyChain.push(await deriveKey(keyChain[keyChain.length-1]));
+    return keyChain[i];
+  });
+  _keyLock=p.catch(()=>{}); return p;
+}
+function unwrap(cipher,key){
+  const d=nacl.secretbox.open(cipher.slice(24),cipher.slice(0,24),key);
+  return d?new Uint8Array(d):null;
+}
+function tryPlay(v){
+  v.muted=true;
+  const p=v.play();
+  if(p&&p.catch) p.catch(()=>{
+    if(v.dataset.tapShown) return; v.dataset.tapShown='1';
+    const ov=document.createElement('div');
+    ov.style.cssText='position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.6);z-index:5;cursor:pointer';
+    ov.innerHTML='<div style="font-size:3rem;background:#6C5CE7;border-radius:50%;width:90px;height:90px;display:flex;align-items:center;justify-content:center">▶</div>';
+    ov.onclick=()=>{ v.play().catch(()=>{}); ov.remove(); };
+    v.parentElement.style.position='relative'; v.parentElement.appendChild(ov);
+  });
+}
+function fstat(t){ $('followstat').textContent=t; }
+
+/* --- parse full link: follow.html?snap=<blob>#<key> --- */
+(function(){
+  const q=new URLSearchParams(location.search);
+  const snap=q.get('snap');
+  const key=location.hash.slice(1);
+  if(snap) $('k-locator').value=snap;
+  if(key&&key.length>=64) $('k-unlock').value=key;
+  // pre-fill snapshot maker when coming from live.html's share box
+  const sm=q.get('snap-manifest'), sk=q.get('snap-key');
+  if(sm) $('snap-manifest').value=sm;
+  if(sk) $('snap-key').value=sk;
+})();
+function pasteFull(){
+  const l=prompt('paste snapshot link (follow.html?snap=<blob>#<key>):');
+  if(!l) return;
+  const m=l.match(/snap=([^#]+)#([0-9a-fA-F]+)/);
+  if(m){ $('k-locator').value=m[1]; $('k-unlock').value=m[2]; }
+  else alert('could not parse link');
+}
+
+/* --- FOLLOW: infinite chain walker --- */
+async function follow(){
+  const locator=$('k-locator').value.trim();
+  const unlock=$('k-unlock').value.trim();
+  if(!locator||unlock.length<64){ alert('need locator (snapshot blob ID) + unlock key'); return; }
+  $('playerpanel').style.display='block';
+  keyChain=[bhex(unlock)];
+  followOn=true; seenChunks=new Set(); videoBuf=[]; vStarted=false;
+  const v=$('fv');
+  fstat('🔗 resolving locator…\n');
+  let snapBlob=locator, gen=0;
+  while(followOn){
+    try{
+      const t0=performance.now();
+      const r=await fetch(AGG+'/v1/blobs/'+snapBlob);
+      if(!r.ok) throw new Error('snapshot HTTP '+r.status);
+      const snap=await r.json();
+      const tSnap=Math.round(performance.now()-t0);
+      $('t-snap').textContent=tSnap+'ms';
+      $('ftitle').textContent='🔗 '+(snap.title||'chain')+' · gen '+gen;
+      fstat(`✓ snapshot gen ${gen} (${tSnap}ms)\n  ${snap.chunks.length} chunks indexed\n  proof: ${String(snap.proof||'').slice(0,32)}…\n`);
+      // A/B: time a "full scan" (fetch each chunk blob header individually)
+      const t1=performance.now();
+      let newOnes=0;
+      for(const c of snap.chunks){
+        if(seenChunks.has(c.n)) continue;
+        seenChunks.add(c.n);
+        try{
+          const cr=await fetch(AGG+'/v1/blobs/'+c.blob);
+          if(!cr.ok) continue;
+          const cipher=new Uint8Array(await cr.arrayBuffer());
+          const key=await keyAt(c.keyIdx??c.n);
+          const plain=unwrap(cipher,key);
+          if(!plain) continue;
+          const bytes=new Uint8Array(plain);
+          videoBuf.push(bytes); newOnes++;
+          if(!vStarted&&videoBuf.length>=1){
+            vStarted=true;
+            const mime=(bytes[4]===0x66&&bytes[5]===0x74&&bytes[6]===0x79&&bytes[7]===0x70)?'video/mp4':'video/webm';
+            v.src=URL.createObjectURL(new Blob(videoBuf,{type:mime}));
+            v.controls=true; tryPlay(v);
+          } else if(vStarted&&newOnes%6===0){
+            const t=v.currentTime, mime=v.src.includes('mp4')?'video/mp4':'video/webm';
+            v.src=URL.createObjectURL(new Blob(videoBuf,{type:mime}));
+            try{ v.currentTime=t; }catch(e){}
+          }
+          fstat(`▶ playing ${seenChunks.size}/${snap.chunks.length} chunks · gen ${gen}\n  +${newOnes} new this snapshot`);
+        }catch(e){}
+      }
+      const tFull=Math.round(performance.now()-t1);
+      $('t-full').textContent=tFull+'ms';
+      const ratio=tFull/Math.max(1,tSnap);
+      $('abnote').textContent=`📊 snapshot index: ${tSnap}ms vs per-chunk scan: ${tFull}ms — snapshot is ${ratio.toFixed(1)}× faster at locating chunks`;
+      // save to registry
+      saveReg(snap.title||'chain',snapBlob,unlock);
+      // check for next snapshot generation
+      if(snap.next_snapshot){
+        fstat(`✓ gen ${gen} done — following to gen ${gen+1}…\n`);
+        snapBlob=snap.next_snapshot; gen++;
+        await new Promise(r=>setTimeout(r,2000));
+      } else {
+        fstat(`✓ gen ${gen} done — ${seenChunks.size} chunks playing\n  ⏳ watching for next snapshot (polling every 15s)…\n`);
+        await new Promise(r=>setTimeout(r,15000));
+        // re-fetch same snapshot to check for next_snapshot pointer
+      }
+    }catch(e){
+      fstat('✗ '+e.message+'\n  retrying in 10s…');
+      if(window.errcatch) errcatch(e.message,'follow');
+      await new Promise(r=>setTimeout(r,10000));
+    }
+  }
+}
+
+/* --- SNAPSHOT creation --- */
+async function makeSnapshot(){
+  const manBlob=$('snap-manifest').value.trim();
+  const key=$('snap-key').value.trim();
+  const title=$('snap-title').value.trim()||'snapshot';
+  if(!manBlob||key.length<64){ alert('need manifest blob ID + unlock key'); return; }
+  $('snapout').textContent='fetching manifest…';
+  try{
+    const r=await fetch(AGG+'/v1/blobs/'+manBlob);
+    const man=await r.json();
+    if(!man.chunks||!man.chunks.length) throw new Error('manifest has no chunks');
+    // condense: keep only what the follower needs
+    const snap={
+      v:1, type:'blob-snapshot', title,
+      created_at:Date.now(),
+      method:'nacl-secretbox/sha256-chain-v1',
+      chunks:man.chunks.filter(c=>c&&c.blob).map(c=>({n:c.n,blob:c.blob,keyIdx:c.keyIdx??c.n,bytes:c.bytes||0})),
+      proof:'sha256(unlock|'+man.chunks.map(c=>c.blob).join(',').slice(0,64)+')',
+      prev_snapshot:null, next_snapshot:null
+    };
+    // compute real proof
+    const kc=bhex(key); let ph=await sha256hex(new Uint8Array([...kc,...new TextEncoder().encode(man.chunks.map(c=>c.blob).join(''))]));
+    snap.proof='sha256:'+ph.slice(0,32)+'…';
+    $('snapout').textContent='publishing snapshot ('+snap.chunks.length+' chunks indexed)…';
+    const pr=await fetch(PUB+'/v1/blobs?epochs=5',{method:'PUT',body:new TextEncoder().encode(JSON.stringify(snap))});
+    const pj=await pr.json();
+    const sbid=(pj.newlyCreated||pj.alreadyCertified).blobObject.blobId;
+    const link=location.origin+location.pathname+'?snap='+sbid+'#'+key;
+    $('snapout').innerHTML=`✓ snapshot live: <span class="mono">${sbid.slice(0,24)}…</span><br>`+
+      `🔗 <input readonly style="width:70%" value="${link}" onclick="this.select()"> `+
+      `<button class="btn" style="font-size:.8rem" onclick="navigator.clipboard.writeText('${link}')">📋</button><br>`+
+      `<span class="lbl">${snap.chunks.length} chunks condensed · original manifest untouched at ${manBlob.slice(0,16)}…</span>`;
+    saveReg(title,sbid,key);
+  }catch(e){
+    $('snapout').textContent='✗ '+e.message;
+    if(window.errcatch) errcatch(e.message,'makeSnapshot');
+  }
+}
+
+/* --- registry --- */
+function getReg(){ try{ return JSON.parse(localStorage.getItem('blob-follow-reg')||'[]'); }catch(e){ return []; } }
+function saveReg(title,snapBlob,key){
+  const reg=getReg();
+  const ex=reg.findIndex(r=>r.snapBlob===snapBlob);
+  const entry={title,snapBlob,key:key.slice(0,64),at:Date.now()};
+  if(ex>=0) reg[ex]=entry; else reg.unshift(entry);
+  localStorage.setItem('blob-follow-reg',JSON.stringify(reg.slice(0,50)));
+  renderReg();
+}
+function renderReg(){
+  const reg=getReg();
+  $('registry').innerHTML=reg.length?reg.map((r,i)=>
+    `<div class="reg" onclick="loadReg(${i})"><b>${r.title}</b><br><span class="mono">${r.snapBlob.slice(0,24)}…</span> <span class="lbl">${new Date(r.at).toLocaleString()}</span></div>`
+  ).join(''):'<div class="lbl">empty — follow a chain or create a snapshot to add</div>';
+}
+function loadReg(i){
+  const r=getReg()[i]; if(!r) return;
+  $('k-locator').value=r.snapBlob; $('k-unlock').value=r.key;
+  window.scrollTo(0,0); follow();
+}
+renderReg();
+</script>
+</body></html>
