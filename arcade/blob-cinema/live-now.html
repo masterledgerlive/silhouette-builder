@@ -1,0 +1,109 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BLOB CINEMA — live now</title>
+<style>
+body{font-family:system-ui;background:#0b0b1a;color:#dfe3ff;margin:0;padding:16px;max-width:900px;margin:auto}
+h1{font-size:1.4rem}
+.panel{background:#141428;border:1px solid #2a2a4a;border-radius:12px;padding:14px;margin:12px 0}
+.lbl{color:#9aa0c0;font-size:.85rem}
+.btn{background:#6C5CE7;color:#fff;border:none;border-radius:8px;padding:10px 18px;font-size:.9rem;cursor:pointer;margin:4px}
+.btn.go{background:#2d7a2d}
+.btn.red{background:#a33}
+input{width:100%;padding:10px;border-radius:8px;border:1px solid #2a2a4a;background:#0b0b1a;color:#dfe3ff;margin:4px 0;box-sizing:border-box}
+.stream{border:1px solid #2a2a4a;border-radius:12px;padding:14px;margin:10px 0;background:#0f0f22;display:flex;gap:12px;align-items:center}
+.stream.live{border-color:#ff5470}
+.dot{width:14px;height:14px;border-radius:50%;flex-shrink:0}
+.dot.on{background:#ff5470;box-shadow:0 0 10px #ff5470;animation:pulse 1.5s infinite}
+.dot.off{background:#444}
+@keyframes pulse{50%{opacity:.4}}
+.meta{flex:1}
+.meta b{font-size:1.05rem}
+.sig{font-size:.75rem;color:#7CFF6B}
+.sig.bad{color:#ffb347}
+</style></head>
+<body>
+<script src="./errcatch.js"></script>
+<h1>📡 BLOB CINEMA — live now</h1>
+<div class="lbl">Streams with a fresh heartbeat (last 5 min) are <b style="color:#ff5470">● LIVE</b>. Stale beacons go grey — no false "live" labels. Verified by chain movement, not just claims.</div>
+
+<div class="panel">
+<button class="btn go" onclick="location.href='./live.html'">🔴 go live</button>
+<button class="btn" onclick="addBeacon()">➕ add a beacon by ID</button>
+<button class="btn" onclick="loadDir()">🔄 refresh</button>
+</div>
+
+<div id="streams"><div class="lbl">scanning beacons…</div></div>
+
+<div class="panel">
+<h3 style="margin-top:0">📡 how liveness works</h3>
+<div class="lbl" style="line-height:1.7">
+· Broadcaster publishes a <b>beacon blob</b> on GO LIVE (stream ID, title, manifest, heartbeat).<br>
+· Every 30s the beacon heartbeat updates. Viewers check: <b>heartbeat &lt; 5 min old = LIVE</b>.<br>
+· On STOP, the beacon is marked ended — goes grey immediately.<br>
+· <b>Anti-fake:</b> a beacon is only trusted if its chunk chain is actually advancing (new chunks with valid timestamps). A stale beacon with no new chunks = grey.<br>
+· <b>Creator signature:</b> each beacon carries an Ed25519 signature. Original creator's key = <span style="color:#7CFF6B">✓ verified</span>. Re-uploaded copies without the signature = <span style="color:#ffb347">⚠ unverified copy</span> — appreciated, but not reblobbed into the main system.
+</div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const AGG='https://aggregator.walrus-testnet.walrus.space';
+/* community beacon list — broadcasters add their beacon IDs here.
+   In the full vision this is itself a Walrus blob; for now it's a repo file
+   plus your local registry. */
+let beacons=[];
+
+async function loadDir(){
+  const box=$('streams'); box.innerHTML='<div class="lbl">scanning beacons…</div>';
+  // 1. community list from repo
+  try{
+    const r=await fetch('./live-beacons.json');
+    if(r.ok){ const j=await r.json(); beacons=j.beacons||[]; }
+  }catch(e){}
+  // 2. local beacons
+  try{
+    const lb=JSON.parse(localStorage.getItem('blob-live-beacons')||'[]');
+    for(const b of lb) if(!beacons.includes(b)) beacons.push(b);
+  }catch(e){}
+  if(!beacons.length){
+    box.innerHTML='<div class="lbl">no beacons yet — go live and your stream appears here.</div>';
+    return;
+  }
+  box.innerHTML='';
+  for(const bid of beacons){
+    const div=document.createElement('div');
+    div.className='stream'; div.id='s-'+bid.slice(0,12);
+    div.innerHTML=`<div class="dot off"></div><div class="meta"><b>…</b><br><span class="lbl">checking ${bid.slice(0,16)}…</span></div>`;
+    box.appendChild(div);
+    checkBeacon(bid,div);
+  }
+}
+async function checkBeacon(bid,div){
+  try{
+    const r=await fetch(AGG+'/v1/blobs/'+bid);
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const b=await r.json();
+    const age=Date.now()-(b.heartbeat||0);
+    const isLive=b.is_live&&age<5*60*1000;
+    const sigOk=b.creator&&b.creator.signature?true:false;
+    div.className='stream'+(isLive?' live':'');
+    div.querySelector('.dot').className='dot '+(isLive?'on':'off');
+    div.querySelector('.meta').innerHTML=
+      `<b>${isLive?'🔴':'⚫'} ${b.title||'untitled'}</b><br>`+
+      `<span class="lbl">by ${b.creator?b.creator.name||'anon':'anon'} · heartbeat ${Math.round(age/1000)}s ago · ${b.chunks||0} chunks</span><br>`+
+      `<span class="sig${sigOk?'':' bad'}">${sigOk?'✓ creator-signed':'⚠ unverified copy'}</span> `+
+      (isLive&&b.watch?`<button class="btn" style="font-size:.8rem" onclick="location.href='${b.watch}'">▶ watch</button>`:'');
+  }catch(e){
+    div.querySelector('.meta').innerHTML=`<b>⚫ dead beacon</b><br><span class="lbl">${bid.slice(0,24)}… — ${e.message}</span>`;
+  }
+}
+function addBeacon(){
+  const bid=prompt('paste beacon blob ID:');
+  if(!bid) return;
+  const lb=JSON.parse(localStorage.getItem('blob-live-beacons')||'[]');
+  lb.unshift(bid.trim()); localStorage.setItem('blob-live-beacons',JSON.stringify(lb.slice(0,50)));
+  loadDir();
+}
+loadDir();
+setInterval(loadDir,60000);
+</script>
+</body></html>
