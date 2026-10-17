@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>🎬 BLOB CINEMA — shared stream viewer</title>
+<style>
+:root{--neon:#7CFF6B;--amber:#ffb347;--red:#ff5470;--blue:#6bb8ff;--gold:#ffd76b}
+body{background:#07070f;color:#e8e8ff;font-family:system-ui,sans-serif;margin:0;padding:14px}
+h1{font-size:1.3rem;margin:0 0 4px}
+.lbl{color:#9a9ac0;font-size:.8rem}.mono{font-family:ui-monospace,Menlo,Consolas,monospace;word-break:break-all}
+.panel{background:#101022;border:1px solid #26264d;border-radius:12px;padding:14px;margin:12px 0}
+.btn{background:#1a1a33;border:1px solid #33336a;color:#e8e8ff;border-radius:8px;padding:8px 14px;font-size:.9rem;cursor:pointer;margin:4px;text-decoration:none;display:inline-block}
+.grid4{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:800px){.grid4{grid-template-columns:1fr}}
+.win{background:#0b0b1a;border:1px solid #26264d;border-radius:10px;padding:10px}
+.win video{width:100%;background:#000;border-radius:6px;max-height:300px}
+.winhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.lag{font-size:.9rem;font-weight:bold}
+#main{max-width:900px;margin:0 auto}
+#bigwin video{width:100%;max-height:60vh;background:#000;border-radius:8px}
+</style>
+</head>
+<body>
+<div id="main">
+<h1>🎬 <span id="title">loading shared stream…</span></h1>
+<p class="lbl"><a href="./reblob.html">📚 library</a> · <a href="./live.html">🔴 broadcast</a> · <a href="./index.html">← theater</a> · <span id="stat">connecting to the chain…</span></p>
+
+<div class="panel" id="bigwin">
+  <video id="vmain" controls playsinline></video>
+  <div style="margin-top:8px"><span class="lbl">🔑 <span class="mono" id="keymain">—</span> · ⏱ <span class="mono" id="timemain">0:00</span></span></div>
+</div>
+
+<div class="panel">
+  <h2 style="margin:0 0 8px;font-size:1rem">👁 ALL FOUR WINDOWS <span class="lbl">same stream, four derived keys, four chain positions</span></h2>
+  <div class="grid4" id="wingrid"></div>
+</div>
+
+<div class="panel">
+  <h2 style="margin:0 0 8px;font-size:1rem">🔗 SHARE THIS <span class="lbl">anyone with the link watches from the blockchain</span></h2>
+  <input id="sharelink" readonly style="width:65%" onclick="this.select()">
+  <button class="btn" onclick="copyShare()">📋 copy</button>
+  <div class="lbl" style="margin-top:6px">Key in URL fragment — never hits our server. Video from Walrus blobs.</div>
+</div>
+</div>
+
+<script src="./nacl-min.js"></script>
+<script>
+const AGG='https://aggregator.walrus-testnet.walrus.space';
+const $=id=>document.getElementById(id);
+const bhex=h=>new Uint8Array(h.match(/../g).map(x=>parseInt(x,16)));
+async function sha256hex(u8){
+  const K=[0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e358c,0x106aa070,0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2];
+  let h=[0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19];
+  const ml=u8.length,bitLen=ml*8,pad=((ml+9+63)>>6)<<6,m=new Uint8Array(pad);
+  m.set(u8);m[ml]=0x80;const dv=new DataView(m.buffer);
+  dv.setUint32(pad-4,bitLen>>>0);dv.setUint32(pad-8,Math.floor(bitLen/4294967296));
+  const w=new Uint32Array(64);
+  for(let o=0;o<pad;o+=64){
+    for(let i=0;i<16;i++)w[i]=dv.getUint32(o+i*4);
+    for(let i=16;i<64;i++){const s0=((w[i-15]>>>7)|(w[i-15]<<25))^((w[i-15]>>>18)|(w[i-15]<<14))^(w[i-15]>>>3),s1=((w[i-2]>>>17)|(w[i-2]<<15))^((w[i-2]>>>19)|(w[i-2]<<13))^(w[i-2]>>>10);w[i]=(w[i-16]+s0+w[i-7]+s1)|0;}
+    let[a,b,c,d,e,f,g,hh]=h;
+    for(let i=0;i<64;i++){const S1=((e>>>6)|(e<<26))^((e>>>11)|(e<<21))^((e>>>25)|(e<<7)),ch=(e&f)^(~e&g),t1=(hh+S1+ch+K[i]+w[i])|0,S0=((a>>>2)|(a<<30))^((a>>>13)|(a<<19))^((a>>>22)|(a<<10)),mj=(a&b)^(a&c)^(b&c),t2=(S0+mj)|0;hh=g;g=f;f=e;e=(d+t1)|0;d=c;c=b;b=a;a=(t1+t2)|0;}
+    h=[(h[0]+a)|0,(h[1]+b)|0,(h[2]+c)|0,(h[3]+d)|0,(h[4]+e)|0,(h[5]+f)|0,(h[6]+g)|0,(h[7]+hh)|0];
+  }
+  return h.map(x=>(x>>>0).toString(16).padStart(8,'0')).join('');
+}
+let manifest=null, keyChain=[], chunks=[], cipherChunks=[];
+const DELAYS=[0,2,4,6];
+async function deriveKey(prev){ const h=await sha256hex(new Uint8Array([...prev,...new TextEncoder().encode('|next')])); return bhex(h); }
+async function keyAt(i){ while(keyChain.length<=i) keyChain.push(await deriveKey(keyChain[keyChain.length-1])); return keyChain[i]; }
+function unwrap(cipher,key){ const dec=nacl.secretbox.open(cipher.slice(24),cipher.slice(0,24),key); return dec?new Uint8Array(dec):null; }
+async function sbAppend(sb,buf){ return new Promise((res,rej)=>{ const on=()=>{sb.removeEventListener('updateend',on);res();}; sb.addEventListener('updateend',on); try{sb.appendBuffer(buf);}catch(e){rej(e);} }); }
+
+async function load(){
+  const q=new URLSearchParams(location.search);
+  const mbid=q.get('watch');
+  const keyHex=location.hash.slice(1);
+  if(!mbid||!keyHex||keyHex.length<64){ $('stat').textContent='bad link — need ?watch=<blob>#<key>'; return; }
+  $('sharelink').value=location.href;
+  try{
+    $('stat').textContent='fetching manifest from Walrus…';
+    const r=await fetch(AGG+'/v1/blobs/'+mbid);
+    manifest=await r.json();
+    $('title').textContent='📡 '+manifest.title;
+    keyChain=[bhex(keyHex)];
+    $('keymain').textContent=keyHex.slice(0,32)+'…';
+    $('stat').textContent='fetching '+manifest.chunks.length+' chunks…';
+    // fetch all chunks
+    for(const c of manifest.chunks){
+      try{
+        const cr=await fetch(AGG+'/v1/blobs/'+c.blob);
+        const cipher=new Uint8Array(await cr.arrayBuffer());
+        chunks[c.n]={n:c.n,blob:c.blob,keyIdx:c.keyIdx,type:c.type,ok:true};
+        cipherChunks[c.n]=cipher;
+      }catch(e){ chunks[c.n]={n:c.n,ok:false}; }
+    }
+    const ok=chunks.filter(c=>c&&c.ok).length;
+    $('stat').textContent='✓ '+ok+' chunks from the chain — playing…';
+    buildViewers();
+  }catch(e){ $('stat').textContent='✗ '+e.message; }
+}
+function buildViewers(){
+  // main player (no delay)
+  startPlayer($('vmain'),0,$('timemain'));
+  // 4 windows
+  const g=$('wingrid'); g.innerHTML='';
+  DELAYS.forEach((d,wi)=>{
+    const box=document.createElement('div'); box.className='win';
+    box.innerHTML=`<div class="winhead"><b>👁 W${wi+1}</b><span class="lag" id="lag${wi}">—</span></div>
+      <video id="wv${wi}" playsinline muted></video>
+      <div class="lbl">🔑 <span class="mono" id="wkey${wi}">—</span> · ⏱ <span class="mono" id="wtime${wi}">0:00</span></div>`;
+    g.appendChild(box);
+    startPlayer($('wv'+wi),d,$('wtime'+wi),$('wkey'+wi),$l('lag'+wi));
+  });
+}
+function $l(id){ return document.getElementById(id); }
+async function startPlayer(video,delay,timeEl,keyEl,lagEl){
+  const ms=new MediaSource(); video.src=URL.createObjectURL(ms);
+  video.addEventListener('timeupdate',()=>{ if(timeEl){ const s=Math.floor(video.currentTime); timeEl.textContent=Math.floor(s/60)+':'+String(s%60).padStart(2,'0'); } });
+  ms.addEventListener('sourceopen',async()=>{
+    const sb=ms.addSourceBuffer('video/webm;codecs=vp9');
+    let n=delay, errs=0;
+    // wait for init
+    while(n<chunks.length){
+      const c=chunks[n];
+      if(!c){ await new Promise(r=>setTimeout(r,500)); continue; }
+      if(!c.ok){ n++; continue; }
+      try{
+        const key=await keyAt(c.keyIdx);
+        const plain=unwrap(cipherChunks[n],key);
+        if(!plain) throw new Error('decrypt failed');
+        if(keyEl) keyEl.textContent='K_'+c.keyIdx;
+        await sbAppend(sb,plain);
+        n++;
+        video.play().catch(()=>{});
+      }catch(e){ errs++; n++; if(errs>10) break; await new Promise(r=>setTimeout(r,300)); }
+    }
+  });
+}
+function copyShare(){ $('sharelink').select(); try{ navigator.clipboard.writeText($('sharelink').value); }catch(e){} }
+load();
+</script>
+</body>
+</html>
