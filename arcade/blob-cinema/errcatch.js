@@ -23,7 +23,11 @@
     console.error('[ERRCATCH]',src||'',msg);
   }
   window.addEventListener('error',function(e){
-    show(e.message+(e.lineno?' (line '+e.lineno+')':''), e.filename?e.filename.split('/').pop():'');
+    var fn=e.filename||'';
+    // ignore browser extension noise (wallets, etc.) — not our code
+    if(fn.indexOf('chrome-extension://')===0||fn.indexOf('moz-extension://')===0||
+       fn.indexOf('evmAsk.js')>=0||fn.indexOf('inpage.js')>=0||fn.indexOf('contentscript')>=0) return;
+    show(e.message+(e.lineno?' (line '+e.lineno+')':''), fn?fn.split('/').pop():'');
   });
   window.addEventListener('unhandledrejection',function(e){
     var msg=e.reason?(e.reason.message||String(e.reason)):'unknown rejection';
