@@ -135,9 +135,11 @@ async function load(){
   startMSE(total);
 }
 async function startPhone(total){
-  const v=$('v'), buf=[];
-  let ok=0, skipped=0, mime='';
+  const v=$('v');
+  let ok=0, skipped=0;
   const errs=[];
+  const chunkURLs=[];
+  // Decrypt all chunks first
   for(let i=0;i<total;i++){
     const c=manifest.chunks[i];
     $('pos').textContent=`chunk ${i+1} / ${total}`;
@@ -152,22 +154,47 @@ async function startPhone(total){
       for(let tk=0;tk<maxK&&!plain;tk++) plain=unwrap(cipher,await keyAt(tk));
       if(!plain) throw new Error('decrypt failed — no key unlocked it');
       const bytes=new Uint8Array(plain);
-      if(!mime) mime=(bytes[4]===0x66&&bytes[5]===0x74&&bytes[6]===0x79&&bytes[7]===0x70)?'video/mp4':(bytes[0]===0x1A&&bytes[1]===0x45&&bytes[2]===0xDF&&bytes[3]===0xA3)?'video/webm':'video/mp4';
-      buf.push(bytes); ok++;
+      const mime=(bytes[4]===0x66&&bytes[5]===0x74&&bytes[6]===0x79&&bytes[7]===0x70)?'video/mp4':'video/webm';
+      chunkURLs.push(URL.createObjectURL(new Blob([bytes],{type:mime})));
+      ok++;
     }catch(e){
       skipped++;
       if(errs.length<5) errs.push(`chunk ${i}: ${e.message}`);
     }
   }
-  // All chunks decrypted — now build the video ONCE (no mid-load src swaps)
-  if(ok>0){
-    $('stat').textContent=`✓ building video from ${ok} chunks…`;
-    v.src=URL.createObjectURL(new Blob(buf,{type:mime}));
-    v.muted=true;
-    tryPlay(v);
+  if(!chunkURLs.length){
+    $('stat').innerHTML=`✗ 0/${total} chunks playable`+(errs.length?'<br>'+errs.join('<br>'):'');
+    if(window.errcatch) errcatch('play-phone: 0 chunks playable','startPhone');
+    return;
   }
-  $('stat').innerHTML=`✓ 📱 playing ${ok}/${total} chunks as one video (${skipped} skipped)`+(errs.length?'<br>'+errs.join('<br>'):'');
-  if(!ok&&window.errcatch) errcatch('play-phone: 0 chunks playable','startPhone');
+  // Sequential playback: play each chunk's blob URL in order.
+  // iOS can't concat MP4 fragments, but it CAN play them one after another.
+  $('stat').textContent=`✓ ${ok}/${total} unlocked — playing…`;
+  let ci=0;
+  const playChunk=()=>{
+    if(ci>=chunkURLs.length){
+      $('stat').textContent=`✓ finished ${ok}/${total} chunks`;
+      return;
+    }
+    $('pos').textContent=`playing chunk ${ci+1} / ${chunkURLs.length}`;
+    v.src=chunkURLs[ci];
+    v.muted=true;
+    v.play().then(()=>{
+      v.onended=()=>{ ci++; playChunk(); };
+    }).catch(()=>{
+      if(!v.dataset.tapShown){
+        v.dataset.tapShown='1';
+        const ov=document.createElement('div');
+        ov.style.cssText='position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.6);z-index:5;cursor:pointer';
+        ov.innerHTML='<div style="font-size:3rem;background:#6C5CE7;border-radius:50%;width:90px;height:90px;display:flex;align-items:center;justify-content:center">▶</div>';
+        ov.onclick=()=>{ v.play().catch(()=>{}); ov.remove(); v.onended=()=>{ ci++; playChunk(); }; };
+        v.parentElement.style.position='relative';
+        v.parentElement.appendChild(ov);
+      }
+    });
+  };
+  playChunk();
+  if(errs.length) $('stat').innerHTML+=`<br><span style="font-size:.75rem">${errs.join('<br>')}</span>`;
 }
 function scrub(pct){
   const v=$('v');
