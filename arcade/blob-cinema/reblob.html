@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>📚 REBLOB FOREVER LIBRARY — never lose a blob</title>
+<style>
+:root{--neon:#7CFF6B;--amber:#ffb347;--red:#ff5470;--blue:#6bb8ff;--gold:#ffd76b}
+body{background:#07070f;color:#e8e8ff;font-family:system-ui,sans-serif;margin:0;padding:14px}
+h1{font-size:1.3rem;margin:0 0 4px}
+.lbl{color:#9a9ac0;font-size:.8rem}.mono{font-family:ui-monospace,Menlo,Consolas,monospace;word-break:break-all}
+.panel{background:#101022;border:1px solid #26264d;border-radius:12px;padding:14px;margin:12px 0}
+.btn{background:#1a1a33;border:1px solid #33336a;color:#e8e8ff;border-radius:8px;padding:8px 14px;font-size:.9rem;cursor:pointer;margin:4px;text-decoration:none;display:inline-block}
+.btn:disabled{opacity:.4}.btn.go{background:#0f3a1a;border-color:var(--neon)}.btn.warn{background:#3a2a0f;border-color:var(--amber)}.btn.red{background:#3a0f1a;border-color:var(--red)}
+.stream{background:#0b0b1a;border:1px solid #26264d;border-radius:10px;padding:12px;margin:10px 0}
+.stream.live{border-color:var(--red)}
+.stream.expiring{border-color:var(--amber)}
+.countdown{font-size:1.2rem;font-weight:bold}
+input{background:#0b0b1a;border:1px solid #33336a;color:#e8e8ff;border-radius:6px;padding:8px;font-size:.9rem}
+</style>
+</head>
+<body>
+<h1>📚 REBLOB FOREVER LIBRARY <span class="lbl">every stream, every blob, time-left till reblob — never lose a frame</span></h1>
+<p class="lbl"><a href="./live.html">🔴 go live</a> · <a href="./index.html">← theater</a> · <a href="./studio.html">studio</a> · <a href="./live-guide.json">🤖 agent guide (JSON)</a></p>
+
+<div class="panel">
+  <h2 style="margin:0 0 8px">🔴 LIVE NOW <span class="lbl">streams currently laying down blobs</span></h2>
+  <div id="livenow"><span class="lbl">checking…</span></div>
+</div>
+
+<div class="panel">
+  <h2 style="margin:0 0 8px">💾 SAVED STREAMS <span class="lbl">completed, verified, reblobbed before expiry — forever</span></h2>
+  <input id="search" placeholder="search streams…" style="width:40%" oninput="render()">
+  <button class="btn" onclick="loadLibrary()">🔄 refresh</button>
+  <div id="streams"><span class="lbl">loading…</span></div>
+</div>
+
+<div class="panel">
+  <h2 style="margin:0 0 8px">🤖 FOR AGENTS <span class="lbl">AI-readable live guide</span></h2>
+  <p class="lbl">Agents: fetch <a href="./live-guide.json" class="mono">live-guide.json</a> for machine-readable stream discovery — live keys, manifest URLs, chunk lists, proof hashes. Then fetch chunks from the Walrus aggregator, decrypt with derived keys (SHA256(prev + "|next")), and play. See the guide for the full protocol.</p>
+  <button class="btn" onclick="downloadGuide()">📥 download agent guide</button>
+</div>
+
+<script>
+const GH='https://arcade.highscores.live/arcade/blob-cinema';
+const $=id=>document.getElementById(id);
+let library={streams:[]};
+async function loadLibrary(){
+  try{
+    const r=await fetch(GH+'/live-library.json?v='+Date.now());
+    if(r.ok){ const g=await r.json(); library.streams=g.streams||[]; }
+  }catch(e){}
+  try{
+    const local=JSON.parse(localStorage.getItem('bloblive_library')||'[]');
+    local.forEach(s=>{
+      if(!library.streams.find(x=>x.id===s.id)){
+        library.streams.unshift({...s,status:'local-only',expires_at:(s.at||Date.now())/1000+5*86400});
+      }
+    });
+  }catch(e){}
+  try{
+    const r=await fetch(GH+'/live-guide.json?v='+Date.now());
+    if(r.ok){ const g=await r.json(); renderLive(g.live_now||[]); }
+  }catch(e){ renderLive([]); }
+  render();
+}
+function fmtLeft(sec){
+  if(sec<0) return 'EXPIRED';
+  const d=Math.floor(sec/86400), h=Math.floor(sec%86400/3600), m=Math.floor(sec%3600/60);
+  return d>0?`${d}d ${h}h`:(h>0?`${h}h ${m}m`:`${m}m`);
+}
+function renderLive(live){
+  $('livenow').innerHTML=live.length?live.map(s=>
+    `<div class="stream live"><b>🔴 ${s.title}</b> <span class="lbl">started ${new Date(s.started_at*1000).toLocaleTimeString()}</span><br>
+     <span class="mono" style="font-size:.75rem">🔑 ${s.live_key.slice(0,32)}…</span><br>
+     <a class="btn red" href="./live.html">▶ watch live node</a>
+     <span class="lbl">${s.chunks} chunks laid so far</span></div>`
+  ).join(''):'<span class="lbl">no live streams right now — <a href="./live.html">start one</a></span>';
+}
+function render(){
+  const q=($('search').value||'').toLowerCase();
+  const list=library.streams.filter(s=>(s.title||'').toLowerCase().includes(q));
+  $('streams').innerHTML=list.length?list.map(s=>{
+    const left=(s.expires_at||0)-Date.now()/1000;
+    const cls=left<0?'':(left<86400?'expiring':'');
+    const leftTxt=left<0?'<span style="color:var(--red)">⚠ EXPIRED — reblob to revive</span>':
+      `<span class="countdown" style="color:${left<86400?'var(--amber)':'var(--neon)'}">⏱ ${fmtLeft(left)}</span> <span class="lbl">till reblob</span>`;
+    return `<div class="stream ${cls}">
+      <b>📼 ${s.title}</b> <span class="lbl">${new Date(s.at||s.started_at*1000).toLocaleString()} · ${s.chunks} chunks · ${s.captions||0} captions</span><br>
+      ${leftTxt}<br>
+      <span class="mono" style="font-size:.75rem">🔑 ${String(s.liveKey||s.live_key||'').slice(0,32)}…</span><br>
+      <a class="btn go" href="./play.html?id=${s.id}">▶ play saved</a>
+      <button class="btn warn" onclick="reblob('${s.id}')">🔄 reblob now</button>
+      <button class="btn" onclick="downloadProof('${s.id}')">📜 proof bundle</button>
+      ${s.status==='local-only'?'<span class="lbl">· local only — send the .livestream.json to Kodakai to publish + keeper-watch</span>':''}
+      <div class="lbl" id="reblob-${s.id}"></div>
+    </div>`;
+  }).join(''):'<span class="lbl">no saved streams yet — <a href="./live.html">go live</a> to create one</span>';
+}
+async function reblob(id){
+  const out=$('reblob-'+id);
+  out.innerHTML='<span class="lbl">⏳ Browser reblob coming soon — for now, send the keeper bundle to Kodakai, or the hourly keeper auto-reblobs GitHub streams.</span>';
+}
+function downloadProof(id){
+  const s=library.streams.find(x=>x.id===id);
+  if(!s) return;
+  const proof={
+    stream:s.title, id:s.id, live_key:s.liveKey||s.live_key,
+    chunks:s.chunks, at:s.at, blobs:(s.blobs||[]).map(b=>b.blob),
+    commitment:'sha256(live_key | chunk_hashes) — verify by recomputation',
+    note:'Hash-commitment proof bundle (not a zk-SNARK). Proves stream integrity: re-hash the manifest and chunks to verify.'
+  };
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([JSON.stringify(proof,null,2)],{type:'application/json'}));
+  a.download=id+'.proof.json'; a.click();
+}
+function downloadGuide(){ window.open(GH+'/live-guide.json','_blank'); }
+loadLibrary();
+setInterval(loadLibrary, 60000);
+</script>
+</body>
+</html>
