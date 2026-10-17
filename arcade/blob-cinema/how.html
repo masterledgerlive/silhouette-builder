@@ -1,161 +1,269 @@
 <!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>BLOB CINEMA — how it works (kid version)</title>
+<title>BLOB CINEMA — make your first video (kid teacher mode)</title>
 <style>
 *{box-sizing:border-box}
-body{font-family:'Comic Sans MS','Chalkboard SE',system-ui,sans-serif;background:linear-gradient(180deg,#1a1a3a,#0b0b1a);color:#fff;margin:0;padding:0;min-height:100vh}
-.hero{text-align:center;padding:32px 16px;background:linear-gradient(180deg,#2a2a5a,#1a1a3a)}
-.hero h1{font-size:2rem;margin:0}
-.hero p{color:#b0b0e0;font-size:1rem}
-.stage{max-width:700px;margin:0 auto;padding:16px}
-.step{background:#1e1e3e;border:3px solid #3a3a6a;border-radius:20px;padding:20px;margin:16px 0;position:relative;overflow:hidden}
-.step h2{margin:0 0 8px;font-size:1.3rem}
-.step p{color:#c0c0e8;line-height:1.6;font-size:.95rem}
-.step .big{font-size:3.5rem;text-align:center;margin:8px 0}
-.arrow{text-align:center;font-size:2.5rem;margin:-8px 0;color:#6C5CE7}
-.demo{background:#0f0f22;border-radius:12px;padding:12px;margin-top:10px;font-family:monospace;font-size:.8rem;color:#7CFF6B;white-space:pre-wrap;word-break:break-all;min-height:60px}
-.btn{background:#6C5CE7;color:#fff;border:none;border-radius:12px;padding:12px 24px;font-size:1rem;cursor:pointer;margin:6px}
-.btn.go{background:#2d7a2d}
-.chain{display:flex;align-items:center;justify-content:center;gap:4px;flex-wrap:wrap;margin:12px 0}
-.link{background:#2a2a5a;border:2px solid #6C5CE7;border-radius:10px;padding:8px 12px;font-family:monospace;font-size:.75rem}
-.tailbox{background:#2a1a3a;border:3px dashed #ff9ff3;border-radius:12px;padding:12px;margin-top:10px}
-.tailbox h3{margin:0 0 6px;color:#ff9ff3}
-.kid{font-size:1.1rem}
+body{font-family:'Comic Sans MS','Chalkboard SE',system-ui,sans-serif;background:linear-gradient(180deg,#1a1a3a,#0b0b1a);color:#fff;margin:0;min-height:100vh}
+.hero{text-align:center;padding:24px 16px;background:linear-gradient(180deg,#2a2a5a,#1a1a3a)}
+.hero h1{font-size:1.7rem;margin:0}
+.hero p{color:#b0b0e0}
+.stage{max-width:720px;margin:0 auto;padding:16px}
+.panel{background:#1e1e3e;border:3px solid #3a3a6a;border-radius:20px;padding:20px;margin:16px 0}
+.panel h2{margin:0 0 8px}
+.kid{color:#d0d0f0;line-height:1.7;font-size:1rem}
+.btn{background:#6C5CE7;color:#fff;border:none;border-radius:12px;padding:14px 28px;font-size:1.1rem;cursor:pointer;margin:6px}
+.btn.go{background:#2d7a2d}.btn.red{background:#a33}.btn:disabled{opacity:.4}
+.btn.big{font-size:1.3rem;padding:18px 36px}
+/* genie speech */
+#genie{position:sticky;top:0;z-index:10;background:#2a1a4a;border:3px solid #6C5CE7;border-radius:16px;padding:14px;margin:12px 0;display:flex;gap:12px;align-items:flex-start}
+#genie .face{font-size:2.5rem}
+#genie .say{flex:1;color:#e8e0ff;line-height:1.6}
+/* pipeline steps */
+#pipe{margin:12px 0}
+.pstep{background:#0f0f22;border:2px solid #2a2a5a;border-radius:12px;padding:12px;margin:8px 0;display:none}
+.pstep.on{display:block;animation:pop .3s}
+.pstep.done{border-color:#2d7a2d}
+.pstep .h{font-size:1.1rem;margin-bottom:4px}
+.pstep .d{font-family:monospace;font-size:.78rem;color:#7CFF6B;word-break:break-all;white-space:pre-wrap}
+.pstep .t{font-size:.75rem;color:#8888aa}
+@keyframes pop{from{transform:scale(.95);opacity:0}}
+/* teacher mode */
+#teacher{display:none;background:#0a0a18;border:2px dashed #ff9ff3;border-radius:12px;padding:12px;margin:10px 0;font-family:monospace;font-size:.75rem;color:#ff9ff3;white-space:pre-wrap;word-break:break-all}
+body.teach #teacher{display:block}
+video{width:100%;border-radius:12px;background:#000;max-height:40vh}
+canvas{width:100%;border-radius:12px;background:#000}
+.toggle{text-align:center;margin:8px}
+.toggle button{background:none;border:2px solid #ff9ff3;color:#ff9ff3;border-radius:20px;padding:6px 16px;cursor:pointer}
 .nav{text-align:center;padding:20px}
-.nav a{color:#6C5CE7;margin:0 12px;text-decoration:none;font-size:1rem}
+.nav a{color:#6C5CE7;margin:0 10px;text-decoration:none}
+#result{display:none}
 </style></head>
 <body>
 <script src="./errcatch.js"></script>
+<script src="./nacl-min.js"></script>
 <div class="hero">
-<h1>🎬 BLOB CINEMA — How It Works</h1>
-<p>The kid's guide to the whole engine. Every step, in plain sight.</p>
+<h1>🎬 Make Your FIRST Video — Live on Chain</h1>
+<p>The genie teaches you every step. Real video, real blockchain, real forever.</p>
 </div>
+
+<div id="genie">
+<div class="face">🧞</div>
+<div class="say" id="geniesay">Hi! I'm your bottle genie. Press the big button below and I'll walk you through making your <b>very first video live on the blockchain</b>. I'll explain every single step as it happens — nothing hidden!</div>
+</div>
+
 <div class="stage">
+<div class="toggle"><button onclick="document.body.classList.toggle('teach');this.textContent=document.body.classList.contains('teach')?'👩‍🏫 teacher mode: ON':'👩‍🏫 teacher mode: OFF'">👩‍🏫 teacher mode: OFF</button>
+<div class="kid" style="font-size:.8rem;color:#8888aa">teacher mode shows real hashes, keys, and headers under each step</div></div>
 
-<div class="step">
-<div class="big">📹</div>
-<h2>1. You press GO LIVE</h2>
-<p class="kid">Your camera or screen starts recording. The video gets chopped into little <b>2-second pieces</b> called <b>chunks</b> — like slicing a baguette into pieces so it's easy to carry!</p>
-<button class="btn" onclick="demoChunks()">🍞 watch it chop!</button>
-<div class="demo" id="d-chunks">press the button…</div>
+<div class="panel" id="setup">
+<h2>🎬 Step 0 — Pick your camera</h2>
+<p class="kid">What should we record? The <b>test pattern</b> needs no permission (great for first try!). Your <b>camera</b> records you for real.</p>
+<button class="btn" onclick="setSrc('test')" id="b-test">🎨 test pattern</button>
+<button class="btn" onclick="setSrc('cam')" id="b-cam">📷 my camera</button>
+<div style="margin-top:12px"><button class="btn go big" id="b-go" onclick="makeFirst()" disabled>🚀 MAKE MY FIRST VIDEO!</button></div>
+<p class="kid" id="srcstat" style="color:#8888aa">pick one first…</p>
 </div>
-<div class="arrow">⬇</div>
 
-<div class="step">
-<div class="big">🔒</div>
-<h2>2. Each chunk gets locked</h2>
-<p class="kid">Every piece goes into a <b>magic lockbox</b> (that's encryption!). Each box gets its <b>own key</b> — and the keys are made in a chain: key #2 is made from key #1, key #3 from key #2, like dominoes!</p>
-<div class="chain" id="keychain"></div>
-<button class="btn" onclick="demoKeys()">⛓ watch the key chain grow!</button>
-<div class="demo" id="d-keys">press the button…</div>
+<div class="panel" id="recording" style="display:none">
+<h2>🔴 Recording… <span id="rectimer">0</span>s</h2>
+<video id="vprev" muted playsinline style="display:none"></video>
+<canvas id="vcap" width="640" height="360" style="display:none"></canvas>
+<div id="pipe"></div>
+<div id="teacher"></div>
 </div>
-<div class="arrow">⬇</div>
 
-<div class="step">
-<div class="big">🌊</div>
-<h2>3. Locked boxes swim to Walrus</h2>
-<p class="kid">The locked boxes get thrown into a giant ocean called <b>Walrus</b> — computers all over the world hold copies. Nobody can open them without the keys! Each box gets a <b>name tag</b> (the blob ID) so we can find it later.</p>
-<button class="btn" onclick="demoBlobs()">🌊 throw boxes in the ocean!</button>
-<div class="demo" id="d-blobs">press the button…</div>
-</div>
-<div class="arrow">⬇</div>
-
-<div class="step">
-<div class="big">📋</div>
-<h2>4. We make a treasure map</h2>
-<p class="kid">We write down where every box is — that's the <b>manifest</b> (a treasure map!). The map goes in the ocean too. To watch, you just need the map + the first key — the rest of the keys unfold like magic!</p>
-<div class="demo">treasure map = {
-  "title": "my stream",
-  "chunks": [
-    {"n":0, "blob":"abc123…", "key":"K_0"},
-    {"n":1, "blob":"def456…", "key":"K_1"},
-    …
-  ]
-}</div>
-</div>
-<div class="arrow">⬇</div>
-
-<div class="step">
-<div class="big">🎒</div>
-<h2>5. Every map carries a backpack (the TAIL!)</h2>
-<p class="kid">Here's the clever part! Every treasure map has a <b>backpack</b> sewn on — that's the <b>tail</b>. The backpack carries community treasures: game skins, votes, other channels, and notes about when to <b>reblob</b> (that's when we move boxes to fresh spots before they disappear!).</p>
-<div class="tailbox">
-<h3>🎒 What's in the backpack?</h3>
-<p class="kid" style="color:#e0c0f0">🎮 game skins & weapons for the arcade<br>
-🗳 votes — what should we build next?<br>
-📺 other channels to follow<br>
-🔄 reblob notes — "move these boxes before they expire!"<br>
-🧠 memories — so our robot friends can learn the chain</p>
-</div>
-<p class="kid"><b>Why?</b> Because then <i>every</i> video carries a piece of the community. The arcade builds itself, one backpack at a time!</p>
-</div>
-<div class="arrow">⬇</div>
-
-<div class="step">
-<div class="big">📺</div>
-<h2>6. The never-ending TV (the follower!)</h2>
-<p class="kid">The <b>chain follower</b> is a TV that never stops! It reads the treasure map, unlocks each box, and plays the video. When boxes move to new spots (reblob!), it follows the trail to the new map. It just keeps going… forever!</p>
-<button class="btn go" onclick="location.href='./follow.html'">🔗 try the follower!</button>
-</div>
-<div class="arrow">⬇</div>
-
-<div class="step">
-<div class="big">🔑</div>
-<h2>7. The 3-part key</h2>
-<p class="kid">To watch someone's stream you need <b>3 things</b>:</p>
-<p class="kid">📍 <b>1. LOCATOR</b> — where's the treasure map? (a blob ID)<br>
-⚙️ <b>2. METHOD</b> — how do the locks work? (always the same magic)<br>
-🗝️ <b>3. UNLOCK</b> — the first key! (secret — only in the link)</p>
-<p class="kid">Give someone all three, and their player can pull your whole chain. <b>No server needed!</b></p>
+<div class="panel" id="result">
+<h2>🎉 YOU DID IT!</h2>
+<p class="kid" id="resulttext"></p>
+<div id="resultlinks"></div>
+<button class="btn" onclick="location.href='./follow.html'">🔗 follow it forever</button>
+<button class="btn" onclick="location.reload()">🎬 make another</button>
 </div>
 
 <div class="nav">
-<a href="./live.html">🔴 go live</a>
+<a href="./live.html">🔴 full studio</a>
 <a href="./follow.html">🔗 follower</a>
-<a href="./reblob.html">📚 library</a>
+<a href="./live-now.html">📡 live now</a>
 <a href="../index.html">🕹 arcade</a>
 </div>
 </div>
 
 <script>
-/* Kid-friendly interactive demos — real logic, simplified */
-async function sha(s){
+const $=id=>document.getElementById(id);
+const PUB='https://publisher.walrus-testnet.walrus.space';
+const AGG='https://aggregator.walrus-testnet.walrus.space';
+const bhex=h=>new Uint8Array(h.match(/../g).map(x=>parseInt(x,16)));
+const hex=b=>Array.from(b).map(x=>x.toString(16).padStart(2,'0')).join('');
+const say=t=>{ $('geniesay').innerHTML=t; };
+const tlog=t=>{ $('teacher').textContent+=t+'\n'; };
+
+let srcKind=null, stream=null, recorder=null, chunks=[], keyChain=[], liveKey=null;
+let nChunk=0, timerInt=null, secs=0;
+
+/* ---------- key chain ---------- */
+async function sha256hexStr(s){
   const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));
-  return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('').slice(0,16);
+  return hex(new Uint8Array(b));
 }
-async function demoChunks(){
-  const el=document.getElementById('d-chunks');
-  el.textContent='';
-  for(let i=0;i<5;i++){
-    el.textContent+=`✂️  chunk #${i} — 2 seconds of video (${(80+Math.floor(Math.random()*40))}KB)\n`;
-    await new Promise(r=>setTimeout(r,400));
-  }
-  el.textContent+='\n🍞 5 pieces! Ready to lock…';
+async function deriveKey(prev){
+  const h=await sha256hexStr(hex(prev)+'|next');
+  return bhex(h);
 }
-async function demoKeys(){
-  const kc=document.getElementById('keychain');
-  const el=document.getElementById('d-keys');
-  kc.innerHTML=''; el.textContent='';
-  let k='first-secret-key';
-  for(let i=0;i<5;i++){
-    k=await sha(k+'|next');
-    const d=document.createElement('div');
-    d.className='link'; d.textContent='K_'+i+' '+k.slice(0,8)+'…';
-    kc.appendChild(d);
-    if(i<4){ const a=document.createElement('div'); a.textContent='→'; a.style.color='#6C5CE7'; kc.appendChild(a); }
-    el.textContent+=`🔑 K_${i} = SHA256(K_${i-1} + "|next") = ${k}…\n`;
-    await new Promise(r=>setTimeout(r,500));
-  }
-  el.textContent+='\n⛓ each key unlocks one chunk — lose one, the rest still work!';
+let _kl=Promise.resolve();
+async function keyAt(i){
+  const p=_kl.then(async()=>{ while(keyChain.length<=i) keyChain.push(await deriveKey(keyChain[keyChain.length-1])); return keyChain[i]; });
+  _kl=p.catch(()=>{}); return p;
 }
-async function demoBlobs(){
-  const el=document.getElementById('d-blobs');
-  el.textContent='';
-  const names=['abc123','def456','ghi789','jkl012','mno345'];
-  for(let i=0;i<5;i++){
-    el.textContent+=`🔒 locked chunk #${i} → 🌊 Walrus blob: ${names[i]}… (name tag!)\n`;
-    await new Promise(r=>setTimeout(r,400));
+
+/* ---------- setup ---------- */
+function setSrc(k){
+  srcKind=k;
+  $('b-test').style.border=k==='test'?'3px solid #7CFF6B':'';
+  $('b-cam').style.border=k==='cam'?'3px solid #7CFF6B':'';
+  $('b-go').disabled=false;
+  $('srcstat').textContent=k==='test'?'🎨 test pattern picked — no permission needed!':'📷 camera picked — you\'ll be the star!';
+  say(k==='test'
+    ? `Great choice! The <b>test pattern</b> draws colorful bouncing balls — no camera needed. Press <b>MAKE MY FIRST VIDEO</b> and watch the magic!`
+    : `Ooh, <b>camera!</b> You're going to be on the blockchain! Press <b>MAKE MY FIRST VIDEO</b> — I'll ask for camera permission first.`);
+}
+
+/* ---------- the main event ---------- */
+async function makeFirst(){
+  $('setup').style.display='none';
+  $('recording').style.display='block';
+  say(`🎬 <b>Here we go!</b> I'm turning on your ${srcKind==='test'?'test pattern':'camera'} and recording <b>10 seconds</b>. Watch each step light up below!`);
+  try{
+    if(srcKind==='test'){
+      const cv=$('vcap'); cv.style.display='block';
+      const ctx=cv.getContext('2d'); let t=0;
+      const tint=setInterval(()=>{
+        t+=0.06;
+        const g=ctx.createLinearGradient(0,0,640,360);
+        g.addColorStop(0,'#101038'); g.addColorStop(1,'#301010');
+        ctx.fillStyle=g; ctx.fillRect(0,0,640,360);
+        for(let i=0;i<5;i++){ ctx.fillStyle=`hsl(${(t*40+i*72)%360},80%,55%)`;
+          ctx.beginPath(); ctx.arc(80+i*120,180+Math.sin(t*2+i)*90,34,0,7); ctx.fill(); }
+        ctx.fillStyle='#fff'; ctx.font='bold 32px sans-serif';
+        ctx.fillText('🎬 MY FIRST VIDEO!',18,50);
+        ctx.font='22px sans-serif'; ctx.fillText(new Date().toLocaleTimeString(),18,330);
+      },50);
+      stream=cv.captureStream(30);
+      window._tint=tint;
+    } else {
+      stream=await navigator.mediaDevices.getUserMedia({video:{width:640},audio:true});
+      const v=$('vprev'); v.style.display='block'; v.srcObject=stream; v.play();
+    }
+  }catch(e){
+    say(`😢 <b>Oops!</b> ${e.message}. Try the test pattern instead — it always works!`);
+    if(window.errcatch) errcatch(e.message,'makeFirst:source');
+    return;
   }
-  el.textContent+='\n🌊 5 boxes floating in the ocean. Only key-holders can open them!';
+  // keys
+  liveKey=nacl.randomBytes(32); keyChain=[liveKey];
+  tlog('LIVE_KEY = '+hex(liveKey));
+  say(`🔑 <b>Step 1 — I made your first key!</b> This secret key will lock your video. From it, I'll grow a whole <b>chain of keys</b> — one for each 2-second piece. Watch!`);
+  await step('key', '🔑 <b>KEY CHAIN</b> — growing keys…', async(el)=>{
+    for(let i=0;i<5;i++){
+      const k=await keyAt(i);
+      el.innerHTML+=`K_${i} = <span class="t">${hex(k).slice(0,24)}…</span><br>`;
+      tlog(`K_${i} = SHA256(K_${i-1} + "|next") = ${hex(k)}`);
+      await wait(300);
+    }
+    el.innerHTML+=`<span class="t">5 keys grown — one per chunk!</span>`;
+  });
+  // record 10s in 2s chunks
+  say(`📹 <b>Step 2 — Recording!</b> I'm chopping your video into <b>2-second pieces</b> and <b>locking each one</b> with its own key. Watch them fly!`);
+  const mime=MediaRecorder.isTypeSupported('video/mp4')?'video/mp4':'video/webm;codecs=vp9';
+  tlog('MIME = '+mime);
+  recorder=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:800000});
+  recorder.ondataavailable=async ev=>{
+    if(!ev.data||!ev.data.size) return;
+    const idx=nChunk++;
+    const raw=new Uint8Array(await ev.data.arrayBuffer());
+    await step('chunk'+idx, `📹 <b>CHUNK #${idx}</b> — ${(raw.length/1024).toFixed(0)}KB captured`, async(el)=>{
+      el.innerHTML+=`captured ${(raw.length/1024).toFixed(1)}KB of video<br>`;
+      tlog(`chunk#${idx}: ${raw.length} bytes, mime=${mime}`);
+      // encrypt
+      const key=await keyAt(idx);
+      const nonce=nacl.randomBytes(24);
+      const c=nacl.secretbox(raw,nonce,key);
+      const out=new Uint8Array(24+c.length); out.set(nonce); out.set(c,24);
+      el.innerHTML+=`🔒 locked with K_${idx} → ${(out.length/1024).toFixed(1)}KB<br>`;
+      tlog(`chunk#${idx}: secretbox(nonce=${hex(nonce).slice(0,16)}…, K_${idx}) → ${out.length} bytes`);
+      await wait(200);
+      // PUT to Walrus
+      el.innerHTML+=`🌊 swimming to Walrus…<br>`;
+      const t0=performance.now();
+      try{
+        const r=await fetch(PUB+'/v1/blobs?epochs=5',{method:'PUT',body:out});
+        const j=await r.json();
+        const bid=(j.newlyCreated||j.alreadyCertified).blobObject.blobId;
+        const ms=Math.round(performance.now()-t0);
+        chunks.push({n:idx,blob:bid,keyIdx:idx,bytes:out.length});
+        el.innerHTML+=`✅ blob: <span class="t">${bid.slice(0,32)}…</span> (${ms}ms)<br>`;
+        tlog(`chunk#${idx}: PUT → ${bid} (${ms}ms)`);
+        say(`🌊 <b>Chunk #${idx} is on the blockchain!</b> Locked, uploaded, ${(chunks.length)} of ~5 done. ${(5-chunks.length)>0?`Keep going…`:`Almost there!`}`);
+      }catch(e){
+        el.innerHTML+=`❌ upload failed: ${e.message}<br>`;
+        tlog(`chunk#${idx}: PUT FAILED — ${e.message}`);
+      }
+    });
+  };
+  recorder.start(2000);
+  secs=0;
+  timerInt=setInterval(()=>{ secs++; $('rectimer').textContent=secs;
+    if(secs>=10) finishFirst();
+  },1000);
+}
+
+async function finishFirst(){
+  clearInterval(timerInt);
+  try{recorder.stop();}catch(e){}
+  if(window._tint) clearInterval(window._tint);
+  if(stream) stream.getTracks().forEach(t=>t.stop());
+  await wait(2500); // let last chunk land
+  say(`📋 <b>Step 3 — The treasure map!</b> I'm writing down where every locked box lives, plus sewing on the <b>backpack</b> (the tail!) with community goodies.`);
+  await step('manifest', '📋 <b>TREASURE MAP</b> — manifest + tail', async(el)=>{
+    const manifest={
+      v:1, type:'blob-manifest', title:'my-first-video',
+      created_at:Date.now(), method:'nacl-secretbox/sha256-chain-v1',
+      chunks:chunks,
+      tail:{ v:1, system:'first video!',
+        community:{ artifacts:[], game_assets:[{kind:'badge',name:'first-video-star',note:'you made this!'}], channels:[], votes:{} },
+        reblob:{ policy:'auto', count:0 } }
+    };
+    el.innerHTML+=`map has ${chunks.length} boxes listed<br>🎒 backpack sewn on (tail v1)<br>🌊 publishing map…<br>`;
+    const r=await fetch(PUB+'/v1/blobs?epochs=5',{method:'PUT',body:new TextEncoder().encode(JSON.stringify(manifest))});
+    const j=await r.json();
+    const mbid=(j.newlyCreated||j.alreadyCertified).blobObject.blobId;
+    el.innerHTML+=`✅ map lives at:<br><span class="t">${mbid}</span><br>`;
+    tlog('MANIFEST = '+mbid);
+    window._mbid=mbid;
+  });
+  // done!
+  $('recording').style.display='none';
+  $('result').style.display='block';
+  const link=location.origin+location.pathname.replace('how.html','play.html')+'?id=first#'+hex(liveKey);
+  $('resulttext').innerHTML=`You just put <b>${chunks.length} video chunks</b> on the blockchain — locked, mapped, with a backpack! As long as the reblob keeper keeps moving them before they expire, your video lives <b>forever</b>. ♾️`;
+  $('resultlinks').innerHTML=
+    `<div class="kid" style="margin:10px 0">🔗 manifest: <span style="font-family:monospace;font-size:.75rem;word-break:break-all">${window._mbid}</span></div>`+
+    `<button class="btn" onclick="navigator.clipboard.writeText('${link}');say('📋 <b>Copied!</b> Send that link to anyone — they can watch your first video!')">📋 copy watch link</button>`;
+  say(`🎉 <b>YOU DID IT!</b> Your video is on the blockchain — ${chunks.length} locked boxes, one treasure map, one backpack. <b>Forever</b>, as long as reblob keeps swimming. Copy the link and show someone!`);
+}
+
+/* ---------- helpers ---------- */
+function wait(ms){ return new Promise(r=>setTimeout(r,ms)); }
+async function step(id,title,fn){
+  let el=document.getElementById('ps-'+id);
+  if(!el){
+    el=document.createElement('div');
+    el.className='pstep'; el.id='ps-'+id;
+    el.innerHTML=`<div class="h">${title}</div><div class="d"></div>`;
+    $('pipe').appendChild(el);
+  }
+  el.classList.add('on');
+  const d=el.querySelector('.d');
+  await fn(d);
+  el.classList.add('done');
 }
 </script>
 </body></html>
