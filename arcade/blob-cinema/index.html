@@ -60,6 +60,11 @@ a{color:var(--neon)}
   <div style="margin-top:6px"><span class="lbl">test key (public, for proof):</span><br><span class="mono" id="k0" style="font-size:.75rem"></span></div>
 </div>
 
+<div class="panel" id="keeperpanel">
+  <h2 class="sec">♾️ KEEPER <span class="lbl">continuous blobs — proof of life</span></h2>
+  <div id="keeperstatus" class="lbl">checking keeper status…</div>
+</div>
+
 <div class="panel">
   <h2 class="sec">THE SCREENING ROOM</h2>
   <div class="warn" style="border-color:#ffaa00;color:#ffcc66;margin-bottom:10px">⏳ SELF-DESTRUCTING FILM — these blobs live on the Walrus <b>testnet</b> (1-day epochs, stored for 5). They dissolve in <b id="doom" style="font-size:18px">…</b>. After that: no blob, no movie.</div>
@@ -232,20 +237,47 @@ renderFilms();
 document.getElementById('b0').textContent = BLOB0;
 document.getElementById('k0').textContent = KEY0;
 
-// self-destruct countdown: blobs stored 2026-10-16 ~01:22 EDT for 5 testnet epochs (1 day each)
-const DOOM_TS = 1792560120000;
+// self-destruct countdown — overridden per-film by keeper-status.json when available
+let DOOM_TS = 1792560120000; // fallback: blobs stored 2026-10-16 ~01:22 EDT for 5 testnet epochs
+function fmtLeft(ms){
+  if(ms<=0) return '0 — dissolved';
+  const d=Math.floor(ms/86400000); ms-=d*86400000;
+  const h=Math.floor(ms/3600000); ms-=h*3600000;
+  const m=Math.floor(ms/60000);
+  return d+'d '+h+'h '+m+'m';
+}
 function tickDoom(){
   const el = document.getElementById('doom');
   if(!el) return;
-  let ms = DOOM_TS - Date.now();
-  if(ms <= 0){ el.textContent = '0 — dissolved'; el.style.color = '#ff5470'; return; }
-  const d = Math.floor(ms/86400000); ms -= d*86400000;
-  const h = Math.floor(ms/3600000); ms -= h*3600000;
-  const m = Math.floor(ms/60000); ms -= m*60000;
-  const s = Math.floor(ms/1000);
-  el.textContent = d+'d '+h+'h '+m+'m '+s+'s';
+  const ms = DOOM_TS - Date.now();
+  el.textContent = fmtLeft(ms);
+  if(ms<=0) el.style.color = '#ff5470';
 }
 tickDoom(); setInterval(tickDoom, 1000);
+
+// keeper status: proof the blobs keep living — time left, key, how it works
+(async()=>{
+  const el=document.getElementById('keeperstatus');
+  try{
+    const r=await fetch('./keeper-status.json?v='+Date.now());
+    if(!r.ok) throw 0;
+    const st=await r.json();
+    const films=st.films||{};
+    el.innerHTML=Object.keys(films).map(k=>{
+      const f=films[k];
+      if(f.expires_at && k===_fid){ DOOM_TS=f.expires_at*1000; tickDoom(); }
+      const exp=f.expires_at?('⏳ dies ≈ '+new Date(f.expires_at*1000).toLocaleString()+' ('+fmtLeft(f.expires_at*1000-Date.now())+' left)'):('⏳ '+f.expires);
+      return '<div style="margin:8px 0;padding:10px;background:#0b0b1a;border-radius:8px;border:1px solid #26264d">'
+        +'🎬 <b>'+f.title+'</b>'+(k===_fid?' <span class="ok">← you are watching this</span>':'')+'<br>'
+        +'📍 head <span class="mono">'+String(f.head).slice(0,20)+'…</span> · 🔑 <span class="mono">'+f.key+'</span><br>'
+        +exp+' · '+(f.auto_renew?'<span class="ok">♾️ auto-renew ON</span>':'<span style="color:#ff5470">💀 auto-renew OFF</span>')
+        +(f.moves?' · 🔁 '+f.moves+' copies made':'')
+        +(f.last_move?' · last copy '+new Date(f.last_move*1000).toLocaleTimeString():'')
+        +(f.last_renewal?' · last renewal '+new Date(f.last_renewal*1000).toLocaleString():'')
+        +'<br><span class="lbl">'+f.how+'</span></div>';
+    }).join('')+'<div class="lbl" style="margin-top:6px">updated '+new Date(st.updated*1000).toLocaleString()+'</div>';
+  }catch(e){ el.textContent='keeper status unavailable (offline?)'; }
+})();
 
 // timeline strip
 const strip = document.getElementById('strip');
@@ -325,6 +357,95 @@ function findMoovEnd(b) {
     if (off > 300000) break;
   }
   return 0;
+}
+
+// MSE's ISOBMFF byte-stream format FORBIDS tfhd base-data-offset (absolute
+// file offsets). Some ffmpeg fragmentations (e.g. Gertie: -movflags without
+// default_base_moof) write it anyway, and desktop Chrome hard-rejects the
+// append: CHUNK_DEMUXER_ERROR_APPEND_FAILED / "TFHD base-data-offset not
+// allowed by MSE". This rewrites each offending moof in place: strip the
+// 8-byte base_data_offset from every tfhd, set default-base-is-moof, and
+// shift every trun data_offset left by 8 * (stripped tfhds in that moof).
+// Exact for files where tfhd base_data_offset == the moof's own file offset
+// (ffmpeg's standard layout here — verified across the whole Gertie file):
+// then old data_offset was already moof-relative, so new = old - 8k.
+// Returns the input unchanged when nothing offends.
+function mseSanitize(u8){
+  const dv = new DataView(u8.buffer, u8.byteOffset, u8.byteLength);
+  const rd32 = o => dv.getUint32(o);
+  const btype = o => String.fromCharCode(u8[o+4], u8[o+5], u8[o+6], u8[o+7]);
+  const kids = (off, end) => {
+    const r = []; let o = off;
+    while (o + 8 <= end) {
+      const sz = rd32(o);
+      if (sz < 8 || o + sz > end) break;
+      r.push({off:o, size:sz, type:btype(o)});
+      o += sz;
+    }
+    return r;
+  };
+  const moofs = [];
+  for (const b of kids(0, u8.length)) {
+    if (b.type !== 'moof') continue;
+    let k = 0;
+    for (const t of kids(b.off+8, b.off+b.size)) {
+      if (t.type !== 'traf') continue;
+      for (const c of kids(t.off+8, t.off+t.size))
+        if (c.type === 'tfhd' && (((u8[c.off+9]<<16)|(u8[c.off+10]<<8)|u8[c.off+11]) & 1)) k++;
+    }
+    if (k > 0) moofs.push({b, k});
+  }
+  if (!moofs.length) return u8;
+  let out = u8;
+  for (let mi = moofs.length-1; mi >= 0; mi--) {  // back-to-front: earlier offsets stay valid
+    const {b, k} = moofs[mi];
+    const body = [];
+    for (const t of kids(b.off+8, b.off+b.size)) {
+      if (t.type !== 'traf') { body.push(out.slice(t.off, t.off+t.size)); continue; }
+      const cparts = []; let tsize = t.size;
+      for (const c of kids(t.off+8, t.off+t.size)) {
+        if (c.type === 'tfhd') {
+          const fl = (out[c.off+9]<<16)|(out[c.off+10]<<8)|out[c.off+11];
+          if (fl & 1) {
+            const ns = c.size-8, nf = (fl & ~1) | 0x020000;
+            const nb = new Uint8Array(ns);
+            nb.set(out.subarray(c.off, c.off+12), 0);
+            nb[0]=(ns>>>24)&255; nb[1]=(ns>>>16)&255; nb[2]=(ns>>>8)&255; nb[3]=ns&255;
+            nb[9]=(nf>>>16)&255; nb[10]=(nf>>>8)&255; nb[11]=nf&255;
+            nb.set(out.subarray(c.off+24, c.off+c.size), 12); // track_ID + tail (base_data_offset dropped)
+            cparts.push(nb); tsize -= 8; continue;
+          }
+        }
+        if (c.type === 'trun') {
+          const fl = (out[c.off+9]<<16)|(out[c.off+10]<<8)|out[c.off+11];
+          if (fl & 1) {
+            const nb = out.slice(c.off, c.off+c.size);
+            const old = (nb[16]<<24)|(nb[17]<<16)|(nb[18]<<8)|nb[19];
+            const nw = (old - 8*k)|0;
+            nb[16]=(nw>>>24)&255; nb[17]=(nw>>>16)&255; nb[18]=(nw>>>8)&255; nb[19]=nw&255;
+            cparts.push(nb); continue;
+          }
+        }
+        cparts.push(out.slice(c.off, c.off+c.size));
+      }
+      const tb = new Uint8Array(tsize);
+      tb.set(out.subarray(t.off, t.off+8), 0);
+      tb[0]=(tsize>>>24)&255; tb[1]=(tsize>>>16)&255; tb[2]=(tsize>>>8)&255; tb[3]=tsize&255;
+      let p = 8; for (const cp of cparts) { tb.set(cp, p); p += cp.length; }
+      body.push(tb);
+    }
+    const nms = b.size - 8*k;
+    const nm = new Uint8Array(nms);
+    nm.set(out.subarray(b.off, b.off+8), 0);
+    nm[0]=(nms>>>24)&255; nm[1]=(nms>>>16)&255; nm[2]=(nms>>>8)&255; nm[3]=nms&255;
+    let p = 8; for (const bp of body) { nm.set(bp, p); p += bp.length; }
+    const nu = new Uint8Array(out.length - 8*k);
+    nu.set(out.subarray(0, b.off), 0);
+    nu.set(nm, b.off);
+    nu.set(out.subarray(b.off+b.size), b.off+nms);
+    out = nu;
+  }
+  return out;
 }
 
 async function playMovie() {
@@ -407,12 +528,16 @@ async function playMovie() {
       now(`<span class="stage">③ DECRYPTED</span> <span class="mono">${media.length.toLocaleString()}b</span> → <span class="stage">④ HASH ✓</span> checking…`);
       const h = await sha256hex(media);
       if (h !== header.proof.section_sha256) throw new Error(`section ${n}: proof mismatch — tampered section, playback halted.`);
+      // MSE legality: some fragmentations carry tfhd base-data-offset, which
+      // this device's buffer hard-rejects. Rewrite to moof-relative addressing.
+      const clean = mseSanitize(media);
+      if (clean !== media) now(`<span class="stage">🔧 MSE-FIX</span> <span class="mono">section ${n}: stripped ${media.length-clean.length}b of absolute tfhd offsets → MSE-legal fragments</span>`);
       // iPhone quirk: feed the init segment (ftyp+moov) as its own append first,
       // then the media. Desktop Chrome accepts it combined; iOS often doesn't.
-      let chunks = [media];
+      let chunks = [clean];
       if (n === 1) {
-        const ie = findMoovEnd(media);
-        if (ie > 0 && ie < media.length) chunks = [media.slice(0, ie), media.slice(ie)];
+        const ie = findMoovEnd(clean);
+        if (ie > 0 && ie < clean.length) chunks = [clean.slice(0, ie), clean.slice(ie)];
       }
       for (const c of chunks) await append(c);
       buffered += media.length;
