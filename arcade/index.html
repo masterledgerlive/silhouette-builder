@@ -20,7 +20,7 @@
   .panel { background:var(--panel); border:1px solid #2a2a5a; border-radius:14px; padding:28px; margin-bottom:28px; }
   h2.sec { color:var(--neon); letter-spacing:.15em; margin-bottom:18px; }
   /* ---- desktop ---- */
-  #desktop { position:relative; height:600px; background:#050510; border:2px solid #2a2a5a; border-radius:14px; overflow:hidden;
+  #desktop { position:relative; height:720px; background:#050510; border:2px solid #2a2a5a; border-radius:14px; overflow:hidden;
              background-image:radial-gradient(circle at 20% 20%, #101038 0%, transparent 50%), radial-gradient(circle at 80% 80%, #301038 0%, transparent 50%); }
   #iconbar { position:absolute; left:0; top:0; bottom:40px; width:110px; padding:12px 8px; display:flex; flex-direction:column; gap:14px; align-items:center; overflow-y:auto; z-index:5; }
   .appicon { width:88px; text-align:center; cursor:pointer; padding:8px 4px; border-radius:10px; border:1px solid transparent; }
@@ -124,13 +124,15 @@ function openApp(id){
   const desk=document.getElementById('desktop');
   const w=document.createElement('div'); w.className='win'; w.id='win-'+id;
   const n=Object.keys(wins).length;
-  w.style.left=(130+n*36)+'px'; w.style.top=(20+n*28)+'px';
-  w.style.width='560px'; w.style.height='400px'; w.style.zIndex=++zTop;
+  w.style.left=(130+(n%3)*380)+'px'; w.style.top=(20+Math.floor(n/3)*80)+'px';
+  w.style.width='800px'; w.style.height='600px'; w.style.zIndex=++zTop;
   w.innerHTML=`<div class="titlebar"><span class="t">${a.art} ${a.name}</span>
     <button class="rec" title="Record this window into the blob chain" onclick="recWin('${id}',this)">🔴 REC</button>
+    <button title="Open in new tab" onclick="openTab('${id}')">↗</button>
+    <button title="Maximize" onclick="maxWin('${id}')">⛶</button>
     <button onclick="minWin('${id}')">_</button><button onclick="closeWin('${id}')">✕</button></div>
     <iframe src="${a.url}" allow="camera;microphone;display-capture;autoplay"></iframe><div class="resize"></div>`;
-  desk.appendChild(w); wins[id]=w;
+  desk.appendChild(w); wins[id]={el:w,max:false};
   // taskbar button
   const tb=document.createElement('button'); tb.className='tbtn active'; tb.id='tb-'+id; tb.textContent=a.art+' '+a.name;
   tb.onclick=()=>focusWin(id); document.getElementById('taskbtns').appendChild(tb);
@@ -138,6 +140,7 @@ function openApp(id){
   const bar2=w.querySelector('.titlebar');
   bar2.onmousedown=e=>{
     if(e.target.tagName==='BUTTON') return;
+    if(wins[id].max) return; // no drag when maximized
     const sx=e.clientX-w.offsetLeft, sy=e.clientY-w.offsetTop;
     const mv=ev=>{ w.style.left=Math.max(110,ev.clientX-sx)+'px'; w.style.top=Math.max(0,ev.clientY-sy)+'px'; };
     const up=()=>{ document.removeEventListener('mousemove',mv); document.removeEventListener('mouseup',up); };
@@ -147,6 +150,7 @@ function openApp(id){
   const rz=w.querySelector('.resize');
   rz.onmousedown=e=>{
     e.preventDefault();
+    if(wins[id].max) return;
     const sw=w.offsetWidth, sh=w.offsetHeight, sx=e.clientX, sy=e.clientY;
     const mv=ev=>{ w.style.width=Math.max(320,sw+ev.clientX-sx)+'px'; w.style.height=Math.max(220,sh+ev.clientY-sy)+'px'; };
     const up=()=>{ document.removeEventListener('mousemove',mv); document.removeEventListener('mouseup',up); };
@@ -154,12 +158,26 @@ function openApp(id){
   };
   w.onmousedown=()=>{ w.style.zIndex=++zTop; focusWin(id); };
 }
-function focusWin(id){ const w=wins[id]; if(!w) return; w.style.display='flex'; w.style.zIndex=++zTop;
+function openTab(id){ const a=APPS.find(x=>x.id===id); if(a) window.open(a.url,'_blank'); }
+function maxWin(id){
+  const rec=wins[id]; if(!rec) return; const w=rec.el;
+  if(!rec.max){
+    rec.prev={l:w.style.left,t:w.style.top,w:w.style.width,h:w.style.height};
+    w.style.left='110px'; w.style.top='0'; w.style.width='calc(100% - 110px)'; w.style.height='calc(100% - 40px)';
+    rec.max=true;
+  } else {
+    w.style.left=rec.prev.l; w.style.top=rec.prev.t; w.style.width=rec.prev.w; w.style.height=rec.prev.h;
+    rec.max=false;
+  }
+}
+function focusWin(id){ const rec=wins[id]; if(!rec) return; const w=rec.el; w.style.display='flex'; w.style.zIndex=++zTop;
   document.querySelectorAll('.tbtn').forEach(b=>b.classList.remove('active'));
   const tb=document.getElementById('tb-'+id); if(tb) tb.classList.add('active'); }
-function minWin(id){ const w=wins[id]; if(w) w.style.display='none'; }
-function closeWin(id){ const w=wins[id]; if(w) w.remove(); delete wins[id];
+function minWin(id){ const rec=wins[id]; if(rec) rec.el.style.display='none'; }
+function closeWin(id){ const rec=wins[id]; if(rec) rec.el.remove(); delete wins[id];
   const tb=document.getElementById('tb-'+id); if(tb) tb.remove(); }
+// auto-open the trio: live recorder + reblob library + a game
+setTimeout(()=>{ openApp('live'); openApp('reblob'); openApp('doom'); },800);
 // ---- record any window into the blob chain ----
 function recWin(id,btn){
   // Opens the live broadcaster with screen-share pre-selected.
