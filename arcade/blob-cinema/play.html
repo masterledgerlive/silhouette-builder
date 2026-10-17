@@ -70,16 +70,31 @@ let manifest=null, keyChain=[], playIdx=0, ms=null, sb=null, playing=false;
 <script src="./nacl-min.js"></script>
 <script>
 async function deriveKey(prev){ const h=await sha256hex(new Uint8Array([...prev,...new TextEncoder().encode('|next')])); return bhex(h); }
+/* LEGACY: how.html briefly used hex-string derivation. Try both so old videos play. */
+async function deriveKeyLegacy(prev){
+  const hexStr=Array.from(prev).map(x=>x.toString(16).padStart(2,'0')).join('');
+  const h=await sha256hex(new TextEncoder().encode(hexStr+'|next'));
+  return bhex(h);
+}
 let _keyLock=Promise.resolve();
+let keyChainHex=[]; // parallel legacy chain
 async function keyAt(i){
   // serialize: concurrent callers must not interleave the derive+push loop,
   // or duplicate keys shift every index and chunks decrypt with the wrong key
   const p=_keyLock.then(async()=>{
     while(keyChain.length<=i) keyChain.push(await deriveKey(keyChain[keyChain.length-1]));
+    while(keyChainHex.length<=i) keyChainHex.push(await deriveKeyLegacy(keyChainHex[keyChainHex.length-1]));
     return keyChain[i];
   });
   _keyLock=p.catch(()=>{});
   return p;
+}
+/* Try standard key first, then legacy — returns {plain, which} */
+function unwrapBoth(cipher,keyStd,keyLeg){
+  let d=unwrap(cipher,keyStd);
+  if(d) return {plain:d,which:'std'};
+  if(keyLeg){ d=unwrap(cipher,keyLeg); if(d) return {plain:d,which:'legacy'}; }
+  return {plain:null,which:'none'};
 }
 function unwrap(cipher,key){ const dec=nacl.secretbox.open(cipher.slice(24),cipher.slice(0,24),key); return dec?new Uint8Array(dec):null; }
 async function load(){
@@ -101,6 +116,7 @@ async function load(){
   if(fragKey&&fragKey.length>=64) manifest.live_key=fragKey;
   $('title').textContent='📼 '+manifest.title;
   keyChain=[bhex(manifest.live_key||manifest.liveKey)];
+  keyChainHex=[bhex(manifest.live_key||manifest.liveKey)];
   $('proof').textContent=`🔑 ${String(manifest.live_key||manifest.liveKey).slice(0,32)}… · ${manifest.chunks.length} chunks · proof: sha256(live_key|chunks)`;
   // verified gameplay badge + score highlights
   if(manifest.verified) $('proof').innerHTML+='<br><span style="color:#7CFF6B">✅ VERIFIED HUMAN GAMEPLAY — camera + screen composited</span>';
@@ -145,12 +161,14 @@ async function startPhone(){
     $('stat').textContent=`📱 decrypting ${i+1}/${total}…`;
     try{
       if(!c||!c.blob||String(c.blob).startsWith('PUT-FAILED')) throw new Error('bad blob ID');
-      const key=await keyAt(c.keyIdx??c.n??i);
+      const ki=c.keyIdx??c.n??i;
+      const key=await keyAt(ki);
       const r=await fetch(AGG+'/v1/blobs/'+c.blob);
       if(!r.ok) throw new Error('Walrus HTTP '+r.status);
       const cipher=new Uint8Array(await r.arrayBuffer());
-      const plain=unwrap(cipher,key);
-      if(!plain) throw new Error('decrypt failed — wrong key?');
+      const res=unwrapBoth(cipher,key,keyChainHex[ki]);
+      if(!res.plain) throw new Error('decrypt failed — wrong key?');
+      const plain=res.plain;
       const bytes=new Uint8Array(plain);
       if(!mime){
         // sniff: MP4 ftyp vs WebM EBML
@@ -207,12 +225,14 @@ async function playLoop(){
     $('stat').textContent='fetching chunk '+(playIdx+1)+'…';
     try{
       if(!c.blob||c.blob.startsWith('PUT-FAILED')) throw new Error('bad blob ID: '+String(c.blob).slice(0,30));
-      const key=await keyAt(c.keyIdx??c.n);
+      const ki=c.keyIdx??c.n;
+      const key=await keyAt(ki);
       const r=await fetch(AGG+'/v1/blobs/'+c.blob);
       if(!r.ok) throw new Error('Walrus HTTP '+r.status);
       const cipher=new Uint8Array(await r.arrayBuffer());
-      const plain=unwrap(cipher,key);
-      if(!plain) throw new Error('decrypt failed — wrong key?');
+      const res=unwrapBoth(cipher,key,keyChainHex[ki]);
+      if(!res.plain) throw new Error('decrypt failed — wrong key?');
+      const plain=res.plain;
       await new Promise((res,rej)=>{
         const on=()=>{sb.removeEventListener('updateend',on);res();};
         sb.addEventListener('updateend',on);
