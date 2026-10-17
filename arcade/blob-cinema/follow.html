@@ -64,6 +64,17 @@ video{width:100%;border-radius:8px;background:#000;max-height:50vh}
 <div id="registry"><div class="lbl">empty — follow a chain or create a snapshot to add</div></div>
 </div>
 
+<div class="panel" style="border-color:#6C5CE7">
+<h3 style="margin-top:0">🧞 bottle genie <span class="lbl">your guide to the chain</span></h3>
+<div id="geniechat" style="background:#0b0b1a;border-radius:8px;padding:10px;min-height:120px;max-height:300px;overflow-y:auto;font-size:.9rem;margin-bottom:8px">
+<div style="color:#9aa0c0">🧞 <i>I live in this bottle. Ask me about the chain, the registry, live streams — or say "help".</i></div>
+</div>
+<div style="display:flex;gap:6px">
+<input id="geniein" placeholder='ask the genie… ("what is this?", "find live", "open library")' style="flex:1" onkeydown="if(event.key==='Enter')askGenie()">
+<button class="btn" onclick="askGenie()">🧞</button>
+</div>
+</div>
+
 <script>
 const $=id=>document.getElementById(id);
 const PUB='https://publisher.walrus-testnet.walrus.space';
@@ -279,5 +290,44 @@ function loadReg(i){
   window.scrollTo(0,0); follow();
 }
 renderReg();
+
+/* ---------- BOTTLE GENIE ----------
+   Lives in the bottle. Reads the registry, explains the chain,
+   finds live streams, opens the library. Rule-based + live data. */
+function gsay(who,text){
+  const c=$('geniechat');
+  const d=document.createElement('div');
+  d.style.margin='6px 0';
+  d.innerHTML=(who==='genie'?'🧞 ':'👤 ')+text;
+  c.appendChild(d); c.scrollTop=c.scrollHeight;
+}
+function askGenie(){
+  const q=$('geniein').value.trim(); if(!q) return;
+  $('geniein').value='';
+  gsay('you',q);
+  const l=q.toLowerCase();
+  const reg=getReg();
+  if(/help|what can you/.test(l)){
+    gsay('genie',`I can:<br>· <b>"what is this"</b> — explain the chain you're following<br>· <b>"registry"</b> — list your saved chains<br>· <b>"find live"</b> — check for live streams<br>· <b>"open library"</b> — jump to the reblob library<br>· <b>"how"</b> — the kid's guide to how it all works`);
+  } else if(/what is this|explain/.test(l)){
+    const t=$('ftitle').textContent;
+    gsay('genie',`You're following <b>${t}</b>.<br>📍 locator → the snapshot blob<br>⚙️ method → nacl-secretbox + sha256 key chain<br>🗝️ unlock → your key unfolds K_0, K_1, K_2… one per chunk.<br>Every chunk is a locked box in the Walrus ocean. The tail backpack carries community memory.`);
+  } else if(/registr|my chains|library/.test(l)){
+    if(!reg.length) gsay('genie',`Your registry is empty. Follow a chain or create a snapshot — I'll remember it here, on your device, no server.`);
+    else gsay('genie',`Your ${reg.length} chain${reg.length>1?'s':''}:<br>`+reg.map((r,i)=>`· <b>${r.title}</b> <span class="lbl">${new Date(r.at).toLocaleDateString()}</span> <a href="#" onclick="loadReg(${i});return false" style="color:#6C5CE7">open</a>`).join('<br>'));
+  } else if(/live/.test(l)){
+    gsay('genie',`Checking for live streams…<br><span class="lbl">(live beacons land here — broadcasters publish a heartbeat blob while live)</span><br><a href="./live-now.html" style="color:#6C5CE7">📡 open the live directory</a>`);
+  } else if(/open library/.test(l)){
+    location.href='./reblob.html';
+  } else if(/how|teach|kid/.test(l)){
+    location.href='./how.html';
+  } else if(/tail|backpack/.test(l)){
+    gsay('genie',`🎒 The <b>tail</b> is the backpack sewn onto every snapshot.<br>It carries: game assets, community votes, other channels, reblob notes, and memories for our agents.<br>Every video builds the arcade, one backpack at a time.`);
+  } else if(/key|unlock/.test(l)){
+    gsay('genie',`🔑 The 3-part key:<br>📍 <b>locator</b> — where's the map (snapshot blob ID)<br>⚙️ <b>method</b> — how locks work (nacl-secretbox + sha256 chain)<br>🗝️ <b>unlock</b> — the first key, only in your link fragment.<br>Your key never leaves your browser.`);
+  } else {
+    gsay('genie',`Hmm — I know about chains, registries, tails, keys, and live streams. Try <b>"help"</b> for the full list.`);
+  }
+}
 </script>
 </body></html>
