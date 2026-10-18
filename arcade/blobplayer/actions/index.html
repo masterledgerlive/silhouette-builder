@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>⚛ Actions — BLOBPLAYER</title>
+<style>
+body{background:#07070f;color:#e8e8ff;font-family:system-ui,sans-serif;margin:0;padding:14px;padding-bottom:80px}
+h1{text-align:center}
+.sub{text-align:center;color:#8888aa;font-size:.85rem;margin-bottom:20px}
+.action{background:#101022;border:2px solid #2a2a4d;border-radius:12px;padding:16px;margin:12px auto;max-width:600px}
+.action.pass{border-color:#1a6b2a}
+.action.fail{border-color:#6b1a2a}
+.action h2{margin:0 0 8px;font-size:1.1rem}
+.action .io{font-size:.75rem;color:#8888aa;margin:4px 0}
+.action .io b{color:#aaaacc}
+.btn{background:#1a1a33;border:1px solid #33336a;color:#e8e8ff;border-radius:8px;padding:10px 20px;cursor:pointer;margin:8px 4px 0 0;font-size:.95rem}
+.btn:disabled{opacity:.4}
+.result{margin-top:10px;font-size:.85rem;min-height:20px}
+.result.ok{color:#4ade80}
+.result.bad{color:#f87171}
+.result.run{color:#6C5CE7}
+.mono{font-family:ui-monospace,monospace;font-size:.75rem;word-break:break-all}
+video{width:100%;max-width:320px;background:#000;border-radius:8px;margin-top:8px}
+#bnav{position:fixed;bottom:0;left:0;right:0;z-index:50;background:#141428;border-top:2px solid #6C5CE7;display:flex;justify-content:space-around;padding:6px 4px calc(6px + env(safe-area-inset-bottom))}
+#bnav a{color:#b0b0e0;text-decoration:none;font-size:1.3rem;display:flex;flex-direction:column;align-items:center;min-width:52px}
+#bnav a span{font-size:.6rem;margin-top:2px}
+</style>
+</head>
+<body>
+<script src="../errcatch.js"></script>
+<h1>⚛ Actions</h1>
+<div class="sub">each action isolated · test one at a time · green means it works</div>
+
+<div class="action" id="a-record">
+  <h2>📷 RECORD</h2>
+  <div class="io"><b>in:</b> test pattern (no camera) · <b>out:</b> video bytes</div>
+  <button class="btn" onclick="testRecord()">▶ test record</button>
+  <div class="result" id="r-record"></div>
+  <video id="v-record" controls playsinline muted style="display:none"></video>
+</div>
+
+<div class="action" id="a-encrypt">
+  <h2>🔑 ENCRYPT</h2>
+  <div class="io"><b>in:</b> bytes + key · <b>out:</b> nonce‖ciphertext</div>
+  <button class="btn" onclick="testEncrypt()">▶ test encrypt</button>
+  <div class="result" id="r-encrypt"></div>
+</div>
+
+<div class="action" id="a-upload">
+  <h2>📤 UPLOAD</h2>
+  <div class="io"><b>in:</b> bytes · <b>out:</b> Walrus blob ID</div>
+  <button class="btn" onclick="testUpload()">▶ test upload</button>
+  <div class="result" id="r-upload"></div>
+</div>
+
+<div class="action" id="a-download">
+  <h2>📥 DOWNLOAD</h2>
+  <div class="io"><b>in:</b> blob ID · <b>out:</b> bytes (must match upload)</div>
+  <button class="btn" onclick="testDownload()">▶ test download</button>
+  <div class="result" id="r-download"></div>
+</div>
+
+<div class="action" id="a-decrypt">
+  <h2>🔓 DECRYPT</h2>
+  <div class="io"><b>in:</b> ciphertext + key · <b>out:</b> original bytes</div>
+  <button class="btn" onclick="testDecrypt()">▶ test decrypt</button>
+  <div class="result" id="r-decrypt"></div>
+</div>
+
+<div class="action" id="a-play">
+  <h2>▶ PLAY</h2>
+  <div class="io"><b>in:</b> video bytes · <b>out:</b> playing video</div>
+  <button class="btn" onclick="testPlay()">▶ test play</button>
+  <div class="result" id="r-play"></div>
+  <video id="v-play" controls playsinline style="display:none"></video>
+</div>
+
+<nav id="bnav">
+<a href="../index.html">🟣<span>home</span></a>
+<a href="./index.html">⚛<span>actions</span></a>
+<a href="../apps/doctor.html">🩺<span>doctor</span></a>
+<a href="../apps/library.html">📚<span>library</span></a>
+</nav>
+
+<script src="../nacl-min.js"></script>
+<script src="../kernel/protocol.js"></script>
+<script>
+// Shared state between action tests (each test can use previous outputs)
+const S={};
+
+function set(id,cls,msg){
+  const box=document.getElementById('a-'+id);
+  box.classList.remove('pass','fail');
+  if(cls)box.classList.add(cls);
+  const r=document.getElementById('r-'+id);
+  r.className='result '+cls;
+  r.innerHTML=msg;
+}
+
+// --- 1. RECORD: capture 3s of test pattern, output raw bytes ---
+async function testRecord(){
+  set('record','run','⏳ recording 3s…');
+  try{
+    const cv=document.createElement('canvas');cv.width=320;cv.height=240;
+    const ctx=cv.getContext('2d');let h=0;
+    const draw=setInterval(()=>{h=(h+8)%360;
+      ctx.fillStyle=`hsl(${h},70%,40%)`;ctx.fillRect(0,0,320,240);
+      ctx.fillStyle='#fff';ctx.font='18px sans-serif';ctx.textAlign='center';
+      ctx.fillText('ACTION TEST',160,120);},100);
+    const stream=cv.captureStream(30);
+    const mime=MediaRecorder.isTypeSupported('video/webm;codecs=vp9')?'video/webm;codecs=vp9':'video/webm';
+    const rec=new MediaRecorder(stream,{mimeType:mime});
+    const parts=[];
+    rec.ondataavailable=e=>{if(e.data&&e.data.size)parts.push(e.data);};
+    rec.start(1000);
+    await new Promise(r=>setTimeout(r,3000));
+    rec.stop(); clearInterval(draw);
+    stream.getTracks().forEach(t=>t.stop());
+    await new Promise(r=>setTimeout(r,500));
+    if(!parts.length)throw new Error('0 chunks from MediaRecorder');
+    const raw=new Uint8Array(await new Blob(parts).arrayBuffer());
+    if(!raw.length)throw new Error('0 bytes');
+    S.raw=raw; S.mime=mime;
+    const v=document.getElementById('v-record');
+    v.style.display='block';
+    v.src=URL.createObjectURL(new Blob([raw],{type:mime}));
+    set('record','pass',`✅ ${raw.length} bytes recorded (${mime})`);
+  }catch(e){ set('record','fail','❌ '+e.message); }
+}
+
+// --- 2. ENCRYPT: encrypt bytes with fresh key, verify decrypt roundtrip ---
+async function testEncrypt(){
+  set('encrypt','run','⏳ encrypting…');
+  try{
+    const input=S.raw||new TextEncoder().encode('action-test-'+Date.now());
+    const k0=nacl.randomBytes(32);
+    const k1=BP.derive(k0);
+    const enc=BP.encryptChunk(input,k1);
+    // verify: decrypt must return original
+    const dec=BP.decryptChunk(enc,k1);
+    if(!dec)throw new Error('decrypt returned null');
+    const match=dec.length===input.length&&dec.every((v,i)=>v===input[i]);
+    if(!match)throw new Error('roundtrip mismatch');
+    S.k1=k1; S.enc=enc; S.plainInput=input;
+    set('encrypt','pass',`✅ ${input.length}B → ${enc.length}B → ${dec.length}B roundtrip OK<br><span class="mono">K_1=${BP.hex(k1).slice(0,16)}…</span>`);
+  }catch(e){ set('encrypt','fail','❌ '+e.message); }
+}
+
+// --- 3. UPLOAD: PUT bytes to Walrus, get blob ID ---
+async function testUpload(){
+  set('upload','run','⏳ uploading… (10-30s)');
+  try{
+    const data=S.enc||new TextEncoder().encode('upload-test-'+Date.now());
+    const t0=Date.now();
+    const bid=await BP.putVerified(data);
+    S.bid=bid; S.uploadedData=data;
+    set('upload','pass',`✅ uploaded in ${((Date.now()-t0)/1000).toFixed(0)}s<br><span class="mono">${bid}</span>`);
+  }catch(e){ set('upload','fail','❌ '+e.message); }
+}
+
+// --- 4. DOWNLOAD: GET blob, verify bytes match ---
+async function testDownload(){
+  set('download','run','⏳ downloading…');
+  try{
+    if(!S.bid)throw new Error('upload first (no blob ID)');
+    const back=await BP.getBlob(S.bid);
+    const match=back.length===S.uploadedData.length&&back.every((v,i)=>v===S.uploadedData[i]);
+    if(!match)throw new Error('bytes do not match upload!');
+    S.downloaded=back;
+    set('download','pass',`✅ ${back.length} bytes, byte-identical to upload`);
+  }catch(e){ set('download','fail','❌ '+e.message); }
+}
+
+// --- 5. DECRYPT: decrypt downloaded bytes with K_1 ---
+async function testDecrypt(){
+  set('decrypt','run','⏳ decrypting…');
+  try{
+    if(!S.downloaded||!S.k1)throw new Error('need encrypt + download first');
+    const plain=BP.decryptChunk(S.downloaded,S.k1);
+    if(!plain)throw new Error('decrypt failed — wrong key?');
+    const match=plain.length===S.plainInput.length&&plain.every((v,i)=>v===S.plainInput[i]);
+    if(!match)throw new Error('decrypted bytes do not match original!');
+    S.decrypted=plain;
+    set('decrypt','pass',`✅ decrypted ${plain.length} bytes, matches original`);
+  }catch(e){ set('decrypt','fail','❌ '+e.message); }
+}
+
+// --- 6. PLAY: play decrypted bytes in video element ---
+async function testPlay(){
+  set('play','run','⏳ loading video…');
+  try{
+    const data=S.decrypted||S.raw;
+    if(!data)throw new Error('record first (no video bytes)');
+    const v=document.getElementById('v-play');
+    v.style.display='block';
+    const url=URL.createObjectURL(new Blob([data],{type:S.mime||'video/webm'}));
+    await new Promise((resolve,reject)=>{
+      v.src=url; v.oncanplay=()=>resolve();
+      v.onerror=()=>reject(new Error('video element rejected data'));
+      setTimeout(()=>reject(new Error('timeout')),8000);
+    });
+    set('play','pass','✅ video loaded — press play above');
+    v.play().catch(()=>{});
+  }catch(e){ set('play','fail','❌ '+e.message); }
+}
+</script>
+</body>
+</html>
