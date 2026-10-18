@@ -54,6 +54,7 @@
   #prompt { flex:0 0 auto; padding-right:8px; }
   #linewrap { flex:1 1 auto; position:relative; min-width:0; }
   #mirror { white-space:pre-wrap; word-break:break-all; min-height:1.5em; }
+  #suggest { color:#1f9d1f; opacity:.7; white-space:pre-wrap; word-break:break-all; }
   #cursor {
     display:inline-block; width:.6em; height:1.15em;
     background:#33ff33; vertical-align:-0.2em;
@@ -73,21 +74,33 @@
     color:#1f9d1f; font-size:11px; letter-spacing:.15em; z-index:52;
     pointer-events:none;
   }
+  /* clickable title — the cheat: one tap reboots the terminal */
+  #titlebar {
+    position:fixed; top:0; left:0; right:0; z-index:60;
+    display:flex; justify-content:space-between; align-items:center;
+    padding:6px 12px; background:rgba(2,8,2,.92);
+    border-bottom:1px solid #1f5c1f; cursor:pointer;
+    font-size:12px; letter-spacing:.15em; color:#33ff33;
+    text-shadow:0 0 6px rgba(51,255,51,.7);
+  }
+  #titlebar .dim { color:#1f9d1f; font-size:10px; }
+  #crt { padding-top:44px; }
 </style>
 </head>
 <body>
+<div id="titlebar"><span>▚ KKN-DOS</span><span class="dim">tap title to reboot</span></div>
 <div id="crt" tabindex="-1">
   <div id="out"></div>
   <div id="promptline">
     <span id="prompt">C:\KKN&gt;</span>
     <span id="linewrap">
-      <span id="mirror"></span><span id="cursor"></span>
+      <span id="mirror"></span><span id="suggest"></span><span id="cursor"></span>
       <input id="kbd" type="text" autocomplete="off" autocapitalize="off"
              autocorrect="off" spellcheck="false" aria-label="terminal input">
     </span>
   </div>
 </div>
-<div id="hint">TAP TO TYPE &middot; UP/DOWN FOR HISTORY</div>
+<div id="hint">TAP TO TYPE &middot; &rarr; TO AUTOFILL &middot; UP/DOWN FOR HISTORY</div>
 
 <script>
 (function(){
@@ -147,7 +160,46 @@
   crt.addEventListener('click', focusKbd);
   crt.addEventListener('touchstart', focusKbd, {passive:true});
 
-  function syncMirror(){ mirror.textContent = kbd.value; }
+  function syncMirror(){ mirror.textContent = kbd.value; showSuggest(); }
+
+  /* ---------- autocomplete: right-arrow fills ---------- */
+  var COMMANDS = ['HELP','DIR','VER','CLS','CLEAR','EXIT','MATRIX','CREATE'];
+  function candidates(){
+    var w = COMMANDS.slice();
+    for(var id in SYSTEMS){ w.push(id.toUpperCase()); }
+    return w;
+  }
+  function findSuggest(){
+    var v = kbd.value.toUpperCase();
+    if(!v) return '';
+    var w = candidates();
+    for(var i=0;i<w.length;i++){
+      if(w[i].indexOf(v) === 0 && w[i] !== v) return w[i].slice(v.length);
+    }
+    return '';
+  }
+  function showSuggest(){
+    var s = document.getElementById('suggest');
+    if(s) s.textContent = findSuggest();
+  }
+  function acceptSuggest(){
+    var suf = findSuggest();
+    if(suf){
+      kbd.value = kbd.value.toUpperCase() + suf;
+      syncMirror();
+      return true;
+    }
+    return false;
+  }
+
+  /* ---------- title cheat: tap to reboot ---------- */
+  document.getElementById('titlebar').addEventListener('click', function(e){
+    e.stopPropagation();
+    out.innerHTML = '';
+    bi = 0;
+    print('<span class="dim">-- reboot --</span>');
+    stepBoot();
+  });
 
   kbd.addEventListener('input', syncMirror);
 
@@ -171,6 +223,8 @@
       var raw = kbd.value;
       kbd.value = ''; syncMirror(); hIndex = -1;
       runCmd(raw);
+    } else if(e.key === 'ArrowRight'){
+      if(acceptSuggest()) e.preventDefault();
     }
   });
 
