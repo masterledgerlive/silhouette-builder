@@ -258,38 +258,42 @@ function startWindows(){
 
 async function pumpWindow(wi,delay){
   const v=$('wv'+wi);
-  const urls=[];
   let nextN=0;
-  while(live||nextN<=chunks.length-1-delay){
+  // Simple: each window plays chunks sequentially at its delay position
+  // Window 0 = live (delay 0), Window 1 = 2 behind, etc.
+  // Each uses the key at its chunk's position — proving 4 different keys
+  while(true){
+    if(!live&&nextN>chunks.length-1-delay)break;
     const target=chunks.length-1-delay;
-    if(nextN>target){await new Promise(r=>setTimeout(r,700));continue;}
+    if(nextN>target){await new Promise(r=>setTimeout(r,500));continue;}
     const c=chunks[nextN];
-    if(!c||!c.ok){nextN++;continue;}
+    if(!c){await new Promise(r=>setTimeout(r,500));continue;}
+    if(!c.ok){nextN++;continue;}
     try{
-      const r=await fetch(AGG+'/v1/blobs/'+c.blob);
+      const r=await fetchRetry(AGG+'/v1/blobs/'+c.blob,{});
       const cipher=new Uint8Array(await r.arrayBuffer());
       const key=await keyAt(c.keyIdx);
       const plain=nacl.secretbox.open(cipher.slice(24),cipher.slice(0,24),key);
       if(!plain)throw new Error('decrypt failed');
-      $('wkey'+wi).textContent=`key: K_${c.keyIdx} = ${hex(key).slice(0,24)}…`;
+      $('wkey'+wi).textContent=`🔑 K_${c.keyIdx} = ${hex(key).slice(0,16)}…`;
       const url=URL.createObjectURL(new Blob([plain],{type:'video/webm'}));
-      urls.push(url);
-      // play sequentially
-      if(urls.length===1){
+      // Play this chunk, then move to next
+      await new Promise((resolve)=>{
         v.src=url;
-        v.play().catch(()=>{});
-        v.onended=()=>{
-          urls.shift();
-          if(urls.length){v.src=urls[0];v.play().catch(()=>{});}
-        };
-      }
-      $('wstat'+wi).textContent=`✓ chunk ${nextN}`;
+        v.onended=()=>{URL.revokeObjectURL(url);resolve();};
+        v.onerror=()=>{URL.revokeObjectURL(url);resolve();};
+        v.play().catch(()=>resolve());
+        // Timeout: don't wait forever for a chunk
+        setTimeout(()=>{URL.revokeObjectURL(url);resolve();},8000);
+      });
+      $('wstat'+wi).textContent=`✓ chunk ${nextN} played`;
     }catch(e){
       $('wstat'+wi).textContent=`❌ ${e.message}`;
+      await new Promise(r=>setTimeout(r,1000));
     }
     nextN++;
-    await new Promise(r=>setTimeout(r,300));
   }
+  $('wstat'+wi).textContent='⏹ done';
 }
 
 async function shareWindow(wi){
