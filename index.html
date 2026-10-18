@@ -59,6 +59,8 @@
   .pill { display:inline-block; font-size:.7rem; padding:3px 10px; border-radius:999px; letter-spacing:.1em; margin-top:8px; }
   .pill.live { border:1px solid var(--neon); color:var(--neon); }
   .pill.building { border:1px solid var(--gold); color:var(--gold); }
+  .pill.core { border:1px solid var(--green); color:var(--green); }
+  .card.core { border-color:var(--green); }
   .card a.go { display:inline-block; margin-top:10px; color:var(--neon); text-decoration:none; border:1px solid var(--neon);
                border-radius:8px; padding:8px 16px; font-size:.85rem; }
   .card.building .soon { display:inline-block; margin-top:10px; color:#8888aa; font-size:.85rem; }
@@ -155,6 +157,9 @@ const SYSTEMS = [
     url:'silouttes/', status:'LIVE',
     desc:'shadow box builder — cut and create trading-card art',
     how:'HOW IT WORKS: pick a version of the Silhouette shadow-box builder and start cutting — built for sports and trading card artists. David is still choosing which version becomes the final agentic AI creator, so try them all and see which cuts deepest.' },
+  { id:'guardian', emoji:'🛡️', name:'Guardian Protocol', sub:'hive pathway', status:'CORE',
+    desc:'mother-chain anchoring — the guardian of the merkle root',
+    how:'HOW IT WORKS: the services that anchor every build to the mother chain — the hive pathway for the whole network. Core infrastructure, always on.' },
   { id:'tickets', emoji:'🎟️', name:'Ticket Hunter AI', sub:'events', status:'BUILDING',
     desc:'best-price event tickets, agent-buyable',
     how:'HOW IT WILL WORK: an agent hunts the best real ticket prices across primary and resale, compares the true delivered total, and can buy only with your exact per-purchase approval. Still being built.' },
@@ -245,6 +250,7 @@ function boot(){
   tprint('arcade core ................ OK');
   tprint('blob cinema vault .......... OK');
   tprint('silhouette studio .......... OK');
+  tprint('guardian protocol .......... CORE');
   tprint('ticket hunter .............. BUILDING');
   tprint('stadium trust .............. BUILDING');
   tprint('decoder lab ................ BUILDING');
@@ -280,10 +286,13 @@ function runCmd(raw){
   } else if(c === 'INSIGHT'){ tprint('switching to INSIGHT mode…'); setTimeout(() => setMode('insight'), 400);
   } else {
     const s = SYSTEMS.find(x => x.id === c.toLowerCase());
-    if(s && s.status === 'LIVE'){
+    if(s && s.status === 'LIVE' && s.url){
       tprint('opening ' + s.name + ' …');
       tprint(s.url);
       window.open(s.url, '_blank');
+    } else if(s && s.status === 'CORE'){
+      tprint(s.emoji + ' ' + s.name + ' — ' + s.desc);
+      tprint('Core infrastructure. Always on.');
     } else if(s){
       tprint(s.name + ' is still being built, chief.');
     } else {
@@ -311,8 +320,10 @@ function buildCards(){
     }
     const d = document.createElement('div');
     d.className = 'card ' + s.status.toLowerCase();
-    const action = s.status === 'LIVE'
+    const action = (s.status === 'LIVE' && s.url)
       ? '<a class="go" href="' + s.url + '">ENTER →</a>'
+      : s.status === 'CORE'
+      ? '<span class="soon">core infrastructure — always on</span>'
       : '<span class="soon">soon — still being built</span>';
     d.innerHTML = '<div class="em">' + s.emoji + '</div><h3>' + s.name + '</h3>' +
       '<div class="sub">Koda Kai Network · ' + s.sub + '</div>' +
