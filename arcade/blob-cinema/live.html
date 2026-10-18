@@ -754,10 +754,30 @@ function openSnapshot(){
   if(m) url+='?snap-manifest='+m[1]+'&snap-key='+m[2];
   window.open(url,'_blank');
 }
-function shareWindow(wi){
-  // share link for a specific window position (delay) — same stream, different key view
-  if(!live||!liveKey){ alert('go live first, then share'); return; }
-  shareLive();
+async function shareWindow(wi){
+  // share link for a specific window position (delay) — same stream, different key
+  // Window wi trails by WIN_DELAY[wi] chunks, so its key is K_{current - delay}
+  if(!liveKey){ alert('go live first, then share'); return; }
+  const delay=WIN_DELAY[wi]||0;
+  const pos=Math.max(0, chunks.length-1-delay);
+  try{
+    const key=await keyAt(pos);
+    const keyHex=hex(key);
+    // Publish manifest first (if not already)
+    if(!window._livembid){
+      await shareLive(); // this sets window._livembid
+    }
+    if(!window._livembid){ alert('publish the live manifest first'); return; }
+    const url=location.origin+location.pathname+'?watch='+window._livembid+'#'+keyHex;
+    // Show in a prompt for easy copy
+    prompt(`🔗 Window ${wi+1} share link (key K_${pos}, ${delay} chunks behind live):`, url);
+    // Also try native share
+    if(navigator.share){
+      navigator.share({title:'Blob Cinema Live', url}).catch(()=>{});
+    }
+  }catch(e){
+    alert('share failed: '+e.message);
+  }
 }
 /* ---------- watch mode: ?watch=<manifest_blob>#<key> ----------
    Opens someone else's shared stream. Fetches manifest from Walrus,
