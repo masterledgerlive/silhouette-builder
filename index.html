@@ -1,102 +1,298 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SILOUTTES — Shadow Box Builder</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Koda Kai Network — the system of all systems</title>
 <style>
-body {
-  margin: 0;
-  padding: 20px;
-  background: #0a0b0d;
-  color: #e8e6e0;
-  font-family: 'Rajdhani', 'Segoe UI', sans-serif;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh;
-}
-.container {
-  text-align: center;
-  max-width: 600px;
-}
-h1 {
-  font-family: 'Bebas Neue', 'Arial Narrow', sans-serif;
-  font-size: 48px;
-  letter-spacing: 3px;
-  margin: 0 0 10px 0;
-}
-h1 em {
-  color: #f5a623;
-  font-style: normal;
-}
-.tagline {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 11px;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  color: #7c8290;
-  margin-bottom: 40px;
-}
-.links {
-  display: flex;
-  gap: 20px;
-  justify-content: center;
-  flex-wrap: wrap;
-}
-.link-btn {
-  padding: 16px 32px;
-  border-radius: 12px;
-  text-decoration: none;
-  font-weight: 700;
-  font-size: 15px;
-  letter-spacing: 1.2px;
-  text-transform: uppercase;
-  transition: all 0.2s;
-  border: 2px solid;
-  display: inline-block;
-}
-.link-btn.primary {
-  background: #f5a623;
-  color: #0a0b0d;
-  border-color: #f5a623;
-}
-.link-btn.primary:hover {
-  filter: brightness(1.1);
-  box-shadow: 0 8px 24px rgba(245, 166, 35, 0.3);
-}
-.link-btn.secondary {
-  background: transparent;
-  color: #2dd4bf;
-  border-color: #2dd4bf;
-}
-.link-btn.secondary:hover {
-  background: rgba(45, 212, 191, 0.1);
-  box-shadow: 0 8px 24px rgba(45, 212, 191, 0.2);
-}
-.version-info {
-  margin-top: 40px;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 10px;
-  color: #4c515c;
-  letter-spacing: 1px;
-}
+  :root { --neon:#22d3ee; --pink:#f0f; --bg:#0a0a18; --panel:#12122a; --gold:#ffd76b; --green:#7CFF6B; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:var(--bg); color:#e8e8f5; font-family:'Courier New',monospace; min-height:100vh;
+         background-image:radial-gradient(circle at 50% 0%, #1a1a3a 0%, var(--bg) 60%); }
+  .wrap { max-width:1000px; margin:0 auto; padding:24px 16px 60px; }
+  header { text-align:center; margin-bottom:18px; }
+  header .wave { font-size:2.6rem; filter:drop-shadow(0 0 14px #0af); }
+  h1 { font-size:clamp(1.6rem,6vw,2.8rem); color:var(--neon); letter-spacing:.12em; margin-top:8px;
+       text-shadow:0 0 18px var(--neon), 0 0 60px #0af; }
+  .tagline { color:var(--pink); letter-spacing:.3em; margin-top:8px; text-shadow:0 0 12px var(--pink); font-size:.95rem; }
+  /* ---- mode tabs ---- */
+  .tabs { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin:20px 0 24px; }
+  .tab { background:var(--panel); border:2px solid #2a2a5a; color:#c9c9e8; border-radius:12px;
+         padding:12px 20px; font-family:inherit; font-size:1rem; cursor:pointer; letter-spacing:.05em; }
+  .tab.active { border-color:var(--neon); color:var(--neon); box-shadow:0 0 18px #0af5; }
+  .mode { display:none; }
+  .mode.show { display:block; }
+  /* ---- COMPUTER / terminal ---- */
+  .term { background:#020d04; border:2px solid #1f5c33; border-radius:12px; padding:18px; position:relative; overflow:hidden;
+          color:var(--green); text-shadow:0 0 8px #3f6; font-size:.95rem; line-height:1.65; min-height:420px; }
+  .term::after { content:''; position:absolute; inset:0; pointer-events:none;
+                 background:repeating-linear-gradient(0deg, rgba(0,0,0,.22) 0 1px, transparent 1px 3px); }
+  .term .out { white-space:pre-wrap; word-break:break-word; }
+  .term .prompt-line { display:flex; align-items:center; gap:8px; margin-top:6px; }
+  .term .ps { color:var(--green); font-weight:bold; }
+  #cmdline { background:transparent; border:0; outline:0; color:var(--green); font-family:inherit; font-size:.95rem; flex:1;
+             text-shadow:0 0 8px #3f6; caret-color:var(--green); text-transform:uppercase; }
+  .badge-live { color:var(--green); } .badge-building { color:var(--gold); }
+  /* ---- KID mode ---- */
+  .kid-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:18px; }
+  .kid-btn { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px;
+             min-height:190px; border-radius:28px; text-decoration:none; color:#0a0a18; font-weight:bold;
+             font-size:1.8rem; border:4px solid rgba(255,255,255,.5); box-shadow:0 6px 0 rgba(0,0,0,.35); }
+  .kid-btn:active { transform:translateY(4px); box-shadow:0 2px 0 rgba(0,0,0,.35); }
+  .kid-btn .em { font-size:4.2rem; }
+  .kid-radio { background:linear-gradient(135deg,#22d3ee,#7df9ff); }
+  .kid-games { background:linear-gradient(135deg,#ffd76b,#ff9d5c); }
+  .kid-movies { background:linear-gradient(135deg,#f0f,#b06bff); color:#fff; }
+  .kid-note { text-align:center; color:#8888aa; margin-top:18px; font-size:1.1rem; }
+  /* ---- INSIGHT mode ---- */
+  .cards { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:14px; }
+  .card { background:var(--panel); border:1px solid #2a2a5a; border-radius:14px; padding:18px; }
+  .card.live { border-color:var(--neon); }
+  .card.building { border-color:#4a3f1a; opacity:.92; }
+  .card h3 { color:#fff; font-size:1.05rem; margin:8px 0 2px; letter-spacing:.05em; }
+  .card .em { font-size:2rem; }
+  .card .sub { color:var(--pink); font-size:.8rem; }
+  .card p { color:#b9b9d8; font-size:.85rem; line-height:1.6; margin:8px 0; }
+  .card .how { color:#8f8fb8; font-size:.78rem; line-height:1.6; border-top:1px dashed #2a2a5a; padding-top:8px; margin-top:8px; }
+  .pill { display:inline-block; font-size:.7rem; padding:3px 10px; border-radius:999px; letter-spacing:.1em; margin-top:8px; }
+  .pill.live { border:1px solid var(--neon); color:var(--neon); }
+  .pill.building { border:1px solid var(--gold); color:var(--gold); }
+  .card a.go { display:inline-block; margin-top:10px; color:var(--neon); text-decoration:none; border:1px solid var(--neon);
+               border-radius:8px; padding:8px 16px; font-size:.85rem; }
+  .card.building .soon { display:inline-block; margin-top:10px; color:#8888aa; font-size:.85rem; }
+  /* ---- genie ---- */
+  .genie-bar { text-align:center; margin:26px 0 14px; }
+  .genie-toggle { background:var(--panel); border:2px solid var(--gold); color:var(--gold); border-radius:999px;
+                  padding:10px 24px; font-family:inherit; font-size:1rem; cursor:pointer; }
+  .genie-toggle.off { opacity:.55; }
+  #geniebox { display:none; background:#0d0d22; border:2px solid var(--gold); border-radius:14px; padding:16px; max-width:640px; margin:0 auto; }
+  #geniebox.open { display:block; }
+  #genielog { max-height:260px; overflow-y:auto; margin-bottom:12px; font-size:.88rem; line-height:1.7; }
+  #genielog .u { color:var(--neon); } #genielog .g { color:var(--gold); }
+  .genie-row { display:flex; gap:8px; }
+  #genieq { flex:1; background:#050510; border:1px solid #2a2a5a; color:#e8e8f5; border-radius:8px;
+            padding:10px; font-family:inherit; font-size:.9rem; }
+  #genieask { background:var(--gold); color:#0a0a18; border:0; border-radius:8px; padding:10px 18px;
+              font-family:inherit; font-weight:bold; cursor:pointer; }
+  footer { text-align:center; color:#66668a; font-size:.8rem; margin-top:44px; line-height:2; }
+  footer .tmp { color:var(--gold); }
 </style>
 </head>
 <body>
-<div class="container">
-  <h1>SILOUTTES</h1>
-  <p class="tagline">Shadow Box Builder & Cut Library</p>
-  
-  <div class="links">
-    <a href="silouttesv265.html" class="link-btn primary">✨ Latest Version (v265)</a>
-    <a href="silouttesv258.html" class="link-btn secondary">🧪 Prior Version V258</a>
-      <a href="silouttesv251.html" class="link-btn secondary">🧪 EAT ME V251</a>
-    <a href="silouttesv265.html" class="link-btn secondary">🧪 USE ME V265</a>
-       <a href="reader168.html" class="link-btn secondary">READER</a>
+<div class="wrap">
+  <header>
+    <div class="wave">🌊</div>
+    <h1>KODA KAI NETWORK</h1>
+    <div class="tagline">the system of all systems</div>
+  </header>
+
+  <div class="tabs" role="tablist">
+    <button class="tab" data-mode="computer" role="tab">💻 COMPUTER</button>
+    <button class="tab" data-mode="kid" role="tab">🧒 KID</button>
+    <button class="tab" data-mode="insight" role="tab">🔍 INSIGHT</button>
   </div>
-  
-  <p class="version-info">For sports and trading card artists @ gamemasters.live or highscores.live</p>
+
+  <!-- ============ COMPUTER ============ -->
+  <section class="mode" id="mode-computer">
+    <div class="term" id="term" onclick="document.getElementById('cmdline').focus()">
+      <div class="out" id="termout"></div>
+      <div class="prompt-line"><span class="ps">C:\KKN&gt;</span><input id="cmdline" autocomplete="off" spellcheck="false" maxlength="60"></div>
+    </div>
+  </section>
+
+  <!-- ============ KID ============ -->
+  <section class="mode" id="mode-kid">
+    <div class="kid-grid">
+      <a class="kid-btn kid-radio" href="https://arcade.highscores.live/arcade/kodakainetwork/"><span class="em">🎙️</span>RADIO</a>
+      <a class="kid-btn kid-games" href="https://arcade.highscores.live/arcade/"><span class="em">👹</span>GAMES</a>
+      <a class="kid-btn kid-movies" href="https://arcade.highscores.live/arcade/blob-cinema/"><span class="em">🎬</span>MOVIES</a>
+    </div>
+    <div class="kid-note">tap a big button to play 🌊</div>
+  </section>
+
+  <!-- ============ INSIGHT ============ -->
+  <section class="mode" id="mode-insight">
+    <div class="cards" id="insight-cards"></div>
+    <div class="genie-bar">
+      <button class="genie-toggle off" id="genietoggle">🧞 GENIE: OFF</button>
+    </div>
+    <div id="geniebox">
+      <div id="genielog"><div class="g">🧞 ask me about the network — try "what is building" or "how do fins work"</div></div>
+      <div class="genie-row">
+        <input id="genieq" placeholder="ask the genie…" autocomplete="off">
+        <button id="genieask">ASK</button>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="tmp">highscores.live is the temporary home — the real kodakainetwork name is coming.</div>
+    <div>🌊 Koda Kai Network · 100% free, always · nothing public without approval</div>
+  </footer>
 </div>
+
+<script>
+/* ================= SYSTEMS (single source of truth) ================= */
+const SYSTEMS = [
+  { id:'radio', emoji:'🎙️', name:'Network Radio/TV', sub:'audio + video',
+    url:'https://arcade.highscores.live/arcade/kodakainetwork/', status:'LIVE',
+    desc:'131-track always-live station, 20 DJ voices, Sound Box',
+    how:'HOW IT WORKS: songs play from the playlist with a DJ voice introducing each track — intro, song, song, then a podcast or news segment, on repeat forever. The page never sleeps; the music never stops.' },
+  { id:'arcade', emoji:'👹', name:'Arcades of Time', sub:'games',
+    url:'https://arcade.highscores.live/arcade/', status:'LIVE',
+    desc:'DOOM + blob cinema arcade, fins economy',
+    how:'HOW IT WORKS: classic DOOM runs in the browser from files sealed into encrypted storage — the game boots from recovered bytes. One fin drops in, one game plays out.' },
+  { id:'cinema', emoji:'🎬', name:'Blob Cinema', sub:'movies on chain',
+    url:'https://arcade.highscores.live/arcade/blob-cinema/', status:'LIVE',
+    desc:'movies living on encrypted Walrus blobs',
+    how:'HOW IT WORKS: films are chopped into chunks, encrypted, and stored as blobs on Walrus. A key chain unlocks each chunk in order, so the movie plays straight from the chain — no server in the middle.' },
+  { id:'tickets', emoji:'🎟️', name:'Ticket Hunter AI', sub:'events', status:'BUILDING',
+    desc:'best-price event tickets, agent-buyable',
+    how:'HOW IT WILL WORK: an agent hunts the best real ticket prices across primary and resale, compares the true delivered total, and can buy only with your exact per-purchase approval. Still being built.' },
+  { id:'stadium', emoji:'🏟️', name:'Fan-Owned Stadium', sub:'community stake', status:'BUILDING',
+    desc:'community stake in the new Rays ballpark',
+    how:'HOW IT WILL WORK: a community trust model for a real stake in the publicly-owned new Rays ballpark — fans as stakeholders, not just spectators. The research is done; the build is next.' },
+  { id:'decoder', emoji:'🕵️', name:'Decoder Lab', sub:'research engine', status:'BUILDING',
+    desc:'the ultimate decoder of all information',
+    how:'HOW IT WILL WORK: a research loop that investigates anything, grades the evidence, and decodes it into plain truth. The engine exists; the public lab is next.' },
+];
+
+/* ================= MODE SWITCHER ================= */
+const MODES = ['computer','kid','insight'];
+function setMode(m){
+  if(!MODES.includes(m)) m = 'computer';
+  try { localStorage.setItem('kkn-hub-mode', m); } catch(e){}
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.mode === m));
+  document.querySelectorAll('.mode').forEach(s => s.classList.toggle('show', s.id === 'mode-' + m));
+  if(m === 'computer') setTimeout(() => document.getElementById('cmdline').focus(), 50);
+}
+document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => setMode(t.dataset.mode)));
+let startMode = 'computer';
+try { startMode = localStorage.getItem('kkn-hub-mode') || 'computer'; } catch(e){}
+
+/* ================= COMPUTER / TERMINAL ================= */
+const termout = document.getElementById('termout');
+const cmdline = document.getElementById('cmdline');
+function tprint(s){ termout.textContent += s + '\n'; document.getElementById('term').scrollTop = 1e6; }
+function boot(){
+  termout.textContent = '';
+  tprint('KODA KAI NETWORK OS v1.0');
+  tprint('(c) 2026 Koda Kai Network — the system of all systems');
+  tprint('');
+  tprint('booting modules ............ OK');
+  tprint('radio uplink ............... OK');
+  tprint('arcade core ................ OK');
+  tprint('blob cinema vault .......... OK');
+  tprint('ticket hunter .............. BUILDING');
+  tprint('stadium trust .............. BUILDING');
+  tprint('decoder lab ................ BUILDING');
+  tprint('');
+  tprint('ALL SYSTEMS NOMINAL');
+  tprint('type HELP for commands');
+}
+function dirList(){
+  tprint('');
+  tprint('SYSTEMS OF THE KODA KAI NETWORK:');
+  SYSTEMS.forEach(s => {
+    const tag = s.status === 'LIVE' ? '[LIVE]    ' : '[BUILDING]';
+    tprint('  ' + tag + ' ' + s.emoji + ' ' + s.name + ' — ' + s.desc);
+  });
+  tprint('');
+}
+function runCmd(raw){
+  const c = raw.trim().toUpperCase();
+  tprint('C:\\KKN> ' + raw.trim());
+  if(!c) return;
+  if(c === 'HELP'){
+    tprint('  HELP     this list');
+    tprint('  DIR      list all systems');
+    tprint('  RADIO    open Network Radio/TV');
+    tprint('  ARCADE   open Arcades of Time');
+    tprint('  CINEMA   open Blob Cinema');
+    tprint('  KID      switch to kid mode');
+    tprint('  INSIGHT  switch to insight mode');
+    tprint('  CLEAR    clear the screen');
+  } else if(c === 'DIR'){ dirList();
+  } else if(c === 'CLEAR'){ termout.textContent = '';
+  } else if(c === 'KID'){ tprint('switching to KID mode…'); setTimeout(() => setMode('kid'), 400);
+  } else if(c === 'INSIGHT'){ tprint('switching to INSIGHT mode…'); setTimeout(() => setMode('insight'), 400);
+  } else if(c === 'RADIO' || c === 'ARCADE' || c === 'CINEMA'){
+    const s = SYSTEMS.find(x => x.id === (c === 'RADIO' ? 'radio' : c === 'ARCADE' ? 'arcade' : 'cinema'));
+    tprint('opening ' + s.name + ' …');
+    tprint(s.url);
+    window.open(s.url, '_blank');
+  } else {
+    tprint('command not recognized, chief — try HELP 🌊');
+  }
+}
+cmdline.addEventListener('keydown', e => {
+  if(e.key === 'Enter'){ runCmd(cmdline.value); cmdline.value = ''; }
+});
+
+/* ================= INSIGHT CARDS ================= */
+function buildCards(){
+  const el = document.getElementById('insight-cards');
+  el.innerHTML = '';
+  SYSTEMS.forEach(s => {
+    const d = document.createElement('div');
+    d.className = 'card ' + s.status.toLowerCase();
+    const action = s.status === 'LIVE'
+      ? '<a class="go" href="' + s.url + '">ENTER →</a>'
+      : '<span class="soon">soon — still being built</span>';
+    d.innerHTML = '<div class="em">' + s.emoji + '</div><h3>' + s.name + '</h3>' +
+      '<div class="sub">Koda Kai Network · ' + s.sub + '</div>' +
+      '<p>' + s.desc + '</p>' +
+      '<div class="how">' + s.how + '</div>' +
+      '<span class="pill ' + s.status.toLowerCase() + '">' + s.status + '</span><br>' + action;
+    el.appendChild(d);
+  });
+}
+
+/* ================= GENIE ================= */
+const GENIE_KB = [
+  { k:['radio','station','music','network radio'], a:'The Koda Kai Network Radio is an always-live station: your playlist\u2019s songs, a DJ voice intro before each track, then podcast and news segments every few songs. It never stops.' },
+  { k:['blob cinema','cinema','movie','film'], a:'Blob Cinema plays movies stored as encrypted blobs on Walrus. Each chunk unlocks in order with a key chain, so the film streams straight from the chain — no server in the middle.' },
+  { k:['fin','token','play'], a:'Fins are the arcade\u2019s play token — one fin, one game. The settled design is a fixed $0.10 play token, burned on play, never tradable. On-chain money waits until real gates are met.' },
+  { k:['building','built','coming','next','soon'], a:'Still building: Ticket Hunter AI, the Fan-Owned Stadium model, and the Decoder Lab. Real plans with research done — not live yet.' },
+  { k:['arcade','doom','game'], a:'Arcades of Time is the game arcade: DOOM sealed into encrypted storage and booted from recovered bytes, plus the blob cinema collection. One fin, one game.' },
+  { k:['ticket'], a:'Ticket Hunter AI will hunt the best true ticket prices and buy only with your exact approval per purchase. It\u2019s being built — nothing buys on its own.' },
+  { k:['stadium','rays','ballpark'], a:'The Fan-Owned Stadium is a community-trust model for a real stake in the new publicly-owned Rays ballpark. Research brief is done; build is next.' },
+  { k:['decoder','decode','research'], a:'The Decoder Lab is the research engine: investigate anything, grade the evidence, decode it into plain truth. The engine exists; the public lab is next.' },
+  { k:['who are you','your name','genie'], a:'I\u2019m the hub genie — I answer questions about the Koda Kai Network\u2019s systems. Try \u201cwhat is building\u201d or \u201chow do fins work\u201d.' },
+  { k:['help','what can you'], a:'Ask me things like: what is the radio network · what is blob cinema · how do fins work · what is building.' },
+];
+const genielog = document.getElementById('genielog');
+const genieq = document.getElementById('genieq');
+function gprint(cls, txt){
+  const d = document.createElement('div');
+  d.className = cls; d.textContent = txt;
+  genielog.appendChild(d); genielog.scrollTop = 1e6;
+}
+function genieAnswer(q){
+  const lq = q.toLowerCase();
+  for(const e of GENIE_KB){ if(e.k.some(k => lq.includes(k))) return e.a; }
+  return "The genie doesn't know that one yet.";
+}
+function askGenie(){
+  const q = genieq.value.trim(); if(!q) return;
+  gprint('u', '🧒 ' + q);
+  gprint('g', '🧞 ' + genieAnswer(q));
+  genieq.value = '';
+}
+document.getElementById('genieask').addEventListener('click', askGenie);
+genieq.addEventListener('keydown', e => { if(e.key === 'Enter') askGenie(); });
+let genieOn = false;
+document.getElementById('genietoggle').addEventListener('click', function(){
+  genieOn = !genieOn;
+  this.textContent = '🧞 GENIE: ' + (genieOn ? 'ON' : 'OFF');
+  this.classList.toggle('off', !genieOn);
+  document.getElementById('geniebox').classList.toggle('open', genieOn);
+});
+
+/* ================= INIT ================= */
+buildCards();
+setMode(startMode);
+boot();
+</script>
 </body>
 </html>
