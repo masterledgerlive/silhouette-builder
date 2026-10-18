@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>🎬 Studio — BLOBPLAYER</title>
+<style>
+body{background:#080810;color:#e8e8ff;font-family:system-ui,sans-serif;margin:0;padding:10px;padding-bottom:90px}
+.panel{background:#101022;border:1px solid #26264d;border-radius:12px;padding:12px;margin:10px 0}
+.mono{font-family:ui-monospace,monospace;font-size:.75rem;word-break:break-all}
+.btn{background:#1a1a33;border:1px solid #33336a;color:#e8e8ff;border-radius:8px;padding:10px 16px;cursor:pointer;margin:4px;font-size:.95rem}
+.btn.red{background:#3d1020;border-color:#6b1a2a}
+.btn.green{background:#103d1a;border-color:#1a6b2a}
+.btn.gold{background:#3d3010;border-color:#6b5a1a}
+.btn:disabled{opacity:.4}
+video{width:100%;background:#000;border-radius:8px}
+.pvw{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pvw .box{border:2px solid #2a2a4d;border-radius:10px;padding:8px}
+.pvw .box.pgm{border-color:#e74c3c}
+.pvw .box.pvw2{border-color:#2ecc71}
+.pvw h4{margin:0 0 6px;font-size:.8rem}
+.src{display:inline-block;background:#1a1a33;border:2px solid #33336a;border-radius:8px;padding:10px 14px;margin:4px;cursor:pointer;font-size:.9rem}
+.src.active{border-color:#2ecc71}
+.src.live{border-color:#e74c3c}
+.qitem{background:#0d0d1a;border:1px solid #2a2a4d;border-radius:8px;padding:10px;margin:6px 0;cursor:pointer}
+.qitem.playing{border-color:#e74c3c;background:#1a0d0d}
+.qitem.done{opacity:.5}
+#prompter{background:#000;border:2px solid #6C5CE7;border-radius:8px;padding:20px;font-size:1.4rem;line-height:1.6;min-height:120px;margin:10px 0}
+#log{max-height:200px;overflow-y:auto;background:#0a0a14;border-radius:8px;padding:10px;font-size:.8rem}
+.pad{display:inline-block;width:70px;height:70px;background:#1a1a33;border:2px solid #6C5CE7;border-radius:12px;margin:6px;cursor:pointer;font-size:1.8rem;line-height:70px;text-align:center;user-select:none}
+.pad:active{background:#6C5CE7}
+#bnav{position:fixed;bottom:0;left:0;right:0;z-index:50;background:#141428;border-top:2px solid #6C5CE7;display:flex;justify-content:space-around;padding:6px 4px calc(6px + env(safe-area-inset-bottom))}
+#bnav a{color:#b0b0e0;text-decoration:none;font-size:1.3rem;display:flex;flex-direction:column;align-items:center;min-width:52px}
+#bnav a span{font-size:.6rem;margin-top:2px}
+</style>
+</head>
+<body>
+<script src="../errcatch.js"></script>
+<h1 style="text-align:center;margin:8px">🎬 Studio</h1>
+<div style="text-align:center;color:#8888aa;font-size:.8rem">live broadcast director — 30s delay, SNL-style</div>
+
+<div class="panel">
+  <div class="pvw">
+    <div class="box pvw2"><h4>👁 PREVIEW</h4><video id="vpvw" muted playsinline></video><div class="mono" id="pvwlabel" style="color:#2ecc71">—</div></div>
+    <div class="box pgm"><h4>🔴 PROGRAM</h4><video id="vpgm" muted playsinline></video><div class="mono" id="pgmlabel" style="color:#e74c3c">—</div></div>
+  </div>
+  <div style="text-align:center;margin-top:10px">
+    <button class="btn red" onclick="cut()">✂ CUT</button>
+    <button class="btn" onclick="fade()">🌅 FADE</button>
+    <button class="btn green" id="gobtn" onclick="goLive()">🔴 GO LIVE</button>
+    <button class="btn" id="stopbtn" onclick="stopLive()" disabled>⏹ stop</button>
+  </div>
+</div>
+
+<div class="panel">
+  <h3>📷 Sources</h3>
+  <div id="sources"></div>
+  <button class="btn" onclick="addCamera()">+ 📷 camera</button>
+  <button class="btn" onclick="addTest()">+ 🎨 test pattern</button>
+  <button class="btn" onclick="addClip()">+ 🎞 preload clip (Walrus blob)</button>
+</div>
+
+<div class="panel">
+  <h3>📋 Rundown Queue</h3>
+  <div id="rundown"></div>
+  <input id="qin" placeholder="segment name…" style="background:#0a0a14;border:1px solid #33336a;color:#e8e8ff;border-radius:6px;padding:8px;width:60%">
+  <button class="btn" onclick="addQ()">➕ add</button>
+</div>
+
+<div class="panel">
+  <h3>🎤 AI Prompter</h3>
+  <div id="prompter">Welcome to the show…</div>
+  <input id="pin" placeholder="type prompt for AI or yourself…" style="background:#0a0a14;border:1px solid #33336a;color:#e8e8ff;border-radius:6px;padding:8px;width:70%">
+  <button class="btn gold" onclick="setPrompt()">📜 set</button>
+  <button class="btn" onclick="speakPrompt()">🔊 AI speak</button>
+</div>
+
+<div class="panel">
+  <h3>🎛 Control Pads <span style="font-size:.7rem;color:#888">(tap to trigger — phone-friendly)</span></h3>
+  <div id="pads"></div>
+</div>
+
+<div class="panel">
+  <h3>📡 Chain Log</h3>
+  <div id="log"></div>
+</div>
+
+<nav id="bnav">
+<a href="../index.html">🟣<span>home</span></a>
+<a href="./record.html">🔴<span>record</span></a>
+<a href="./studio.html">🎬<span>studio</span></a>
+<a href="./library.html">📚<span>library</span></a>
+<a href="../../index.html">🕹<span>arcade</span></a>
+</nav>
+
+<script src="../nacl-min.js"></script>
+<script src="../kernel/protocol.js"></script>
+<script src="../system/checks.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+let sources=[], previewSrc=null, programSrc=null;
+let rundown=[], live=false, pgmRecorder=null, pgmChunks=[];
+let liveKey=null, keyChain=[];
+
+function log(m){ const d=document.createElement('div'); d.innerHTML=m; $('log').prepend(d); }
+
+// --- Sources ---
+function addSource(name, kind, getStream){
+  const id='src-'+Date.now();
+  sources.push({id,name,kind,getStream,stream:null});
+  renderSources();
+  log(`📷 source added: ${name}`);
+}
+async function addCamera(){
+  try{
+    const s=await navigator.mediaDevices.getUserMedia({video:{width:640},audio:false});
+    addSource('Camera','cam',async()=>s);
+  }catch(e){ log('❌ camera: '+e.message); }
+}
+function addTest(){
+  const cv=document.createElement('canvas');cv.width=640;cv.height=480;
+  const ctx=cv.getContext('2d');let h=0;
+  setInterval(()=>{h=(h+2)%360;ctx.fillStyle=`hsl(${h},70%,35%)`;ctx.fillRect(0,0,640,480);
+    ctx.fillStyle='#fff';ctx.font='bold 40px sans-serif';ctx.textAlign='center';
+    ctx.fillText('BLOBPLAYER LIVE',320,240);},100);
+  addSource('Test Pattern','test',async()=>cv.captureStream(30));
+}
+function addClip(){
+  const bid=prompt('Walrus blob ID of the clip:');
+  if(!bid)return;
+  const name=prompt('Clip name:')||'clip';
+  addSource(name,'clip',async()=>{
+    const data=await BP.getBlob(bid);
+    const v=document.createElement('video');
+    v.src=URL.createObjectURL(new Blob([data],{type:'video/webm'}));
+    v.muted=true; v.loop=true; await v.play().catch(()=>{});
+    return v.captureStream(30);
+  });
+}
+function renderSources(){
+  $('sources').innerHTML=sources.map(s=>
+    `<div class="src ${previewSrc===s.id?'active':''} ${programSrc===s.id?'live':''}" onclick="preview('${s.id}')">${s.kind==='cam'?'📷':s.kind==='test'?'🎨':'🎞'} ${s.name}</div>`
+  ).join('');
+}
+async function preview(id){
+  previewSrc=id;
+  const s=sources.find(x=>x.id===id);
+  if(!s.stream)s.stream=await s.getStream();
+  $('vpvw').srcObject=s.stream; $('vpvw').play().catch(()=>{});
+  $('pvwlabel').textContent=s.name;
+  renderSources();
+}
+async function toProgram(){
+  if(!previewSrc)return;
+  programSrc=previewSrc;
+  const s=sources.find(x=>x.id===programSrc);
+  if(!s.stream)s.stream=await s.getStream();
+  $('vpgm').srcObject=s.stream; $('vpgm').play().catch(()=>{});
+  $('pgmlabel').textContent='🔴 '+s.name;
+  renderSources();
+  log(`🔴 PROGRAM: ${s.name}`);
+}
+function cut(){ toProgram(); log('✂ CUT'); }
+function fade(){
+  $('vpgm').style.transition='opacity .5s'; $('vpgm').style.opacity=0;
+  setTimeout(()=>{ toProgram(); $('vpgm').style.opacity=1; },500);
+  log('🌅 FADE');
+}
+
+// --- Rundown ---
+function addQ(){
+  const name=$('qin').value.trim(); if(!name)return;
+  rundown.push({name,done:false});
+  $('qin').value=''; renderRundown();
+}
+function renderRundown(){
+  $('rundown').innerHTML=rundown.map((q,i)=>
+    `<div class="qitem ${q.done?'done':''}" onclick="playQ(${i})">${q.done?'✓':'○'} ${q.name}</div>`
+  ).join('');
+}
+function playQ(i){
+  const q=rundown[i];
+  // Try to find a matching source
+  const s=sources.find(x=>x.name.toLowerCase().includes(q.name.toLowerCase().split(' ')[0]));
+  if(s){ preview(s.id); cut(); }
+  setPrompt(q.name);
+  rundown[i].done=true; renderRundown();
+  log(`📋 rundown: ${q.name}`);
+}
+
+// --- Prompter ---
+function setPrompt(t){
+  $('prompter').textContent=t||$('pin').value||'...';
+  log('📜 prompter: '+$('prompter').textContent.slice(0,40));
+}
+function speakPrompt(){
+  const t=$('prompter').textContent;
+  try{
+    speechSynthesis.cancel();
+    speechSynthesis.speak(new SpeechSynthesisUtterance(t));
+    log('🔊 AI speaking…');
+  }catch(e){ log('❌ speech: '+e.message); }
+}
+
+// --- Control Pads ---
+const padActions=[
+  ['✂','cut'],['🌅','fade'],['📷','cam'],['🎨','test'],
+  ['🔊','speak'],['📜','prompt'],['⏭','next'],['🔴','live']
+];
+function renderPads(){
+  $('pads').innerHTML=padActions.map(([icon,act])=>
+    `<div class="pad" onclick="padHit('${act}')">${icon}</div>`).join('');
+}
+function padHit(act){
+  if(act==='cut')cut();
+  else if(act==='fade')fade();
+  else if(act==='cam')addCamera();
+  else if(act==='test')addTest();
+  else if(act==='speak')speakPrompt();
+  else if(act==='prompt')setPrompt();
+  else if(act==='next'){ const i=rundown.findIndex(q=>!q.done); if(i>=0)playQ(i); }
+  else if(act==='live'){ live?stopLive():goLive(); }
+  log('🎛 pad: '+act);
+}
+
+// --- Live (record program output to chain) ---
+async function keyAt(i){
+  while(keyChain.length<=i)keyChain.push(BP.derive(keyChain[keyChain.length-1]));
+  return keyChain[i];
+}
+async function goLive(){
+  if(!programSrc){ log('❌ CUT a source to PROGRAM first'); return; }
+  const s=sources.find(x=>x.id===programSrc);
+  if(!s.stream)s.stream=await s.getStream();
+
+  liveKey=nacl.randomBytes(32); keyChain=[liveKey]; pgmChunks=[]; live=true;
+  $('gobtn').disabled=true; $('stopbtn').disabled=false;
+  log(`🔴 <b>LIVE</b> — K_0 = <span class="mono">${BP.hex(liveKey).slice(0,16)}…</span>`);
+
+  pgmRecorder=new MediaRecorder(s.stream,{mimeType:'video/webm;codecs=vp9'});
+  pgmRecorder.ondataavailable=async ev=>{
+    if(!ev.data||!ev.data.size||!live)return;
+    const idx=pgmChunks.length;
+    const raw=new Uint8Array(await ev.data.arrayBuffer());
+    const key=await keyAt(idx+1);
+    const enc=BP.encryptChunk(raw,key);
+    try{
+      const bid=await BP.putVerified(enc);
+      pgmChunks.push({n:idx,blob:bid,keyIdx:idx+1,bytes:raw.length,ok:true});
+      log(`✓ chunk #${idx} → <span class="mono">${bid.slice(0,16)}…</span>`);
+    }catch(e){ log(`❌ chunk #${idx}: ${e.message}`); }
+  };
+  pgmRecorder.start(5000); // 5s chunks to match batching
+  // Re-grab program stream if source changes mid-live
+  log('📡 recording PROGRAM output to chain (5s batches)');
+}
+async function stopLive(){
+  live=false;
+  try{ if(pgmRecorder&&pgmRecorder.state!=='inactive')pgmRecorder.stop(); }catch(e){}
+  // publish manifest
+  const ok=pgmChunks.filter(c=>c.ok);
+  if(ok.length){
+    const m={v:2,type:'blobplayer-manifest',title:'studio broadcast',created_at:Date.now(),live:false,
+      method:'nacl-secretbox/sha256-chain-v1',live_key:BP.hex(liveKey),
+      chunks:ok.map(c=>({n:c.n,blob:c.blob,keyIdx:c.keyIdx,bytes:c.bytes}))};
+    const r=await BP.fetchRetry(BP.PUB+'/v1/blobs?epochs=5',{method:'PUT',body:new TextEncoder().encode(JSON.stringify(m))});
+    const j=await r.json();
+    const mbid=(j.newlyCreated||j.alreadyCertified).blobObject.blobId;
+    const url=location.origin+location.pathname.replace('studio.html','watch.html')+`?watch=${mbid}#${BP.hex(liveKey)}`;
+    log(`📋 published: <a href="${url}" style="color:#6C5CE7">watch →</a>`);
+    try{
+      const lib=JSON.parse(localStorage.getItem('bp_library')||'[]');
+      lib.unshift({id:'bp-'+Date.now(),title:'studio '+new Date().toLocaleString(),at:Date.now(),manifest:mbid,liveKey:BP.hex(liveKey),chunks:ok.length});
+      localStorage.setItem('bp_library',JSON.stringify(lib.slice(0,50)));
+    }catch(e){}
+  }
+  $('gobtn').disabled=false; $('stopbtn').disabled=true;
+  log(`⏹ stopped — ${ok.length} chunks`);
+}
+
+renderSources(); renderRundown(); renderPads();
+addTest(); // default source
+</script>
+</body>
+</html>
