@@ -260,6 +260,17 @@ function openSys(id){
   if(!s) return;
   if(wins[id]){ focusWin(id); return; }
 
+  // external sites can't live in a window (they block framing) — open in a
+  // new tab so the Bridge stays on screen
+  if(s.url){
+    var probe = document.createElement('a');
+    probe.href = s.url;
+    if(probe.origin !== location.origin){
+      window.open(s.url, '_blank');
+      return;
+    }
+  }
+
   var w = document.createElement('div'); w.className = 'win';
   var mobile = window.innerWidth < 640;
   if(mobile){
