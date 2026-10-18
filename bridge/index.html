@@ -57,6 +57,7 @@
     position:absolute; pointer-events:auto; background:var(--panel);
     border:1px solid var(--cy); border-radius:12px; box-shadow:0 0 34px rgba(34,211,238,.3);
     display:flex; flex-direction:column; min-width:300px; min-height:200px;
+    max-width:calc(100vw - 16px); max-height:calc(100vh - 110px);
     backdrop-filter:blur(2px);
   }
   .win .titlebar {
@@ -266,8 +267,11 @@ function openSys(id){
     w.style.width = 'calc(100% - 16px)'; w.style.height = 'calc(100% - 16px)';
   } else {
     var n = cascade++ % 6;
-    w.style.left = (40 + n*36) + 'px'; w.style.top = (24 + n*30) + 'px';
-    w.style.width = '760px'; w.style.height = '540px';
+    var vw = window.innerWidth, vh = window.innerHeight;
+    var ww = Math.min(760, vw - 24), wh = Math.min(540, vh - 140);
+    w.style.left = Math.min(40 + n*36, vw - ww - 12) + 'px';
+    w.style.top = Math.min(24 + n*30, vh - wh - 90) + 'px';
+    w.style.width = ww + 'px'; w.style.height = wh + 'px';
   }
   w.style.zIndex = ++zTop;
 
