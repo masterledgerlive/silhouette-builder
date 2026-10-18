@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>🔴 BLOB LIVE — clean</title>
+<style>
+body{background:#07070f;color:#e8e8ff;font-family:system-ui,sans-serif;margin:0;padding:14px;padding-bottom:80px}
+.panel{background:#101022;border:1px solid #26264d;border-radius:12px;padding:14px;margin:12px 0}
+.mono{font-family:ui-monospace,monospace;font-size:.75rem;word-break:break-all}
+.btn{background:#1a1a33;border:1px solid #33336a;color:#e8e8ff;border-radius:8px;padding:10px 18px;cursor:pointer;margin:4px;font-size:1rem}
+.btn.red{background:#3d1020;border-color:#6b1a2a}
+.btn.green{background:#103d1a;border-color:#1a6b2a}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+video{width:100%;max-width:640px;background:#000;border-radius:8px}
+.check{padding:6px 10px;margin:4px 0;border-radius:6px;font-size:.85rem}
+.check.ok{background:#0f2f15;border:1px solid #1a6b2a}
+.check.fail{background:#2f0f15;border:1px solid #6b1a2a}
+.check.wait{background:#1a1a2a;border:1px solid #333}
+.win{border:2px solid #2a2a4d;border-radius:10px;padding:10px;margin:10px 0;background:#0d0d1a}
+.win h3{margin:0 0 8px 0;font-size:.9rem}
+#bnav{position:fixed;bottom:0;left:0;right:0;z-index:50;background:#141428;border-top:2px solid #6C5CE7;display:flex;justify-content:space-around;padding:6px 4px calc(6px + env(safe-area-inset-bottom))}
+#bnav a{color:#b0b0e0;text-decoration:none;font-size:1.3rem;display:flex;flex-direction:column;align-items:center;min-width:52px}
+#bnav a span{font-size:.6rem;margin-top:2px}
+</style>
+</head>
+<body>
+<script src="./errcatch.js"></script>
+<script src="./nacl-min.js"></script>
+<h1>🔴 BLOB LIVE <span style="font-size:.8rem;color:#888">clean protocol</span></h1>
+
+<div class="panel">
+  <h3>System Checks</h3>
+  <div id="checks"></div>
+  <button class="btn" onclick="runChecks()">▶ run system checks</button>
+</div>
+
+<div class="panel">
+  <h3>Broadcast</h3>
+  <video id="preview" muted playsinline style="display:none"></video><br>
+  <button class="btn" onclick="setSrc('test')">🎨 test pattern</button>
+  <button class="btn" onclick="setSrc('cam')">📷 camera</button><br><br>
+  <button class="btn red" id="gobtn" onclick="goLive()" disabled>🔴 GO LIVE</button>
+  <button class="btn" id="stopbtn" onclick="stopLive()" disabled>⏹ stop</button>
+  <div id="liveinfo" class="mono" style="margin-top:8px"></div>
+</div>
+
+<div class="panel" id="windows" style="display:none">
+  <h3>4 Windows — 4 Keys — One Stream</h3>
+  <p style="font-size:.85rem;color:#888">Each window trails live by a different delay, decrypting with a different key from the same chain.</p>
+  <div id="winlist"></div>
+</div>
+
+<nav id="bnav">
+<a href="./how.html">🎬<span>make</span></a>
+<a href="./premiere.html">▶<span>watch</span></a>
+<a href="./live-now.html">📡<span>live</span></a>
+<a href="./follow.html">🔗<span>follow</span></a>
+<a href="./reblob.html">📚<span>library</span></a>
+<a href="../index.html">🕹<span>arcade</span></a>
+</nav>
+
+<script>
+const AGG='https://aggregator.walrus-testnet.walrus.space';
+const PUB='https://publisher.walrus-testnet.walrus.space';
+const $=id=>document.getElementById(id);
+const hex=b=>Array.from(b).map(x=>x.toString(16).padStart(2,'0')).join('');
+const bhex=h=>new Uint8Array(h.match(/../g).map(x=>parseInt(x,16)));
+
+// Pure-JS SHA256 (no crypto.subtle dependency)
+function sha256bytes(data){
+  var K=[0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2];
+  var H=[0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19];
+  var l=data.length,bitLen=l*8,padLen=(((l+1+8+63)>>6)<<6);
+  var m=new Uint8Array(padLen);m.set(data);m[l]=0x80;
+  var dv=new DataView(m.buffer);
+  dv.setUint32(padLen-8,Math.floor(bitLen/4294967296));dv.setUint32(padLen-4,bitLen>>>0);
+  var w=new Uint32Array(64);
+  function rotr(x,n){return(x>>>n)|(x<<(32-n));}
+  for(var off=0;off<padLen;off+=64){
+    for(var i=0;i<16;i++)w[i]=dv.getUint32(off+i*4);
+    for(var i=16;i<64;i++){var s0=rotr(w[i-15],7)^rotr(w[i-15],18)^(w[i-15]>>>3),s1=rotr(w[i-2],17)^rotr(w[i-2],19)^(w[i-2]>>>10);w[i]=(w[i-16]+s0+w[i-7]+s1)|0;}
+    var a=H[0],b=H[1],c=H[2],d=H[3],e=H[4],f=H[5],g=H[6],h=H[7];
+    for(var i=0;i<64;i++){var S1=rotr(e,6)^rotr(e,11)^rotr(e,25),ch=(e&f)^(~e&g),t1=(h+S1+ch+K[i]+w[i])|0,S0=rotr(a,2)^rotr(a,13)^rotr(a,22),mj=(a&b)^(a&c)^(b&c),t2=(S0+mj)|0;h=g;g=f;f=e;e=(d+t1)|0;d=c;c=b;b=a;a=(t1+t2)|0;}
+    H[0]=(H[0]+a)|0;H[1]=(H[1]+b)|0;H[2]=(H[2]+c)|0;H[3]=(H[3]+d)|0;H[4]=(H[4]+e)|0;H[5]=(H[5]+f)|0;H[6]=(H[6]+g)|0;H[7]=(H[7]+h)|0;
+  }
+  var out=new Uint8Array(32),odv=new DataView(out.buffer);
+  for(var i=0;i<8;i++)odv.setUint32(i*4,H[i]>>>0);
+  return out;
+}
+
+// Key chain: K(n+1) = SHA256(K(n) || "|next")
+function deriveKey(k){return sha256bytes(new Uint8Array([...k,...new TextEncoder().encode('|next')]));}
+
+let stream=null, recorder=null, liveKey=null, keyChain=[], chunks=[], live=false, nChunk=0;
+const WIN_DELAY=[0,2,4,6];
+
+function check(id,ok,msg){
+  let el=$('chk-'+id);
+  if(!el){el=document.createElement('div');el.id='chk-'+id;$('checks').appendChild(el);}
+  el.className='check '+(ok===null?'wait':ok?'ok':'fail');
+  el.innerHTML=(ok===null?'⏳ ':ok?'✅ ':'❌ ')+msg;
+  return ok;
+}
+
+async function runChecks(){
+  $('checks').innerHTML='';
+  // 1. NaCl
+  check('nacl',typeof nacl!=='undefined'&&nacl.secretbox,'NaCl secretbox loaded');
+  // 2. Key generation
+  try{
+    const k=nacl.randomBytes(32);
+    check('keygen',k.length===32,'Key generation: 32 bytes');
+  }catch(e){check('keygen',false,'Key generation: '+e.message);}
+  // 3. Key derivation
+  try{
+    const k0=new Uint8Array(32).fill(1);
+    const k1=deriveKey(k0);
+    const k1b=deriveKey(k0);
+    check('derive',k1.length===32&&hex(k1)===hex(k1b)&&hex(k1)!==hex(k0),'Key derivation: deterministic, 32B, K1≠K0');
+  }catch(e){check('derive',false,'Key derivation: '+e.message);}
+  // 4. Encrypt/decrypt roundtrip
+  try{
+    const k=nacl.randomBytes(32),n=nacl.randomBytes(24),msg=new TextEncoder().encode('hello blockchain');
+    const c=nacl.secretbox(msg,n,k);
+    const d=nacl.secretbox.open(c,n,k);
+    check('crypt',d&&new TextDecoder().decode(d)==='hello blockchain','Encrypt/decrypt roundtrip');
+  }catch(e){check('crypt',false,'Encrypt/decrypt: '+e.message);}
+  // 5. Walrus PUT then GET (verifies the blob is retrievable)
+  try{
+    check('walrus',null,'Walrus PUT+GET (verifying blob retrievable)…');
+    const data=new TextEncoder().encode('blob-cinema-check-'+Date.now());
+    const r=await fetch(PUB+'/v1/blobs?epochs=1',{method:'PUT',body:data});
+    if(!r.ok)throw new Error('PUT HTTP '+r.status);
+    const j=await r.json();
+    const bid=(j.newlyCreated||j.alreadyCertified).blobObject.blobId;
+    const g=await fetch(AGG+'/v1/blobs/'+bid);
+    if(!g.ok)throw new Error('GET HTTP '+g.status);
+    const back=new Uint8Array(await g.arrayBuffer());
+    const ok=back.length===data.length&&back.every((v,i)=>v===data[i]);
+    check('walrus',ok,'Walrus PUT+GET: blob '+bid.slice(0,16)+'… verified '+(ok?'✓':'✗'));
+  }catch(e){check('walrus',false,'Walrus: '+e.message);}
+  // 6. MediaRecorder
+  check('mr',typeof MediaRecorder!=='undefined','MediaRecorder available');
+  $('gobtn').disabled=false;
+}
+
+async function setSrc(kind){
+  try{
+    if(stream)stream.getTracks().forEach(t=>t.stop());
+    if(kind==='test'){
+      const cv=document.createElement('canvas');cv.width=640;cv.height=480;
+      const ctx=cv.getContext('2d');
+      let h=0;
+      setInterval(()=>{h=(h+1)%360;ctx.fillStyle=`hsl(${h},70%,40%)`;ctx.fillRect(0,0,640,480);
+        ctx.fillStyle='#fff';ctx.font='48px sans-serif';ctx.fillText('BLOB LIVE',200,240);},100);
+      stream=cv.captureStream(30);
+    }else{
+      stream=await navigator.mediaDevices.getUserMedia({video:{width:640},audio:true});
+    }
+    const v=$('preview');v.style.display='inline-block';v.srcObject=stream;v.play();
+    $('gobtn').disabled=false;
+  }catch(e){alert('source failed: '+e.message);}
+}
+
+async function keyAt(i){
+  while(keyChain.length<=i)keyChain.push(deriveKey(keyChain[keyChain.length-1]));
+  return keyChain[i];
+}
+
+async function goLive(){
+  if(!stream){alert('pick a source first');return;}
+  liveKey=nacl.randomBytes(32);
+  keyChain=[liveKey];
+  chunks=[];nChunk=0;live=true;
+  $('gobtn').disabled=true;$('stopbtn').disabled=false;
+  $('windows').style.display='block';
+  $('liveinfo').innerHTML=`🔴 LIVE — K_0 = <span class="mono">${hex(liveKey).slice(0,24)}…</span>`;
+
+  // recorder
+  const mime=MediaRecorder.isTypeSupported('video/webm;codecs=vp9')?'video/webm;codecs=vp9':'video/webm';
+  recorder=new MediaRecorder(stream,{mimeType:mime});
+  recorder.ondataavailable=async ev=>{
+    if(!ev.data||!ev.data.size||!live)return;
+    const idx=nChunk++;
+    const raw=new Uint8Array(await ev.data.arrayBuffer());
+    const key=await keyAt(idx+1); // chunk n uses K(n+1)
+    const nonce=nacl.randomBytes(24);
+    const c=nacl.secretbox(raw,nonce,key);
+    const out=new Uint8Array(24+c.length);out.set(nonce);out.set(c,24);
+    // PUT to Walrus
+    try{
+      const r=await fetch(PUB+'/v1/blobs?epochs=5',{method:'PUT',body:out});
+      if(!r.ok)throw new Error('HTTP '+r.status);
+      const j=await r.json();
+      const bid=(j.newlyCreated||j.alreadyCertified).blobObject.blobId;
+      // VERIFY: GET it back
+      const g=await fetch(AGG+'/v1/blobs/'+bid);
+      if(!g.ok)throw new Error('verify GET failed');
+      chunks[idx]={n:idx,blob:bid,keyIdx:idx+1,bytes:raw.length,ok:true};
+      $('liveinfo').innerHTML+=`<br>✓ chunk #${idx} → <span class="mono">${bid.slice(0,20)}…</span> (${raw.length}B, verified)`;
+    }catch(e){
+      chunks[idx]={n:idx,ok:false,error:e.message};
+      $('liveinfo').innerHTML+=`<br>❌ chunk #${idx}: ${e.message}`;
+    }
+  };
+  recorder.start(2000);
+  startWindows();
+}
+
+function startWindows(){
+  const wl=$('winlist');wl.innerHTML='';
+  WIN_DELAY.forEach((delay,wi)=>{
+    const div=document.createElement('div');
+    div.className='win';
+    div.innerHTML=`<h3>Window ${wi+1} — ${delay} chunks behind ${delay===0?'(LIVE)':''}</h3>
+      <video id="wv${wi}" controls playsinline muted></video><br>
+      <span class="mono" id="wkey${wi}">key: —</span><br>
+      <button class="btn" style="font-size:.8rem" onclick="shareWindow(${wi})">🔗 share this window's key</button>
+      <span class="mono" id="wstat${wi}"></span>`;
+    wl.appendChild(div);
+    pumpWindow(wi,delay);
+  });
+}
+
+async function pumpWindow(wi,delay){
+  const v=$('wv'+wi);
+  const urls=[];
+  let nextN=0;
+  while(live||nextN<=chunks.length-1-delay){
+    const target=chunks.length-1-delay;
+    if(nextN>target){await new Promise(r=>setTimeout(r,700));continue;}
+    const c=chunks[nextN];
+    if(!c||!c.ok){nextN++;continue;}
+    try{
+      const r=await fetch(AGG+'/v1/blobs/'+c.blob);
+      const cipher=new Uint8Array(await r.arrayBuffer());
+      const key=await keyAt(c.keyIdx);
+      const plain=nacl.secretbox.open(cipher.slice(24),cipher.slice(0,24),key);
+      if(!plain)throw new Error('decrypt failed');
+      $('wkey'+wi).textContent=`key: K_${c.keyIdx} = ${hex(key).slice(0,24)}…`;
+      const url=URL.createObjectURL(new Blob([plain],{type:'video/webm'}));
+      urls.push(url);
+      // play sequentially
+      if(urls.length===1){
+        v.src=url;
+        v.play().catch(()=>{});
+        v.onended=()=>{
+          urls.shift();
+          if(urls.length){v.src=urls[0];v.play().catch(()=>{});}
+        };
+      }
+      $('wstat'+wi).textContent=`✓ chunk ${nextN}`;
+    }catch(e){
+      $('wstat'+wi).textContent=`❌ ${e.message}`;
+    }
+    nextN++;
+    await new Promise(r=>setTimeout(r,300));
+  }
+}
+
+async function shareWindow(wi){
+  const delay=WIN_DELAY[wi];
+  const pos=Math.max(0,chunks.length-1-delay);
+  const c=chunks[pos];
+  if(!c||!c.ok){alert('no chunk at that position yet');return;}
+  const key=await keyAt(c.keyIdx);
+  // publish manifest
+  const manifest={v:1,type:'blob-manifest',title:'blob-live',chunks:chunks.filter(x=>x&&x.ok),
+    live_key:hex(liveKey),method:'nacl-secretbox/sha256-chain-v1'};
+  const r=await fetch(PUB+'/v1/blobs?epochs=5',{method:'PUT',body:new TextEncoder().encode(JSON.stringify(manifest))});
+  const j=await r.json();
+  const mbid=(j.newlyCreated||j.alreadyCertified).blobObject.blobId;
+  const url=location.origin+location.pathname.replace('live-clean.html','play.html')+`?id=live#${hex(key)}`;
+  // Actually use premiere for universal link:
+  const purl=location.origin+'/arcade/blob-cinema/premiere.html?watch='+mbid+'#'+hex(key);
+  prompt(`Window ${wi+1} (K_${c.keyIdx}, ${delay} behind):`,purl);
+}
+
+function stopLive(){
+  live=false;
+  try{if(recorder&&recorder.state!=='inactive')recorder.stop();}catch(e){}
+  if(stream)stream.getTracks().forEach(t=>t.stop());
+  $('gobtn').disabled=false;$('stopbtn').disabled=true;
+  $('liveinfo').innerHTML+=`<br><br><b>⏹ STOPPED</b> — ${chunks.filter(c=>c&&c.ok).length} chunks on Walrus`;
+}
+
+// auto-run checks on load
+runChecks();
+</script>
+</body>
+</html>
