@@ -40,7 +40,9 @@ video{width:100%;max-width:640px;background:#000;border-radius:8px}
   <button class="btn" onclick="setSrc('test')">🎨 test pattern</button>
   <button class="btn" onclick="setSrc('cam')">📷 camera</button><br><br>
   <button class="btn red" id="gobtn" onclick="goLive()" disabled>🔴 START RECORDING</button>
-  <button class="btn" id="stopbtn" onclick="stopRec()" disabled>⏹ stop & publish</button>
+  <button class="btn" id="stopbtn" onclick="stopRec()" disabled>⏹ stop & publish</button><br>
+  <button class="btn green" id="testbtn" onclick="liveTest25()">🧪 25s LIVE TEST (test pattern)</button>
+  <div style="font-size:.75rem;color:#888;margin-top:4px">live test: fresh key, 25s test pattern, auto-stops, shows watch link</div>
   <div id="status" class="mono" style="margin-top:8px"></div>
 </div>
 
@@ -172,6 +174,28 @@ async function publishManifest(){
   }catch(e){ log('❌ manifest: '+e.message); }
 }
 
+// 25-second live test: fresh key, test pattern, auto-stops
+// Uses the EXACT same pipeline as goLive — proves live works
+async function liveTest25(){
+  log('<b>🧪 LIVE TEST starting</b> — fresh key, 25s test pattern');
+  $('testbtn').disabled=true;
+  // Force test pattern source
+  await setSrc('test');
+  await new Promise(r=>setTimeout(r,500)); // let pattern start
+  // Run system checks first
+  const ok=await BPC.runAll();
+  if(!ok){ log('❌ checks failed'); $('testbtn').disabled=false; return; }
+  // Start live (same as goLive)
+  await goLive();
+  log('⏱ recording 25 seconds…');
+  // Auto-stop after 25s
+  setTimeout(async ()=>{
+    log('⏱ 25s done — stopping…');
+    await stopRec();
+    $('testbtn').disabled=false;
+  },25000);
+}
+
 async function stopRec(){
   live=false;
   clearInterval(batchTimer);
@@ -180,6 +204,7 @@ async function stopRec(){
   await publishManifest();
   if(stream)stream.getTracks().forEach(t=>t.stop());
   $('gobtn').disabled=false; $('stopbtn').disabled=true;
+  const testbtn=$('testbtn'); if(testbtn)testbtn.disabled=false;
   const n=chunks.filter(c=>c&&c.ok).length;
   log(`<b>⏹ STOPPED</b> — ${n} chunks on Walrus`);
   $('status').innerHTML=`⏹ done — ${n} chunks. <a href="./library.html" style="color:#6C5CE7">view in library →</a>`;
