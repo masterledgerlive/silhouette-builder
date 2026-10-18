@@ -146,6 +146,10 @@ const SYSTEMS = [
     url:'https://arcade.highscores.live/arcade/blob-cinema/', status:'LIVE',
     desc:'movies living on encrypted Walrus blobs',
     how:'HOW IT WORKS: films are chopped into chunks, encrypted, and stored as blobs on Walrus. A key chain unlocks each chunk in order, so the movie plays straight from the chain — no server in the middle.' },
+  { id:'silhouette', emoji:'✂️', name:'Silhouette Creator', sub:'agentic ai creator',
+    url:'silhouette/', status:'LIVE',
+    desc:'shadow box builder — cut and create trading-card art',
+    how:'HOW IT WORKS: pick a version of the Silhouette shadow-box builder and start cutting — built for sports and trading card artists. David is still choosing which version becomes the final agentic AI creator, so try them all and see which cuts deepest.' },
   { id:'tickets', emoji:'🎟️', name:'Ticket Hunter AI', sub:'events', status:'BUILDING',
     desc:'best-price event tickets, agent-buyable',
     how:'HOW IT WILL WORK: an agent hunts the best real ticket prices across primary and resale, compares the true delivered total, and can buy only with your exact per-purchase approval. Still being built.' },
@@ -183,6 +187,7 @@ function boot(){
   tprint('radio uplink ............... OK');
   tprint('arcade core ................ OK');
   tprint('blob cinema vault .......... OK');
+  tprint('silhouette studio .......... OK');
   tprint('ticket hunter .............. BUILDING');
   tprint('stadium trust .............. BUILDING');
   tprint('decoder lab ................ BUILDING');
@@ -209,6 +214,7 @@ function runCmd(raw){
     tprint('  RADIO    open Network Radio/TV');
     tprint('  ARCADE   open Arcades of Time');
     tprint('  CINEMA   open Blob Cinema');
+    tprint('  CREATE   open Silhouette Creator');
     tprint('  KID      switch to kid mode');
     tprint('  INSIGHT  switch to insight mode');
     tprint('  CLEAR    clear the screen');
@@ -216,8 +222,8 @@ function runCmd(raw){
   } else if(c === 'CLEAR'){ termout.textContent = '';
   } else if(c === 'KID'){ tprint('switching to KID mode…'); setTimeout(() => setMode('kid'), 400);
   } else if(c === 'INSIGHT'){ tprint('switching to INSIGHT mode…'); setTimeout(() => setMode('insight'), 400);
-  } else if(c === 'RADIO' || c === 'ARCADE' || c === 'CINEMA'){
-    const s = SYSTEMS.find(x => x.id === (c === 'RADIO' ? 'radio' : c === 'ARCADE' ? 'arcade' : 'cinema'));
+  } else if(c === 'RADIO' || c === 'ARCADE' || c === 'CINEMA' || c === 'CREATE'){
+    const s = SYSTEMS.find(x => x.id === (c === 'RADIO' ? 'radio' : c === 'ARCADE' ? 'arcade' : c === 'CINEMA' ? 'cinema' : 'silhouette'));
     tprint('opening ' + s.name + ' …');
     tprint(s.url);
     window.open(s.url, '_blank');
