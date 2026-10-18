@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>🔴 Record — BLOBPLAYER</title>
+<style>
+body{background:#07070f;color:#e8e8ff;font-family:system-ui,sans-serif;margin:0;padding:14px;padding-bottom:90px}
+.panel{background:#101022;border:1px solid #26264d;border-radius:12px;padding:14px;margin:12px 0;max-width:700px;margin-left:auto;margin-right:auto}
+.mono{font-family:ui-monospace,monospace;font-size:.75rem;word-break:break-all}
+.btn{background:#1a1a33;border:1px solid #33336a;color:#e8e8ff;border-radius:8px;padding:10px 18px;cursor:pointer;margin:4px;font-size:1rem}
+.btn.red{background:#3d1020;border-color:#6b1a2a}
+.btn.green{background:#103d1a;border-color:#1a6b2a}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+video{width:100%;max-width:640px;background:#000;border-radius:8px}
+.check{padding:6px 10px;margin:4px 0;border-radius:6px;font-size:.85rem}
+.check.ok{background:#0f2f15;border:1px solid #1a6b2a}
+.check.fail{background:#2f0f15;border:1px solid #6b1a2a}
+.check.wait{background:#1a1a2a;border:1px solid #333}
+#log{max-height:300px;overflow-y:auto;background:#0a0a14;border-radius:8px;padding:10px;font-size:.8rem}
+#log div{margin:2px 0}
+#bnav{position:fixed;bottom:0;left:0;right:0;z-index:50;background:#141428;border-top:2px solid #6C5CE7;display:flex;justify-content:space-around;padding:6px 4px calc(6px + env(safe-area-inset-bottom))}
+#bnav a{color:#b0b0e0;text-decoration:none;font-size:1.3rem;display:flex;flex-direction:column;align-items:center;min-width:52px}
+#bnav a span{font-size:.6rem;margin-top:2px}
+</style>
+</head>
+<body>
+<script src="../errcatch.js"></script>
+<h1 style="text-align:center">🔴 Record</h1>
+<div style="text-align:center;color:#8888aa;font-size:.85rem">blockchain DVR — batches upload every 5s</div>
+
+<div class="panel">
+  <h3>System Checks</h3>
+  <div id="checks"></div>
+  <button class="btn" onclick="BPC.runAll().then(ok=>{document.getElementById('gobtn').disabled=!ok;})">▶ run checks</button>
+</div>
+
+<div class="panel">
+  <video id="preview" muted playsinline style="display:none"></video><br>
+  <button class="btn" onclick="setSrc('test')">🎨 test pattern</button>
+  <button class="btn" onclick="setSrc('cam')">📷 camera</button><br><br>
+  <button class="btn red" id="gobtn" onclick="goLive()" disabled>🔴 START RECORDING</button>
+  <button class="btn" id="stopbtn" onclick="stopRec()" disabled>⏹ stop & publish</button>
+  <div id="status" class="mono" style="margin-top:8px"></div>
+</div>
+
+<div class="panel">
+  <h3>📡 Chain Log</h3>
+  <div id="log"></div>
+</div>
+
+<div class="panel" id="sharepanel" style="display:none">
+  <h3>🔗 Share</h3>
+  <input id="sharelink" readonly onclick="this.select()" style="width:100%;background:#0a0a14;border:1px solid #33336a;color:#e8e8ff;border-radius:6px;padding:8px" class="mono">
+  <button class="btn" onclick="navigator.clipboard.writeText(document.getElementById('sharelink').value)">📋 copy</button>
+</div>
+
+<nav id="bnav">
+<a href="../index.html">🟣<span>home</span></a>
+<a href="./record.html">🔴<span>record</span></a>
+<a href="./watch.html">👁<span>watch</span></a>
+<a href="./library.html">📚<span>library</span></a>
+<a href="../../index.html">🕹<span>arcade</span></a>
+</nav>
+
+<script src="../nacl-min.js"></script>
+<script src="../kernel/protocol.js"></script>
+<script src="../system/checks.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+let stream=null, recorder=null, liveKey=null, keyChain=[], chunks=[], live=false;
+let manifestId=null, batchTimer=null;
+
+function log(m){ const d=document.createElement('div'); d.innerHTML=m; $('log').prepend(d); }
+
+async function setSrc(kind){
+  try{
+    if(stream)stream.getTracks().forEach(t=>t.stop());
+    if(kind==='test'){
+      const cv=document.createElement('canvas');cv.width=640;cv.height=480;
+      const ctx=cv.getContext('2d');let h=0;
+      setInterval(()=>{ if(!live&&!stream)return;
+        h=(h+2)%360;ctx.fillStyle=`hsl(${h},70%,35%)`;ctx.fillRect(0,0,640,480);
+        ctx.fillStyle='#fff';ctx.font='bold 52px sans-serif';ctx.textAlign='center';
+        ctx.fillText('BLOBPLAYER',320,220);ctx.font='24px sans-serif';
+        ctx.fillText(new Date().toLocaleTimeString(),320,260);
+      },100);
+      stream=cv.captureStream(30);
+    }else{
+      stream=await navigator.mediaDevices.getUserMedia({video:{width:640},audio:false});
+    }
+    const v=$('preview');v.style.display='block';v.srcObject=stream;v.play();
+    log('📷 source ready');
+  }catch(e){ log('❌ source: '+e.message); }
+}
+
+async function keyAt(i){
+  while(keyChain.length<=i)keyChain.push(BP.derive(keyChain[keyChain.length-1]));
+  return keyChain[i];
+}
+
+async function goLive(){
+  const ok=await BPC.runAll();
+  if(!ok){ log('❌ system checks failed — cannot record'); return; }
+  if(!stream){ log('❌ pick a source first'); return; }
+
+  liveKey=nacl.randomBytes(32);
+  keyChain=[liveKey]; chunks=[]; live=true; manifestId=null;
+  $('gobtn').disabled=true; $('stopbtn').disabled=false;
+  $('sharepanel').style.display='none';
+  log(`🔴 <b>LIVE</b> — K_0 = <span class="mono">${BP.hex(liveKey).slice(0,16)}…</span>`);
+  $('status').innerHTML=`🔴 RECORDING — K_0 = <span class="mono">${BP.hex(liveKey).slice(0,16)}…</span>`;
+
+  // MediaRecorder: 2s chunks, batched every 5s for upload
+  const mime=MediaRecorder.isTypeSupported('video/webm;codecs=vp9')?'video/webm;codecs=vp9':'video/webm';
+  recorder=new MediaRecorder(stream,{mimeType:mime});
+  const pending=[]; // chunks waiting for batch upload
+
+  recorder.ondataavailable=async ev=>{
+    if(!ev.data||!ev.data.size||!live)return;
+    const idx=chunks.length+pending.length;
+    const raw=new Uint8Array(await ev.data.arrayBuffer());
+    const key=await keyAt(idx+1);
+    const enc=BP.encryptChunk(raw,key);
+    pending.push({n:idx,keyIdx:idx+1,bytes:raw.length,data:enc});
+    log(`📦 chunk #${idx} encrypted (${raw.length}B → ${enc.length}B, K_${idx+1})`);
+  };
+  recorder.onerror=e=>log('❌ recorder: '+(e.error?e.error.message:'unknown'));
+  recorder.start(2000);
+
+  // Batch uploader: every 5s, upload pending chunks + publish manifest
+  batchTimer=setInterval(async ()=>{
+    if(!pending.length||!live)return;
+    const batch=pending.splice(0);
+    log(`📤 uploading batch of ${batch.length} chunks…`);
+    for(const c of batch){
+      try{
+        const bid=await BP.putVerified(c.data);
+        c.blob=bid; c.ok=true;
+        chunks[c.n]=c;
+        log(`✓ chunk #${c.n} → <span class="mono">${bid.slice(0,16)}…</span> verified`);
+      }catch(e){
+        c.ok=false; c.error=e.message;
+        chunks[c.n]=c;
+        log(`❌ chunk #${c.n}: ${e.message}`);
+      }
+    }
+    // Incremental manifest: viewers can watch mid-recording
+    await publishManifest();
+  },5000);
+}
+
+async function publishManifest(){
+  const okChunks=chunks.filter(c=>c&&c.ok);
+  if(!okChunks.length)return;
+  const manifest={
+    v:2, type:'blobplayer-manifest', title:'blobplayer recording',
+    created_at:Date.now(), live:live,
+    method:'nacl-secretbox/sha256-chain-v1',
+    live_key:BP.hex(liveKey),
+    chunks:okChunks.map(c=>({n:c.n,blob:c.blob,keyIdx:c.keyIdx,bytes:c.bytes}))
+  };
+  try{
+    const data=new TextEncoder().encode(JSON.stringify(manifest));
+    const r=await BP.fetchRetry(BP.PUB+`/v1/blobs?epochs=${BP.EPOCHS}`,{method:'PUT',body:data});
+    const j=await r.json();
+    manifestId=(j.newlyCreated||j.alreadyCertified).blobObject.blobId;
+    log(`📋 manifest updated: <span class="mono">${manifestId.slice(0,16)}…</span> (${okChunks.length} chunks)`);
+    const url=location.origin+location.pathname.replace('record.html','watch.html')+`?watch=${manifestId}#${BP.hex(liveKey)}`;
+    $('sharelink').value=url;
+    $('sharepanel').style.display='block';
+  }catch(e){ log('❌ manifest: '+e.message); }
+}
+
+async function stopRec(){
+  live=false;
+  clearInterval(batchTimer);
+  try{ if(recorder&&recorder.state!=='inactive')recorder.stop(); }catch(e){}
+  // Final manifest
+  await publishManifest();
+  if(stream)stream.getTracks().forEach(t=>t.stop());
+  $('gobtn').disabled=false; $('stopbtn').disabled=true;
+  const n=chunks.filter(c=>c&&c.ok).length;
+  log(`<b>⏹ STOPPED</b> — ${n} chunks on Walrus`);
+  $('status').innerHTML=`⏹ done — ${n} chunks. <a href="./library.html" style="color:#6C5CE7">view in library →</a>`;
+  // Save to local library
+  try{
+    const lib=JSON.parse(localStorage.getItem('bp_library')||'[]');
+    lib.unshift({id:'bp-'+Date.now(),title:'recording '+new Date().toLocaleString(),
+      at:Date.now(),manifest:manifestId,liveKey:BP.hex(liveKey),chunks:n});
+    localStorage.setItem('bp_library',JSON.stringify(lib.slice(0,50)));
+  }catch(e){}
+}
+
+// auto-checks on load
+window.addEventListener('load',()=>setTimeout(()=>BPC.runAll().then(ok=>{$('gobtn').disabled=!ok;}),500));
+</script>
+</body>
+</html>
