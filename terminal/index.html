@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>KKN-DOS — Koda Kai Network Terminal</title>
+<style>
+  * { box-sizing:border-box; margin:0; padding:0; }
+  html, body { height:100%; }
+  body {
+    background:#020502; color:#33ff33;
+    font-family:'Courier New', Courier, monospace;
+    font-size:16px; line-height:1.5;
+    overflow:hidden;
+    -webkit-tap-highlight-color: transparent;
+  }
+  #crt {
+    position:fixed; inset:0; padding:14px 14px 20px;
+    overflow-y:auto; overflow-x:hidden;
+    text-shadow:0 0 6px rgba(51,255,51,.75);
+    cursor:text;
+    scrollbar-width:thin; scrollbar-color:#1a5c1a #020502;
+  }
+  /* scanlines */
+  #crt::after {
+    content:''; position:fixed; inset:0; pointer-events:none; z-index:50;
+    background:repeating-linear-gradient(0deg, rgba(0,0,0,.28) 0 1px, transparent 1px 3px);
+  }
+  /* vignette */
+  #crt::before {
+    content:''; position:fixed; inset:0; pointer-events:none; z-index:51;
+    background:radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,.55) 100%);
+  }
+  #out { white-space:pre-wrap; word-break:break-word; }
+  .dim { color:#1f9d1f; }
+  .bright { color:#b6ffb6; }
+  .warn { color:#ffe14d; text-shadow:0 0 6px rgba(255,225,77,.7); }
+  #promptline { display:flex; align-items:baseline; }
+  #prompt { flex:0 0 auto; padding-right:8px; }
+  #linewrap { flex:1 1 auto; position:relative; min-width:0; }
+  #mirror { white-space:pre-wrap; word-break:break-all; min-height:1.5em; }
+  #cursor {
+    display:inline-block; width:.6em; height:1.15em;
+    background:#33ff33; vertical-align:-0.2em;
+    box-shadow:0 0 8px rgba(51,255,51,.9);
+    animation:blink 1s steps(1) infinite;
+  }
+  @keyframes blink { 50% { opacity:0; } }
+  /* real input: invisible but focusable (mobile keyboard) */
+  #kbd {
+    position:absolute; inset:0; width:100%; height:100%;
+    opacity:0; border:0; padding:0; margin:0;
+    font-size:16px; /* prevents iOS zoom */
+    caret-color:transparent; color:transparent; background:transparent;
+  }
+  #hint {
+    position:fixed; bottom:6px; left:0; right:0; text-align:center;
+    color:#1f9d1f; font-size:11px; letter-spacing:.15em; z-index:52;
+    pointer-events:none;
+  }
+</style>
+</head>
+<body>
+<div id="crt" tabindex="-1">
+  <div id="out"></div>
+  <div id="promptline">
+    <span id="prompt">C:\KKN&gt;</span>
+    <span id="linewrap">
+      <span id="mirror"></span><span id="cursor"></span>
+      <input id="kbd" type="text" autocomplete="off" autocapitalize="off"
+             autocorrect="off" spellcheck="false" aria-label="terminal input">
+    </span>
+  </div>
+</div>
+<div id="hint">TAP TO TYPE &middot; UP/DOWN FOR HISTORY</div>
+
+<script>
+(function(){
+  "use strict";
+  var out = document.getElementById('out');
+  var kbd = document.getElementById('kbd');
+  var mirror = document.getElementById('mirror');
+  var crt = document.getElementById('crt');
+
+  var HUB = 'https://arcade.highscores.live/';
+
+  var SYSTEMS = {
+    radio:      { name:'Network Radio/TV',        url:'https://arcade.highscores.live/arcade/kodakainetwork/' },
+    arcade:     { name:'Arcades of Time',          url:'https://arcade.highscores.live/arcade/' },
+    cinema:     { name:'Blob Cinema',              url:'https://arcade.highscores.live/arcade/blob-cinema/' },
+    silhouette: { name:'Silhouette Creator',       url:'https://arcade.highscores.live/silhouette/' },
+    doom:       { name:'DOOM',                     url:'https://arcade.highscores.live/arcade/doom/' },
+    live:       { name:'Blob Live',                url:'https://arcade.highscores.live/arcade/blob-cinema/live.html' },
+    follow:     { name:'Chain Follower',           url:'https://arcade.highscores.live/arcade/blob-cinema/follow.html' },
+    how:        { name:'How It Works',             url:'https://arcade.highscores.live/arcade/blob-cinema/how.html' },
+    livenow:    { name:'Live Now',                 url:'https://arcade.highscores.live/arcade/blob-cinema/live-now.html' },
+    studio:     { name:'Studio',                   url:'https://arcade.highscores.live/arcade/blob-cinema/studio.html' },
+    reblob:     { name:'Reblob Library',           url:'https://arcade.highscores.live/arcade/blob-cinema/reblob.html' },
+    scores:     { name:'Hall of Scores',           url:'https://arcade.highscores.live/arcade/blob-cinema/scores.html' },
+    play:       { name:'Replay DVR',               url:'https://arcade.highscores.live/arcade/blob-cinema/play.html' },
+    sliders:    { name:'Sliders (prototype)',      url:'https://arcade.highscores.live/arcade/blob-cinema/sliders.html' },
+    bbb:        { name:'BBB (prototype)',          url:'https://arcade.highscores.live/arcade/blob-cinema/bbb.html' },
+    diag:       { name:'MSE Diagnostics',          url:'https://arcade.highscores.live/arcade/blob-cinema/mse-diag.html' },
+    'theater-old': { name:'Blob Theater (origin)', url:'https://arcade.highscores.live/arcade/blob-theater/' },
+    tickets:    { name:'Ticket Hunter AI',         building:true },
+    stadium:    { name:'Fan-Owned Stadium',        building:true },
+    decoder:    { name:'Decoder Lab',              building:true }
+  };
+
+  var GROUPS = [
+    { title:'[NETWORK]',        ids:['radio','arcade','cinema','silhouette'] },
+    { title:'[ARCADE CABINETS]', ids:['doom','live','follow','how','livenow','studio','reblob','scores','play','sliders','bbb','diag','theater-old'] },
+    { title:'[BUILDING]',       ids:['tickets','stadium','decoder'] }
+  ];
+
+  var history = [], hIndex = -1;
+
+  function print(html, cls){
+    var d = document.createElement('div');
+    if(cls) d.className = cls;
+    d.innerHTML = html;
+    out.appendChild(d);
+    crt.scrollTop = crt.scrollHeight;
+  }
+  function esc(s){
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+  function focusKbd(){ kbd.focus({preventScroll:true}); }
+
+  crt.addEventListener('click', focusKbd);
+  crt.addEventListener('touchstart', focusKbd, {passive:true});
+
+  function syncMirror(){ mirror.textContent = kbd.value; }
+
+  kbd.addEventListener('input', syncMirror);
+
+  kbd.addEventListener('keydown', function(e){
+    if(e.key === 'ArrowUp'){
+      e.preventDefault();
+      if(history.length){
+        if(hIndex < 0) hIndex = history.length;
+        if(hIndex > 0) hIndex--;
+        kbd.value = history[hIndex]; syncMirror();
+      }
+    } else if(e.key === 'ArrowDown'){
+      e.preventDefault();
+      if(hIndex >= 0){
+        hIndex++;
+        kbd.value = (hIndex >= history.length) ? '' : history[hIndex];
+        if(hIndex >= history.length) hIndex = -1;
+        syncMirror();
+      }
+    } else if(e.key === 'Enter'){
+      var raw = kbd.value;
+      kbd.value = ''; syncMirror(); hIndex = -1;
+      runCmd(raw);
+    }
+  });
+
+  function cmdHelp(){
+    print('Available commands:');
+    print('  HELP      this list');
+    print('  DIR       list all systems');
+    print('  VER       version info');
+    print('  CLS       clear the screen');
+    print('  EXIT      back to the hub');
+    print('  &lt;name&gt;    open a system (try RADIO, DOOM, SCORES, CREATE...)');
+    print('  MATRIX    ???');
+  }
+
+  function cmdDir(){
+    print('');
+    GROUPS.forEach(function(g){
+      print('<span class="bright">' + g.title + '</span>');
+      g.ids.forEach(function(id){
+        var s = SYSTEMS[id];
+        var tag = s.building
+          ? '<span class="warn">[BUILDING]</span>'
+          : '<span class="dim">[LIVE]</span>    ';
+        print('  ' + tag + ' ' + id.toUpperCase().padEnd(12,' ') + ' ' + esc(s.name));
+      });
+      print('');
+    });
+  }
+
+  function runCmd(raw){
+    print('C:\\KKN&gt; ' + esc(raw));
+    var c = raw.trim().toUpperCase();
+    if(!c) return;
+    history.push(raw); if(history.length > 100) history.shift();
+
+    if(c === 'HELP'){ cmdHelp(); return; }
+    if(c === 'DIR'){ cmdDir(); return; }
+    if(c === 'VER'){
+      print('Koda Kai Network DOS v7.1 — the system of all systems');
+      print('No pixels were harmed. All systems nominal.');
+      return;
+    }
+    if(c === 'CLS' || c === 'CLEAR'){ out.innerHTML = ''; return; }
+    if(c === 'EXIT'){
+      print('Returning to the hub ...');
+      setTimeout(function(){ window.location.href = HUB; }, 500);
+      return;
+    }
+    if(c === 'MATRIX'){
+      print('Wake up ... the Koda Kai Network has you. (No red pills here — only green text.)');
+      return;
+    }
+    var id = c.toLowerCase().replace(/-/g,'-');
+    // allow CREATE as an alias for the silhouette creator
+    if(id === 'create') id = 'silhouette';
+    if(SYSTEMS.hasOwnProperty(id)){
+      var s = SYSTEMS[id];
+      if(s.building){
+        print(esc(s.name) + ' is still being built, chief.');
+      } else {
+        print('opening ' + esc(s.name) + ' ...');
+        window.open(s.url, '_blank');
+      }
+      return;
+    }
+    print('Bad command or file name — try HELP');
+  }
+
+  /* ---------- boot sequence ---------- */
+  var boot = [
+    { t:  60, h: '<span class="dim">  ~~    ~~    ~~<br>    ~~    ~~    ~~<br>  ~~    ~~    ~~</span>' },
+    { t: 120, h: '<span class="bright">KODA KAI NETWORK DOS</span>  <span class="dim">v7.1</span>' },
+    { t: 120, h: 'the system of all systems' },
+    { t: 200, h: '' },
+    { t:  90, h: 'Memory check ............ <span class="dim">640K ought to be enough</span> ... OK' },
+    { t:  90, h: 'Loading modules ......... radio uplink ... OK' },
+    { t:  90, h: 'Loading modules ......... arcade core .... OK' },
+    { t:  90, h: 'Loading modules ......... blob vault ..... OK' },
+    { t:  90, h: 'Loading modules ......... silhouette .... OK' },
+    { t: 200, h: '' },
+    { t: 100, h: '<span class="bright">ALL SYSTEMS NOMINAL</span>' },
+    { t: 100, h: 'Type HELP for commands.' },
+    { t: 150, h: '' }
+  ];
+  var bi = 0;
+  function stepBoot(){
+    if(bi < boot.length){
+      print(boot[bi].h);
+      setTimeout(stepBoot, boot[bi].t); bi++;
+    } else {
+      focusKbd();
+    }
+  }
+  stepBoot();
+})();
+</script>
+</body>
+</html>
