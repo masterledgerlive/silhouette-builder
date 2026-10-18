@@ -46,6 +46,8 @@
   .kid-note { text-align:center; color:#8888aa; margin-top:18px; font-size:1.1rem; }
   /* ---- INSIGHT mode ---- */
   .cards { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:14px; }
+  .grouphead { grid-column:1/-1; color:var(--pink); letter-spacing:.15em; margin:14px 0 2px;
+               font-size:1.05rem; text-shadow:0 0 12px var(--pink); }
   .card { background:var(--panel); border:1px solid #2a2a5a; border-radius:14px; padding:18px; }
   .card.live { border-color:var(--neon); }
   .card.building { border-color:#4a3f1a; opacity:.92; }
@@ -94,6 +96,9 @@
 
   <!-- ============ COMPUTER ============ -->
   <section class="mode" id="mode-computer">
+    <div style="text-align:center;margin-bottom:12px">
+      <a href="terminal/" style="display:inline-block;padding:10px 22px;border:2px solid var(--green);border-radius:10px;color:var(--green);text-decoration:none;letter-spacing:.1em;text-shadow:0 0 8px #3f6">⛶ OPEN FULL DOS TERMINAL — maximum geek</a>
+    </div>
     <div class="term" id="term" onclick="document.getElementById('cmdline').focus()">
       <div class="out" id="termout"></div>
       <div class="prompt-line"><span class="ps">C:\KKN&gt;</span><input id="cmdline" autocomplete="off" spellcheck="false" maxlength="60"></div>
@@ -159,6 +164,58 @@ const SYSTEMS = [
   { id:'decoder', emoji:'🕵️', name:'Decoder Lab', sub:'research engine', status:'BUILDING',
     desc:'the ultimate decoder of all information',
     how:'HOW IT WILL WORK: a research loop that investigates anything, grades the evidence, and decodes it into plain truth. The engine exists; the public lab is next.' },
+  { id:'doom', emoji:'👹', name:'DOOM', sub:'arcade cabinet', group:'arcade',
+    url:'https://arcade.highscores.live/arcade/doom/', status:'LIVE',
+    desc:'the first exhibit — shareware Doom, sealed and playable',
+    how:'HOW IT WORKS: Doom is sealed into encrypted storage shards and booted from recovered bytes, right in the browser. 7/7 proving tests green.' },
+  { id:'live', emoji:'🔴', name:'Blob Live', sub:'arcade cabinet', group:'arcade',
+    url:'https://arcade.highscores.live/arcade/blob-cinema/live.html', status:'LIVE',
+    desc:'real-time video turned into encrypted blobs',
+    how:'HOW IT WORKS: broadcast from webcam, screen, or test pattern — video becomes encrypted blobs with derived keys, live.' },
+  { id:'follow', emoji:'🔗', name:'Chain Follower', sub:'arcade cabinet', group:'arcade',
+    url:'https://arcade.highscores.live/arcade/blob-cinema/follow.html', status:'LIVE',
+    desc:'the infinite player — follows a blob chain forever',
+    how:'HOW IT WORKS: a 3-part key (locator, method, unlock) follows a blob chain forever — snapshots, registry, no server.' },
+  { id:'how', emoji:'🧒', name:'How It Works', sub:'arcade cabinet', group:'arcade',
+    url:'https://arcade.highscores.live/arcade/blob-cinema/how.html', status:'LIVE',
+    desc:'the whole engine as a kids cartoon',
+    how:'HOW IT WORKS: chunks, key chains, Walrus, treasure maps — the entire engine as a cartoon you can click through.' },
+  { id:'livenow', emoji:'📡', name:'Live Now', sub:'arcade cabinet', group:'arcade',
+    url:'https://arcade.highscores.live/arcade/blob-cinema/live-now.html', status:'LIVE',
+    desc:'who is live — the heartbeat directory',
+    how:'HOW IT WORKS: beacons with heartbeats — fresh means LIVE, stale goes grey. Creator-signed, no fakes.' },
+  { id:'studio', emoji:'🎥', name:'Studio', sub:'arcade cabinet', group:'arcade',
+    url:'https://arcade.highscores.live/arcade/blob-cinema/studio.html', status:'LIVE',
+    desc:'wire-tap your upload',
+    how:'HOW IT WORKS: watch every byte, every blob, every receipt as you upload — then it lives in the keeper forever.' },
+  { id:'reblob', emoji:'📚', name:'Reblob Library', sub:'arcade cabinet', group:'arcade',
+    url:'https://arcade.highscores.live/arcade/blob-cinema/reblob.html', status:'LIVE',
+    desc:'never lose a blob',
+    how:'HOW IT WORKS: every stream, every blob, time-left till reblob — proof bundles and play links, forever.' },
+  { id:'scores', emoji:'🏆', name:'Hall of Scores', sub:'arcade cabinet', group:'arcade',
+    url:'https://arcade.highscores.live/arcade/blob-cinema/scores.html', status:'LIVE',
+    desc:'verified scores only — the highscores proof',
+    how:'HOW IT WORKS: top scores need camera + screen proof. Unverified scores get flagged. Click any score to watch the human play.' },
+  { id:'play', emoji:'▶️', name:'Replay', sub:'arcade cabinet', group:'arcade',
+    url:'https://arcade.highscores.live/arcade/blob-cinema/play.html', status:'LIVE',
+    desc:'DVR — scrub any saved stream',
+    how:'HOW IT WORKS: captions, timeline, derived keys — catch up to live or wander the past.' },
+  { id:'sliders', emoji:'🟧', name:'Sliders', sub:'arcade prototype', group:'arcade',
+    url:'https://arcade.highscores.live/arcade/blob-cinema/sliders.html', status:'LIVE',
+    desc:'early prototype — a 10-minute movie on Walrus',
+    how:'HOW IT WORKS: an early offshoot, still playable — a movie living only on Walrus blobs.' },
+  { id:'bbb', emoji:'🅱️', name:'BBB', sub:'arcade prototype', group:'arcade',
+    url:'https://arcade.highscores.live/arcade/blob-cinema/bbb.html', status:'LIVE',
+    desc:'first experiment — proved the chain could hold a movie',
+    how:'HOW IT WORKS: the rough first experiment that proved a movie could live on the chain.' },
+  { id:'diag', emoji:'🔧', name:'MSE Diag', sub:'arcade tool', group:'arcade',
+    url:'https://arcade.highscores.live/arcade/blob-cinema/mse-diag.html', status:'LIVE',
+    desc:'the diagnostic that proved the video pipeline',
+    how:'HOW IT WORKS: for nerds — the diagnostic that proved the video pipeline works.' },
+  { id:'theater-old', emoji:'◈', name:'Blob Theater', sub:'arcade origin', group:'arcade',
+    url:'https://arcade.highscores.live/arcade/blob-theater/', status:'LIVE',
+    desc:'the original 12-blob proof',
+    how:'HOW IT WORKS: where it all started — the original 12-blob proof of concept.' },
 ];
 
 /* ================= MODE SWITCHER ================= */
@@ -211,24 +268,27 @@ function runCmd(raw){
   if(c === 'HELP'){
     tprint('  HELP     this list');
     tprint('  DIR      list all systems');
-    tprint('  RADIO    open Network Radio/TV');
-    tprint('  ARCADE   open Arcades of Time');
-    tprint('  CINEMA   open Blob Cinema');
-    tprint('  CREATE   open Silhouette Creator');
+    tprint('  DOS      open the full geeky DOS terminal');
     tprint('  KID      switch to kid mode');
     tprint('  INSIGHT  switch to insight mode');
     tprint('  CLEAR    clear the screen');
+    tprint('  + any system id from DIR opens it (DOOM, SCORES, CREATE ...)');
   } else if(c === 'DIR'){ dirList();
   } else if(c === 'CLEAR'){ termout.textContent = '';
+  } else if(c === 'DOS'){ tprint('jacking into the full DOS terminal …'); window.open('terminal/', '_blank');
   } else if(c === 'KID'){ tprint('switching to KID mode…'); setTimeout(() => setMode('kid'), 400);
   } else if(c === 'INSIGHT'){ tprint('switching to INSIGHT mode…'); setTimeout(() => setMode('insight'), 400);
-  } else if(c === 'RADIO' || c === 'ARCADE' || c === 'CINEMA' || c === 'CREATE'){
-    const s = SYSTEMS.find(x => x.id === (c === 'RADIO' ? 'radio' : c === 'ARCADE' ? 'arcade' : c === 'CINEMA' ? 'cinema' : 'silhouette'));
-    tprint('opening ' + s.name + ' …');
-    tprint(s.url);
-    window.open(s.url, '_blank');
   } else {
-    tprint('command not recognized, chief — try HELP 🌊');
+    const s = SYSTEMS.find(x => x.id === c.toLowerCase());
+    if(s && s.status === 'LIVE'){
+      tprint('opening ' + s.name + ' …');
+      tprint(s.url);
+      window.open(s.url, '_blank');
+    } else if(s){
+      tprint(s.name + ' is still being built, chief.');
+    } else {
+      tprint('command not recognized, chief — try HELP 🌊');
+    }
   }
 }
 cmdline.addEventListener('keydown', e => {
@@ -239,7 +299,16 @@ cmdline.addEventListener('keydown', e => {
 function buildCards(){
   const el = document.getElementById('insight-cards');
   el.innerHTML = '';
+  let lastGroup = 'main';
   SYSTEMS.forEach(s => {
+    const g = s.group || 'main';
+    if(g !== lastGroup){
+      lastGroup = g;
+      const h = document.createElement('h2');
+      h.className = 'grouphead';
+      h.textContent = '👹 ARCADE CABINETS — every box from the arcade floor';
+      el.appendChild(h);
+    }
     const d = document.createElement('div');
     d.className = 'card ' + s.status.toLowerCase();
     const action = s.status === 'LIVE'
@@ -264,6 +333,7 @@ const GENIE_KB = [
   { k:['ticket'], a:'Ticket Hunter AI will hunt the best true ticket prices and buy only with your exact approval per purchase. It\u2019s being built — nothing buys on its own.' },
   { k:['stadium','rays','ballpark'], a:'The Fan-Owned Stadium is a community-trust model for a real stake in the new publicly-owned Rays ballpark. Research brief is done; build is next.' },
   { k:['decoder','decode','research'], a:'The Decoder Lab is the research engine: investigate anything, grade the evidence, decode it into plain truth. The engine exists; the public lab is next.' },
+  { k:['silhouette','creator','cut','trading card','shadow box'], a:'The Silhouette Creator is the shadow-box builder for sports and trading card artists — pick a version and start cutting. David is still choosing which version becomes the final agentic AI creator.' },
   { k:['who are you','your name','genie'], a:'I\u2019m the hub genie — I answer questions about the Koda Kai Network\u2019s systems. Try \u201cwhat is building\u201d or \u201chow do fins work\u201d.' },
   { k:['help','what can you'], a:'Ask me things like: what is the radio network · what is blob cinema · how do fins work · what is building.' },
 ];
