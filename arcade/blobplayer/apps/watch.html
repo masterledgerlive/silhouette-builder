@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>👁 Watch — BLOBPLAYER</title>
+<style>
+body{background:#07070f;color:#e8e8ff;font-family:system-ui,sans-serif;margin:0;padding:14px;padding-bottom:90px}
+.panel{background:#101022;border:1px solid #26264d;border-radius:12px;padding:14px;margin:12px 0;max-width:720px;margin-left:auto;margin-right:auto}
+.mono{font-family:ui-monospace,monospace;font-size:.75rem;word-break:break-all}
+.btn{background:#1a1a33;border:1px solid #33336a;color:#e8e8ff;border-radius:8px;padding:10px 18px;cursor:pointer;margin:4px;font-size:1rem}
+.win{border:2px solid #2a2a4d;border-radius:10px;padding:10px;margin:10px 0;background:#0d0d1a}
+.win h3{margin:0 0 8px;font-size:.95rem}
+video{width:100%;background:#000;border-radius:8px}
+#log{max-height:200px;overflow-y:auto;background:#0a0a14;border-radius:8px;padding:10px;font-size:.8rem}
+#bnav{position:fixed;bottom:0;left:0;right:0;z-index:50;background:#141428;border-top:2px solid #6C5CE7;display:flex;justify-content:space-around;padding:6px 4px calc(6px + env(safe-area-inset-bottom))}
+#bnav a{color:#b0b0e0;text-decoration:none;font-size:1.3rem;display:flex;flex-direction:column;align-items:center;min-width:52px}
+#bnav a span{font-size:.6rem;margin-top:2px}
+</style>
+</head>
+<body>
+<script src="../errcatch.js"></script>
+<h1 style="text-align:center">👁 Watch</h1>
+<div style="text-align:center;color:#8888aa;font-size:.85rem">4 keys · one stream · pure math</div>
+
+<div class="panel" id="loadpanel">
+  <div id="loadmsg">loading…</div>
+</div>
+
+<div class="panel" id="windows" style="display:none">
+  <div id="winlist"></div>
+</div>
+
+<div class="panel">
+  <h3>🔗 Chain Log</h3>
+  <div id="log"></div>
+</div>
+
+<nav id="bnav">
+<a href="../index.html">🟣<span>home</span></a>
+<a href="./record.html">🔴<span>record</span></a>
+<a href="./watch.html">👁<span>watch</span></a>
+<a href="./library.html">📚<span>library</span></a>
+<a href="../../index.html">🕹<span>arcade</span></a>
+</nav>
+
+<script src="../nacl-min.js"></script>
+<script src="../kernel/protocol.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+const WIN_DELAY=[0,2,4,6];
+let manifest=null, liveKey=null, keyChain=[];
+
+function log(m){ const d=document.createElement('div'); d.innerHTML=m; $('log').prepend(d); }
+
+async function keyAt(i){
+  while(keyChain.length<=i)keyChain.push(BP.derive(keyChain[keyChain.length-1]));
+  return keyChain[i];
+}
+
+async function load(){
+  const q=new URLSearchParams(location.search);
+  const mbid=q.get('watch');
+  const keyHex=location.hash.slice(1);
+  if(!mbid||!keyHex){
+    $('loadmsg').innerHTML='❌ need ?watch=&lt;manifest&gt;#&lt;key&gt;<br><br><a href="./library.html" style="color:#6C5CE7">→ pick from library</a>';
+    return;
+  }
+  try{
+    $('loadmsg').textContent='📥 fetching manifest from Walrus…';
+    const data=await BP.getBlob(mbid);
+    manifest=JSON.parse(new TextDecoder().decode(data));
+    liveKey=BP.bhex(keyHex);
+    keyChain=[liveKey];
+    // If manifest has its own live_key and it differs, use manifest's chain position
+    // The shared key might be K_n for some n>0; find n by deriving forward
+    $('loadmsg').innerHTML=`✅ manifest: ${manifest.chunks.length} chunks`;
+    log(`📋 manifest loaded — ${manifest.chunks.length} chunks`);
+    log(`🔑 starting key: <span class="mono">${keyHex.slice(0,16)}…</span>`);
+    startWindows();
+  }catch(e){
+    $('loadmsg').innerHTML='❌ '+e.message;
+  }
+}
+
+// Find which K_n the given key corresponds to by deriving from manifest live_key
+async function findKeyIndex(targetHex){
+  if(!manifest.live_key)return 0;
+  let k=BP.bhex(manifest.live_key);
+  for(let i=0;i<=manifest.chunks.length+10;i++){
+    if(BP.hex(k)===targetHex)return i;
+    k=BP.derive(k);
+  }
+  return -1; // not in chain — try brute force per chunk
+}
+
+async function startWindows(){
+  $('windows').style.display='block';
+  $('loadpanel').style.display='none';
+  const wl=$('winlist'); wl.innerHTML='';
+
+  // Determine key offset: shared key might be K_m for m>0
+  const targetHex=BP.hex(liveKey);
+  let keyOffset=await findKeyIndex(targetHex);
+  if(keyOffset<0){
+    log('⚠️ key not in main chain — will brute-force per chunk');
+    keyOffset=0;
+  }else{
+    log(`🔑 shared key is K_${keyOffset} in the chain`);
+  }
+
+  WIN_DELAY.forEach((delay,wi)=>{
+    const div=document.createElement('div');
+    div.className='win';
+    div.innerHTML=`<h3>Window ${wi+1} ${delay===0?'· LIVE':`· ${delay} behind`}</h3>
+      <video id="wv${wi}" controls playsinline muted></video>
+      <div class="mono" id="wkey${wi}" style="margin-top:6px;color:#6C5CE7">key: —</div>
+      <div class="mono" id="wstat${wi}" style="color:#888">waiting…</div>`;
+    wl.appendChild(div);
+    pumpWindow(wi,delay,keyOffset);
+  });
+
+  // Poll for new chunks (incremental manifest)
+  setInterval(async ()=>{
+    try{
+      const q=new URLSearchParams(location.search);
+      const data=await BP.getBlob(q.get('watch'));
+      const m=JSON.parse(new TextDecoder().decode(data));
+      if(m.chunks.length>manifest.chunks.length){
+        const added=m.chunks.length-manifest.chunks.length;
+        manifest=m;
+        log(`📋 manifest updated: +${added} chunks (${m.chunks.length} total)`);
+      }
+    }catch(e){}
+  },15000);
+}
+
+async function pumpWindow(wi,delay,keyOffset){
+  const v=$('wv'+wi);
+  let nextN=0;
+  const seen=new Set();
+  while(true){
+    const chunks=manifest.chunks;
+    const target=chunks.length-1-delay;
+    if(nextN>target){ await new Promise(r=>setTimeout(r,1000)); continue; }
+    const c=chunks[nextN];
+    if(!c||seen.has(c.n)){ nextN++; continue; }
+    seen.add(c.n);
+    try{
+      $('wstat'+wi).textContent=`📥 fetching chunk ${c.n}…`;
+      const packed=await BP.getBlob(c.blob);
+      // Try key at expected position, then brute force
+      let key=null, keyIdxUsed=-1;
+      const expectedIdx=keyOffset+c.keyIdx;
+      // keyOffset is where our liveKey sits; chunk's keyIdx is relative to manifest live_key
+      // So we derive from manifest live_key to c.keyIdx
+      let mk=BP.bhex(manifest.live_key||BP.hex(liveKey));
+      for(let i=0;i<c.keyIdx;i++)mk=BP.derive(mk);
+      key=mk; keyIdxUsed=c.keyIdx;
+
+      let plain=BP.decryptChunk(packed,key);
+      if(!plain){
+        // brute force: try all keys in chain
+        $('wstat'+wi).textContent=`🔍 brute-forcing key…`;
+        let bk=BP.bhex(manifest.live_key||BP.hex(liveKey));
+        for(let i=0;i<=chunks.length+5;i++){
+          plain=BP.decryptChunk(packed,bk);
+          if(plain){ key=bk; keyIdxUsed=i; break; }
+          bk=BP.derive(bk);
+        }
+      }
+      if(!plain)throw new Error('decrypt failed with all keys');
+
+      $('wkey'+wi).textContent=`🔑 K_${keyIdxUsed} = ${BP.hex(key).slice(0,20)}… ✓`;
+      log(`✓ W${wi+1} unlocked chunk ${c.n} with K_${keyIdxUsed}`);
+
+      const url=URL.createObjectURL(new Blob([plain],{type:'video/webm'}));
+      await new Promise(resolve=>{
+        v.src=url;
+        v.onended=()=>{URL.revokeObjectURL(url);resolve();};
+        v.onerror=()=>{URL.revokeObjectURL(url);resolve();};
+        v.play().catch(()=>{});
+        setTimeout(()=>{try{URL.revokeObjectURL(url);}catch(e){}resolve();},10000);
+      });
+      $('wstat'+wi).textContent=`✓ played chunk ${c.n}`;
+    }catch(e){
+      $('wstat'+wi).textContent=`❌ chunk ${c.n}: ${e.message}`;
+      await new Promise(r=>setTimeout(r,2000));
+    }
+    nextN++;
+  }
+}
+
+load();
+</script>
+</body>
+</html>
