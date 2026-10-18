@@ -56,28 +56,6 @@
   #payToken, #payAmt { font-family:inherit; background:#0d0d22; color:#e8e8f5;
           border:1px solid #33336a; border-radius:8px; padding:10px; font-size:.85rem; }
   #payAmt { width:110px; }
-  .steps { counter-reset:st; list-style:none; margin:0 0 16px; }
-  .steps li { counter-increment:st; position:relative; padding:0 0 12px 38px; color:#c9c9e8;
-              font-size:.88rem; line-height:1.7; }
-  .steps li::before { content:counter(st); position:absolute; left:0; top:0; width:26px; height:26px;
-              border:1px solid var(--neon); border-radius:50%; text-align:center; line-height:24px;
-              color:var(--neon); font-size:.8rem; }
-  .steps li b { color:#fff; }
-  .rw { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:10px 0 16px; }
-  .rw div { border:1px solid #2a2a5a; border-radius:10px; padding:12px; font-size:.82rem; line-height:1.7; color:#b9b9d8; }
-  .rw h3 { font-size:.85rem; letter-spacing:.12em; margin-bottom:6px; }
-  .rw .r h3 { color:var(--neon); } .rw .w h3 { color:var(--pink); }
-  @media (max-width:640px) { .rw { grid-template-columns:1fr; } }
-  .vbox { margin-top:10px; font-size:.8rem; line-height:1.7; word-break:break-all; }
-  .vline.ok b { color:#4ade80; } .vline.bad b { color:#f66; } .vline.wait b { color:#888; }
-  .vdetail { color:#77779a; margin:0 0 6px 18px; }
-  #locations { flex-direction:column; }
-  .runcard { border:1px solid #2a2a5a; border-radius:12px; padding:14px; }
-  .runcard dl { display:grid; grid-template-columns:max-content 1fr; gap:4px 12px; margin:12px 0;
-                font-size:.78rem; word-break:break-all; }
-  .runcard dt { color:var(--pink); } .runcard dd { color:#c9c9e8; }
-  .testnet { display:inline-block; border:1px solid #fbbf24; color:#fbbf24; border-radius:999px;
-             padding:2px 10px; font-size:.72rem; letter-spacing:.1em; margin-left:8px; }
   footer { text-align:center; color:#66668a; font-size:.8rem; margin-top:36px; line-height:2; }
 </style>
 </head>
@@ -89,17 +67,24 @@
     <div class="sub">SEALED · PLAYABLE · 1993</div>
   </header>
 
-  <div class="free">1 FIN = 1 PLAY — CONNECT · VERIFY · PAY</div>
-
-  <div class="panel" id="freeBar" style="display:none;border-color:#fbbf24">
-    <h2 style="color:#fbbf24">FREE PLAY — TEST MODE</h2>
-    <div class="whint" style="color:#c9c9e8;line-height:1.8">No wallet, no fins, nothing written on-chain. SEAL is switched off,
-      so free runs never reach the inject relay and spend no gas. VERIFY NOW still works.</div>
-    <div class="wrow" style="margin-top:12px">
-      <button id="freePlayBtn" class="wbtn big" style="background:#fbbf24">PLAY FREE</button>
-      <button id="freeEndBtn" class="wbtn">END FREE PLAY</button>
+  <div class="cabinet" id="cabinetTop">
+    <button id="freePlayBtn" class="wbtn big" style="font-size:1.1rem; padding:16px 40px;">▶ PLAY DOOM</button>
+    <div class="controls" style="margin-top:14px">
+      <b>Arrows</b> move · <b>Ctrl</b> fire · <b>Space</b> use/open · <b>Shift</b> run ·
+      <b>, / .</b> strafe · <b>Tab</b> map · <b>Enter</b> select · <b>Esc</b> menu
     </div>
   </div>
+
+  <div class="cabinet" id="cabinet" style="display:none">
+    <canvas id="screen" width="320" height="200"></canvas>
+    <div id="status">Warming up the cabinet…</div>
+  </div>
+
+  <details style="margin-bottom:24px">
+    <summary style="cursor:pointer; color:var(--neon); letter-spacing:.15em; padding:12px; border:1px solid #2a2a5a; border-radius:14px; text-align:center;">🔧 UNDER THE HOOD — wallet · fins · seals · proofs</summary>
+    <div style="padding-top:16px">
+
+  <div class="free">1 FIN = 1 PLAY — CONNECT · VERIFY · PAY</div>
 
   <div class="panel" id="walletPanel">
     <h2>WALLET — LOGIN TO PLAY</h2>
@@ -124,10 +109,6 @@
       <span class="whint" id="playHint"></span>
     </div>
     <div id="wNote" class="whint"></div>
-    <div id="wDeep" class="wrow" style="display:none;margin-top:8px"></div>
-    <div class="wrow" style="margin-top:8px">
-      <button id="freeTryBtn" class="wbtn" style="border-color:#fbbf24;color:#fbbf24">TRY FREE PLAY (no seal)</button>
-    </div>
     <div class="whint" style="margin-top:8px">TEST MODE: the treasury is David's own wallet — right now you are paying yourself. Base mainnet.</div>
   </div>
 
@@ -141,28 +122,18 @@
   </div>
 
   <div class="panel">
-    <h2>HOW THIS CABINET PROVES ITSELF <span class="testnet">BASE SEPOLIA · TESTNET</span></h2>
-    <ol class="steps">
-      <li><b>The game is just two files.</b> <code>doom.wasm</code> is the engine and
-        <code>doom1.wad</code> holds the levels, art and sound. Your browser downloads them and runs them —
-        nothing is streamed from a server.</li>
-      <li><b>Each file gets a fingerprint.</b> A SHA-256 hash is a 64-character fingerprint: change one byte
-        of the game and the fingerprint changes completely.</li>
-      <li><b>The fingerprints are bundled into a manifest.</b> The manifest's single summary fingerprint is the
-        <b>Merkle root</b>. The bundle of game bytes was stored as a <b>Quilt blob</b> with its own id.</li>
-      <li><b>The blob id + Merkle root were written on-chain.</b> That is the <b>seal transaction</b> below.
-        Once a block is confirmed nobody — including us — can edit what it says.</li>
-      <li><b>Anyone can check.</b> Press <b>VERIFY NOW</b>: your browser re-hashes the files it is about to play
-        and reads the seal straight from the public chain. If every line is ✓ the game you play is the game
-        that was sealed.</li>
-    </ol>
-    <div class="rw">
-      <div class="r"><h3>FREE READ</h3>Checking proofs costs nothing. No wallet, no signature, no gas —
-        just public RPC and the block explorer. Anyone can do it, any time.</div>
-      <div class="w"><h3>PAID WRITE (KEY)</h3>Writing something new on-chain — like sealing your run — costs gas.
-        The relay's paying key covers it. It is on testnet until the mainnet relay is secured
-        (login, rate limit, daily cap).</div>
-    </div>
+    <h2>SEAL YOUR RUN</h2>
+    <p style="color:#b9b9d8; font-size:.9rem; line-height:1.7; margin-bottom:12px">
+      Every run can live on-chain. Your inputs are hashed into a run claim and
+      injected through the Guardian pathway — the button it creates is the
+      run's on-chain location, relayed by code injection.</p>
+    <button id="sealBtn">SEAL THIS RUN ⛓</button>
+    <div id="sealOut"></div>
+    <div id="locations"></div>
+  </div>
+
+  <div class="panel">
+    <h2>WHERE THIS CODE LIVES — PROOFS</h2>
     <div class="proof">
       <span class="lbl">SEALED QUILT BLOB</span><br>
       <b>df8a82beb4ad1fe6e412fbd2a5f5c4b0785bb49b785782023aa43a1906062a18</b><br>
@@ -173,32 +144,15 @@
       <span class="lbl">SEAL TRANSACTION</span><br>
       <b>0x646610e26c7557ad53ab6a1560ba27a79a0c17cd0be694979aaaccab8808ec78</b>
       <a target="_blank" rel="noopener" href="https://sepolia.basescan.org/tx/0x646610e26c7557ad53ab6a1560ba27a79a0c17cd0be694979aaaccab8808ec78">view →</a><br>
-      <span class="lbl">CHAIN</span> <b>Base Sepolia · block 47956932</b><br>
-      <span class="lbl">WHAT THE TX SAYS</span><br>
-      <b>§$STORE§§DOOM§seal/v1§BLOB§df8a82be…062a18§ROOT§ba89d5f3…61b46cf§TS§2026-10-10</b>
+      <span class="lbl">CHAIN</span> <b>Base Sepolia · block 47956932</b><br><br>
+      The bytes you are playing were recovered from the sealed shards and are
+      byte-identical to the manifest above. Anyone can re-fetch, re-encode, and
+      compare — that's the proof, not our word.
     </div>
-    <button id="verifyBtnProof" class="wbtn big" style="margin-top:14px">VERIFY NOW — FREE</button>
-    <div id="verifyOut" class="vbox"></div>
   </div>
 
-  <div class="panel">
-    <h2>SEAL YOUR RUN</h2>
-    <ol class="steps">
-      <li><b>Your run becomes a fingerprint.</b> Every key you press (and when) plus the tic and frame counts are
-        hashed into a <b>run hash</b>.</li>
-      <li><b>The fingerprint is injected on-chain.</b> SEAL THIS RUN sends a short payload
-        (<code>§DOOMPLAY§v1§RUN§…</code>) to the inject relay, which writes it in a transaction. The relay returns
-        the <b>tx hash</b> and, when it provides them, an <b>inject id</b> and <b>hitch id</b>.</li>
-      <li><b>You get a location card.</b> The pink button is the run's on-chain location. The card is saved in
-        this browser, so it is still here after you close the tab. <b>CHECK ON-CHAIN</b> reads the tx back and
-        confirms its data matches your payload.</li>
-    </ol>
-    <button id="sealBtn">SEAL THIS RUN ⛓</button>
-    <div id="sealOut"></div>
-    <div class="whint" style="margin-top:14px"><span id="runCount"></span> ·
-      <a href="#" id="clearRuns">forget saved cards</a></div>
-    <div id="locations"></div>
-  </div>
+    </div>
+  </details>
 
   <footer>
     Arcades of Time · the cabinet seals itself as you play<br>
@@ -206,9 +160,15 @@
   </footer>
 
 </div>
-<script src="free.js"></script>
 <script src="wallet.js"></script>
-<script src="proof.js"></script>
 <script src="doom.js"></script>
+<script>
+  /* kid-mode: one tap, no wallet, no fins — just plays */
+  document.getElementById('freePlayBtn').addEventListener('click', function(){
+    document.getElementById('cabinetTop').style.display = 'none';
+    document.getElementById('cabinet').style.display = 'block';
+    window.startDoom();
+  });
+</script>
 </body>
 </html>
