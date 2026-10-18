@@ -174,29 +174,47 @@ async function startPhone(total){
   }
   // Sequential playback: play each chunk's blob URL in order.
   // iOS can't concat MP4 fragments, but it CAN play them one after another.
+  // Fix for "operation was aborted": wait for canplay before play(), revoke old URLs.
   $('stat').textContent=`✓ ${ok}/${total} unlocked — playing…`;
   let ci=0;
+  let currentURL=null;
   const playChunk=()=>{
     if(ci>=chunkURLs.length){
       $('stat').textContent=`✓ finished ${ok}/${total} chunks`;
+      if(currentURL) URL.revokeObjectURL(currentURL);
       return;
     }
     $('pos').textContent=`playing chunk ${ci+1} / ${chunkURLs.length}`;
-    v.src=chunkURLs[ci];
+    // Revoke previous to avoid abort conflicts
+    if(currentURL) URL.revokeObjectURL(currentURL);
+    currentURL=chunkURLs[ci];
+    v.src=currentURL;
     v.muted=true;
-    v.play().then(()=>{
-      v.onended=()=>{ ci++; playChunk(); };
-    }).catch(()=>{
-      if(!v.dataset.tapShown){
-        v.dataset.tapShown='1';
-        const ov=document.createElement('div');
-        ov.style.cssText='position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.6);z-index:5;cursor:pointer';
-        ov.innerHTML='<div style="font-size:3rem;background:#6C5CE7;border-radius:50%;width:90px;height:90px;display:flex;align-items:center;justify-content:center">▶</div>';
-        ov.onclick=()=>{ v.play().catch(()=>{}); ov.remove(); v.onended=()=>{ ci++; playChunk(); }; };
-        v.parentElement.style.position='relative';
-        v.parentElement.appendChild(ov);
+    // Wait for canplay before play() to avoid "operation was aborted"
+    const onCanPlay=()=>{
+      v.removeEventListener('canplay',onCanPlay);
+      v.play().then(()=>{
+        v.onended=()=>{ ci++; playChunk(); };
+      }).catch((e)=>{
+        // If play() fails, show tap overlay (don't crash)
+        if(!v.dataset.tapShown){
+          v.dataset.tapShown='1';
+          const ov=document.createElement('div');
+          ov.style.cssText='position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.6);z-index:5;cursor:pointer';
+          ov.innerHTML='<div style="font-size:3rem;background:#6C5CE7;border-radius:50%;width:90px;height:90px;display:flex;align-items:center;justify-content:center">▶</div>';
+          ov.onclick=()=>{ v.play().catch(()=>{}); ov.remove(); v.onended=()=>{ ci++; playChunk(); }; };
+          v.parentElement.style.position='relative';
+          v.parentElement.appendChild(ov);
+        }
+      });
+    };
+    v.addEventListener('canplay',onCanPlay);
+    // Timeout fallback: if canplay never fires, try play anyway after 2s
+    setTimeout(()=>{
+      if(v.readyState>=2 && v.paused && !v.dataset.tapShown){
+        v.play().catch(()=>{});
       }
-    });
+    },2000);
   };
   playChunk();
   if(errs.length) $('stat').innerHTML+=`<br><span style="font-size:.75rem">${errs.join('<br>')}</span>`;
