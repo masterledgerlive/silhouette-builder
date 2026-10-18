@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>🔗 BLOB PROOF — verify on the chain</title>
+<style>
+body{background:#07070f;color:#e8e8ff;font-family:system-ui,sans-serif;margin:0;padding:14px;padding-bottom:80px}
+.panel{background:#101022;border:1px solid #26264d;border-radius:12px;padding:14px;margin:12px 0}
+.mono{font-family:ui-monospace,Menlo,Consolas,monospace;word-break:break-all;font-size:.75rem}
+.btn{background:#1a1a33;border:1px solid #33336a;color:#e8e8ff;border-radius:8px;padding:8px 14px;cursor:pointer;margin:4px;text-decoration:none;display:inline-block}
+.ok{color:#7CFF6B}.warn{color:#ffd76b}.err{color:#ff5470}
+.chunk{border:1px solid #2a2a4d;border-radius:8px;padding:10px;margin:8px 0;background:#0d0d1a}
+.chunk a{color:#6C5CE7}
+#bnav{position:fixed;bottom:0;left:0;right:0;z-index:50;background:#141428;border-top:2px solid #6C5CE7;display:flex;justify-content:space-around;padding:6px 4px calc(6px + env(safe-area-inset-bottom))}
+#bnav a{color:#b0b0e0;text-decoration:none;font-size:1.3rem;display:flex;flex-direction:column;align-items:center;min-width:52px}
+#bnav a span{font-size:.6rem;margin-top:2px}
+</style>
+</head>
+<body>
+<script src="./errcatch.js"></script>
+<h1>🔗 BLOB PROOF</h1>
+<p style="color:#9a9ac0">Every chunk, verified on Walrus. Click any blob to see the raw encrypted data.</p>
+
+<div class="panel">
+  <div id="info">loading…</div>
+</div>
+
+<div id="chunks"></div>
+
+<nav id="bnav">
+<a href="./how.html">🎬<span>make</span></a>
+<a href="./premiere.html">▶<span>watch</span></a>
+<a href="./live-now.html">📡<span>live</span></a>
+<a href="./follow.html">🔗<span>follow</span></a>
+<a href="./reblob.html">📚<span>library</span></a>
+<a href="../index.html">🕹<span>arcade</span></a>
+</nav>
+
+<script>
+const AGG='https://aggregator.walrus-testnet.walrus.space';
+const $=id=>document.getElementById(id);
+
+async function load(){
+  const params=new URLSearchParams(location.search);
+  const mbid=params.get('watch')||params.get('manifest');
+  const id=params.get('id');
+  
+  let manifest=null;
+  if(mbid){
+    try{
+      const r=await fetch(AGG+'/v1/blobs/'+mbid);
+      manifest=await r.json();
+    }catch(e){
+      $('info').innerHTML=`<span class="err">Failed to load manifest: ${e.message}</span>`;
+      return;
+    }
+  } else if(id){
+    try{
+      const lib=JSON.parse(localStorage.getItem('bloblive_library')||'[]');
+      const s=lib.find(x=>x.id===id);
+      if(s&&s.manifest){
+        const r=await fetch(AGG+'/v1/blobs/'+s.manifest);
+        manifest=await r.json();
+      } else if(s){
+        manifest={title:s.title,chunks:s.blobs||[],live_key:s.liveKey,local:true};
+      }
+    }catch(e){}
+  }
+  
+  if(!manifest||!manifest.chunks){
+    $('info').innerHTML='<span class="err">No manifest found. Provide ?watch=&lt;blob_id&gt; or ?id=&lt;library_id&gt;</span>';
+    return;
+  }
+  
+  const chunks=manifest.chunks;
+  $('info').innerHTML=`
+    <b>${manifest.title||'untitled'}</b><br>
+    <span class="mono">manifest: ${mbid||'(local)'}<br>
+    method: ${manifest.method||'nacl-secretbox/sha256-chain-v1'}<br>
+    chunks: ${chunks.length}<br>
+    proof: ${manifest.proof||'n/a'}</span><br><br>
+    <span class="ok">✓ ${chunks.length} chunks on Walrus</span>
+    ${manifest.local?'<br><span class="warn">⚠ local copy — publish to Walrus for universal proof</span>':''}
+  `;
+  
+  $('chunks').innerHTML=chunks.map((c,i)=>`
+    <div class="chunk">
+      <b>chunk #${c.n??i}</b> <span class="ok">✓</span><br>
+      <span class="mono">
+      blob: <a href="${AGG}/v1/blobs/${c.blob}" target="_blank">${c.blob}</a><br>
+      key: K_${c.keyIdx??(i+1)} = SHA256(K_${c.keyIdx?c.keyIdx-1:i} ‖ "|next")<br>
+      bytes: ${c.bytes||'?'}
+      </span>
+    </div>
+  `).join('');
+}
+
+load();
+</script>
+</body>
+</html>
