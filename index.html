@@ -99,7 +99,8 @@
   <!-- ============ COMPUTER ============ -->
   <section class="mode" id="mode-computer">
     <div style="text-align:center;margin-bottom:12px">
-      <a href="terminal/" style="display:inline-block;padding:10px 22px;border:2px solid var(--green);border-radius:10px;color:var(--green);text-decoration:none;letter-spacing:.1em;text-shadow:0 0 8px #3f6">⛶ OPEN FULL DOS TERMINAL — maximum geek</a>
+      <a href="dos/" style="display:inline-block;padding:10px 22px;border:2px solid var(--green);border-radius:10px;color:var(--green);text-decoration:none;letter-spacing:.1em;text-shadow:0 0 8px #3f6">⛶ OPEN FULL DOS TERMINAL — maximum geek</a>
+      <a href="bridge/" style="display:inline-block;padding:10px 22px;border:2px solid var(--neon);border-radius:10px;color:var(--neon);text-decoration:none;letter-spacing:.1em;text-shadow:0 0 8px #0af;margin-left:8px">🌉 OPEN KKN BRIDGE — desktop command deck</a>
     </div>
     <div class="term" id="term" onclick="document.getElementById('cmdline').focus()">
       <div class="out" id="termout"></div>
@@ -275,13 +276,15 @@ function runCmd(raw){
     tprint('  HELP     this list');
     tprint('  DIR      list all systems');
     tprint('  DOS      open the full geeky DOS terminal');
+    tprint('  BRIDGE   open the KKN Bridge command deck');
     tprint('  KID      switch to kid mode');
     tprint('  INSIGHT  switch to insight mode');
     tprint('  CLEAR    clear the screen');
     tprint('  + any system id from DIR opens it (DOOM, SCORES, CREATE ...)');
   } else if(c === 'DIR'){ dirList();
   } else if(c === 'CLEAR'){ termout.textContent = '';
-  } else if(c === 'DOS'){ tprint('jacking into the full DOS terminal …'); window.open('terminal/', '_blank');
+  } else if(c === 'DOS'){ tprint('jacking into the full DOS terminal …'); window.open('dos/', '_blank');
+  } else if(c === 'BRIDGE'){ tprint('opening the KKN Bridge command deck …'); window.open('bridge/', '_blank');
   } else if(c === 'KID'){ tprint('switching to KID mode…'); setTimeout(() => setMode('kid'), 400);
   } else if(c === 'INSIGHT'){ tprint('switching to INSIGHT mode…'); setTimeout(() => setMode('insight'), 400);
   } else {
