@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>📚 Library — BLOBPLAYER</title>
+<style>
+body{background:#07070f;color:#e8e8ff;font-family:system-ui,sans-serif;margin:0;padding:14px;padding-bottom:90px}
+.panel{background:#101022;border:1px solid #26264d;border-radius:12px;padding:14px;margin:12px 0;max-width:700px;margin-left:auto;margin-right:auto}
+.mono{font-family:ui-monospace,monospace;font-size:.75rem;word-break:break-all}
+.btn{background:#1a1a33;border:1px solid #33336a;color:#e8e8ff;border-radius:8px;padding:8px 14px;cursor:pointer;margin:4px;font-size:.9rem}
+.item{border:1px solid #2a2a4d;border-radius:8px;padding:12px;margin:8px 0;background:#0d0d1a}
+#bnav{position:fixed;bottom:0;left:0;right:0;z-index:50;background:#141428;border-top:2px solid #6C5CE7;display:flex;justify-content:space-around;padding:6px 4px calc(6px + env(safe-area-inset-bottom))}
+#bnav a{color:#b0b0e0;text-decoration:none;font-size:1.3rem;display:flex;flex-direction:column;align-items:center;min-width:52px}
+#bnav a span{font-size:.6rem;margin-top:2px}
+</style>
+</head>
+<body>
+<script src="../errcatch.js"></script>
+<h1 style="text-align:center">📚 Library</h1>
+
+<div class="panel">
+  <h3>Your Recordings</h3>
+  <div id="list"></div>
+</div>
+
+<div class="panel">
+  <h3>🔗 Open from Link</h3>
+  <p style="font-size:.85rem;color:#888">Paste any blobplayer share link to add it to your library.</p>
+  <input id="linkin" placeholder="paste watch link…" style="width:100%;background:#0a0a14;border:1px solid #33336a;color:#e8e8ff;border-radius:6px;padding:8px" class="mono">
+  <button class="btn" onclick="addLink()">➕ add</button>
+</div>
+
+<nav id="bnav">
+<a href="../index.html">🟣<span>home</span></a>
+<a href="./record.html">🔴<span>record</span></a>
+<a href="./watch.html">👁<span>watch</span></a>
+<a href="./library.html">📚<span>library</span></a>
+<a href="../../index.html">🕹<span>arcade</span></a>
+</nav>
+
+<script>
+function render(){
+  const lib=JSON.parse(localStorage.getItem('bp_library')||'[]');
+  const el=document.getElementById('list');
+  if(!lib.length){ el.innerHTML='<p style="color:#888">no recordings yet — <a href="./record.html" style="color:#6C5CE7">make one →</a></p>'; return; }
+  el.innerHTML=lib.map((v,i)=>`
+    <div class="item">
+      <b>${v.title}</b><br>
+      <span class="mono" style="color:#888">${v.chunks} chunks · ${new Date(v.at).toLocaleString()}</span><br>
+      <a href="./watch.html?watch=${v.manifest}#${v.liveKey}" class="btn" style="display:inline-block;text-decoration:none;margin-top:8px">▶ watch</a>
+      <a href="./proof.html?watch=${v.manifest}" class="btn" style="display:inline-block;text-decoration:none;margin-top:8px">🔍 proof</a>
+      <button class="btn" onclick="share(${i})">🔗 share</button>
+    </div>`).join('');
+}
+function share(i){
+  const lib=JSON.parse(localStorage.getItem('bp_library')||'[]');
+  const v=lib[i];
+  const url=location.origin+location.pathname.replace('library.html','watch.html')+`?watch=${v.manifest}#${v.liveKey}`;
+  if(navigator.share){ navigator.share({title:'BLOBPLAYER',url}).catch(()=>{}); }
+  prompt('share link:',url);
+}
+function addLink(){
+  const url=document.getElementById('linkin').value.trim();
+  const m=url.match(/watch=([A-Za-z0-9_-]+)#([a-f0-9]{64})/);
+  if(!m){ alert('not a valid blobplayer link'); return; }
+  const lib=JSON.parse(localStorage.getItem('bp_library')||'[]');
+  lib.unshift({id:'bp-'+Date.now(),title:'shared video',at:Date.now(),manifest:m[1],liveKey:m[2],chunks:'?'});
+  localStorage.setItem('bp_library',JSON.stringify(lib.slice(0,50)));
+  document.getElementById('linkin').value='';
+  render();
+}
+render();
+</script>
+</body>
+</html>
