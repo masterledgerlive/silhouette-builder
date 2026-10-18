@@ -15,12 +15,27 @@
     -webkit-tap-highlight-color: transparent;
   }
   #crt {
-    position:fixed; inset:0; padding:14px 14px 20px;
+    position:fixed; inset:0; padding:14px 14px 64px;
     overflow-y:auto; overflow-x:hidden;
     text-shadow:0 0 6px rgba(51,255,51,.75);
     cursor:text;
     scrollbar-width:thin; scrollbar-color:#1a5c1a #020502;
   }
+  /* quick-launch bar */
+  #quickbar {
+    position:fixed; left:0; right:0; bottom:0; z-index:60;
+    display:flex; gap:6px; justify-content:center; align-items:center;
+    padding:8px 6px; background:rgba(2,8,2,.92);
+    border-top:1px solid #1f5c1f; overflow-x:auto;
+    font-size:13px; white-space:nowrap;
+  }
+  #quickbar button {
+    background:#031003; color:#33ff33; border:1px solid #1f5c1f; border-radius:6px;
+    font-family:inherit; font-size:13px; padding:6px 9px; cursor:pointer;
+    text-shadow:0 0 6px rgba(51,255,51,.7); flex:0 0 auto;
+  }
+  #quickbar button:active { background:#0a2a0a; }
+  #quickbar .qk { color:#1f9d1f; margin-right:2px; }
   /* scanlines */
   #crt::after {
     content:''; position:fixed; inset:0; pointer-events:none; z-index:50;
@@ -104,10 +119,12 @@
     'theater-old': { name:'Blob Theater (origin)', url:'https://arcade.highscores.live/arcade/blob-theater/' },
     tickets:    { name:'Ticket Hunter AI',         building:true },
     stadium:    { name:'Fan-Owned Stadium',        building:true },
-    decoder:    { name:'Decoder Lab',              building:true }
+    decoder:    { name:'Decoder Lab',              building:true },
+    guardian:   { name:'Guardian Protocol',        infra:true, desc:'the hive pathway — mother-chain anchoring' }
   };
 
   var GROUPS = [
+    { title:'[INFRASTRUCTURE]', ids:['guardian'] },
     { title:'[NETWORK]',        ids:['radio','arcade','cinema','silhouette'] },
     { title:'[ARCADE CABINETS]', ids:['doom','live','follow','how','livenow','studio','reblob','scores','play','sliders','bbb','diag','theater-old'] },
     { title:'[BUILDING]',       ids:['tickets','stadium','decoder'] }
@@ -176,6 +193,8 @@
         var s = SYSTEMS[id];
         var tag = s.building
           ? '<span class="warn">[BUILDING]</span>'
+          : s.infra
+          ? '<span class="bright">[CORE]</span>    '
           : '<span class="dim">[LIVE]</span>    ';
         print('  ' + tag + ' ' + id.toUpperCase().padEnd(12,' ') + ' ' + esc(s.name));
       });
@@ -213,6 +232,9 @@
       var s = SYSTEMS[id];
       if(s.building){
         print(esc(s.name) + ' is still being built, chief.');
+      } else if(s.infra){
+        print('<span class="bright">' + esc(s.name) + '</span> — ' + esc(s.desc));
+        print('Core infrastructure. Always on.');
       } else {
         print('opening ' + esc(s.name) + ' ...');
         window.open(s.url, '_blank');
@@ -228,14 +250,22 @@
     { t: 120, h: '<span class="bright">KODA KAI NETWORK DOS</span>  <span class="dim">v7.1</span>' },
     { t: 120, h: 'the system of all systems' },
     { t: 200, h: '' },
-    { t:  90, h: 'Memory check ............ <span class="dim">640K ought to be enough</span> ... OK' },
-    { t:  90, h: 'Loading modules ......... radio uplink ... OK' },
-    { t:  90, h: 'Loading modules ......... arcade core .... OK' },
-    { t:  90, h: 'Loading modules ......... blob vault ..... OK' },
-    { t:  90, h: 'Loading modules ......... silhouette .... OK' },
+    { t:  90, h: '<span class="bright">INFRASTRUCTURE</span>' },
+    { t:  90, h: '  [ROOT] MOTHER GENESIS BLOCKCHAIN' },
+    { t:  90, h: '    |- merkle tree ...... every build hashed in' },
+    { t:  90, h: '    |- blobs ............ carry the whole system' },
+    { t:  90, h: '    |- container ........ travels whole, as a file' },
+    { t:  90, h: '    |- reblob keeper .... no move missed (Walrus/Sui)' },
+    { t:  90, h: '    |- guardian ......... the hive pathway [CORE]' },
+    { t: 200, h: '' },
+    { t:  90, h: '<span class="bright">SYSTEMS — type a name to spin it up</span>' },
+    { t:  90, h: '  [NETWORK]  radio · arcade · cinema · silhouette' },
+    { t:  90, h: '  [ARCADE]   doom · live · follow · how · livenow · studio ·' },
+    { t:  90, h: '             reblob · scores · play · sliders · bbb · diag · theater-old' },
+    { t:  90, h: '  [BUILDING] tickets · stadium · decoder' },
     { t: 200, h: '' },
     { t: 100, h: '<span class="bright">ALL SYSTEMS NOMINAL</span>' },
-    { t: 100, h: 'Type HELP for commands.' },
+    { t: 100, h: 'Type HELP for commands, DIR for details.' },
     { t: 150, h: '' }
   ];
   var bi = 0;
@@ -248,6 +278,46 @@
     }
   }
   stepBoot();
+})();
+</script>
+<div id="quickbar">
+  <button data-id="radio"><span class="qk">1</span>🎙</button>
+  <button data-id="arcade"><span class="qk">2</span>👹</button>
+  <button data-id="cinema"><span class="qk">3</span>🎬</button>
+  <button data-id="silhouette"><span class="qk">4</span>✂️</button>
+  <button data-id="doom"><span class="qk">5</span>💀</button>
+  <button data-id="live"><span class="qk">6</span>🔴</button>
+  <button data-id="scores"><span class="qk">7</span>🏆</button>
+  <button data-id="play"><span class="qk">8</span>▶️</button>
+  <button data-id="studio"><span class="qk">9</span>🎥</button>
+  <button data-id="follow"><span class="qk">0</span>🔗</button>
+  <button id="qb-dir">☰</button>
+</div>
+<script>
+(function(){
+  var urls = {
+    radio:'https://arcade.highscores.live/arcade/kodakainetwork/',
+    arcade:'https://arcade.highscores.live/arcade/',
+    cinema:'https://arcade.highscores.live/arcade/blob-cinema/',
+    silhouette:'https://arcade.highscores.live/silouttes/',
+    doom:'https://arcade.highscores.live/arcade/doom/',
+    live:'https://arcade.highscores.live/arcade/blob-cinema/live.html',
+    scores:'https://arcade.highscores.live/arcade/blob-cinema/scores.html',
+    play:'https://arcade.highscores.live/arcade/blob-cinema/play.html',
+    studio:'https://arcade.highscores.live/arcade/blob-cinema/studio.html',
+    follow:'https://arcade.highscores.live/arcade/blob-cinema/follow.html'
+  };
+  document.querySelectorAll('#quickbar button[data-id]').forEach(function(b){
+    b.addEventListener('click', function(e){
+      e.stopPropagation();
+      var u = urls[b.getAttribute('data-id')];
+      if(u) window.open(u, '_blank');
+    });
+  });
+  document.getElementById('qb-dir').addEventListener('click', function(e){
+    e.stopPropagation();
+    window.open('https://arcade.highscores.live/', '_blank');
+  });
 })();
 </script>
 </body>
