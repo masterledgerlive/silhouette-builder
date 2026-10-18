@@ -281,9 +281,9 @@ async function shareLiveNow(){
     const manifest={v:1,type:'blob-manifest',title:'live-now',created_at:Date.now(),
       method:'nacl-secretbox/sha256-chain-v1',chunks:chunks.map(c=>({...c})),live:true,
       tail:{v:1,community:{artifacts:[],game_assets:[],channels:[],votes:{}},reblob:{policy:'auto',count:0}}};
-    // timeout: Walrus PUTs hang sometimes — 30s max
+    // timeout: Walrus PUTs can be slow — 120s max (was 30s, too short)
     const ctrl=new AbortController();
-    const to=setTimeout(()=>ctrl.abort(),30000);
+    const to=setTimeout(()=>ctrl.abort(),120000);
     const r=await fetch(PUB+'/v1/blobs?epochs=5',{method:'PUT',signal:ctrl.signal,
       body:new TextEncoder().encode(JSON.stringify(manifest))});
     clearTimeout(to);
