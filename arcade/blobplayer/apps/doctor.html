@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>🩺 Doctor — BLOBPLAYER</title>
+<style>
+body{background:#07070f;color:#e8e8ff;font-family:system-ui,sans-serif;margin:0;padding:14px;padding-bottom:80px}
+.panel{background:#101022;border:1px solid #26264d;border-radius:12px;padding:14px;margin:12px 0;max-width:700px;margin-left:auto;margin-right:auto}
+.mono{font-family:ui-monospace,monospace;font-size:.75rem;word-break:break-all}
+.btn{background:#1a1a33;border:1px solid #33336a;color:#e8e8ff;border-radius:8px;padding:12px 20px;cursor:pointer;margin:4px;font-size:1rem;width:100%}
+.btn:disabled{opacity:.4}
+.test{border:1px solid #2a2a4d;border-radius:8px;padding:12px;margin:8px 0;background:#0d0d1a}
+.test .name{font-weight:600;margin-bottom:6px}
+.test .status{font-size:.85rem}
+.test.pass{border-color:#1a6b2a}
+.test.fail{border-color:#6b1a2a}
+.test.running{border-color:#6C5CE7}
+.pass .status{color:#4ade80}
+.fail .status{color:#f87171}
+video{width:100%;max-width:400px;background:#000;border-radius:8px;display:block;margin:10px auto}
+.detail{font-size:.75rem;color:#8888aa;margin-top:6px}
+#bnav{position:fixed;bottom:0;left:0;right:0;z-index:50;background:#141428;border-top:2px solid #6C5CE7;display:flex;justify-content:space-around;padding:6px 4px calc(6px + env(safe-area-inset-bottom))}
+#bnav a{color:#b0b0e0;text-decoration:none;font-size:1.3rem;display:flex;flex-direction:column;align-items:center;min-width:52px}
+#bnav a span{font-size:.6rem;margin-top:2px}
+</style>
+</head>
+<body>
+<script src="../errcatch.js"></script>
+<h1 style="text-align:center">🩺 Doctor</h1>
+<div style="text-align:center;color:#8888aa;font-size:.85rem">tests the full pipeline, step by step<br>if a step is red, that's where it's broken</div>
+
+<div class="panel">
+  <button class="btn" id="runbtn" onclick="runAll()" style="background:#103d1a;border-color:#1a6b2a;font-size:1.2rem">▶ RUN FULL PIPELINE TEST</button>
+  <div style="text-align:center;font-size:.8rem;color:#888;margin-top:8px">records 5s → encrypts → uploads → downloads → decrypts → plays</div>
+</div>
+
+<div class="panel" id="tests"></div>
+
+<div class="panel" id="result" style="display:none">
+  <h3>🎬 Playback Test</h3>
+  <video id="vplay" controls playsinline></video>
+  <div id="playmsg" style="text-align:center"></div>
+</div>
+
+<nav id="bnav">
+<a href="../index.html">🟣<span>home</span></a>
+<a href="./doctor.html">🩺<span>doctor</span></a>
+<a href="./record.html">🔴<span>record</span></a>
+<a href="./library.html">📚<span>library</span></a>
+</nav>
+
+<script src="../nacl-min.js"></script>
+<script src="../kernel/protocol.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+const tests=[
+  {id:'record', name:'📷 1. Record 5 seconds', desc:'captures video from test pattern (no camera needed)'},
+  {id:'encrypt', name:'🔑 2. Encrypt', desc:'NaCl secretbox with derived key K_1'},
+  {id:'upload', name:'📤 3. Upload to Walrus', desc:'PUT encrypted blob, get blob ID'},
+  {id:'download', name:'📥 4. Download from Walrus', desc:'GET the blob back, verify bytes match'},
+  {id:'decrypt', name:'🔓 5. Decrypt', desc:'secretbox.open with K_1, verify video bytes'},
+  {id:'play', name:'▶ 6. Play', desc:'video element plays decrypted bytes'},
+];
+
+let testData={};
+
+function render(){
+  $('tests').innerHTML=tests.map(t=>{
+    const d=testData[t.id]||{};
+    const cls=d.status?' '+d.status:'';
+    return `<div class="test${cls}" id="t-${t.id}">
+      <div class="name">${t.name}</div>
+      <div class="status">${d.msg||'<span style="color:#666">not run</span>'}</div>
+      ${d.detail?`<div class="detail mono">${d.detail}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+function set(id,status,msg,detail){
+  testData[id]={status,msg,detail};
+  render();
+  const el=$('t-'+id);
+  if(el)el.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+async function runAll(){
+  $('runbtn').disabled=true;
+  testData={}; render();
+  $('result').style.display='none';
+  const t0=Date.now();
+
+  // 1. RECORD
+  set('record','running','⏳ recording 5 seconds…');
+  try{
+    const cv=document.createElement('canvas');cv.width=320;cv.height=240;
+    const ctx=cv.getContext('2d');let h=0;
+    const draw=setInterval(()=>{h=(h+5)%360;ctx.fillStyle=`hsl(${h},70%,40%)`;ctx.fillRect(0,0,320,240);
+      ctx.fillStyle='#fff';ctx.font='20px sans-serif';ctx.textAlign='center';ctx.fillText('DOCTOR TEST',160,120);},100);
+    const stream=cv.captureStream(30);
+    const mime=MediaRecorder.isTypeSupported('video/webm;codecs=vp9')?'video/webm;codecs=vp9':'video/webm';
+    const rec=new MediaRecorder(stream,{mimeType:mime});
+    const chunks=[];
+    rec.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data);};
+    rec.start(1000);
+    await new Promise(r=>setTimeout(r,5000));
+    rec.stop(); clearInterval(draw);
+    stream.getTracks().forEach(t=>t.stop());
+    await new Promise(r=>setTimeout(r,500));
+    if(!chunks.length)throw new Error('MediaRecorder produced 0 chunks');
+    const raw=new Uint8Array(await new Blob(chunks).arrayBuffer());
+    if(!raw.length)throw new Error('0 bytes recorded');
+    testData.raw=raw;
+    set('record','pass',`✅ recorded ${raw.length} bytes in ${((Date.now()-t0)/1000).toFixed(1)}s`,`mime: ${mime}, chunks: ${chunks.length}`);
+  }catch(e){ set('record','fail','❌ '+e.message); $('runbtn').disabled=false; return; }
+
+  // 2. ENCRYPT
+  set('encrypt','running','⏳ encrypting…');
+  try{
+    const k0=nacl.randomBytes(32);
+    const k1=BP.derive(k0);
+    testData.k0=k0; testData.k1=k1;
+    const enc=BP.encryptChunk(testData.raw,k1);
+    if(enc.length!==testData.raw.length+40)throw new Error('wrong encrypted size');
+    testData.enc=enc;
+    set('encrypt','pass',`✅ ${testData.raw.length}B → ${enc.length}B (nonce + secretbox)`,`K_1 = ${BP.hex(k1).slice(0,16)}…`);
+  }catch(e){ set('encrypt','fail','❌ '+e.message); $('runbtn').disabled=false; return; }
+
+  // 3. UPLOAD
+  set('upload','running','⏳ uploading to Walrus… (may take 10-30s)');
+  try{
+    const t1=Date.now();
+    const bid=await BP.putVerified(testData.enc);
+    testData.bid=bid;
+    set('upload','pass',`✅ uploaded and verified in ${((Date.now()-t1)/1000).toFixed(0)}s`,`blob: ${bid.slice(0,32)}…`);
+  }catch(e){ set('upload','fail','❌ '+e.message,'Walrus may be throttling (429) or down'); $('runbtn').disabled=false; return; }
+
+  // 4. DOWNLOAD
+  set('download','running','⏳ downloading…');
+  try{
+    const back=await BP.getBlob(testData.bid);
+    if(back.length!==testData.enc.length)throw new Error(`size mismatch: ${back.length} vs ${testData.enc.length}`);
+    const match=back.every((v,i)=>v===testData.enc[i]);
+    if(!match)throw new Error('bytes do not match!');
+    testData.downloaded=back;
+    set('download','pass',`✅ ${back.length} bytes, byte-identical`,'GET from aggregator, verified');
+  }catch(e){ set('download','fail','❌ '+e.message); $('runbtn').disabled=false; return; }
+
+  // 5. DECRYPT
+  set('decrypt','running','⏳ decrypting…');
+  try{
+    const plain=BP.decryptChunk(testData.downloaded,testData.k1);
+    if(!plain)throw new Error('secretbox.open returned null — wrong key?');
+    if(plain.length!==testData.raw.length)throw new Error('decrypted size mismatch');
+    testData.plain=plain;
+    set('decrypt','pass',`✅ decrypted ${plain.length} bytes with K_1`,'key chain verified');
+  }catch(e){ set('decrypt','fail','❌ '+e.message); $('runbtn').disabled=false; return; }
+
+  // 6. PLAY
+  set('play','running','⏳ loading video…');
+  try{
+    $('result').style.display='block';
+    const v=$('vplay');
+    const url=URL.createObjectURL(new Blob([testData.plain],{type:'video/webm'}));
+    await new Promise((resolve,reject)=>{
+      v.src=url;
+      v.oncanplay=()=>resolve();
+      v.onerror=()=>reject(new Error('video element rejected the data'));
+      setTimeout(()=>reject(new Error('timeout waiting for video')),10000);
+    });
+    set('play','pass','✅ video loaded — hit play below','if it plays, the FULL pipeline works');
+    $('playmsg').innerHTML='<b>👆 press play</b> — if you see the test pattern, everything works';
+    v.play().catch(()=>{});
+  }catch(e){ set('play','fail','❌ '+e.message); }
+
+  $('runbtn').disabled=false;
+  const total=((Date.now()-t0)/1000).toFixed(0);
+  log(`🏁 pipeline complete in ${total}s`);
+}
+
+function log(m){
+  // simple console for now
+  console.log(m);
+}
+
+render();
+</script>
+</body>
+</html>
