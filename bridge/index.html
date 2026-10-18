@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>KKN BRIDGE — command deck</title>
+<style>
+  :root { --cy:#22d3ee; --gold:#ffd76b; --bg:#04040c; --panel:rgba(10,14,30,.88); --green:#7CFF6B; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  html, body { height:100%; }
+  body {
+    background:var(--bg); color:#e8f6ff; font-family:'Courier New',Courier,monospace;
+    overflow:hidden; -webkit-tap-highlight-color:transparent;
+  }
+  #stars { position:fixed; inset:0; z-index:0; }
+  /* ---------- header ---------- */
+  header {
+    position:fixed; top:0; left:0; right:0; z-index:100;
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    padding:10px 16px; background:linear-gradient(180deg,rgba(4,6,16,.95),rgba(4,6,16,.75));
+    border-bottom:1px solid rgba(34,211,238,.35);
+  }
+  .brand { font-size:1.15rem; letter-spacing:.18em; color:var(--cy); text-shadow:0 0 14px var(--cy); white-space:nowrap; }
+  .brand small { color:var(--gold); letter-spacing:.3em; font-size:.7rem; text-shadow:0 0 10px var(--gold); }
+  .switcher { display:flex; gap:8px; }
+  .switcher a, .switcher span {
+    font-family:inherit; font-size:.78rem; letter-spacing:.1em; text-decoration:none;
+    padding:7px 14px; border-radius:8px; border:1px solid rgba(34,211,238,.4); color:var(--cy);
+  }
+  .switcher a:hover { background:rgba(34,211,238,.12); }
+  .switcher .here { background:var(--cy); color:#031018; border-color:var(--cy); font-weight:bold; box-shadow:0 0 16px var(--cy); }
+  /* ---------- deck ---------- */
+  #deck { position:fixed; top:58px; left:0; right:0; bottom:104px; z-index:10; }
+  #iconfield {
+    position:absolute; left:0; top:0; bottom:0; width:100%;
+    overflow-y:auto; overflow-x:hidden; padding:14px;
+    display:flex; flex-wrap:wrap; gap:18px; align-content:flex-start;
+  }
+  .igroup { min-width:150px; }
+  .igroup h3 {
+    font-size:.68rem; letter-spacing:.25em; color:var(--gold); text-shadow:0 0 8px var(--gold);
+    border-bottom:1px solid rgba(255,215,107,.3); padding-bottom:6px; margin-bottom:10px;
+  }
+  .igrid { display:grid; grid-template-columns:repeat(auto-fill,minmax(84px,1fr)); gap:10px; }
+  .icon {
+    text-align:center; cursor:pointer; padding:10px 4px; border-radius:12px;
+    border:1px solid transparent; transition:.15s;
+  }
+  .icon:hover, .icon:active { background:rgba(34,211,238,.1); border-color:var(--cy); box-shadow:0 0 14px rgba(34,211,238,.35); }
+  .icon .art { font-size:2rem; filter:drop-shadow(0 0 8px #0af); }
+  .icon .nm { font-size:.62rem; color:#cfe9ff; margin-top:5px; line-height:1.35; }
+  .icon .tag { font-size:.55rem; color:var(--gold); letter-spacing:.08em; }
+  .icon.building { opacity:.75; }
+  /* ---------- windows ---------- */
+  #winlayer { position:absolute; inset:0; pointer-events:none; }
+  .win {
+    position:absolute; pointer-events:auto; background:var(--panel);
+    border:1px solid var(--cy); border-radius:12px; box-shadow:0 0 34px rgba(34,211,238,.3);
+    display:flex; flex-direction:column; min-width:300px; min-height:200px;
+    backdrop-filter:blur(2px);
+  }
+  .win .titlebar {
+    display:flex; align-items:center; gap:8px; padding:8px 10px; cursor:move; user-select:none;
+    background:linear-gradient(90deg,rgba(34,211,238,.18),rgba(255,215,107,.08));
+    border-bottom:1px solid rgba(34,211,238,.4); border-radius:11px 11px 0 0;
+    touch-action:none;
+  }
+  .win .titlebar .t { flex:1; font-size:.78rem; color:var(--cy); letter-spacing:.06em; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+  .win .titlebar button {
+    font-family:inherit; background:rgba(10,20,40,.9); border:1px solid rgba(34,211,238,.5);
+    color:#e8f6ff; border-radius:6px; padding:3px 9px; cursor:pointer; font-size:.72rem;
+  }
+  .win .titlebar button:hover { background:rgba(34,211,238,.2); }
+  .win .body { flex:1; display:flex; min-height:0; }
+  .win iframe { flex:1; border:0; border-radius:0 0 11px 11px; background:#000; min-height:160px; }
+  .win .infocard {
+    flex:1; padding:26px 22px; text-align:center; overflow:auto;
+  }
+  .win .infocard .big { font-size:3rem; filter:drop-shadow(0 0 12px var(--gold)); }
+  .win .infocard h2 { color:var(--gold); letter-spacing:.12em; margin:12px 0 8px; font-size:1.05rem; }
+  .win .infocard p { color:#bcd7ef; font-size:.85rem; line-height:1.7; }
+  .win .infocard .pill {
+    display:inline-block; margin-top:12px; font-size:.68rem; letter-spacing:.15em;
+    padding:4px 14px; border-radius:999px; border:1px solid var(--green); color:var(--green);
+  }
+  .win .resize {
+    position:absolute; right:0; bottom:0; width:22px; height:22px; cursor:nwse-resize; touch-action:none;
+    background:linear-gradient(135deg,transparent 50%,var(--gold) 50%); border-radius:0 0 11px 0;
+  }
+  .win.max { left:6px !important; top:6px !important; width:calc(100% - 12px) !important; height:calc(100% - 12px) !important; }
+  /* ---------- bottom: taskbar + dock ---------- */
+  #bottom { position:fixed; left:0; right:0; bottom:0; z-index:100; }
+  #taskbar {
+    display:flex; align-items:center; gap:8px; padding:7px 12px;
+    background:rgba(4,6,16,.94); border-top:1px solid rgba(34,211,238,.3);
+    overflow-x:auto; min-height:44px;
+  }
+  #taskbar .tbtn {
+    font-family:inherit; background:rgba(10,20,40,.9); border:1px solid rgba(34,211,238,.4);
+    color:#cfe9ff; border-radius:8px; padding:6px 12px; font-size:.72rem; cursor:pointer; white-space:nowrap;
+  }
+  #taskbar .tbtn.active { border-color:var(--gold); color:var(--gold); box-shadow:0 0 10px rgba(255,215,107,.4); }
+  #taskbar .none { color:#4a5a70; font-size:.7rem; letter-spacing:.15em; }
+  #dock {
+    display:flex; gap:4px; justify-content:center; align-items:center;
+    padding:8px 6px; background:rgba(2,4,12,.97); border-top:1px solid rgba(255,215,107,.25);
+    overflow-x:auto;
+  }
+  #dock button {
+    font-family:inherit; background:transparent; border:1px solid transparent; border-radius:10px;
+    font-size:1.5rem; padding:7px 11px; cursor:pointer; flex:0 0 auto; transition:.15s;
+    filter:drop-shadow(0 0 6px rgba(34,211,238,.5));
+  }
+  #dock button:hover, #dock button:active { background:rgba(34,211,238,.12); border-color:var(--cy); }
+  #dock button .k { display:block; font-size:.55rem; color:var(--gold); }
+  @media (max-width:640px) {
+    .brand { font-size:.95rem; }
+    .switcher a, .switcher span { padding:6px 9px; font-size:.68rem; }
+    #deck { bottom:112px; }
+    .igroup { min-width:100%; }
+  }
+</style>
+</head>
+<body>
+<canvas id="stars"></canvas>
+
+<header>
+  <div class="brand">🌉 KKN BRIDGE <small>COMMAND DECK</small></div>
+  <nav class="switcher">
+    <a href="https://arcade.highscores.live/">HUB</a>
+    <a href="https://arcade.highscores.live/dos/">DOS</a>
+    <a href="https://arcade.highscores.live/arcade/">ARCADE</a>
+    <span class="here">BRIDGE</span>
+  </nav>
+</header>
+
+<main id="deck">
+  <div id="iconfield"></div>
+  <div id="winlayer"></div>
+</main>
+
+<div id="bottom">
+  <div id="taskbar"><span class="none">NO WINDOWS OPEN — CLICK AN ICON TO LAUNCH</span></div>
+  <div id="dock"></div>
+</div>
+
+<script>
+(function(){
+"use strict";
+var BASE = 'https://arcade.highscores.live';
+var BC = BASE + '/arcade/blob-cinema/';
+
+var SYSTEMS = [
+  // ---- network ----
+  { id:'radio',      emoji:'🎙️', name:'Network Radio/TV',  group:'NETWORK', url:BASE + '/arcade/kodakainetwork/' },
+  { id:'arcade',     emoji:'👹', name:'Arcades of Time',   group:'NETWORK', url:BASE + '/arcade/' },
+  { id:'cinema',     emoji:'🎬', name:'Blob Cinema',       group:'NETWORK', url:BASE + '/arcade/blob-cinema/' },
+  { id:'silhouette', emoji:'✂️', name:'Silhouette Creator',group:'NETWORK', url:BASE + '/silouttes/' },
+  // ---- infra ----
+  { id:'guardian',   emoji:'🛡️', name:'Guardian Protocol', group:'INFRASTRUCTURE', infra:true,
+    info:'the hive pathway — mother-chain anchoring. Core infrastructure, always on.' },
+  // ---- arcade cabinets ----
+  { id:'doom',       emoji:'💀', name:'DOOM',              group:'ARCADE CABINETS', url:BASE + '/arcade/doom/' },
+  { id:'live',       emoji:'🔴', name:'Blob Live',         group:'ARCADE CABINETS', url:BC + 'live.html' },
+  { id:'follow',     emoji:'🔗', name:'Chain Follower',    group:'ARCADE CABINETS', url:BC + 'follow.html' },
+  { id:'how',        emoji:'🧒', name:'How It Works',      group:'ARCADE CABINETS', url:BC + 'how.html' },
+  { id:'livenow',    emoji:'📡', name:'Live Now',          group:'ARCADE CABINETS', url:BC + 'live-now.html' },
+  { id:'studio',     emoji:'🎥', name:'Studio',            group:'ARCADE CABINETS', url:BC + 'studio.html' },
+  { id:'reblob',     emoji:'📚', name:'Reblob Library',    group:'ARCADE CABINETS', url:BC + 'reblob.html' },
+  { id:'scores',     emoji:'🏆', name:'Hall of Scores',    group:'ARCADE CABINETS', url:BC + 'scores.html' },
+  { id:'play',       emoji:'▶️', name:'Replay DVR',        group:'ARCADE CABINETS', url:BC + 'play.html' },
+  { id:'sliders',    emoji:'🟧', name:'Sliders',           group:'ARCADE CABINETS', url:BC + 'sliders.html', note:'prototype' },
+  { id:'bbb',        emoji:'🅱️', name:'BBB',               group:'ARCADE CABINETS', url:BC + 'bbb.html', note:'prototype' },
+  { id:'diag',       emoji:'🔧', name:'MSE Diag',          group:'ARCADE CABINETS', url:BC + 'mse-diag.html', note:'tool' },
+  { id:'theater-old',emoji:'◈', name:'Blob Theater',      group:'ARCADE CABINETS', url:BASE + '/arcade/blob-theater/', note:'origin' },
+  // ---- building ----
+  { id:'tickets',    emoji:'🎟️', name:'Ticket Hunter AI',  group:'BUILDING', building:true },
+  { id:'stadium',    emoji:'🏟️', name:'Fan-Owned Stadium', group:'BUILDING', building:true },
+  { id:'decoder',    emoji:'🕵️', name:'Decoder Lab',       group:'BUILDING', building:true }
+];
+
+var DOCK = [
+  { id:'radio',  emoji:'🎙️', key:'1' },
+  { id:'arcade', emoji:'👹', key:'2' },
+  { id:'cinema', emoji:'🎬', key:'3' },
+  { id:'silhouette', emoji:'✂️', key:'4' },
+  { id:'doom',   emoji:'💀', key:'5' },
+  { id:'live',   emoji:'🔴', key:'6' },
+  { id:'scores', emoji:'🏆', key:'7' },
+  { id:'play',   emoji:'▶️', key:'8' },
+  { id:'studio', emoji:'🎥', key:'9' },
+  { id:'dos',    emoji:'💻', key:'0', url:BASE + '/dos/', name:'KKN-DOS Terminal' }
+];
+
+/* ---------- starfield ---------- */
+var cv = document.getElementById('stars'), cx = cv.getContext('2d'), stars = [];
+function sizeStars(){
+  cv.width = window.innerWidth; cv.height = window.innerHeight;
+  stars = [];
+  var n = Math.min(260, Math.floor(cv.width * cv.height / 7000));
+  for(var i = 0; i < n; i++){
+    stars.push({ x:Math.random()*cv.width, y:Math.random()*cv.height,
+                 r:Math.random()*1.4 + .3, p:Math.random()*Math.PI*2,
+                 s:.5 + Math.random()*1.5,
+                 c:Math.random() < .12 ? '255,215,107' : '180,230,255' });
+  }
+}
+sizeStars();
+window.addEventListener('resize', sizeStars);
+(function twinkle(t){
+  cx.clearRect(0,0,cv.width,cv.height);
+  // nebula wash
+  var g = cx.createRadialGradient(cv.width*.75, cv.height*.15, 0, cv.width*.75, cv.height*.15, cv.width*.6);
+  g.addColorStop(0,'rgba(30,20,70,.35)'); g.addColorStop(1,'rgba(0,0,0,0)');
+  cx.fillStyle = g; cx.fillRect(0,0,cv.width,cv.height);
+  for(var i = 0; i < stars.length; i++){
+    var s = stars[i], a = .35 + .65 * Math.abs(Math.sin(t/1000*s.s + s.p));
+    cx.fillStyle = 'rgba(' + s.c + ',' + a.toFixed(2) + ')';
+    cx.beginPath(); cx.arc(s.x, s.y, s.r, 0, 7); cx.fill();
+  }
+  requestAnimationFrame(twinkle);
+})(0);
+
+/* ---------- icons ---------- */
+var field = document.getElementById('iconfield');
+var groups = [];
+SYSTEMS.forEach(function(s){ if(groups.indexOf(s.group) < 0) groups.push(s.group); });
+groups.forEach(function(g){
+  var wrap = document.createElement('div'); wrap.className = 'igroup';
+  var h = document.createElement('h3'); h.textContent = g; wrap.appendChild(h);
+  var grid = document.createElement('div'); grid.className = 'igrid';
+  SYSTEMS.forEach(function(s){
+    if(s.group !== g) return;
+    var d = document.createElement('div');
+    d.className = 'icon' + (s.building ? ' building' : '');
+    d.innerHTML = '<div class="art">' + s.emoji + '</div><div class="nm">' + s.name + '</div>' +
+      (s.note ? '<div class="tag">' + s.note + '</div>' : '') +
+      (s.building ? '<div class="tag">soon</div>' : '') +
+      (s.infra ? '<div class="tag">core</div>' : '');
+    d.addEventListener('click', function(){ openSys(s.id); });
+    grid.appendChild(d);
+  });
+  wrap.appendChild(grid); field.appendChild(wrap);
+});
+
+/* ---------- window manager ---------- */
+var layer = document.getElementById('winlayer');
+var deck = document.getElementById('deck');
+var taskbar = document.getElementById('taskbar');
+var zTop = 10, wins = {}, cascade = 0;
+
+function sysById(id){
+  if(id === 'dos') return { id:'dos', emoji:'💻', name:'KKN-DOS Terminal', url:BASE + '/dos/' };
+  return SYSTEMS.find(function(s){ return s.id === id; });
+}
+
+function openSys(id){
+  var s = sysById(id);
+  if(!s) return;
+  if(wins[id]){ focusWin(id); return; }
+
+  var w = document.createElement('div'); w.className = 'win';
+  var mobile = window.innerWidth < 640;
+  if(mobile){
+    w.style.left = '8px'; w.style.top = '8px';
+    w.style.width = 'calc(100% - 16px)'; w.style.height = 'calc(100% - 16px)';
+  } else {
+    var n = cascade++ % 6;
+    w.style.left = (40 + n*36) + 'px'; w.style.top = (24 + n*30) + 'px';
+    w.style.width = '760px'; w.style.height = '540px';
+  }
+  w.style.zIndex = ++zTop;
+
+  var bar = document.createElement('div'); bar.className = 'titlebar';
+  bar.innerHTML = '<span class="t">' + s.emoji + ' ' + s.name + '</span>';
+  var btnMin = mkBtn('–', 'minimize'); var btnMax = mkBtn('⛶', 'maximize'); var btnX = mkBtn('✕', 'close');
+  btnMin.addEventListener('click', function(e){ e.stopPropagation(); minWin(id); });
+  btnMax.addEventListener('click', function(e){ e.stopPropagation(); toggleMax(id); });
+  btnX.addEventListener('click', function(e){ e.stopPropagation(); closeWin(id); });
+  bar.appendChild(btnMin); bar.appendChild(btnMax); bar.appendChild(btnX);
+  w.appendChild(bar);
+
+  var body = document.createElement('div'); body.className = 'body';
+  if(s.url){
+    var f = document.createElement('iframe');
+    f.setAttribute('src', s.url);
+    f.setAttribute('allow', 'camera;microphone;display-capture;autoplay');
+    body.appendChild(f);
+  } else {
+    var card = document.createElement('div'); card.className = 'infocard';
+    var pill = s.infra ? 'CORE INFRASTRUCTURE — ALWAYS ON' : 'STILL BEING BUILT';
+    card.innerHTML = '<div class="big">' + s.emoji + '</div><h2>' + s.name + '</h2>' +
+      '<p>' + (s.info || 'This system is still being built. Check back soon.') + '</p>' +
+      '<span class="pill">' + pill + '</span>';
+    body.appendChild(card);
+  }
+  w.appendChild(body);
+
+  var rz = document.createElement('div'); rz.className = 'resize'; w.appendChild(rz);
+
+  // drag (pointer events cover mouse + touch)
+  bar.addEventListener('pointerdown', function(e){
+    if(e.target.tagName === 'BUTTON' || w.classList.contains('max')) return;
+    var sx = e.clientX - w.offsetLeft, sy = e.clientY - w.offsetTop;
+    bar.setPointerCapture(e.pointerId);
+    var mv = function(ev){
+      w.style.left = Math.max(0, ev.clientX - sx) + 'px';
+      w.style.top = Math.max(0, ev.clientY - sy) + 'px';
+    };
+    var up = function(){ bar.removeEventListener('pointermove', mv); bar.removeEventListener('pointerup', up); };
+    bar.addEventListener('pointermove', mv); bar.addEventListener('pointerup', up);
+  });
+  // resize
+  rz.addEventListener('pointerdown', function(e){
+    e.preventDefault(); e.stopPropagation();
+    if(w.classList.contains('max')) return;
+    var sw = w.offsetWidth, sh = w.offsetHeight, sx = e.clientX, sy = e.clientY;
+    rz.setPointerCapture(e.pointerId);
+    var mv = function(ev){
+      w.style.width = Math.max(300, sw + ev.clientX - sx) + 'px';
+      w.style.height = Math.max(200, sh + ev.clientY - sy) + 'px';
+    };
+    var up = function(){ rz.removeEventListener('pointermove', mv); rz.removeEventListener('pointerup', up); };
+    rz.addEventListener('pointermove', mv); rz.addEventListener('pointerup', up);
+  });
+  w.addEventListener('pointerdown', function(){ w.style.zIndex = ++zTop; markActive(id); }, true);
+
+  layer.appendChild(w);
+
+  // taskbar button
+  var tb = document.createElement('button'); tb.className = 'tbtn active'; tb.id = 'tb-' + id;
+  tb.textContent = s.emoji + ' ' + s.name;
+  tb.addEventListener('click', function(){
+    var rec = wins[id]; if(!rec) return;
+    if(rec.el.style.display === 'none'){ rec.el.style.display = 'flex'; focusWin(id); }
+    else if(parseInt(rec.el.style.zIndex, 10) === zTop){ minWin(id); }
+    else focusWin(id);
+  });
+  var none = taskbar.querySelector('.none'); if(none) none.remove();
+  taskbar.appendChild(tb);
+
+  wins[id] = { el:w, btn:tb, max:false };
+  markActive(id);
+}
+function mkBtn(label){
+  var b = document.createElement('button'); b.textContent = label; return b;
+}
+function markActive(id){
+  Object.keys(wins).forEach(function(k){
+    wins[k].btn.classList.toggle('active', k === id);
+  });
+}
+function focusWin(id){
+  var rec = wins[id]; if(!rec) return;
+  rec.el.style.display = 'flex';
+  rec.el.style.zIndex = ++zTop; markActive(id);
+}
+function minWin(id){
+  var rec = wins[id]; if(!rec) return;
+  rec.el.style.display = 'none'; rec.btn.classList.remove('active');
+}
+function toggleMax(id){
+  var rec = wins[id]; if(!rec) return;
+  rec.max = !rec.max;
+  rec.el.classList.toggle('max', rec.max);
+  focusWin(id);
+}
+function closeWin(id){
+  var rec = wins[id]; if(!rec) return;
+  rec.el.remove(); rec.btn.remove(); delete wins[id];
+  if(!Object.keys(wins).length){
+    var sp = document.createElement('span'); sp.className = 'none';
+    sp.textContent = 'NO WINDOWS OPEN — CLICK AN ICON TO LAUNCH';
+    taskbar.appendChild(sp);
+  }
+}
+
+/* ---------- dock ---------- */
+var dock = document.getElementById('dock');
+DOCK.forEach(function(d){
+  var b = document.createElement('button');
+  b.innerHTML = d.emoji + '<span class="k">' + d.key + '</span>';
+  b.title = (sysById(d.id) || {}).name || d.id;
+  b.addEventListener('click', function(){ openSys(d.id); });
+  dock.appendChild(b);
+});
+})();
+</script>
+</body>
+</html>
