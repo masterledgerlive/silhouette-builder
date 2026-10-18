@@ -183,23 +183,28 @@ async function goLive(){
   // PUT queue: one at a time, retry 429s with backoff
   const putQueue=[];
   let putting=false;
-  async function doPut(data,retries=5){
+  async function fetchRetry(url,opts,retries=8){
     for(let i=0;i<retries;i++){
       try{
-        const r=await fetch(PUB+'/v1/blobs?epochs=5',{method:'PUT',body:data});
+        const r=await fetch(url,opts);
         if(r.status===429){
-          const wait=Math.min(5000*(i+1),20000);
+          const wait=Math.min(8000*(i+1),30000);
           await new Promise(r=>setTimeout(r,wait));
           continue;
         }
-        if(!r.ok)throw new Error('HTTP '+r.status);
-        const j=await r.json();
-        return (j.newlyCreated||j.alreadyCertified).blobObject.blobId;
+        return r;
       }catch(e){
         if(i===retries-1)throw e;
-        await new Promise(r=>setTimeout(r,2000*(i+1)));
+        await new Promise(r=>setTimeout(r,3000*(i+1)));
       }
     }
+    throw new Error('retry exhausted');
+  }
+  async function doPut(data){
+    const r=await fetchRetry(PUB+'/v1/blobs?epochs=5',{method:'PUT',body:data});
+    if(!r.ok)throw new Error('PUT HTTP '+r.status);
+    const j=await r.json();
+    return (j.newlyCreated||j.alreadyCertified).blobObject.blobId;
   }
   async function pumpQueue(){
     if(putting)return;putting=true;
@@ -207,15 +212,17 @@ async function goLive(){
       const {idx,out,raw}=putQueue.shift();
       try{
         const bid=await doPut(out);
-        // VERIFY: GET it back
-        const g=await fetch(AGG+'/v1/blobs/'+bid);
-        if(!g.ok)throw new Error('verify GET failed');
+        // VERIFY: GET it back (with retry)
+        const g=await fetchRetry(AGG+'/v1/blobs/'+bid,{});
+        if(!g.ok)throw new Error('verify GET '+g.status);
         chunks[idx]={n:idx,blob:bid,keyIdx:idx+1,bytes:raw.length,ok:true};
         $('liveinfo').innerHTML+=`<br>✓ chunk #${idx} → <span class="mono">${bid.slice(0,20)}…</span> (${raw.length}B, verified)`;
       }catch(e){
         chunks[idx]={n:idx,ok:false,error:e.message};
         $('liveinfo').innerHTML+=`<br>❌ chunk #${idx}: ${e.message}`;
       }
+      // Small delay between chunks to avoid throttling
+      await new Promise(r=>setTimeout(r,1000));
     }
     putting=false;
   }
