@@ -230,10 +230,25 @@ async function makeFirst(){
   }
   say(`🔑 <b>Key #0 created!</b> From it grows a chain — <b>K_(n+1) = SHA256(K_n ‖ "|next")</b>. Pure math. Each 2-second chunk gets its own key. <b>Recording for 3 minutes</b> — your video stays pinned up top!`);
   addStep('key','🔑 <b>KEY CHAIN</b>',`K_0 = ${hex(liveKey).slice(0,24)}…<br><span style="color:#8888aa">grows: K_1, K_2… one per chunk</span>`);
-  // recorder
-  const mime=MediaRecorder.isTypeSupported('video/mp4')?'video/mp4':'video/webm;codecs=vp9';
+  // recorder — try mimeTypes in order, use first that actually produces data
+  const mimes=['video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm','video/mp4'];
+  let mime=null;
+  for(const m of mimes){
+    if(MediaRecorder.isTypeSupported(m)){ mime=m; break; }
+  }
+  if(!mime) mime=''; // let browser choose
   tlog('MIME = '+mime);
-  recorder=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:800000});
+  try{
+    recorder=new MediaRecorder(stream,mime?{mimeType:mime}:undefined);
+  }catch(e){
+    tlog('MediaRecorder failed with '+mime+', trying default: '+e.message);
+    recorder=new MediaRecorder(stream);
+    mime='(browser default)';
+  }
+  recorder.onerror=(ev)=>{
+    tlog('recorder error: '+(ev.error?ev.error.message:'unknown'));
+    say(`⚠️ <b>Recorder error:</b> ${ev.error?ev.error.message:'unknown'}`);
+  };
   recorder.ondataavailable=async ev=>{
     if(!ev.data||!ev.data.size||done) return;
     const idx=nChunk++;
