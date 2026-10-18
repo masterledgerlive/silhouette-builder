@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>🔍 Proof — BLOBPLAYER</title>
+<style>
+body{background:#07070f;color:#e8e8ff;font-family:system-ui,sans-serif;margin:0;padding:14px;padding-bottom:90px}
+.panel{background:#101022;border:1px solid #26264d;border-radius:12px;padding:14px;margin:12px 0;max-width:700px;margin-left:auto;margin-right:auto}
+.mono{font-family:ui-monospace,monospace;font-size:.75rem;word-break:break-all}
+.btn{background:#1a1a33;border:1px solid #33336a;color:#e8e8ff;border-radius:8px;padding:8px 14px;cursor:pointer;margin:4px}
+.ok{color:#4ade80}.bad{color:#f87171}
+.row{padding:8px;border-bottom:1px solid #1a1a2e;font-size:.85rem}
+#bnav{position:fixed;bottom:0;left:0;right:0;z-index:50;background:#141428;border-top:2px solid #6C5CE7;display:flex;justify-content:space-around;padding:6px 4px calc(6px + env(safe-area-inset-bottom))}
+#bnav a{color:#b0b0e0;text-decoration:none;font-size:1.3rem;display:flex;flex-direction:column;align-items:center;min-width:52px}
+#bnav a span{font-size:.6rem;margin-top:2px}
+</style>
+</head>
+<body>
+<script src="../errcatch.js"></script>
+<h1 style="text-align:center">🔍 Proof</h1>
+<div style="text-align:center;color:#8888aa;font-size:.85rem">verify every blob in the chain</div>
+
+<div class="panel">
+  <div id="out">loading…</div>
+</div>
+
+<nav id="bnav">
+<a href="../index.html">🟣<span>home</span></a>
+<a href="./record.html">🔴<span>record</span></a>
+<a href="./watch.html">👁<span>watch</span></a>
+<a href="./library.html">📚<span>library</span></a>
+<a href="../../index.html">🕹<span>arcade</span></a>
+</nav>
+
+<script src="../nacl-min.js"></script>
+<script src="../kernel/protocol.js"></script>
+<script>
+async function verify(){
+  const q=new URLSearchParams(location.search);
+  const mbid=q.get('watch');
+  const out=document.getElementById('out');
+  if(!mbid){ out.innerHTML='❌ need ?watch=&lt;manifest_blob_id&gt;'; return; }
+  try{
+    out.innerHTML='📥 fetching manifest…';
+    const data=await BP.getBlob(mbid);
+    const m=JSON.parse(new TextDecoder().decode(data));
+    let html=`<b>${m.title||'video'}</b> — ${m.chunks.length} chunks<br>`;
+    html+=`<span class="mono">manifest: <a href="${BP.AGG}/v1/blobs/${mbid}" target="_blank" style="color:#6C5CE7">${mbid.slice(0,24)}…</a></span><br><br>`;
+    let key=m.live_key?BP.bhex(m.live_key):null;
+    let okCount=0;
+    for(const c of m.chunks){
+      try{
+        const packed=await BP.getBlob(c.blob);
+        // verify key decrypts
+        let decrypted=false;
+        if(key){
+          let k=key;
+          for(let i=0;i<c.keyIdx;i++)k=BP.derive(k);
+          decrypted=!!BP.decryptChunk(packed,k);
+        }
+        if(decrypted)okCount++;
+        html+=`<div class="row">${decrypted?'<span class="ok">✓</span>':'<span class="bad">✗</span>'} chunk ${c.n} — <a href="${BP.AGG}/v1/blobs/${c.blob}" target="_blank" style="color:#6C5CE7" class="mono">${c.blob.slice(0,20)}…</a> <span class="mono">(${c.bytes}B, K_${c.keyIdx}${decrypted?' ✓ decrypts':''})</span></div>`;
+      }catch(e){
+        html+=`<div class="row"><span class="bad">✗</span> chunk ${c.n} — ${e.message}</div>`;
+      }
+    }
+    html=`<h3>${okCount}/${m.chunks.length} chunks verified</h3>`+html;
+    out.innerHTML=html;
+  }catch(e){ out.innerHTML='❌ '+e.message; }
+}
+verify();
+</script>
+</body>
+</html>
