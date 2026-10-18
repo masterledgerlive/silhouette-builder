@@ -348,12 +348,20 @@ async function finishFirst(manual){
     localStorage.setItem('bloblive_library',JSON.stringify(lib.slice(0,50)));
     tlog('saved to local library (instant)');
   }catch(e){ tlog('library save: '+e.message); }
-  say(`✅ <b>WRAPPED!</b> ${chunks.length} chunks saved. Publishing to the chain in the background — your video is already in the library!`);
-  $('b-stop').textContent='✅ wrapped!'; $('b-stop').disabled=false;
+  // Update UI — wrap in try/catch so a DOM issue doesn't leave button stuck
+  try{
+    say(`✅ <b>WRAPPED!</b> ${chunks.length} chunks saved. Publishing to the chain in the background — your video is already in the library!`);
+  }catch(e){}
+  try{
+    const bs=$('b-stop');
+    if(bs){ bs.textContent='✅ wrapped!'; bs.disabled=false; }
+  }catch(e){}
   // show share link immediately using local data
-  const localLink=location.origin+location.pathname.replace('how.html','play.html')+'?id='+localId+'#'+liveKeyHex;
-  $('livelink').value=localLink;
-  $('sharelive').style.display='block';
+  try{
+    const localLink=location.origin+location.pathname.replace('how.html','play.html')+'?id='+localId+'#'+liveKeyHex;
+    $('livelink').value=localLink;
+    $('sharelive').style.display='block';
+  }catch(e){ tlog('share UI: '+e.message); }
   // Background: publish manifest to Walrus (don't block UI)
   (async()=>{
     try{
