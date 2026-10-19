@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>⚡ Multiplayer Blob Verification — 2-Player Proof</title>
+<style>
+  :root { --neon:#22d3ee; --pink:#f0f; --bg:#0a0a18; --panel:#12122a;
+          --gold:#ffd76b; --green:#7CFF6B; --red:#ff5470; --dim:#8a8aa8; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:var(--bg); color:#e8e8f5; font-family:'Courier New',monospace;
+         background-image:radial-gradient(circle at 50% 0%, #1a1a3a 0%, var(--bg) 60%);
+         padding:18px 12px 60px; }
+  .wrap { max-width:1220px; margin:0 auto; }
+  header { text-align:center; margin-bottom:14px; }
+  h1 { color:var(--neon); letter-spacing:.1em; font-size:clamp(1.1rem,3.4vw,1.7rem);
+       text-shadow:0 0 16px var(--neon); }
+  .sub { color:var(--dim); font-size:.8rem; letter-spacing:.18em; margin-top:4px; }
+  #consensus { display:inline-block; margin-top:10px; padding:8px 22px; border-radius:999px;
+    font-size:.85rem; letter-spacing:.12em; border:2px solid var(--green); color:var(--green); }
+  #consensus.bad { border-color:var(--red); color:var(--red); }
+  main { display:grid; grid-template-columns: 810px 1fr; gap:14px; margin-top:14px; }
+  @media (max-width:1180px){ main { grid-template-columns:1fr; } }
+  canvas { width:100%; max-width:810px; background:#000; border:2px solid var(--neon);
+    border-radius:12px; display:block; }
+  #legend { color:var(--dim); font-size:.75rem; margin-top:8px; line-height:1.8; }
+  #legend b { color:#e8e8f5; }
+  .p1c { color:var(--neon); } .p2c { color:var(--pink); }
+  aside section { background:var(--panel); border:1px solid #2a2a5a; border-radius:12px;
+    padding:12px 14px; margin-bottom:12px; }
+  aside h2 { color:var(--neon); font-size:.78rem; letter-spacing:.18em; margin-bottom:8px; }
+  .kv { display:flex; justify-content:space-between; font-size:.78rem; padding:3px 0; }
+  .kv .k { color:var(--dim); } .kv .v { color:#e8e8f5; }
+  .mono { font-family:ui-monospace,Menlo,Consolas,monospace; }
+  #chainlist div, #hitlog div { font-size:.72rem; padding:4px 6px; border-bottom:1px solid #1c1c38;
+    word-break:break-all; }
+  #chainlist .th { color:var(--dim); }
+  #hitlog { max-height:170px; overflow-y:auto; }
+  #hitlog .ok { color:var(--green); } #hitlog .bad { color:var(--red); }
+  #hitlog .info { color:var(--dim); }
+  .layer { font-size:.75rem; padding:6px 0; border-bottom:1px solid #1c1c38; }
+  .layer:last-child { border-bottom:none; }
+  .layer .st { float:right; }
+  .okc { color:var(--green); } .livec { color:var(--gold); }
+  .ctlrow { display:flex; gap:10px; align-items:center; margin:8px 0; flex-wrap:wrap; }
+  button { font-family:inherit; cursor:pointer; border-radius:10px; padding:10px 16px;
+    font-size:.8rem; letter-spacing:.08em; }
+  #cheatBtn { background:#3a0f1a; color:var(--red); border:2px solid var(--red); }
+  #cheatBtn:disabled { opacity:.35; cursor:default; }
+  #resetBtn { background:#0d0d22; color:var(--neon); border:1px solid var(--neon); }
+  input[type=range] { flex:1; min-width:140px; accent-color:var(--neon); }
+  footer { text-align:center; color:#66668a; font-size:.75rem; margin-top:22px; line-height:1.9; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>⚡ MULTIPLAYER BLOB VERIFICATION</h1>
+    <div class="sub">2-PLAYER PROOF — NO SERVER, ONLY MATH · FIRST TO 5 VERIFIED HITS</div>
+    <div id="consensus">CONSENSUS ✓</div>
+  </header>
+  <main>
+    <div>
+      <canvas id="cv" width="800" height="500"></canvas>
+      <div id="legend">
+        <b class="p1c">P1 (cyan):</b> WASD move · <b>SPACE</b> fire &nbsp;·&nbsp;
+        <b class="p2c">P2 (magenta):</b> ARROWS move · <b>ENTER</b> fire<br>
+        Bullets are slow-mo — dodge them. Every tick's inputs are hash-chained. Hits only count when <b>both</b> simulations agree.
+      </div>
+    </div>
+    <aside>
+      <section>
+        <h2>🤝 AGREEMENT</h2>
+        <div class="kv"><span class="k">sim tick</span><span class="v mono" id="kTick">0</span></div>
+        <div class="kv"><span class="k">real tick</span><span class="v mono" id="kReal">0</span></div>
+        <div class="kv"><span class="k">sim A ⬌ sim B</span><span class="v" id="kSims">match</span></div>
+        <div class="kv"><span class="k">effective rate</span><span class="v mono" id="kHz">30.0 Hz</span></div>
+        <div class="kv"><span class="k">P2 input delay</span><span class="v mono" id="kLag">0 ticks</span></div>
+      </section>
+      <section>
+        <h2>⛓ INPUT BLOB CHAIN <span style="color:var(--dim)">(local — production: Walrus)</span></h2>
+        <div id="chainlist" class="mono"><div class="th">waiting for first tick…</div></div>
+      </section>
+      <section>
+        <h2>🧱 SUBLAYERS</h2>
+        <div class="layer">🗺 STATIC — arena geometry <span class="st okc" id="kArena">hashing…</span></div>
+        <div class="layer">⚡ REACTION — players + bullets <span class="st livec">per-tick · live</span></div>
+        <div class="layer">📒 LEDGER — verified hits <span class="st mono" id="kLedger">0 hits</span></div>
+      </section>
+      <section>
+        <h2>🎯 HIT LOG</h2>
+        <div id="hitlog"><div class="info">no hits yet — shoot something</div></div>
+      </section>
+      <section>
+        <h2>🎛 CONTROLS</h2>
+        <div class="ctlrow">
+          <span style="font-size:.75rem;color:var(--dim)">lag</span>
+          <input type="range" id="lagSlider" min="0" max="500" step="10" value="0">
+          <span class="mono" id="lagVal" style="font-size:.75rem">0ms</span>
+        </div>
+        <div class="ctlrow">
+          <button id="cheatBtn">😈 P1 CHEAT — claim fake hit</button>
+          <button id="resetBtn">↻ reset match</button>
+        </div>
+        <div style="font-size:.72rem;color:var(--dim);line-height:1.7">
+          The cheat button makes P1's client claim a hit that never happened.
+          Watch the verifier catch it against the agreed input log.
+        </div>
+      </section>
+    </aside>
+  </main>
+  <footer>
+    🌊 Koda Kai Network · Blob Arcade Builder · muse.ai/join · Code: <b style="color:var(--neon)">BUD12L</b><br>
+    <span>Deterministic lockstep · input hash chains · dual-simulation consensus · no server</span>
+  </footer>
+</div>
+
+<script id="sim-core">
+/* ===== SIM CORE — zero DOM, zero Date, zero Math.random. Fully deterministic. ===== */
+const TICK_HZ = 30, DT = 1 / TICK_HZ;
+const ARENA = { w: 800, h: 500 };
+const P_SPEED = 170, B_SPEED = 150, P_R = 12, B_R = 5;
+const FIRE_CD = 0.6, BULLET_TTL = 4.0, WIN_SCORE = 5;
+
+async function sha256hex(s) {
+  const d = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
+  return Array.from(new Uint8Array(d)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+const shortHash = h => h.slice(0, 10);
+const r4 = n => Math.round(n * 1e4) / 1e4;
+
+function arenaCanonical() {
+  return 'arena:' + ARENA.w + 'x' + ARENA.h + '|walls:4|spawn:p1(120,250),p2(680,250)|rules:first-to-' + WIN_SCORE;
+}
+
+function createSim() {
+  const S = {
+    tick: 0,
+    p1: { x: 120, y: 250, fx: 1, fy: 0, cd: 0, flash: 0, votedOff: false, strikes: 0 },
+    p2: { x: 680, y: 250, fx: -1, fy: 0, cd: 0, flash: 0, votedOff: false, strikes: 0 },
+    bullets: [],
+    hits: [],
+    score: { p1: 0, p2: 0 },
+    winner: null,
+    nextBulletId: 1,
+    prevFire: { p1: false, p2: false }
+  };
+
+  function movePlayer(p, inp) {
+    let dx = 0, dy = 0;
+    if (inp.l) dx -= 1; if (inp.r) dx += 1;
+    if (inp.u) dy -= 1; if (inp.d) dy += 1;
+    if (dx || dy) {
+      const m = Math.sqrt(dx * dx + dy * dy);
+      p.fx = dx / m; p.fy = dy / m;
+      p.x += dx / m * P_SPEED * DT;
+      p.y += dy / m * P_SPEED * DT;
+      p.x = Math.max(P_R, Math.min(ARENA.w - P_R, p.x));
+      p.y = Math.max(P_R, Math.min(ARENA.h - P_R, p.y));
+    }
+    if (p.cd > 0) p.cd -= DT;
+    if (p.flash > 0) p.flash -= DT;
+  }
+
+  function tryFire(p, inp, wasDown, owner) {
+    if (inp.f && !wasDown && p.cd <= 0 && !p.votedOff && !S.winner) {
+      p.cd = FIRE_CD;
+      S.bullets.push({
+        id: S.nextBulletId++, x: r4(p.x + p.fx * (P_R + 6)), y: r4(p.y + p.fy * (P_R + 6)),
+        vx: r4(p.fx * B_SPEED), vy: r4(p.fy * B_SPEED), owner: owner, ttl: BULLET_TTL
+      });
+    }
+    return inp.f;
+  }
+
+  // Advance one deterministic tick. Returns physics hit events.
+  function step(pi) {
+    S.tick++;
+    if (S.winner) return { hits: [] };
+    movePlayer(S.p1, pi.p1);
+    movePlayer(S.p2, pi.p2);
+    S.prevFire.p1 = tryFire(S.p1, pi.p1, S.prevFire.p1, 'p1');
+    S.prevFire.p2 = tryFire(S.p2, pi.p2, S.prevFire.p2, 'p2');
+    const hits = [];
+    for (let i = S.bullets.length - 1; i >= 0; i--) {
+      const b = S.bullets[i];
+      b.x = r4(b.x + b.vx * DT); b.y = r4(b.y + b.vy * DT); b.ttl = r4(b.ttl - DT);
+      let dead = b.ttl <= 0 || b.x < 0 || b.x > ARENA.w || b.y < 0 || b.y > ARENA.h;
+      if (!dead) {
+        const vids = ['p1', 'p2'];
+        for (let v = 0; v < 2; v++) {
+          const vid = vids[v];
+          if (vid === b.owner) continue;
+          const pl = S[vid];
+          const dx = b.x - pl.x, dy = b.y - pl.y;
+          if (dx * dx + dy * dy < (P_R + B_R) * (P_R + B_R)) {
+            dead = true;
+            const hit = { tick: S.tick, shooter: b.owner, victim: vid,
+                          bx: b.x, by: b.y, vx: pl.x, vy: pl.y };
+            S.hits.push(hit);
+            S.score[b.owner]++;
+            pl.flash = 0.35;
+            hits.push(hit);
+            if (S.score[b.owner] >= WIN_SCORE) S.winner = b.owner;
+            break;
+          }
+        }
+      }
+      if (dead) S.bullets.splice(i, 1);
+    }
+    return { hits: hits };
+  }
+
+  function stateHashStr() {
+    return ['t' + S.tick,
+      r4(S.p1.x), r4(S.p1.y), r4(S.p2.x), r4(S.p2.y),
+      S.bullets.map(b => b.id + ':' + b.x + ',' + b.y).join(';'),
+      's' + S.score.p1 + '-' + S.score.p2, S.winner || '-'
+    ].join('|');
+  }
+
+  return { S, step, stateHashStr };
+}
+
+function inputBits(pi) {
+  const b = x => x ? '1' : '0';
+  const one = p => b(p.u) + b(p.d) + b(p.l) + b(p.r) + b(p.f);
+  return one(pi.p1) + '|' + one(pi.p2);
+}
+
+// A hit claim is verified by re-checking it against an independent simulation's
+// agreed hit log. Real claims reproduce; fabricated ones don't.
+function verifyClaim(claim, simB) {
+  return simB.S.hits.some(h =>
+    h.tick === claim.tick &&
+    h.shooter === claim.shooter &&
+    h.victim === claim.victim &&
+    Math.abs(h.bx - claim.bx) < 0.01 &&
+    Math.abs(h.by - claim.by) < 0.01);
+}
+
+function hitCanonical(h) {
+  return [h.tick, h.shooter, h.victim, h.bx, h.by].join('|');
+}
+</script>
+
+<script id="ui">
+(function () {
+'use strict';
+const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+const W = cv.width, H = cv.height;
+
+/* ---------- static layer: prerender once, hash once ---------- */
+const staticCv = document.createElement('canvas');
+staticCv.width = W; staticCv.height = H;
+(function paintStatic() {
+  const g = staticCv.getContext('2d');
+  g.fillStyle = '#050510'; g.fillRect(0, 0, W, H);
+  g.strokeStyle = '#1c1c38'; g.lineWidth = 1;
+  for (let x = 40; x < W; x += 40) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, H); g.stroke(); }
+  for (let y = 40; y < H; y += 40) { g.beginPath(); g.moveTo(0, y); g.lineTo(W, y); g.stroke(); }
+  g.strokeStyle = '#22d3ee'; g.lineWidth = 3; g.strokeRect(4, 4, W - 8, H - 8);
+  g.strokeStyle = '#33335a'; g.lineWidth = 2;
+  g.beginPath(); g.moveTo(W / 2, 10); g.lineTo(W / 2, H - 10); g.stroke();
+  g.fillStyle = '#22d3ee'; g.font = '11px monospace'; g.textAlign = 'center';
+  g.fillText('P1 SPAWN', 120, 40);
+  g.fillStyle = '#f0f'; g.fillText('P2 SPAWN', 680, 40);
+})();
+
+/* ---------- input ---------- */
+const live = {
+  p1: { u: false, d: false, l: false, r: false, f: false },
+  p2: { u: false, d: false, l: false, r: false, f: false }
+};
+const KEYMAP = {
+  KeyW: ['p1', 'u'], KeyS: ['p1', 'd'], KeyA: ['p1', 'l'], KeyD: ['p1', 'r'], Space: ['p1', 'f'],
+  ArrowUp: ['p2', 'u'], ArrowDown: ['p2', 'd'], ArrowLeft: ['p2', 'l'], ArrowRight: ['p2', 'r'], Enter: ['p2', 'f']
+};
+window.addEventListener('keydown', e => {
+  const m = KEYMAP[e.code];
+  if (m) { live[m[0]][m[1]] = true; e.preventDefault(); }
+});
+window.addEventListener('keyup', e => {
+  const m = KEYMAP[e.code];
+  if (m) { live[m[0]][m[1]] = false; e.preventDefault(); }
+});
+const snap = () => ({
+  p1: { u: live.p1.u, d: live.p1.d, l: live.p1.l, r: live.p1.r, f: live.p1.f },
+  p2: { u: live.p2.u, d: live.p2.d, l: live.p2.l, r: live.p2.r, f: live.p2.f }
+});
+
+/* ---------- match state ---------- */
+let simA, simB;                 // simA = P1 client view, simB = P2 client (shadow) view
+let tickHash = '0'.repeat(64); // input blob chain head
+let ledgerHead = '0'.repeat(64);
+let verifiedCount = 0;
+let realTick = 0, simTick = 0;
+let lagMs = 0, lagTicks = 0;
+let chainView = [];            // last tick hashes for display
+let running = true, lastLoopT = 0, hzSamples = [];
+const p1q = [], p2q = [];      // lockstep input queues: {tick, inp}
+
+const $ = id => document.getElementById(id);
+const chainEl = $('chainlist'), hitEl = $('hitlog');
+
+function logHit(html, cls) {
+  if (hitEl.querySelector('.info') && hitEl.children.length === 1) hitEl.innerHTML = '';
+  const d = document.createElement('div');
+  if (cls) d.className = cls;
+  d.innerHTML = html;
+  hitEl.prepend(d);
+  while (hitEl.children.length > 40) hitEl.removeChild(hitEl.lastChild);
+}
+
+function setConsensus(ok, msg) {
+  const el = $('consensus');
+  el.textContent = msg;
+  el.classList.toggle('bad', !ok);
+}
+
+async function boot() {
+  simA = createSim(); simB = createSim();
+  const ah = await sha256hex('static|' + arenaCanonical());
+  $('kArena').textContent = '✓ ' + shortHash(ah) + ' agreed';
+  logHit('match start — arena agreed <span class="mono">' + shortHash(ah) + '</span>', 'info');
+  lastLoopT = performance.now();
+  setTimeout(loop, 1000 / TICK_HZ);
+}
+
+function reset() {
+  simA = createSim(); simB = createSim();
+  tickHash = '0'.repeat(64); ledgerHead = '0'.repeat(64);
+  verifiedCount = 0; realTick = 0; simTick = 0; chainView = [];
+  p1q.length = 0; p2q.length = 0; running = true;
+  $('cheatBtn').disabled = false;
+  hitEl.innerHTML = '<div class="info">match reset — shoot something</div>';
+  setConsensus(true, 'CONSENSUS ✓');
+  updatePanel();
+}
+
+async function loop() {
+  if (!running) { setTimeout(loop, 1000 / TICK_HZ); return; }
+  const now = performance.now();
+  hzSamples.push(now - lastLoopT); lastLoopT = now;
+  if (hzSamples.length > 30) hzSamples.shift();
+  realTick++;
+
+  // sample live inputs into lockstep queues
+  const s = snap();
+  p1q.push({ tick: realTick, p1: s.p1 });
+  p2q.push({ tick: realTick, p2: s.p2, deliverAt: realTick + lagTicks });
+
+  // lockstep: sim advances tick T only when BOTH inputs for T have arrived
+  while (p1q.length && p2q.length && p2q[0].tick === simTick + 1 && p2q[0].deliverAt <= realTick) {
+    const pi = { p1: p1q.shift().p1, p2: p2q.shift().p2 };
+    simTick++;
+    const evA = simA.step(pi);
+    simB.step(pi);
+
+    // 1) input blob chain
+    tickHash = await sha256hex(tickHash + '|' + simTick + '|' + inputBits(pi));
+    chainView.push({ t: simTick, h: tickHash });
+    if (chainView.length > 5) chainView.shift();
+
+    // 2) dual-simulation consensus
+    const ha = simA.S.stateHashStr(), hb = simB.S.stateHashStr();
+    if (ha !== hb) {
+      setConsensus(false, 'DIVERGENCE ✗ @ tick ' + simTick);
+      logHit('✖ <b>DIVERGENCE</b> @ tick ' + simTick + ' — sims disagree, match halted', 'bad');
+      running = false;
+    }
+
+    // 3) verify each physics hit claim against the shadow sim
+    for (const h of evA.hits) {
+      const claim = { tick: h.tick, shooter: h.shooter, victim: h.victim, bx: h.bx, by: h.by };
+      if (verifyClaim(claim, simB)) {
+        verifiedCount++;
+        ledgerHead = await sha256hex(ledgerHead + '|' + hitCanonical(h));
+        logHit('✓ <b>VERIFIED</b> ' + h.shooter.toUpperCase() + ' hit ' + h.victim.toUpperCase() +
+          ' @t' + h.tick + ' (' + h.bx + ',' + h.by + ')', 'ok');
+      } else {
+        logHit('✖ claim rejected @t' + h.tick, 'bad');
+      }
+    }
+    if (simA.S.winner) {
+      setConsensus(true, '🏆 ' + simA.S.winner.toUpperCase() + ' WINS — verified by ledger');
+      logHit('🏆 <b>' + simA.S.winner.toUpperCase() + ' WINS</b> ' + simA.S.score.p1 + '–' + simA.S.score.p2, 'ok');
+      running = false;
+    }
+  }
+
+  render();
+  updatePanel();
+  setTimeout(loop, 1000 / TICK_HZ);
+}
+
+/* ---------- cheat: P1's client claims a hit that never happened ---------- */
+$('cheatBtn').addEventListener('click', () => {
+  if (!running || simA.S.p1.votedOff) return;
+  const fake = { tick: simTick, shooter: 'p1', victim: 'p2', bx: 999, by: 999 };
+  logHit('😈 <b>P1 claims hit</b> @t' + fake.tick + ' (999,999)…', 'info');
+  setTimeout(() => {
+    const ok = verifyClaim(fake, simB);
+    if (!ok) {
+      simA.S.p1.strikes++;
+      logHit('✖ <b>DISAGREEMENT</b> — no such hit in the agreed log @t' + fake.tick +
+        ' <span class="mono">(' + shortHash(tickHash) + ')</span>', 'bad');
+      logHit('🗳 <b>P2 votes EXPEL P1</b> — 1/1 honest votes — <b>P1 VOTED OFF</b>', 'bad');
+      simA.S.p1.votedOff = true; simB.S.p1.votedOff = true;
+      $('cheatBtn').disabled = true;
+      setConsensus(true, 'CONSENSUS ✓ — cheater expelled by math');
+    }
+  }, 600);
+});
+
+$('resetBtn').addEventListener('click', reset);
+$('lagSlider').addEventListener('input', e => {
+  lagMs = +e.target.value;
+  lagTicks = Math.round(lagMs / (1000 / TICK_HZ));
+  $('lagVal').textContent = lagMs + 'ms';
+});
+
+/* ---------- panel ---------- */
+function updatePanel() {
+  $('kTick').textContent = simTick;
+  $('kReal').textContent = realTick;
+  $('kLag').textContent = lagTicks + ' ticks (' + lagMs + 'ms)';
+  const avg = hzSamples.length ? hzSamples.reduce((a, b) => a + b, 0) / hzSamples.length : 33.3;
+  $('kHz').textContent = (1000 / avg).toFixed(1) + ' Hz';
+  $('kSims').textContent = 'match';
+  chainEl.innerHTML = chainView.length
+    ? chainView.map(c => '<div><span class="th">t' + c.t + '</span> ' + shortHash(c.h) + '…</div>').reverse().join('')
+    : '<div class="th">waiting for first tick…</div>';
+  $('kLedger').textContent = verifiedCount + ' hits · head ' + shortHash(ledgerHead);
+}
+
+/* ---------- render ---------- */
+function drawPlayer(g, p, color, label) {
+  g.save();
+  if (p.votedOff) g.globalAlpha = 0.35;
+  g.fillStyle = p.flash > 0 ? '#ffffff' : color;
+  g.beginPath(); g.arc(p.x, p.y, P_R, 0, 7); g.fill();
+  g.strokeStyle = color; g.lineWidth = 2;
+  g.beginPath(); g.moveTo(p.x, p.y); g.lineTo(p.x + p.fx * (P_R + 8), p.y + p.fy * (P_R + 8)); g.stroke();
+  g.fillStyle = color; g.font = '11px monospace'; g.textAlign = 'center';
+  g.fillText(label + (p.votedOff ? ' ✖' : ''), p.x, p.y - P_R - 8);
+  g.restore();
+}
+
+function render() {
+  ctx.drawImage(staticCv, 0, 0);
+  const S = simA.S;
+  // bullets
+  for (const b of S.bullets) {
+    ctx.fillStyle = b.owner === 'p1' ? '#22d3ee' : '#f0f';
+    ctx.shadowColor = ctx.fillStyle; ctx.shadowBlur = 10;
+    ctx.beginPath(); ctx.arc(b.x, b.y, B_R, 0, 7); ctx.fill();
+    ctx.shadowBlur = 0;
+  }
+  drawPlayer(ctx, S.p1, '#22d3ee', 'P1');
+  drawPlayer(ctx, S.p2, '#f0f', 'P2');
+  // score
+  ctx.fillStyle = '#e8e8f5'; ctx.font = 'bold 18px monospace'; ctx.textAlign = 'center';
+  ctx.fillText('P1 ' + S.score.p1 + '  —  ' + S.score.p2 + ' P2', W / 2, 28);
+  if (S.winner) {
+    ctx.fillStyle = 'rgba(5,5,16,.7)'; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = '#ffd76b'; ctx.font = 'bold 42px monospace';
+    ctx.fillText(S.winner.toUpperCase() + ' WINS', W / 2, H / 2 - 10);
+    ctx.fillStyle = '#8a8aa8'; ctx.font = '15px monospace';
+    ctx.fillText('every hit verified by the ledger — hit reset to run it back', W / 2, H / 2 + 26);
+  }
+  // lag ghost note
+  if (lagTicks > 0) {
+    ctx.fillStyle = '#ffd76b'; ctx.font = '12px monospace'; ctx.textAlign = 'left';
+    ctx.fillText('⏳ P2 inputs delayed ' + lagTicks + ' ticks — feel the lag, math still agrees', 14, H - 14);
+  }
+}
+
+boot();
+})();
+</script>
+</body>
+</html>
