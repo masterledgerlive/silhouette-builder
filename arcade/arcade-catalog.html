@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Arcades of Time — the real arcade of time</title>
+<style>
+  :root { --neon:#22d3ee; --pink:#f0f; --bg:#0a0a18; --panel:#12122a; --gold:#ffd76b; --green:#7CFF6B; --red:#ff5470; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:var(--bg); color:#e8e8f5; font-family:'Courier New',monospace; min-height:100vh; overflow-x:hidden;
+         background-image:radial-gradient(ellipse at 50% 120%, #1a0f2e 0%, transparent 60%), radial-gradient(circle at 50% 0%, #1a1a3a 0%, var(--bg) 60%); }
+  /* floor perspective lines */
+  .floor { position:fixed; inset:0; pointer-events:none; z-index:0; opacity:.35;
+    background:repeating-linear-gradient(90deg, transparent 0 118px, rgba(34,211,238,.07) 118px 120px); }
+  .wrap { max-width:1200px; margin:0 auto; padding:24px 16px 60px; position:relative; z-index:1; }
+  header { text-align:center; margin-bottom:8px; }
+  h1 { font-size:clamp(1.8rem,6vw,3rem); color:var(--neon); letter-spacing:.14em; text-shadow:0 0 18px var(--neon), 0 0 60px #0af; }
+  .tagline { color:var(--pink); letter-spacing:.28em; margin-top:6px; text-shadow:0 0 12px var(--pink); font-size:.85rem; }
+  .switcher { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin:16px 0 6px; }
+  .switcher a { color:#c9c9e8; text-decoration:none; border:1px solid #2a2a5a; border-radius:8px; padding:6px 14px; font-size:.78rem; letter-spacing:.1em; }
+  .switcher a.cur { border-color:var(--neon); color:var(--neon); box-shadow:0 0 12px #0af5; }
+  .switcher a:hover { border-color:var(--neon); color:var(--neon); }
+
+  /* ---------- carousel ---------- */
+  .carwrap { position:relative; margin:26px 0 8px; }
+  .car { position:relative; height:560px; perspective:1400px; overflow:hidden; touch-action:pan-y; }
+  .cab {
+    position:absolute; left:50%; top:10px; width:300px; height:520px; margin-left:-150px;
+    transform-style:preserve-3d; transition:transform .55s cubic-bezier(.2,.8,.25,1), opacity .55s, filter .55s;
+    cursor:pointer;
+  }
+  .cab .body {
+    width:100%; height:100%; border-radius:14px 14px 18px 18px; position:relative; overflow:hidden;
+    background:linear-gradient(180deg,#1b1b30 0%,#101022 100%);
+    border:2px solid #2a2a5a; box-shadow:0 18px 50px rgba(0,0,0,.6);
+    display:flex; flex-direction:column;
+  }
+  .cab .marquee {
+    height:74px; display:flex; align-items:center; justify-content:center; text-align:center;
+    font-weight:bold; font-size:1.05rem; letter-spacing:.08em; padding:6px 10px;
+    border-bottom:3px solid #000; text-shadow:0 0 10px currentColor;
+  }
+  .cab .screenwrap { margin:12px 14px 0; background:#000; border-radius:8px; border:4px solid #05050c; box-shadow:inset 0 0 30px #000; position:relative; height:190px; overflow:hidden; }
+  .cab .screen { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; }
+  .cab .screen .coin { color:var(--gold); font-size:.95rem; letter-spacing:.2em; animation:blink 1.1s steps(2) infinite; text-shadow:0 0 12px var(--gold); }
+  @keyframes blink { 50% { opacity:.25; } }
+  .cab .screen .gname { color:#8a8aa8; font-size:.72rem; letter-spacing:.12em; text-align:center; padding:0 10px; }
+  .cab .screen iframe { position:absolute; inset:0; width:100%; height:100%; border:0; background:#000; display:none; }
+  .cab.playing .screen iframe { display:block; }
+  .cab .deck { margin:12px 14px 0; height:64px; border-radius:8px; background:linear-gradient(180deg,#23233c,#141428); border:1px solid #2a2a5a; position:relative; }
+  .cab .stick { position:absolute; left:36px; top:8px; width:10px; height:30px; background:#888; border-radius:5px; }
+  .cab .stick::before { content:''; position:absolute; left:-9px; top:-12px; width:28px; height:28px; border-radius:50%; background:radial-gradient(circle at 35% 35%, #ff6b6b, #a00); box-shadow:0 0 10px #f00a; }
+  .cab .btn { position:absolute; top:18px; width:20px; height:20px; border-radius:50%; box-shadow:0 0 8px currentColor; }
+  .cab .sideart { position:absolute; top:0; bottom:0; width:10px; }
+  .cab .sideart.l { left:0; border-radius:12px 0 0 16px; }
+  .cab .sideart.r { right:0; border-radius:0 12px 16px 0; }
+  .cab .kick { margin-top:auto; height:86px; display:flex; align-items:center; justify-content:center; border-top:2px solid #000; background:rgba(0,0,0,.35); }
+  .cab .playbtn {
+    font-family:inherit; font-size:1rem; letter-spacing:.15em; padding:12px 30px; border-radius:10px; cursor:pointer;
+    background:#0a2a0a; color:var(--green); border:2px solid var(--green); text-shadow:0 0 8px var(--green); box-shadow:0 0 16px #0f02;
+  }
+  .cab .playbtn:hover { background:#0f3d0f; }
+  .cab .badge { position:absolute; top:84px; left:50%; transform:translateX(-50%) rotate(-4deg); background:var(--gold); color:#111; font-size:.62rem; font-weight:bold; letter-spacing:.08em; padding:4px 10px; border-radius:6px; z-index:3; white-space:nowrap; }
+  .carbtn {
+    position:absolute; top:50%; transform:translateY(-50%); z-index:10;
+    width:52px; height:52px; border-radius:50%; border:2px solid var(--neon); background:rgba(10,10,24,.8);
+    color:var(--neon); font-size:1.5rem; cursor:pointer; text-shadow:0 0 10px var(--neon);
+  }
+  .carbtn:hover { box-shadow:0 0 18px #0af8; }
+  #prevBtn { left:6px; } #nextBtn { right:6px; }
+  .dots { display:flex; gap:8px; justify-content:center; margin:10px 0 4px; flex-wrap:wrap; }
+  .dots button { width:12px; height:12px; border-radius:50%; border:1px solid var(--neon); background:transparent; cursor:pointer; padding:0; }
+  .dots button.on { background:var(--neon); box-shadow:0 0 10px var(--neon); }
+  .controls-note { text-align:center; color:#8a8aa8; font-size:.78rem; margin:14px 0 4px; line-height:1.9; }
+  .controls-note b { color:var(--gold); }
+  #exitPlay { display:none; margin:10px auto 0; font-family:inherit; padding:10px 26px; border-radius:10px; cursor:pointer;
+    background:#2a0f14; color:var(--red); border:2px solid var(--red); letter-spacing:.12em; }
+</style>
+</head>
+<body>
+<div class="floor"></div>
+<div class="wrap">
+  <header>
+    <h1>👹 ARCADES OF TIME</h1>
+    <div class="tagline">THE REAL ARCADE OF TIME · INSERT COIN</div>
+    <nav class="switcher">
+      <a href="https://arcade.highscores.live/">HUB</a>
+      <a href="https://arcade.highscores.live/dos/">DOS</a>
+      <a href="https://arcade.highscores.live/bridge/">BRIDGE</a>
+      <a href="https://arcade.highscores.live/arcade/github.html">GITHUB</a>
+      <a href="https://arcade.highscores.live/arcade/linktree.html">LINKTREE</a>
+      <a href="https://arcade.highscores.live/arcade/" class="cur">ARCADE</a>
+    </nav>
+  </header>
+
+  <div class="carwrap">
+    <div class="car" id="car"></div>
+    <button class="carbtn" id="prevBtn" aria-label="previous">‹</button>
+    <button class="carbtn" id="nextBtn" aria-label="next">›</button>
+  </div>
+  <div class="dots" id="dots"></div>
+  <div style="text-align:center"><button id="exitPlay">✕ EXIT GAME — back to the floor</button></div>
+  <div class="controls-note">
+    <b>5</b> = coin &nbsp;·&nbsp; <b>1</b> = start &nbsp;·&nbsp; arrows move &nbsp;·&nbsp; <b>ALT</b> = button<br>
+    Xbox / gamepad controllers work through your browser's Gamepad API — just plug and play.
+  </div>
+</div>
+<script>
+var GAMES = [
+  { id:'doom', name:'DOOM', year:'1993', colors:{mq:'#ff3b3b',bg:'#1a0505',stripe:'#ff3b3b'}, url:'https://arcade.highscores.live/arcade/doom/', badge:'SEALED IN BLANKS — OUR BUILD', blurb:'Our blob-sealed build. Booted from recovered bytes.', external:true },
+  { id:'arcade_defender', name:'DEFENDER', year:'1981 · Williams', colors:{mq:'#ff5a2a',bg:'#1c0d04',stripe:'#ff5a2a'}, blurb:'The hardest shooter of 1981. Save the humanoids.' },
+  { id:'arcade_digdug', name:'DIG DUG', year:'1982 · Namco', colors:{mq:'#3b8bff',bg:'#041a2e',stripe:'#ffd76b'}, blurb:'Pump up the Pookas. Don\u2019t get crushed.' },
+  { id:'arcade_joust', name:'JOUST', year:'1982 · Williams', colors:{mq:'#ff9a3b',bg:'#211104',stripe:'#ff9a3b'}, blurb:'Ostrich jousting. Flap to survive.' },
+  { id:'arcade_tron', name:'TRON', year:'1982 · Bally Midway', colors:{mq:'#22d3ee',bg:'#02141c',stripe:'#22d3ee'}, blurb:'Enter the Grid. Light cycles await.' },
+  { id:'arcade_qbert', name:'Q*BERT', year:'1982 · Gottlieb', colors:{mq:'#ff7b1c',bg:'#1c0d20',stripe:'#b14dff'}, blurb:'@!#?@! Hop the pyramid.' },
+  { id:'arcade_centiped', name:'CENTIPEDE', year:'1981 · Atari', colors:{mq:'#7CFF6B',bg:'#061a08',stripe:'#7CFF6B'}, blurb:'Trackball fury in the mushroom patch.' },
+  { id:'arcade_missile', name:'MISSILE COMMAND', year:'1980 · Atari', colors:{mq:'#ff5470',bg:'#1c0510',stripe:'#22d3ee'}, blurb:'Defend the cities. The end is inevitable.' },
+  { id:'arcade_galaga88', name:"GALAGA '88", year:'1987 · Namco', colors:{mq:'#ff3b6b',bg:'#14041c',stripe:'#3b8bff'}, blurb:'The sequel that out-dived the original.' },
+  { id:'arcade_20pacgal', name:'MS. PAC-MAN / GALAGA', year:'20th Anniversary', colors:{mq:'#ffd76b',bg:'#1c0d1c',stripe:'#f0f'}, blurb:'Two legends, one reunion cabinet.' },
+  { id:'arcade_invaders', name:'SPACE INVADERS', year:'1978 · Taito', colors:{mq:'#7CFF6B',bg:'#081408',stripe:'#7CFF6B'}, blurb:'Where it all started. Descend, invader.' }
+];
+var car = document.getElementById('car');
+var dots = document.getElementById('dots');
+var exitBtn = document.getElementById('exitPlay');
+var cur = 0, playing = null;
+
+GAMES.forEach(function(g, i){
+  var c = g.colors;
+  var el = document.createElement('div');
+  el.className = 'cab'; el.dataset.i = i;
+  var badge = g.badge ? '<div class="badge">' + g.badge + '</div>' : '';
+  var screenInner = g.external
+    ? '<div class="coin">OUR BUILD</div><div class="gname">' + g.blurb + '</div>'
+    : '<div class="coin">INSERT COIN</div><div class="gname">' + g.name + '<br>' + g.year + '</div>';
+  el.innerHTML =
+    '<div class="body" style="border-color:' + c.stripe + '33">' +
+    '<div class="sideart l" style="background:' + c.stripe + '"></div>' +
+    '<div class="sideart r" style="background:' + c.stripe + '"></div>' +
+    '<div class="marquee" style="color:' + c.mq + ';background:linear-gradient(180deg,' + c.bg + ',#0a0a14)">' + g.name + '</div>' +
+    badge +
+    '<div class="screenwrap"><div class="screen">' + screenInner + '<iframe title="' + g.name + '" allow="autoplay; fullscreen"></iframe></div></div>' +
+    '<div class="deck"><div class="stick"></div>' +
+    '<div class="btn" style="left:110px;color:#ff3b3b;background:#ff3b3b"></div>' +
+    '<div class="btn" style="left:150px;color:#ffd76b;background:#ffd76b"></div>' +
+    '<div class="btn" style="left:190px;color:#22d3ee;background:#22d3ee"></div></div>' +
+    '<div class="kick"><button class="playbtn">▶ PLAY</button></div>' +
+    '</div>';
+  el.querySelector('.playbtn').addEventListener('click', function(e){ e.stopPropagation(); playGame(i); });
+  el.addEventListener('click', function(){ if(i !== cur) goTo(i); });
+  car.appendChild(el);
+  var d = document.createElement('button');
+  d.setAttribute('aria-label', g.name);
+  d.addEventListener('click', function(){ goTo(i); });
+  dots.appendChild(d);
+});
+
+function layout(){
+  var cabs = car.children, n = cabs.length;
+  for(var i=0;i<n;i++){
+    var off = ((i - cur) % n + n) % n;
+    if(off > n/2) off -= n;
+    var el = cabs[i], dot = dots.children[i];
+    dot.className = (off === 0) ? 'on' : '';
+    if(Math.abs(off) > 2){ el.style.opacity = '0'; el.style.pointerEvents = 'none'; continue; }
+    el.style.opacity = '1'; el.style.pointerEvents = 'auto';
+    var x = off * 240, z = -Math.abs(off) * 260, r = off * -28;
+    var s = off === 0 ? 1.06 : 0.82;
+    el.style.transform = 'translateX(' + x + 'px) translateZ(' + z + 'px) rotateY(' + r + 'deg) scale(' + s + ')';
+    el.style.filter = off === 0 ? 'none' : 'brightness(.55)';
+    el.style.zIndex = 20 - Math.abs(off);
+  }
+}
+function goTo(i){ stopGame(); cur = ((i % GAMES.length) + GAMES.length) % GAMES.length; layout(); }
+document.getElementById('prevBtn').addEventListener('click', function(){ goTo(cur - 1); });
+document.getElementById('nextBtn').addEventListener('click', function(){ goTo(cur + 1); });
+document.addEventListener('keydown', function(e){
+  if(playing) return;
+  if(e.key === 'ArrowLeft') goTo(cur - 1);
+  if(e.key === 'ArrowRight') goTo(cur + 1);
+});
+var tx0 = null;
+car.addEventListener('touchstart', function(e){ tx0 = e.touches[0].clientX; }, {passive:true});
+car.addEventListener('touchend', function(e){
+  if(tx0 === null) return;
+  var dx = e.changedTouches[0].clientX - tx0;
+  if(Math.abs(dx) > 40) goTo(cur + (dx < 0 ? 1 : -1));
+  tx0 = null;
+}, {passive:true});
+
+function playGame(i){
+  var g = GAMES[i], el = car.children[i];
+  if(g.external){ window.open(g.url, '_blank'); return; }
+  stopGame();
+  playing = i;
+  var f = el.querySelector('iframe');
+  f.src = 'https://archive.org/embed/' + g.id;
+  el.classList.add('playing');
+  exitBtn.style.display = 'block';
+  cur = i; layout();
+}
+function stopGame(){
+  if(playing === null) return;
+  var el = car.children[playing];
+  el.classList.remove('playing');
+  el.querySelector('iframe').src = 'about:blank';
+  playing = null;
+  exitBtn.style.display = 'none';
+}
+exitBtn.addEventListener('click', stopGame);
+layout();
+</script>
+
+
+<section id="builder" style="max-width:1200px;margin:44px auto 0;padding:0 16px;position:relative;z-index:1">
+  <h2 style="color:var(--green);letter-spacing:.15em;text-align:center;font-size:clamp(1.3rem,4vw,1.9rem);text-shadow:0 0 14px var(--green)">🔨 THE BUILDER WORKSHOP</h2>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin-top:18px">
+    <a href="./builder/" style="display:block;text-decoration:none;background:linear-gradient(135deg,#0d2a1a,#0a0a18);border:2px solid var(--green);border-radius:14px;padding:20px 16px;box-shadow:0 0 24px #7CFF6B33">
+      <div style="font-size:1.8rem">⛓</div>
+      <div style="color:var(--green);letter-spacing:.1em;font-size:1rem;margin:6px 0">REAL BLOB BUILDER</div>
+      <div style="color:#b9b9d8;font-size:.78rem;line-height:1.6">Seal objects as real Walrus blobs. Every hit writes its own blob. Real timing.</div>
+      <div style="color:var(--neon);letter-spacing:.1em;margin-top:8px;font-size:.8rem">ENTER →</div>
+    </a>
+    <a href="./builder/contract-duel/" style="display:block;text-decoration:none;background:var(--panel);border:1px solid #2a2a5a;border-radius:14px;padding:20px 16px">
+      <div style="font-size:1.8rem">🎯</div>
+      <div style="color:var(--neon);letter-spacing:.1em;font-size:1rem;margin:6px 0">CONTRACT DUEL</div>
+      <div style="color:#b9b9d8;font-size:.78rem;line-height:1.6">The agreed multiplayer mechanics. 360° ships, every shot verified. First to 5.</div>
+      <div style="color:var(--neon);letter-spacing:.1em;margin-top:8px;font-size:.8rem">PLAY →</div>
+    </a>
+    <a href="./builder/zombie-proof/" style="display:block;text-decoration:none;background:var(--panel);border:1px solid #2a2a5a;border-radius:14px;padding:20px 16px">
+      <div style="font-size:1.8rem">🧟</div>
+      <div style="color:var(--neon);letter-spacing:.1em;font-size:1rem;margin:6px 0">ZOMBIE PROOF</div>
+      <div style="color:#b9b9d8;font-size:.78rem;line-height:1.6">Where it started — 3 objects pulled live from blobs, key firing, zombie hunts you.</div>
+      <div style="color:var(--neon);letter-spacing:.1em;margin-top:8px;font-size:.8rem">PLAY →</div>
+    </a>
+    <a href="./builder/v2/" style="display:block;text-decoration:none;background:var(--panel);border:1px solid #2a2a5a;border-radius:14px;padding:20px 16px">
+      <div style="font-size:1.8rem">🧱</div>
+      <div style="color:var(--neon);letter-spacing:.1em;font-size:1rem;margin:6px 0">OBJECT BUILDER</div>
+      <div style="color:#b9b9d8;font-size:.78rem;line-height:1.6">Build from objects — palette, live stage, blob inspector. Kid and adult mode.</div>
+      <div style="color:var(--neon);letter-spacing:.1em;margin-top:8px;font-size:.8rem">ENTER →</div>
+    </a>
+    <a href="./floor.html" style="display:block;text-decoration:none;background:var(--panel);border:1px solid #2a2a5a;border-radius:14px;padding:20px 16px">
+      <div style="font-size:1.8rem">🕹</div>
+      <div style="color:var(--neon);letter-spacing:.1em;font-size:1rem;margin:6px 0">THE 1980s FLOOR</div>
+      <div style="color:#b9b9d8;font-size:.78rem;line-height:1.6">The carousel — walk the arcade floor, pick your cabinet.</div>
+      <div style="color:var(--neon);letter-spacing:.1em;margin-top:8px;font-size:.8rem">WALK IN →</div>
+    </a>
+  </div>
+</section>
+
+<section id="catalog" style="max-width:1200px;margin:44px auto 0;padding:0 16px;position:relative;z-index:1">
+  <h2 style="color:var(--neon);letter-spacing:.15em;text-align:center;font-size:clamp(1.3rem,4vw,1.9rem)">🗂 THE FULL CATALOG</h2>
+  <p style="text-align:center;color:#8a8aa8;font-size:.85rem;margin:8px 0 18px;line-height:1.8">
+    <b style="color:var(--gold)">11 systems live</b>, more being added. Every game is its own system file —<br>
+    its own page, its own emulator credits, its own blob-ready package.
+  </p>
+  <div style="text-align:center;margin-bottom:18px">
+    <input id="catSearch" placeholder="search the floor…" autocomplete="off"
+      style="font-family:inherit;font-size:1rem;padding:12px 18px;width:min(420px,90%);border-radius:10px;
+             border:1px solid #2a2a5a;background:#0d0d22;color:#e8e8f5;outline:none">
+  </div>
+  <div id="catGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px"></div>
+</section>
+<script>
+var CATSYS = [
+  {id:'doom', name:'DOOM', sub:'1993 · id Software', blob:'OUR BUILD — SEALED IN BLOBS', live:true},
+  {id:'arcade_defender', name:'DEFENDER', sub:'1981 · Williams'},
+  {id:'arcade_digdug', name:'DIG DUG', sub:'1982 · Namco'},
+  {id:'arcade_joust', name:'JOUST', sub:'1982 · Williams'},
+  {id:'arcade_tron', name:'TRON', sub:'1982 · Bally Midway'},
+  {id:'arcade_qbert', name:"Q*BERT", sub:'1982 · Gottlieb'},
+  {id:'arcade_centiped', name:'CENTIPEDE', sub:'1981 · Atari'},
+  {id:'arcade_missile', name:'MISSILE COMMAND', sub:'1980 · Atari'},
+  {id:'arcade_galaga88', name:"GALAGA '88", sub:'1987 · Namco'},
+  {id:'arcade_20pacgal', name:'MS. PAC-MAN / GALAGA', sub:'20th Anniversary · Namco'},
+  {id:'arcade_invaders', name:'SPACE INVADERS', sub:'1978 · Taito'}
+];
+var catGrid = document.getElementById('catGrid');
+function renderCat(q){
+  q = (q||'').toUpperCase();
+  catGrid.innerHTML = '';
+  CATSYS.forEach(function(g){
+    if(q && (g.name+' '+g.sub).toUpperCase().indexOf(q) < 0) return;
+    var d = document.createElement('a');
+    d.href = 'games/' + g.id + '/';
+    d.style.cssText = 'display:block;background:var(--panel);border:1px solid #2a2a5a;border-radius:12px;padding:18px;text-decoration:none;transition:.2s';
+    d.onmouseenter = function(){ d.style.borderColor = 'var(--neon)'; d.style.boxShadow = '0 0 16px #0af5'; };
+    d.onmouseleave = function(){ d.style.borderColor = '#2a2a5a'; d.style.boxShadow = 'none'; };
+    d.innerHTML = '<div style="color:#fff;letter-spacing:.08em;font-size:1rem">' + g.name + '</div>' +
+      '<div style="color:var(--pink);font-size:.78rem;margin-top:4px">' + g.sub + '</div>' +
+      '<div style="margin-top:10px;font-size:.68rem;letter-spacing:.08em;color:' + (g.live ? 'var(--green)' : 'var(--gold)') + '">' +
+      (g.live ? '● OUR BUILD — SEALED IN BLOBS' : '◌ STATIC-READY — blob system not live yet') + '</div>' +
+      '<div style="margin-top:8px;color:var(--neon);font-size:.78rem;letter-spacing:.1em">OPEN SYSTEM →</div>';
+    catGrid.appendChild(d);
+  });
+}
+document.getElementById('catSearch').addEventListener('input', function(){ renderCat(this.value); });
+renderCat('');
+</script>
+
+
+<section id="emulib" style="max-width:1200px;margin:44px auto 0;padding:0 16px;position:relative;z-index:1">
+  <h2 style="color:var(--neon);letter-spacing:.15em;text-align:center;font-size:clamp(1.3rem,4vw,1.9rem)">🔧 EMULATOR LIBRARY</h2>
+  <p style="text-align:center;color:#8a8aa8;font-size:.85rem;margin:8px 0 20px;line-height:1.8;max-width:680px;margin-left:auto;margin-right:auto">
+    Thanks to the programmers who made these games playable again. Every emulator below is a real project,
+    credited to its real makers — the people who kept the arcade alive when the cabinets died.
+  </p>
+  <div id="emuGroups" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px"></div>
+</section>
+<script>
+var EMUG = [
+  {t:'ARCADE EMULATORS', items:[
+    ['MAME','https://www.mamedev.org','MAMEdev team','The staple: thousands of arcade games, preserved with hardware-level accuracy.'],
+    ['Final Burn Neo','', 'FBNeo team (open-source)','Arcade specialist — Capcom, Neo-Geo, Sega, Data East, Konami. Fast on modest hardware.'],
+    ['FinalBurn Alpha','https://www.fbalpha.com','FinalBurn Alpha team','All-in-one arcade platforms: Capcom, Data East, Konami, Neo-Geo, Sega, Taito.'],
+    ['Daphne','https://www.emulator-zone.com/doc.php/arcade/','Daphne team','Laserdisc arcade — the Dragon’s Lair era.'],
+    ['ZiNc','https://www.emulator-zone.com/doc.php/arcade/','ZiNc team','Sony ZN-1 / ZN-2 and Namco System 11.'],
+    ['Raine','https://www.emulator-zone.com/doc.php/arcade/','Raine team','Taito and Jaleco hardware.'],
+    ['Calice','https://www.emulator-zone.com/doc.php/arcade/','','Capcom CPS-1 / CPS-2, Sega System 16 / 18, SNK Neo Geo.'],
+    ['Nebula','https://www.emulator-zone.com/doc.php/arcade/','','CPS2, NeoGeo, PGM and Konami.'],
+    ['WinKawaks','https://www.emulator-zone.com/doc.php/arcade/','Kawaks team','CPS1 / CPS2 and Neo Geo.'],
+    ['VivaNonno','https://www.emulator-zone.com/doc.php/arcade/','','Namco System 22.'],
+    ['Demul','','Demul team','Sega Dreamcast and NAOMI arcade boards, high accuracy.'],
+    ['JSMAME / JSMESS','https://archive.org','Jason Scott / Internet Archive','The in-browser emulator behind the Internet Arcade — what this floor plays on.']
+  ]},
+  {t:'MULTI-SYSTEM & FRONTENDS', items:[
+    ['RetroArch','https://www.retroarch.com','Libretro team','Frontend running 30+ cores — including MAME and Final Burn Neo arcade cores.'],
+    ['LaunchBox + BigBox','https://www.launchbox-app.com','Unbroken Software (Jason Carr)','“We make your games beautiful” — BigBox mode for the TV / cabinet.'],
+    ['Hyperspin','','Hyperspin team','The spinning-wheel classic — animated marquees and video previews.'],
+    ['EmulationStation','','EmulationStation team','The menu engine behind Batocera and RetroPie.'],
+    ['RetroBat','','RetroBat team','Windows frontend — portable, auto-configures EmulationStation.'],
+    ['Dolphin','https://dolphin-emu.org','Dolphin team','GameCube / Wii — including Triforce arcade titles.']
+  ]},
+  {t:'CABINET SYSTEMS', items:[
+    ['Batocera Linux','https://batocera.org','Batocera team','Boots straight into the arcade from USB — no desktop in the way.'],
+    ['Recalbox','','Recalbox team','Pi arcade OS with JAMMA-board support for real cabinets.'],
+    ['RetroPie','','RetroPie project','The tinkerer’s Debian-based Pi classic.'],
+    ['Lakka','','Libretro / Lakka team','RetroArch straight on LibreELEC — featherweight.'],
+    ['PCUAE','https://projectcarouselusb.eu/','Spannernick & Wizart','Game carousel and emulator manager for TheC64-style mini consoles.'],
+    ['RGB-Pi + RePlayOS','','RGB-Pi (Barcelona)','Pixel-perfect 24-bit RGB on CRTs.']
+  ]}
+];
+var eg = document.getElementById('emuGroups');
+EMUG.forEach(function(grp){
+  var d = document.createElement('div');
+  d.style.cssText = 'background:var(--panel);border:1px solid #2a2a5a;border-radius:14px;padding:20px';
+  var h = '<h3 style="color:var(--gold);letter-spacing:.12em;font-size:.85rem;margin-bottom:12px">' + grp.t + '</h3>';
+  var items = grp.items.map(function(e){
+    var nm = e[1] ? '<a href="' + e[1] + '" target="_blank" rel="noopener" style="color:var(--neon)">' + e[0] + ' ↗</a>'
+                   : '<span style="color:var(--neon)">' + e[0] + '</span>';
+    return '<div style="margin-bottom:12px;font-size:.8rem;line-height:1.6"><b style="color:#fff">' + nm + '</b><br>' +
+      '<span style="color:#b9b9d8">' + e[3] + '</span><br>' +
+      '<span style="color:#66668a">by ' + e[2] + '</span></div>';
+  }).join('');
+  d.innerHTML = h + items;
+  eg.appendChild(d);
+});
+</script>
+
+<section style="max-width:1200px;margin:34px auto 0;padding:0 16px;position:relative;z-index:1">
+  <div style="background:var(--panel);border:1px solid #2a2a5a;border-radius:14px;padding:24px;text-align:center">
+    <div style="font-size:2rem">🏆</div>
+    <h2 style="color:var(--gold);letter-spacing:.14em;margin:8px 0">HALL OF SCORES</h2>
+    <p style="color:#b9b9d8;font-size:.88rem;line-height:1.7;max-width:640px;margin:0 auto">
+      Verified scores only. Top runs need <b style="color:#fff">camera + screen proof</b> — no fakes on the board.
+      Click any score to watch the human play.
+    </p>
+    <p style="margin-top:14px">
+      <a href="https://arcade.highscores.live/arcade/blob-cinema/scores.html" style="display:inline-block;padding:12px 28px;border:2px solid var(--gold);border-radius:10px;color:var(--gold);text-decoration:none;letter-spacing:.12em">ENTER THE HALL →</a>
+    </p>
+    <p style="margin-top:16px;color:#8a8aa8;font-size:.82rem;line-height:1.7">
+      🔴 <b style="color:var(--red)">REC YOUR RUN</b> — record your gameplay as witness for real highscores.
+      Verified runs + replay blobs are how scores get proven.<br>
+      <a href="https://arcade.highscores.live/arcade/blob-cinema/studio.html" style="color:var(--neon)">Open the Studio to record →</a>
+    </p>
+  </div>
+
+  <div style="background:var(--panel);border:1px solid #2a2a5a;border-radius:14px;padding:24px;margin-top:16px;color:#8a8aa8;font-size:.82rem;line-height:1.9">
+    <h3 style="color:var(--neon);letter-spacing:.12em;margin-bottom:8px">HOW THIS FLOOR WORKS</h3>
+    <p>These cabinets stream from the <b style="color:#fff">Internet Archive's preservation library</b> — free, running in your browser on JSMAME emulation. Pick a cabinet, hit PLAY, drop a coin with <b style="color:var(--gold)">5</b>.</p>
+    <p style="margin-top:8px">Our <b style="color:#fff">DOOM</b> is different: it's <b style="color:var(--gold)">our own build, sealed into encrypted blobs</b> and booted from recovered bytes — the first game living the way all of them will.</p>
+    <p style="margin-top:8px"><b style="color:var(--pink)">ROADMAP (not done yet):</b> every game living in our own blobs, with on-chain verified scores — real gameplay witnessed, replay blobs to prove it, highscores the chain itself trusts. That's the future we're building toward.</p>
+  </div>
+
+  <footer style="text-align:center;color:#66668a;font-size:.78rem;margin-top:28px;line-height:2">
+    🌊 Koda Kai Network — the system of all systems<br>
+    muse.ai/join · Code: <b style="color:var(--neon)">BUD12L</b> — both sides get 1B bonus tokens<br>
+    <span style="font-size:.7rem">Games © their respective owners, preserved by the Internet Archive. Played here for preservation.</span>
+  </footer>
+</section>
+</body>
+</html>
