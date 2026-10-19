@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Nintendokidai · Links · highscores.live</title>
+<style>
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+         background:#0b0b14; color:#f5f5fa; min-height:100vh; }
+  .wrap { max-width:620px; margin:0 auto; padding:40px 20px 60px; }
+  .profile { text-align:center; margin-bottom:28px; }
+  .avatar { width:110px; height:110px; border-radius:50%; object-fit:cover; margin:0 auto 14px;
+            border:3px solid #22d3ee; box-shadow:0 0 24px #22d3ee66; display:block; }
+  .avatar-fallback { width:110px; height:110px; border-radius:50%; margin:0 auto 14px; font-size:3rem;
+            display:flex; align-items:center; justify-content:center;
+            background:linear-gradient(135deg,#22d3ee,#f0f); }
+  h1 { font-size:1.35rem; letter-spacing:.02em; }
+  .handle { color:#22d3ee; font-size:.9rem; margin-top:4px; }
+  .bio { color:#a9a9c9; font-size:.88rem; margin-top:10px; line-height:1.6; max-width:480px; margin-left:auto; margin-right:auto; }
+  .links { display:flex; flex-direction:column; gap:12px; margin-top:8px; }
+  .linkbtn { display:block; text-align:center; padding:15px 18px; border-radius:14px;
+             background:#151528; border:1px solid #2a2a5a; color:#f5f5fa; text-decoration:none;
+             font-size:.95rem; font-weight:600; transition:.18s; }
+  .linkbtn:hover { border-color:#22d3ee; box-shadow:0 0 16px #22d3ee55; transform:translateY(-1px); }
+  .linkbtn .sub { display:block; font-weight:400; font-size:.75rem; color:#8888aa; margin-top:3px; word-break:break-all; }
+  .section-label { text-align:center; color:#66668a; font-size:.75rem; letter-spacing:.25em; margin:26px 0 12px; }
+  .foot { text-align:center; margin-top:36px; font-size:.8rem; color:#66668a; line-height:2.2; }
+  .foot a { color:#22d3ee; text-decoration:none; border:1px solid #22d3ee; border-radius:999px; padding:7px 18px; margin:0 4px; display:inline-block;}
+  .foot a:hover { background:#22d3ee; color:#000; }
+  .mirror-note { text-align:center; font-size:.72rem; color:#55557a; margin-top:18px; }
+  .mirror-note a { color:#8888aa; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="profile">
+    <div class="avatar-fallback" id="avatarfb">🌊</div>
+    <h1 id="pname">Nintendokidai</h1>
+    <div class="handle">@infinitumikn</div>
+    <div class="bio" id="pbio">Every link, one page — the highscores.live mirror.</div>
+  </div>
+  <div class="links" id="links"></div>
+  <div class="mirror-note">Mirror of <a href="https://linktr.ee/infinitumikn" target="_blank" rel="noopener">linktr.ee/infinitumikn</a> · hosted on highscores.live</div>
+  <div class="foot">
+    <a href="index.html">🕹 ARCADE</a>
+    <a href="github.html">💻 GITHUB</a><br>
+    <a href="https://linktr.ee/infinitumikn" target="_blank" rel="noopener">↗ real linktree</a>
+  </div>
+</div>
+<script>
+/* LINKS INVENTORY — mirrored from https://linktr.ee/infinitumikn
+   {t: title, u: url, s: optional sub-caption} */
+const LINKS = [
+  // __INVENTORY__ — filled from live linktr.ee/infinitumikn
+];
+const box = document.getElementById('links');
+if (!LINKS.length) {
+  box.innerHTML = '<div style="text-align:center;color:#8888aa;padding:30px">Links are being mirrored… check back shortly.</div>';
+}
+LINKS.forEach(l => {
+  const a = document.createElement('a');
+  a.className = 'linkbtn'; a.href = l.u; a.target = '_blank'; a.rel = 'noopener';
+  a.innerHTML = l.t + (l.s ? '<span class="sub">' + l.s + '</span>' : '');
+  box.appendChild(a);
+});
+</script>
+</body>
+</html>
