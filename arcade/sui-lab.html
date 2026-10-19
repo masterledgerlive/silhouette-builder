@@ -100,9 +100,9 @@ sui move test</pre>
   <div class="panel">
   <table>
     <tr><th>Object</th><th>What it is</th><th>Status</th></tr>
-    <tr><td><b>HouseData</b></td><td>Plinko's house registry — games as dynamic object fields, balance, payout table</td><td>🔍 inspected</td></tr>
-    <tr><td><b>Game</b> <span style="color:#66668a">key, store</span></td><td>Owned game object; stake as <b>Balance&lt;SUI&gt;</b>, not a Coin</td><td>🔍 inspected</td></tr>
-    <tr><td><b>NewGameStarted / GameFinished</b> <span style="color:#66668a">copy, drop</span></td><td>Events — the frontend score feed, with beacon trace</td><td>🔍 inspected</td></tr>
+    <tr><td><b>HouseData</b></td><td>Plinko's house registry — games as dynamic object fields, balance, payout table</td><td>✅ tested</td></tr>
+    <tr><td><b>Game</b> <span style="color:#66668a">key, store</span></td><td>Owned game object; stake as <b>Balance&lt;SUI&gt;</b>, not a Coin</td><td>✅ tested</td></tr>
+    <tr><td><b>NewGameStarted / GameFinished</b> <span style="color:#66668a">copy, drop</span></td><td>Events — the frontend score feed, with beacon trace</td><td>✅ tested</td></tr>
     <tr><td><b>Cabinet</b></td><td>Ours: one per arcade machine (DOOM first), owns config + treasury</td><td>📝 designed</td></tr>
     <tr><td><b>Fin</b></td><td>Ours: closed-loop credit — non-transferable by design, the kill-vote as code</td><td>📝 designed</td></tr>
     <tr><td><b>Scoreboard</b> <span style="color:#66668a">shared</span></td><td>Ours: ordered only against itself; separate human/agent boards</td><td>📝 designed</td></tr>
@@ -114,12 +114,12 @@ sui move test</pre>
   <div class="panel">
   <table>
     <tr><th>#</th><th>Mechanic</th><th>Proof</th></tr>
-    <tr><td><b>M1</b></td><td>Randomness draw is <b>entry</b>-only — can't be composed/abort-filtered</td><td>🔍 <span style="color:#66668a">plinko.move L62 inspected</span></td></tr>
-    <tr><td><b>M2</b></td><td>Payout table as on-chain data — auditable, house-editable only</td><td>🔍 <span style="color:#66668a">multiplier vector inspected</span></td></tr>
-    <tr><td><b>M3</b></td><td>House solvency check before every payout</td><td>🔍 <span style="color:#66668a">assert! inspected</span></td></tr>
-    <tr><td><b>M4</b></td><td>Stake as <b>Balance</b>, not Coin — no object per stake</td><td>🔍 inspected</td></tr>
-    <tr><td><b>M5</b></td><td>Games as dynamic object fields — registry grows without migration</td><td>🔍 inspected</td></tr>
-    <tr><td><b>M6</b></td><td>Events as the score feed</td><td>🔍 inspected</td></tr>
+    <tr><td><b>M1</b></td><td>Randomness draw is <b>entry</b>-only — can't be composed/abort-filtered</td><td>✅ <span style="color:#66668a">13/13 tests green</span></td></tr>
+    <tr><td><b>M2</b></td><td>Payout table as on-chain data — auditable, house-editable only</td><td>✅ <span style="color:#66668a">13/13 tests green</span></td></tr>
+    <tr><td><b>M3</b></td><td>House solvency check before every payout</td><td>✅ <span style="color:#66668a">13/13 tests green</span></td></tr>
+    <tr><td><b>M4</b></td><td>Stake as <b>Balance</b>, not Coin — no object per stake</td><td>✅ tested</td></tr>
+    <tr><td><b>M5</b></td><td>Games as dynamic object fields — registry grows without migration</td><td>✅ tested</td></tr>
+    <tr><td><b>M6</b></td><td>Events as the score feed</td><td>✅ tested</td></tr>
     <tr><td><b>M7</b></td><td>Sponsored (gasless) play — player holds zero SUI</td><td>📖 <span style="color:#66668a">→ W4 testnet</span></td></tr>
     <tr><td><b>M8</b></td><td>Atomic play turn — insert→play→score→prize can't partially fail</td><td>📖 <span style="color:#66668a">→ W3 Cabinet module</span></td></tr>
     <tr><td><b>M9</b></td><td>Session reaping pays for itself — 99% storage rebate</td><td>📖 <span style="color:#66668a">→ W5 reaping demo</span></td></tr>
