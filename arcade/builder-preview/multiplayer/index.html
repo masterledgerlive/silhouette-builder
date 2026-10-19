@@ -62,9 +62,14 @@
   <main>
     <div>
       <canvas id="cv" width="800" height="500"></canvas>
+      <div id="touchctl" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+        <button id="fire1" style="padding:14px;font-size:1rem">🔥 P1 FIRE</button>
+        <button id="fire2" style="padding:14px;font-size:1rem">🔥 P2 FIRE</button>
+      </div>
       <div id="legend">
         <b class="p1c">P1 (cyan):</b> WASD move · <b>SPACE</b> fire &nbsp;·&nbsp;
         <b class="p2c">P2 (magenta):</b> ARROWS move · <b>ENTER</b> fire<br>
+        📱 Touch: drag left half = move P1, drag right half = move P2, tap FIRE.<br>
         Bullets are slow-mo — dodge them. Every tick's inputs are hash-chained. Hits only count when <b>both</b> simulations agree.
       </div>
     </div>
@@ -284,6 +289,40 @@ window.addEventListener('keyup', e => {
   const m = KEYMAP[e.code];
   if (m) { live[m[0]][m[1]] = false; e.preventDefault(); }
 });
+/* touch: drag left half = P1, right half = P2; FIRE buttons */
+(function(){
+  const cv = document.getElementById('cv');
+  const touches = {};
+  function setDir(pl, dx, dy){
+    const t = 12;
+    live[pl].l = dx < -t; live[pl].r = dx > t;
+    live[pl].u = dy < -t; live[pl].d = dy > t;
+  }
+  cv.addEventListener('pointerdown', e => {
+    const r = cv.getBoundingClientRect();
+    const x = (e.clientX - r.left) / r.width * 800;
+    const pl = x < 400 ? 'p1' : 'p2';
+    touches[e.pointerId] = { pl, sx: e.clientX, sy: e.clientY };
+    cv.setPointerCapture(e.pointerId);
+  });
+  cv.addEventListener('pointermove', e => {
+    const t = touches[e.pointerId]; if (!t) return;
+    setDir(t.pl, e.clientX - t.sx, e.clientY - t.sy);
+  });
+  const endT = e => {
+    const t = touches[e.pointerId]; if (!t) return;
+    live[t.pl].l = live[t.pl].r = live[t.pl].u = live[t.pl].d = false;
+    delete touches[e.pointerId];
+  };
+  cv.addEventListener('pointerup', endT);
+  cv.addEventListener('pointercancel', endT);
+  const f1 = document.getElementById('fire1'), f2 = document.getElementById('fire2');
+  [['p1', f1], ['p2', f2]].forEach(([pl, btn]) => {
+    btn.addEventListener('pointerdown', e => { live[pl].f = true; e.preventDefault(); });
+    btn.addEventListener('pointerup', () => { live[pl].f = false; });
+    btn.addEventListener('pointerleave', () => { live[pl].f = false; });
+  });
+})();
 const snap = () => ({
   p1: { u: live.p1.u, d: live.p1.d, l: live.p1.l, r: live.p1.r, f: live.p1.f },
   p2: { u: live.p2.u, d: live.p2.d, l: live.p2.l, r: live.p2.r, f: live.p2.f }
