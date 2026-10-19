@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Blob Arcade Builder v2 — objects</title>
+<style>
+  :root { --neon:#22d3ee; --pink:#f0f; --bg:#0a0a18; --panel:#12122a; --gold:#ffd76b; --green:#7CFF6B; --red:#ff5470; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:var(--bg); color:#e8e8f5; font-family:'Courier New',monospace; min-height:100vh;
+         background-image:radial-gradient(circle at 50% 0%, #1a1a3a 0%, var(--bg) 60%); }
+  .wrap { max-width:1280px; margin:0 auto; padding:24px 14px 60px; }
+  header { text-align:center; margin-bottom:6px; }
+  h1 { font-size:clamp(1.5rem,4.5vw,2.4rem); color:var(--neon); letter-spacing:.12em; text-shadow:0 0 18px var(--neon); }
+  .tag { color:var(--pink); letter-spacing:.25em; margin-top:6px; font-size:.78rem; }
+  .honest { text-align:center; color:#8888aa; font-size:.76rem; margin:10px 0 22px; letter-spacing:.06em; }
+  section { background:var(--panel); border:1px solid #2a2a5a; border-radius:14px; padding:20px; margin-bottom:20px; }
+  h2 { color:var(--neon); letter-spacing:.14em; margin-bottom:4px; font-size:1.05rem; }
+  .sub { color:#8888aa; font-size:.8rem; margin-bottom:14px; line-height:1.6; }
+  /* proofs */
+  .cards { display:flex; gap:14px; flex-wrap:wrap; justify-content:center; }
+  .card { background:#0d0d22; border:1px solid #33336a; border-radius:12px; padding:12px; text-align:center; width:240px; }
+  .card h3 { color:var(--gold); letter-spacing:.1em; margin-bottom:4px; font-size:.9rem; }
+  .card p { color:#8888aa; font-size:.72rem; margin-bottom:8px; }
+  .stage { position:relative; width:100%; max-width:220px; margin:0 auto; }
+  canvas.game { width:100%; height:auto; border-radius:8px; border:2px solid #22224a; background:#000;
+                image-rendering:pixelated; touch-action:none; display:block; }
+  .overlay { position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+             background:rgba(10,10,24,.72); border-radius:8px; cursor:pointer;
+             color:var(--green); font-size:.85rem; letter-spacing:.12em; }
+  .overlay.hidden { display:none; }
+  .stopbtn { margin-top:6px; font-family:inherit; font-size:.72rem; padding:5px 12px; background:transparent;
+             color:var(--pink); border:1px solid var(--pink); border-radius:999px; cursor:pointer; }
+  /* v2 grid */
+  .v2grid { display:grid; grid-template-columns:280px 1fr 300px; gap:14px; }
+  .col { background:#0d0d22; border:1px solid #2a2a5a; border-radius:12px; padding:14px; min-width:0; }
+  .col h3 { color:var(--gold); font-size:.85rem; letter-spacing:.12em; margin-bottom:10px; }
+  .tmplbtn { display:block; width:100%; text-align:left; font-family:inherit; font-size:.8rem; margin-bottom:8px;
+             padding:10px 12px; border-radius:8px; cursor:pointer; background:#12122a; color:#b9b9d8;
+             border:1px solid #33336a; }
+  .tmplbtn:hover { border-color:var(--neon); color:var(--neon); }
+  .tmplbtn .k { color:#66668a; font-size:.68rem; display:block; }
+  .objrow { border:1px solid #2a2a5a; border-radius:8px; padding:8px 10px; margin-bottom:8px; font-size:.78rem;
+            cursor:pointer; }
+  .objrow.sel { border-color:var(--neon); box-shadow:0 0 10px #22d3ee33; }
+  .objrow.dropped { opacity:.45; }
+  .objrow .nm { color:#fff; }
+  .objrow .kd { color:#66668a; font-size:.68rem; }
+  .objrow .rowbtns { margin-top:6px; display:flex; gap:6px; flex-wrap:wrap; }
+  .mini { font-family:inherit; font-size:.68rem; padding:4px 10px; border-radius:999px; cursor:pointer;
+          background:transparent; border:1px solid #44447a; color:#b9b9d8; }
+  .mini.on { border-color:var(--green); color:var(--green); }
+  .mini.warn { border-color:var(--gold); color:var(--gold); }
+  .mini.danger { border-color:var(--red); color:var(--red); }
+  .modetabs { display:flex; gap:8px; margin:12px 0 10px; }
+  .modetab { flex:1; font-family:inherit; padding:10px; border-radius:8px; cursor:pointer; font-size:.82rem;
+             background:#0d0d22; color:#8888aa; border:2px solid #33336a; }
+  .modetab.sel { color:var(--neon); border-color:var(--neon); }
+  .sliderow { display:flex; align-items:center; gap:8px; margin-bottom:8px; font-size:.76rem; }
+  .sliderow label { flex:0 0 90px; color:#b9b9d8; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .sliderow input[type=range] { flex:1; accent-color:var(--neon); min-width:0; }
+  .sliderow .val { flex:0 0 52px; text-align:right; color:var(--gold); }
+  .colorrow { display:flex; gap:10px; flex-wrap:wrap; margin:8px 0; font-size:.76rem; }
+  .colorrow label { color:#b9b9d8; display:flex; align-items:center; gap:6px; }
+  input[type=color] { width:36px; height:26px; border:1px solid #33336a; background:#0d0d22; border-radius:6px; padding:2px; }
+  textarea.code { font-family:'Courier New',monospace; background:#08081a; color:#c9e8ff; border:1px solid #33336a;
+                  border-radius:8px; padding:8px; font-size:.7rem; width:100%; line-height:1.45; }
+  #edInit { min-height:70px; } #edTick { min-height:150px; } #edDraw { min-height:110px; } #edParams { min-height:70px; }
+  .applybtn { font-family:inherit; margin-top:8px; padding:10px 22px; border-radius:8px; cursor:pointer;
+              background:#0a2a0a; color:var(--green); border:2px solid var(--green); letter-spacing:.1em; }
+  .err { color:var(--red); font-size:.74rem; margin-top:8px; white-space:pre-wrap; word-break:break-all; }
+  /* stage */
+  #cv-stage { width:100%; max-width:380px; height:auto; border-radius:10px; border:2px solid #2a2a5a;
+              background:#000; image-rendering:pixelated; touch-action:none; display:block; margin:0 auto; }
+  .stagebtns { text-align:center; margin:10px 0; display:flex; gap:10px; justify-content:center; }
+  .big { font-family:inherit; padding:12px 26px; border-radius:10px; cursor:pointer; letter-spacing:.1em; font-size:.88rem; }
+  .play { background:#0a2a0a; color:var(--green); border:2px solid var(--green); }
+  .stop { background:transparent; color:var(--pink); border:2px solid var(--pink); }
+  #cuefeed { background:#08081a; border:1px solid #2a2a5a; border-radius:8px; padding:10px; margin-top:10px;
+             font-size:.72rem; min-height:120px; max-height:170px; overflow-y:auto; }
+  #cuefeed .cue { padding:3px 0; border-bottom:1px dashed #22224a; color:#b9b9d8; }
+  #cuefeed .cue b { color:var(--gold); }
+  #cuefeed .cue .fr { color:var(--neon); }
+  #triggraph { margin-top:10px; font-size:.74rem; color:#8888aa; line-height:1.9; }
+  #triggraph .edge { color:#b9b9d8; }
+  #triggraph .edge b { color:var(--pink); }
+  /* inspector */
+  .insp { border:1px solid #2a2a5a; border-radius:10px; padding:10px; margin-bottom:10px; font-size:.74rem; }
+  .insp.errd { border-color:var(--red); }
+  .insp .nm { color:#fff; font-size:.82rem; }
+  .insp .kd { color:#66668a; font-size:.66rem; }
+  .insp .row { margin-top:6px; word-break:break-all; line-height:1.6; }
+  .insp .k { color:var(--pink); }
+  .insp .blob { color:var(--neon); }
+  .insp .shr { color:var(--gold); }
+  .insp .bad { color:var(--red); }
+  .insp .ok { color:var(--green); }
+  /* dashboard */
+  .dash { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:10px; margin-bottom:14px; }
+  .stat { background:#0d0d22; border:1px solid #2a2a5a; border-radius:10px; padding:12px; text-align:center; }
+  .stat .v { font-size:1.4rem; color:var(--neon); }
+  .stat .l { font-size:.68rem; color:#8888aa; letter-spacing:.1em; margin-top:4px; }
+  .stat.warn .v { color:var(--gold); } .stat.bad .v { color:var(--red); } .stat.good .v { color:var(--green); }
+  #sealOut { background:#08081a; border:1px solid #33336a; border-radius:8px; padding:12px; margin-top:12px;
+             font-size:.74rem; white-space:pre-wrap; word-break:break-all; color:#b9b9d8; display:none;
+             max-height:260px; overflow-y:auto; }
+  #sealOut .k { color:var(--pink); }
+  .dl { display:inline-block; margin-top:8px; color:var(--neon); font-size:.8rem; }
+  footer { text-align:center; color:#66668a; font-size:.78rem; margin-top:26px; line-height:2; }
+  footer b { color:var(--neon); }
+  @media (max-width:980px){ .v2grid{ grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>▚ BLOB ARCADE BUILDER</h1>
+  <div class="tag">GAMES ARE OBJECTS · OBJECTS ARE BLOBS</div>
+</header>
+<p class="honest">v0.2 — every piece of a game is an object with its own code, its own blob address, its own errors.<br>
+Share code by hash · link objects with triggers · seal the whole build under one key.</p>
+
+<!-- ============ V1 PROOFS (kept working) ============ -->
+<section>
+  <h2>◈ PROOFS — v1 mechanics still play</h2>
+  <p class="sub">The original three proof games, untouched. Click to play.</p>
+  <div class="cards">
+    <div class="card"><h3>BOUNCE</h3><p>Paddle + ball physics.</p>
+      <div class="stage"><canvas class="game" id="cv-bounce"></canvas><div class="overlay" id="ov-bounce">▶ PLAY</div></div></div>
+    <div class="card"><h3>SNAKE</h3><p>Grid snake.</p>
+      <div class="stage"><canvas class="game" id="cv-snake"></canvas><div class="overlay" id="ov-snake">▶ PLAY</div></div></div>
+    <div class="card"><h3>SHOOTER</h3><p>Move + shoot.</p>
+      <div class="stage"><canvas class="game" id="cv-shooter"></canvas><div class="overlay" id="ov-shooter">▶ PLAY</div></div></div>
+  </div>
+</section>
+
+<!-- ============ V2 OBJECT BUILDER ============ -->
+<section>
+  <h2>◈ OBJECT BUILDER — compose a game from objects</h2>
+  <p class="sub">Left: add objects, keep or drop them. Center: they run live — watch the cues fly.
+  Right: every object's code, blob address, and errors. A broken object never kills the game.</p>
+
+  <div class="v2grid">
+    <!-- LEFT: palette -->
+    <div class="col">
+      <h3>＋ ADD OBJECT</h3>
+      <div id="tmplBtns"></div>
+      <h3 style="margin-top:14px">▤ OBJECTS</h3>
+      <div id="objList"></div>
+      <div class="modetabs">
+        <button class="modetab sel" id="tabKid">🧒 KID</button>
+        <button class="modetab" id="tabAdult">🧑 ADULT</button>
+      </div>
+      <div id="kidPanel">
+        <p class="sub" style="margin-bottom:8px">Tweak the selected object — sliders, colors, no code.</p>
+        <div id="kidControls"><span class="sub">Select an object above.</span></div>
+      </div>
+      <div id="adultPanel" style="display:none">
+        <p class="sub" style="margin-bottom:8px">Edit the selected object's code directly.</p>
+        <div id="adultControls"><span class="sub">Select an object above.</span></div>
+      </div>
+    </div>
+
+    <!-- CENTER: stage -->
+    <div class="col">
+      <h3>▶ STAGE — live</h3>
+      <canvas id="cv-stage"></canvas>
+      <div class="stagebtns">
+        <button class="big play" id="btnRun">▶ RUN</button>
+        <button class="big stop" id="btnStop">■ STOP</button>
+        <button class="big" id="btnReset" style="background:transparent;color:var(--gold);border:2px solid var(--gold)">↻ RESET</button>
+      </div>
+      <h3>⚡ LIVE CUES</h3>
+      <div id="cuefeed"><span class="sub">press RUN — cues fired by objects appear here</span></div>
+      <h3 style="margin-top:10px">🔗 TRIGGER GRAPH</h3>
+      <div id="triggraph"><span class="sub">who cues whom</span></div>
+    </div>
+
+    <!-- RIGHT: inspector -->
+    <div class="col">
+      <h3>🔍 BLOB INSPECTOR</h3>
+      <div id="inspector"><span class="sub">No objects yet — add one.</span></div>
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <h3 style="color:var(--gold);font-size:.85rem;letter-spacing:.12em;margin:18px 0 10px">📊 BUILD DASHBOARD</h3>
+  <div class="dash" id="dash"></div>
+  <div style="text-align:center">
+    <button class="big" id="btnSeal" style="background:#2a1a05;color:var(--gold);border:2px solid var(--gold)">⛓ SEAL BUILD</button>
+  </div>
+  <div id="sealOut"></div>
+</section>
+
+<footer>
+  🌊 Koda Kai Network · muse.ai/join · Code: <b>BUD12L</b><br>
+  <span style="font-size:.72rem">v0.2 objects · one shared key · the blobs are forever (well, 5 days at a time)</span>
+</footer>
+
+</div>
+
+<script src="engine.js"></script>
+<script src="objects.js"></script>
+<script src="starter-objects.js"></script>
+<script src="games/bounce.js"></script>
+<script src="games/snake.js"></script>
+<script src="games/shooter.js"></script>
+<script>
+(function () {
+  'use strict';
+  var KEY_ID = 'blob-arcade-key-v1';
+  var BLOB_LIMIT = 1048576; // 1MB per object
+
+  /* ---------- sha256 ---------- */
+  function sha256fallback(ascii) {
+    function rr(v, a) { return (v >>> a) | (v << (32 - a)); }
+    var maxWord = Math.pow(2, 32), i, j, result = '';
+    var words = [], asciiBitLength = ascii.length * 8;
+    var hash = [0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19];
+    var k = [0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
+      0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
+      0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
+      0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
+      0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
+      0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
+      0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
+      0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2];
+    ascii += '\x80';
+    while (ascii.length % 64 - 56) ascii += '\x00';
+    for (i = 0; i < ascii.length; i++) {
+      j = ascii.charCodeAt(i); if (j >> 8) return null;
+      words[i >> 2] |= j << ((3 - i) % 4) * 8;
+    }
+    words[words.length] = (asciiBitLength / maxWord) | 0;
+    words[words.length] = asciiBitLength;
+    for (j = 0; j < words.length;) {
+      var w = words.slice(j, j += 16), oldHash = hash.slice(0);
+      for (i = 0; i < 64; i++) {
+        var w15 = w[i - 15], w2 = w[i - 2];
+        var a = hash[0], e = hash[4];
+        var t1 = hash[7] + (rr(e, 6) ^ rr(e, 11) ^ rr(e, 25)) + ((e & hash[5]) ^ (~e & hash[6])) + k[i]
+          + (w[i] = i < 16 ? w[i] : (w[i - 16] + (rr(w15, 7) ^ rr(w15, 18) ^ (w15 >>> 3)) + w[i - 7] + (rr(w2, 17) ^ rr(w2, 19) ^ (w2 >>> 10))) | 0);
+        var t2 = (rr(a, 2) ^ rr(a, 13) ^ rr(a, 22)) + ((a & hash[1]) ^ (a & hash[2]) ^ (hash[1] & hash[2]));
+        hash = [(t1 + t2) | 0, hash[0], hash[1], hash[2], (hash[3] + t1) | 0, hash[4], hash[5], hash[6]];
+      }
+      for (i = 0; i < 8; i++) hash[i] = (hash[i] + oldHash[i]) | 0;
+    }
+    for (i = 0; i < 8; i++)
+      for (j = 3; j + 1; j--) {
+        var b = (hash[i] >> (j * 8)) & 255;
+        result += (b < 16 ? '0' : '') + b.toString(16);
+      }
+    return result;
+  }
+  function sha256hex(str) {
+    if (window.crypto && crypto.subtle) {
+      return crypto.subtle.digest('SHA-256', new TextEncoder().encode(str)).then(function (buf) {
+        return Array.prototype.map.call(new Uint8Array(buf), function (b) {
+          return ('0' + b.toString(16)).slice(-2);
+        }).join('');
+      });
+    }
+    return Promise.resolve(sha256fallback(unescape(encodeURIComponent(str))));
+  }
+  function canonicalJSON(obj) {
+    if (obj === null || typeof obj !== 'object') return JSON.stringify(obj);
+    if (Array.isArray(obj)) return '[' + obj.map(canonicalJSON).join(',') + ']';
+    return '{' + Object.keys(obj).sort().map(function (k) {
+      return JSON.stringify(k) + ':' + canonicalJSON(obj[k]);
+    }).join(',') + '}';
+  }
+
+  /* ---------- v1 proofs (kept working) ---------- */
+  var GAMES = { bounce: BlobGame_bounce, snake: BlobGame_snake, shooter: BlobGame_shooter };
+  var proofEngines = {};
+  ['bounce', 'snake', 'shooter'].forEach(function (m) {
+    var eng = new BlobEngine(document.getElementById('cv-' + m), GAMES[m]);
+    proofEngines[m] = eng;
+    var ov = document.getElementById('ov-' + m);
+    ov.addEventListener('click', function () {
+      Object.keys(proofEngines).forEach(function (k) {
+        if (k !== m) { proofEngines[k].stop(); document.getElementById('ov-' + k).classList.remove('hidden'); }
+      });
+      eng.reset(); eng.start();
+      ov.classList.add('hidden');
+    });
+  });
+
+  /* ---------- v2 object runtime ---------- */
+  var rt = new BlobObjects(document.getElementById('cv-stage'));
+  var selectedId = null;
+  var hashCache = {}; // obj.id -> {hash, blobId, bytes}
+
+  function objectCanonical(obj) {
+    return canonicalJSON({ kind: obj.kind, init: obj.initSrc, tick: obj.tickSrc,
+                           draw: obj.drawSrc, params: obj.params });
+  }
+
+  function rehashObject(obj) {
+    var canon = objectCanonical(obj);
+    var bytes = new TextEncoder().encode(canon).length;
+    return sha256hex(canon).then(function (h) {
+      hashCache[obj.id] = {
+        hash: h,
+        blobId: bytes > BLOB_LIMIT ? null : 'blob_' + h.slice(0, 24),
+        bytes: bytes,
+        tooBig: bytes > BLOB_LIMIT
+      };
+      renderInspector(); renderDash();
+    });
+  }
+  function rehashAll() {
+    rt.objects.forEach(function (o) {
+      if (!hashCache[o.id] || hashCache[o.id]._dirty) rehashObject(o);
+    });
+  }
+
+  // shared-code dedup: group kept objects by code hash
+  function sharedGroups() {
+    var groups = {};
+    rt.objects.forEach(function (o) {
+      if (!o.keep) return;
+      var hc = hashCache[o.id];
+      if (!hc || !hc.hash) return;
+      (groups[hc.hash] = groups[hc.hash] || []).push(o);
+    });
+    return groups;
+  }
+
+  /* ---------- palette ---------- */
+  var KIND_EMOJI = { sprite: '👾', trigger: '⚡', score: '🏆', background: '🌌' };
+  function renderPalette() {
+    var tb = document.getElementById('tmplBtns'); tb.innerHTML = '';
+    BlobObjects_starter.forEach(function (t, i) {
+      var b = document.createElement('button');
+      b.className = 'tmplbtn';
+      b.innerHTML = (KIND_EMOJI[t.kind] || '▫') + ' ' + t.name +
+                    '<span class="k">' + t.kind + ' — add to build</span>';
+      b.addEventListener('click', function () { addFromTemplate(i); });
+      tb.appendChild(b);
+    });
+    var ol = document.getElementById('objList'); ol.innerHTML = '';
+    if (!rt.objects.length) { ol.innerHTML = '<span class="sub">Empty — add an object.</span>'; return; }
+    rt.objects.forEach(function (o) {
+      var d = document.createElement('div');
+      d.className = 'objrow' + (o.id === selectedId ? ' sel' : '') + (o.keep ? '' : ' dropped');
+      d.innerHTML = '<span class="nm">' + esc(o.name) + '</span> ' +
+                    '<span class="kd">' + o.kind + (o.error ? ' · <span style="color:#ff5470">ERROR</span>' : '') + '</span>' +
+                    '<div class="rowbtns"></div>';
+      var rb = d.querySelector('.rowbtns');
+      var kb = document.createElement('button');
+      kb.className = 'mini ' + (o.keep ? 'on' : '');
+      kb.textContent = o.keep ? '✓ keep' : '○ dropped';
+      kb.addEventListener('click', function (e) { e.stopPropagation(); o.keep = !o.keep; refresh(); });
+      var db = document.createElement('button');
+      db.className = 'mini'; db.textContent = '⧉ dup';
+      db.title = 'duplicate (same code → shared blob)';
+      db.addEventListener('click', function (e) {
+        e.stopPropagation();
+        rt.addObject({ name: o.name + ' 2', kind: o.kind, params: JSON.parse(JSON.stringify(o.params)),
+                       initSrc: o.initSrc, tickSrc: o.tickSrc, drawSrc: o.drawSrc,
+                       emits: o.emits.slice(), listens: o.listens.slice(), keep: true });
+        refresh();
+      });
+      var xb = document.createElement('button');
+      xb.className = 'mini danger'; xb.textContent = '✕';
+      xb.addEventListener('click', function (e) {
+        e.stopPropagation(); rt.removeObject(o.id);
+        delete hashCache[o.id];
+        if (selectedId === o.id) selectedId = null;
+        refresh();
+      });
+      rb.appendChild(kb); rb.appendChild(db); rb.appendChild(xb);
+      d.addEventListener('click', function () { selectedId = o.id; refresh(); });
+      ol.appendChild(d);
+    });
+  }
+
+  function addFromTemplate(i) {
+    var t = BlobObjects_starter[i];
+    var obj = rt.addObject({
+      name: t.name, kind: t.kind,
+      params: JSON.parse(JSON.stringify(t.params)),
+      initSrc: t.init.toString(), tickSrc: t.tick.toString(), drawSrc: t.draw.toString(),
+      emits: (t.emits || []).slice(), listens: (t.listens || []).slice(),
+      keep: true
+    });
+    selectedId = obj.id;
+    refresh();
+  }
+
+  function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
+  /* ---------- inspector ---------- */
+  function renderInspector() {
+    var el = document.getElementById('inspector');
+    if (!rt.objects.length) { el.innerHTML = '<span class="sub">No objects yet — add one.</span>'; return; }
+    var groups = sharedGroups();
+    el.innerHTML = '';
+    rt.objects.forEach(function (o) {
+      var hc = hashCache[o.id] || {};
+      var sharedN = 0;
+      Object.keys(groups).forEach(function (h) {
+        if (groups[h].indexOf(o) >= 0) sharedN = groups[h].length;
+      });
+      var d = document.createElement('div');
+      d.className = 'insp' + (o.error ? ' errd' : '');
+      var html = '<div class="nm">' + esc(o.name) + '</div><div class="kd">' + o.kind +
+                 (o.keep ? '' : ' · dropped') + '</div>';
+      html += '<div class="row"><span class="k">bytes</span> ' + (hc.bytes != null ? hc.bytes.toLocaleString() : '…') + '</div>';
+      html += '<div class="row"><span class="k">sha256</span> ' + (hc.hash ? hc.hash.slice(0, 16) + '…' : '…') + '</div>';
+      if (hc.tooBig) {
+        html += '<div class="row bad">⚠ ' + (hc.bytes / 1048576).toFixed(1) + 'MB — too big for a single blob, split it</div>';
+      } else if (hc.blobId) {
+        html += '<div class="row"><span class="k">blob</span> <span class="blob">' + hc.blobId + '</span></div>';
+      } else {
+        html += '<div class="row"><span class="k">blob</span> hashing…</div>';
+      }
+      if (sharedN > 1) html += '<div class="row shr">⧉ shared by ' + sharedN + ' objects — one blob, many users</div>';
+      if (o.emits && o.emits.length) html += '<div class="row"><span class="k">emits</span> ' + o.emits.map(esc).join(', ') + '</div>';
+      if (o.listens && o.listens.length) html += '<div class="row"><span class="k">listens</span> ' + o.listens.map(esc).join(', ') + '</div>';
+      if (o.error) {
+        html += '<div class="row bad">✖ ' + esc(o.error) + ' (×' + o.errorCount + ')</div>';
+        html += '<button class="mini warn" data-retry="' + o.id + '">↻ retry object</button>';
+      } else {
+        html += '<div class="row ok">✓ running clean</div>';
+      }
+      d.innerHTML = html;
+      var rb = d.querySelector('[data-retry]');
+      if (rb) rb.addEventListener('click', function () { rt.retryObject(o.id); refresh(); });
+      el.appendChild(d);
+    });
+  }
+
+  /* ---------- cues + trigger graph ---------- */
+  function renderCues() {
+    var cf = document.getElementById('cuefeed');
+    var feed = rt.world.cueFeed.slice().reverse();
+    if (!feed.length) { cf.innerHTML = '<span class="sub">press RUN — cues fired by objects appear here</span>'; return; }
+    cf.innerHTML = feed.map(function (c) {
+      return '<div class="cue"><span class="fr">' + esc(c.from) + '</span> → <b>' + esc(c.cue) + '</b> ' +
+             '<span style="color:#66668a">t=' + c.t.toFixed(1) + 's</span></div>';
+    }).join('');
+  }
+
+  function renderTrigGraph() {
+    var tg = document.getElementById('triggraph');
+    var edges = [];
+    rt.objects.forEach(function (a) {
+      if (!a.keep || !a.emits) return;
+      a.emits.forEach(function (cue) {
+        rt.objects.forEach(function (b) {
+          if (!b.keep || b.id === a.id) return;
+          if (b.listens && b.listens.indexOf(cue) >= 0)
+            edges.push({ from: a.name, cue: cue, to: b.name });
+        });
+      });
+    });
+    if (!edges.length) { tg.innerHTML = '<span class="sub">no links yet — objects cue each other via emits/listens</span>'; return; }
+    tg.innerHTML = edges.map(function (e) {
+      return '<div class="edge">' + esc(e.from) + ' —<b>' + esc(e.cue) + '</b>→ ' + esc(e.to) + '</div>';
+    }).join('');
+  }
+
+  /* ---------- dashboard ---------- */
+  function renderDash() {
+    var kept = rt.objects.filter(function (o) { return o.keep; });
+    var bytes = 0, uniq = {}, errs = 0;
+    var groups = sharedGroups();
+    kept.forEach(function (o) {
+      var hc = hashCache[o.id];
+      if (hc) { bytes += hc.bytes || 0; if (hc.hash) uniq[hc.hash] = 1; }
+      if (o.error) errs++;
+    });
+    var sharedBlobs = Object.keys(groups).filter(function (h) { return groups[h].length > 1; }).length;
+    var health = errs ? (errs >= kept.length && kept.length ? 'bad' : 'warn') : 'good';
+    var healthTxt = !kept.length ? '—' : errs ? errs + ' error' + (errs > 1 ? 's' : '') : 'ALL GREEN';
+    document.getElementById('dash').innerHTML =
+      stat(kept.length + '/' + rt.objects.length, 'objects kept') +
+      stat(Object.keys(uniq).length, 'unique blobs') +
+      stat(sharedBlobs, 'shared blobs') +
+      stat(bytes > 1048576 ? (bytes / 1048576).toFixed(1) + 'MB' : Math.round(bytes / 1024) + 'KB', 'total size') +
+      stat(errs, 'errors', errs ? 'bad' : 'good') +
+      stat(healthTxt, 'build health', health);
+  }
+  function stat(v, l, cls) {
+    return '<div class="stat' + (cls ? ' ' + cls : '') + '"><div class="v">' + v + '</div><div class="l">' + l + '</div></div>';
+  }
+
+  /* ---------- kid panel ---------- */
+  function renderKid() {
+    var kc = document.getElementById('kidControls');
+    var o = selectedId && rt.getObject(selectedId);
+    if (!o) { kc.innerHTML = '<span class="sub">Select an object above.</span>'; return; }
+    kc.innerHTML = '<p class="sub" style="margin-bottom:8px">Tweaking <b style="color:#fff">' + esc(o.name) + '</b></p>';
+    Object.keys(o.params).forEach(function (k) {
+      var v = o.params[k];
+      if (typeof v === 'number') {
+        var row = document.createElement('div'); row.className = 'sliderow';
+        var lab = document.createElement('label'); lab.textContent = k;
+        var inp = document.createElement('input');
+        var lo = Math.max(v * 0.25, v - 100), hi = v * 2 + 10;
+        if (v < 2) { lo = 0.1; hi = 20; }
+        inp.type = 'range'; inp.min = lo.toFixed(1); inp.max = hi.toFixed(1);
+        inp.step = (hi - lo) / 100; inp.value = v;
+        var val = document.createElement('span'); val.className = 'val'; val.textContent = v;
+        inp.addEventListener('input', function () {
+          o.params[k] = parseFloat(inp.value); val.textContent = inp.value;
+          hashCache[o.id] = null; rehashObject(o);
+        });
+        row.appendChild(lab); row.appendChild(inp); row.appendChild(val);
+        kc.appendChild(row);
+      } else if (typeof v === 'string' && /^#[0-9a-fA-F]{6}$/.test(v)) {
+        var cr = document.createElement('div'); cr.className = 'colorrow';
+        var lab2 = document.createElement('label'); lab2.textContent = k;
+        var ci = document.createElement('input'); ci.type = 'color'; ci.value = v;
+        ci.addEventListener('input', function () {
+          o.params[k] = ci.value; hashCache[o.id] = null; rehashObject(o);
+        });
+        lab2.appendChild(ci); cr.appendChild(lab2); kc.appendChild(cr);
+      }
+    });
+    var nm = document.createElement('div'); nm.className = 'sliderow'; nm.style.marginTop = '8px';
+    nm.innerHTML = '<label>name</label>';
+    var ni = document.createElement('input');
+    ni.type = 'text'; ni.value = o.name; ni.maxLength = 30;
+    ni.style.cssText = 'flex:1;font-family:inherit;background:#0d0d22;color:#e8e8f5;border:1px solid #33336a;border-radius:6px;padding:6px;font-size:.76rem';
+    ni.addEventListener('change', function () { o.name = ni.value.trim() || o.name; refresh(); });
+    nm.appendChild(ni); kc.appendChild(nm);
+  }
+
+  /* ---------- adult panel ---------- */
+  function renderAdult() {
+    var ac = document.getElementById('adultControls');
+    var o = selectedId && rt.getObject(selectedId);
+    if (!o) { ac.innerHTML = '<span class="sub">Select an object above.</span>'; return; }
+    ac.innerHTML = '<p class="sub" style="margin-bottom:8px">Editing <b style="color:#fff">' + esc(o.name) + '</b> — apply recompiles live.</p>' +
+      '<p class="sub">init(P, api, world):</p><textarea class="code" id="edInit" spellcheck="false"></textarea>' +
+      '<p class="sub" style="margin-top:8px">tick(S, P, input, dt, api, world, emit):</p><textarea class="code" id="edTick" spellcheck="false"></textarea>' +
+      '<p class="sub" style="margin-top:8px">draw(S, P, ctx, api):</p><textarea class="code" id="edDraw" spellcheck="false"></textarea>' +
+      '<p class="sub" style="margin-top:8px">params JSON:</p><textarea class="code" id="edParams" spellcheck="false"></textarea>' +
+      '<button class="applybtn" id="btnApply">APPLY CODE</button><div class="err" id="adultErr2"></div>';
+    document.getElementById('edInit').value = o.initSrc;
+    document.getElementById('edTick').value = o.tickSrc;
+    document.getElementById('edDraw').value = o.drawSrc;
+    document.getElementById('edParams').value = JSON.stringify(o.params, null, 1);
+    document.getElementById('btnApply').addEventListener('click', function () {
+      var errEl = document.getElementById('adultErr2'); errEl.textContent = '';
+      try {
+        var p = JSON.parse(document.getElementById('edParams').value);
+        BlobCompile(document.getElementById('edInit').value);
+        BlobCompile(document.getElementById('edTick').value);
+        BlobCompile(document.getElementById('edDraw').value);
+        o.initSrc = document.getElementById('edInit').value;
+        o.tickSrc = document.getElementById('edTick').value;
+        o.drawSrc = document.getElementById('edDraw').value;
+        o.params = p;
+        rt.retryObject(o.id); // re-init with new code
+        hashCache[o.id] = null;
+        refresh();
+      } catch (e) { errEl.textContent = 'apply failed: ' + e.message; }
+    });
+  }
+
+  /* ---------- mode tabs ---------- */
+  var kidMode = true;
+  document.getElementById('tabKid').addEventListener('click', function () {
+    kidMode = true;
+    this.classList.add('sel'); document.getElementById('tabAdult').classList.remove('sel');
+    document.getElementById('kidPanel').style.display = '';
+    document.getElementById('adultPanel').style.display = 'none';
+  });
+  document.getElementById('tabAdult').addEventListener('click', function () {
+    kidMode = false;
+    this.classList.add('sel'); document.getElementById('tabKid').classList.remove('sel');
+    document.getElementById('adultPanel').style.display = '';
+    document.getElementById('kidPanel').style.display = 'none';
+    renderAdult();
+  });
+
+  /* ---------- stage controls ---------- */
+  document.getElementById('btnRun').addEventListener('click', function () { rt.start(); });
+  document.getElementById('btnStop').addEventListener('click', function () { rt.stop(); });
+  document.getElementById('btnReset').addEventListener('click', function () { rt.resetAll(); renderCues(); });
+  rt.onFrame = function () { renderCues(); };
+  rt.onError = function () { renderInspector(); renderDash(); renderTrigGraph(); };
+
+  function refresh() {
+    renderPalette(); renderInspector(); renderTrigGraph(); renderDash();
+    if (kidMode) renderKid(); else renderAdult();
+    rehashAll();
+  }
+
+  /* ---------- seal build ---------- */
+  document.getElementById('btnSeal').addEventListener('click', function () {
+    var kept = rt.objects.filter(function (o) { return o.keep; });
+    if (!kept.length) { alert('Add and keep at least one object first.'); return; }
+    var objs = kept.map(function (o) {
+      var hc = hashCache[o.id] || {};
+      return { id: o.id, name: o.name, kind: o.kind, params: o.params,
+               init: o.initSrc, tick: o.tickSrc, draw: o.drawSrc,
+               emits: o.emits, listens: o.listens,
+               sha256: hc.hash || null, blob: hc.blobId || null, bytes: hc.bytes || 0,
+               shared: hc.hash ? kept.filter(function (x) {
+                 var xh = hashCache[x.id]; return xh && xh.hash === hc.hash;
+               }).length : 1 };
+    });
+    var pkg = { format: 'blob-arcade-build/v0.2', name: 'My Object Build',
+                objects: objs, created: new Date().toISOString(), key_id: KEY_ID };
+    var canon = canonicalJSON(pkg);
+    sha256hex(canon).then(function (hash) {
+      var manifest = { build: pkg.name, format: pkg.format, sha256: hash, key_id: KEY_ID,
+        sealed_at: pkg.created, objects: objs.map(function (o) {
+          return { name: o.name, kind: o.kind, sha256: o.sha256, blob: o.blob,
+                   bytes: o.bytes, shared_by: o.shared };
+        }),
+        blob_id: null, epochs: 5,
+        reblob: 'same key, fresh nonce -> new blob IDs every cycle' };
+      var out = document.getElementById('sealOut');
+      out.style.display = 'block';
+      out.innerHTML = '<span class="k">BUILD</span> ' + objs.length + ' objects · ' + canon.length.toLocaleString() + ' bytes\n' +
+        '<span class="k">SHA256</span> ' + hash + '\n<span class="k">MANIFEST</span>\n' +
+        esc(JSON.stringify(manifest, null, 1)) + '\n<span class="k">NEXT</span> save the package, then run:\n' +
+        '  python3 seal-game.py &lt;package.json&gt;\nto seal on Walrus testnet under ' + KEY_ID + '.';
+      var blob = new Blob([JSON.stringify(pkg, null, 1)], { type: 'application/json' });
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'object-build.blob-arcade.json';
+      a.className = 'dl'; a.textContent = '⬇ download build package JSON';
+      out.appendChild(document.createElement('br')); out.appendChild(a);
+      out.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
+  });
+
+  /* ---------- boot: starter build ---------- */
+  [0, 1, 2, 3].forEach(addFromTemplate); // starfield, paddle, ball, score
+  selectedId = rt.objects.length ? rt.objects[2].id : null; // ball selected
+  refresh();
+  rt.start();
+})();
+</script>
+</body>
+</html>
