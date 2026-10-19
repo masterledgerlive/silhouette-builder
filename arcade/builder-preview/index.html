@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Blob Arcade Builder — proof of mechanics</title>
+<style>
+  :root { --neon:#22d3ee; --pink:#f0f; --bg:#0a0a18; --panel:#12122a; --gold:#ffd76b; --green:#7CFF6B; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:var(--bg); color:#e8e8f5; font-family:'Courier New',monospace; min-height:100vh;
+         background-image:radial-gradient(circle at 50% 0%, #1a1a3a 0%, var(--bg) 60%); }
+  .wrap { max-width:960px; margin:0 auto; padding:28px 16px 60px; }
+  header { text-align:center; margin-bottom:8px; }
+  h1 { font-size:clamp(1.6rem,5vw,2.6rem); color:var(--neon); letter-spacing:.12em; text-shadow:0 0 18px var(--neon); }
+  .tag { color:var(--pink); letter-spacing:.25em; margin-top:6px; font-size:.8rem; text-shadow:0 0 10px var(--pink); }
+  .honest { text-align:center; color:#8888aa; font-size:.78rem; margin:10px 0 26px; letter-spacing:.08em; }
+  section { background:var(--panel); border:1px solid #2a2a5a; border-radius:14px; padding:22px; margin-bottom:22px; }
+  h2 { color:var(--neon); letter-spacing:.15em; margin-bottom:6px; font-size:1.1rem; }
+  .sub { color:#8888aa; font-size:.82rem; margin-bottom:16px; line-height:1.6; }
+  .cards { display:flex; gap:16px; flex-wrap:wrap; justify-content:center; }
+  .card { background:#0d0d22; border:1px solid #33336a; border-radius:12px; padding:14px; text-align:center; width:300px; }
+  .card h3 { color:var(--gold); letter-spacing:.12em; margin-bottom:4px; }
+  .card p { color:#8888aa; font-size:.75rem; margin-bottom:10px; min-height:2.4em; }
+  .stage { position:relative; width:100%; max-width:260px; margin:0 auto; }
+  canvas.game { width:100%; height:auto; border-radius:8px; border:2px solid #22224a; background:#000;
+                image-rendering:pixelated; touch-action:none; display:block; }
+  .overlay { position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+             background:rgba(10,10,24,.72); border-radius:8px; cursor:pointer;
+             color:var(--green); font-size:1rem; letter-spacing:.15em; text-shadow:0 0 10px var(--green); }
+  .overlay.hidden { display:none; }
+  .stopbtn { margin-top:8px; font-family:inherit; font-size:.75rem; padding:6px 14px; background:transparent;
+             color:var(--pink); border:1px solid var(--pink); border-radius:999px; cursor:pointer; letter-spacing:.1em; }
+  .mechbtns { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px; }
+  .mechbtn { font-family:inherit; padding:12px 20px; border-radius:10px; cursor:pointer; letter-spacing:.1em;
+             background:#0d0d22; color:#8888aa; border:2px solid #33336a; font-size:.9rem; }
+  .mechbtn.sel { color:var(--neon); border-color:var(--neon); text-shadow:0 0 8px var(--neon); box-shadow:0 0 14px #22d3ee44; }
+  .sliderow { display:flex; align-items:center; gap:12px; margin-bottom:10px; }
+  .sliderow label { flex:0 0 130px; font-size:.82rem; color:#b9b9d8; }
+  .sliderow input[type=range] { flex:1; accent-color:var(--neon); }
+  .sliderow .val { flex:0 0 60px; text-align:right; color:var(--gold); font-size:.85rem; }
+  .colorrow { display:flex; gap:16px; margin:12px 0; flex-wrap:wrap; }
+  .colorrow label { font-size:.82rem; color:#b9b9d8; display:flex; align-items:center; gap:8px; }
+  input[type=color] { width:44px; height:32px; border:1px solid #33336a; background:#0d0d22; border-radius:6px; padding:2px; }
+  input[type=text], textarea { font-family:inherit; background:#0d0d22; color:#e8e8f5;
+    border:1px solid #33336a; border-radius:8px; padding:10px; font-size:.85rem; width:100%; }
+  textarea { min-height:220px; font-size:.78rem; line-height:1.5; }
+  .btnrow { display:flex; gap:12px; flex-wrap:wrap; margin-top:16px; }
+  .big { font-family:inherit; padding:14px 30px; border-radius:10px; cursor:pointer; letter-spacing:.12em; font-size:.95rem; }
+  .preview { background:#0a2a0a; color:var(--green); border:2px solid var(--green); text-shadow:0 0 8px var(--green); }
+  .seal { background:#2a1a05; color:var(--gold); border:2px solid var(--gold); text-shadow:0 0 8px var(--gold); }
+  .err { color:#ff5470; font-size:.8rem; margin-top:10px; white-space:pre-wrap; }
+  #sealOut { background:#0d0d22; border:1px solid #33336a; border-radius:8px; padding:14px; margin-top:14px;
+             font-size:.78rem; white-space:pre-wrap; word-break:break-all; color:#b9b9d8; display:none; }
+  #sealOut .k { color:var(--pink); }
+  .dl { display:inline-block; margin-top:10px; color:var(--neon); }
+  a.schemalink { color:var(--neon); font-size:.82rem; }
+  footer { text-align:center; color:#66668a; font-size:.8rem; margin-top:30px; line-height:2; }
+  footer b { color:var(--neon); }
+  @media (max-width:640px){ .card{width:100%;} .stage{max-width:320px;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>▚ BLOB ARCADE BUILDER</h1>
+  <div class="tag">OUR OWN GAME-MAKING MACHINE</div>
+</header>
+<p class="honest">proof of mechanics — v0.1 · blob sealing via keeper (testnet) · every game sealed joins the reblob cycle</p>
+
+<!-- ============ PROOFS ============ -->
+<section>
+  <h2>◈ PROOFS — the mechanics work</h2>
+  <p class="sub">Three tiny games, each proving one mechanic. Click to play — arrows / WASD / space, or touch.</p>
+  <div class="cards">
+    <div class="card">
+      <h3>BOUNCE</h3><p>Paddle + ball physics. Proves movement, collision, scoring.</p>
+      <div class="stage"><canvas class="game" id="cv-bounce"></canvas><div class="overlay" id="ov-bounce">▶ CLICK TO PLAY</div></div>
+      <button class="stopbtn" data-stop="bounce" style="display:none">■ STOP</button>
+    </div>
+    <div class="card">
+      <h3>SNAKE</h3><p>Grid snake. Proves grid state, growth, input queue.</p>
+      <div class="stage"><canvas class="game" id="cv-snake"></canvas><div class="overlay" id="ov-snake">▶ CLICK TO PLAY</div></div>
+      <button class="stopbtn" data-stop="snake" style="display:none">■ STOP</button>
+    </div>
+    <div class="card">
+      <h3>SHOOTER</h3><p>Move + shoot. Proves projectiles, spawning, destroy.</p>
+      <div class="stage"><canvas class="game" id="cv-shooter"></canvas><div class="overlay" id="ov-shooter">▶ CLICK TO PLAY</div></div>
+      <button class="stopbtn" data-stop="shooter" style="display:none">■ STOP</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============ KID BUILDER ============ -->
+<section>
+  <h2>🧒 KID BUILDER — make a game, no code</h2>
+  <p class="sub">Pick a mechanic, move the sliders, name it, preview it, seal it.</p>
+  <div class="mechbtns" id="kidMechs">
+    <button class="mechbtn sel" data-m="bounce">🏓 BOUNCE</button>
+    <button class="mechbtn" data-m="snake">🐍 SNAKE</button>
+    <button class="mechbtn" data-m="shooter">🚀 SHOOTER</button>
+  </div>
+  <div id="kidSliders"></div>
+  <div class="colorrow" id="kidColors"></div>
+  <div class="sliderow"><label>Game name</label><input type="text" id="kidName" value="My Bounce" maxlength="40" style="flex:1"></div>
+  <div class="btnrow">
+    <button class="big preview" id="kidPreview">▶ PREVIEW</button>
+    <button class="big seal" id="kidSeal">⛓ SEAL IT</button>
+  </div>
+  <div class="err" id="kidErr"></div>
+  <div class="stage" style="margin-top:14px; max-width:300px;"><canvas class="game" id="cv-kid"></canvas></div>
+</section>
+
+<!-- ============ ADULT BUILDER ============ -->
+<section>
+  <h2>🧑 ADULT BUILDER — write the tick</h2>
+  <p class="sub">Edit the <code>tick(S, P, input, dt, api)</code> function and params JSON directly.
+  Full contract: <a class="schemalink" href="BUILDER-SCHEMA.md">BUILDER-SCHEMA.md</a></p>
+  <div class="mechbtns" id="adultMechs">
+    <button class="mechbtn sel" data-m="bounce">🏓 BOUNCE</button>
+    <button class="mechbtn" data-m="snake">🐍 SNAKE</button>
+    <button class="mechbtn" data-m="shooter">🚀 SHOOTER</button>
+  </div>
+  <div class="sliderow"><label>Game name</label><input type="text" id="adultName" value="My Custom Bounce" maxlength="40" style="flex:1"></div>
+  <p class="sub" style="margin:10px 0 6px">tick function:</p>
+  <textarea id="adultTick" spellcheck="false"></textarea>
+  <p class="sub" style="margin:10px 0 6px">params JSON:</p>
+  <textarea id="adultParams" spellcheck="false" style="min-height:120px"></textarea>
+  <div class="btnrow">
+    <button class="big preview" id="adultPreview">▶ PREVIEW</button>
+    <button class="big seal" id="adultSeal">⛓ SEAL IT</button>
+  </div>
+  <div class="err" id="adultErr"></div>
+  <div class="stage" style="margin-top:14px; max-width:300px;"><canvas class="game" id="cv-adult"></canvas></div>
+</section>
+
+<!-- ============ SEAL ============ -->
+<section>
+  <h2>⛓ SEALED — join the reblob cycle</h2>
+  <p class="sub">Sealing packages your game definition, hashes it (sha256), and writes a
+  keeper-style manifest under the family key <code>blob-arcade-key-v1</code>.
+  Run <code>seal-game.py package.json</code> to put the real bytes on Walrus testnet —
+  sealed games join the reblob cycle: <b>same key, fresh nonce, new blob IDs every 5 days</b>.</p>
+  <div id="sealOut"></div>
+</section>
+
+<footer>
+  🌊 Koda Kai Network · muse.ai/join · Code: <b>BUD12L</b><br>
+  <span style="font-size:.72rem">proof of mechanics — v0.1 · games are tiny; the blobs are forever (well, 5 days at a time)</span>
+</footer>
+
+</div>
+
+<script src="engine.js"></script>
+<script src="games/bounce.js"></script>
+<script src="games/snake.js"></script>
+<script src="games/shooter.js"></script>
+<script>
+(function () {
+  'use strict';
+  var GAMES = { bounce: BlobGame_bounce, snake: BlobGame_snake, shooter: BlobGame_shooter };
+  var KEY_ID = 'blob-arcade-key-v1';
+
+  /* ---------- sha256: subtle when available, compact fallback ---------- */
+  function sha256fallback(ascii) {
+    function rr(v, a) { return (v >>> a) | (v << (32 - a)); }
+    var maxWord = Math.pow(2, 32), i, j, result = '';
+    var words = [], asciiBitLength = ascii.length * 8;
+    var hash = [0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19];
+    var k = [0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
+      0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
+      0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
+      0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
+      0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
+      0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
+      0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
+      0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2];
+    ascii += '\x80';
+    while (ascii.length % 64 - 56) ascii += '\x00';
+    for (i = 0; i < ascii.length; i++) {
+      j = ascii.charCodeAt(i); if (j >> 8) return null; // ASCII only
+      words[i >> 2] |= j << ((3 - i) % 4) * 8;
+    }
+    words[words.length] = (asciiBitLength / maxWord) | 0;
+    words[words.length] = asciiBitLength;
+    for (j = 0; j < words.length;) {
+      var w = words.slice(j, j += 16), oldHash = hash.slice(0);
+      for (i = 0; i < 64; i++) {
+        var w15 = w[i - 15], w2 = w[i - 2];
+        var a = hash[0], e = hash[4];
+        var t1 = hash[7] + (rr(e, 6) ^ rr(e, 11) ^ rr(e, 25)) + ((e & hash[5]) ^ (~e & hash[6])) + k[i]
+          + (w[i] = i < 16 ? w[i] : (w[i - 16] + (rr(w15, 7) ^ rr(w15, 18) ^ (w15 >>> 3)) + w[i - 7] + (rr(w2, 17) ^ rr(w2, 19) ^ (w2 >>> 10))) | 0);
+        var t2 = (rr(a, 2) ^ rr(a, 13) ^ rr(a, 22)) + ((a & hash[1]) ^ (a & hash[2]) ^ (hash[1] & hash[2]));
+        hash = [(t1 + t2) | 0, hash[0], hash[1], hash[2], (hash[3] + t1) | 0, hash[4], hash[5], hash[6]];
+      }
+      for (i = 0; i < 8; i++) hash[i] = (hash[i] + oldHash[i]) | 0;
+    }
+    for (i = 0; i < 8; i++)
+      for (j = 3; j + 1; j--) {
+        var b = (hash[i] >> (j * 8)) & 255;
+        result += (b < 16 ? '0' : '') + b.toString(16);
+      }
+    return result;
+  }
+  function sha256hex(str) {
+    if (window.crypto && crypto.subtle) {
+      return crypto.subtle.digest('SHA-256', new TextEncoder().encode(str))
+        .then(function (buf) {
+          return Array.prototype.map.call(new Uint8Array(buf), function (b) {
+            return ('0' + b.toString(16)).slice(-2);
+          }).join('');
+        });
+    }
+    return Promise.resolve(sha256fallback(unescape(encodeURIComponent(str))));
+  }
+  function canonicalJSON(obj) {
+    if (obj === null || typeof obj !== 'object') return JSON.stringify(obj);
+    if (Array.isArray(obj)) return '[' + obj.map(canonicalJSON).join(',') + ']';
+    return '{' + Object.keys(obj).sort().map(function (k) {
+      return JSON.stringify(k) + ':' + canonicalJSON(obj[k]);
+    }).join(',') + '}';
+  }
+
+  /* ---------- proofs: click to play ---------- */
+  var proofEngines = {};
+  ['bounce', 'snake', 'shooter'].forEach(function (m) {
+    var eng = new BlobEngine(document.getElementById('cv-' + m), GAMES[m]);
+    proofEngines[m] = eng;
+    var ov = document.getElementById('ov-' + m);
+    var stopBtn = document.querySelector('[data-stop="' + m + '"]');
+    ov.addEventListener('click', function () {
+      Object.keys(proofEngines).forEach(function (k) {
+        if (k !== m) { proofEngines[k].stop(); document.getElementById('ov-' + k).classList.remove('hidden'); }
+      });
+      document.querySelectorAll('.stopbtn').forEach(function (b) { b.style.display = 'none'; });
+      eng.reset(); eng.start();
+      ov.classList.add('hidden'); stopBtn.style.display = '';
+    });
+    stopBtn.addEventListener('click', function () {
+      eng.stop(); ov.classList.remove('hidden'); stopBtn.style.display = 'none';
+    });
+  });
+
+  /* ---------- kid builder ---------- */
+  var SLIDERS = {
+    bounce: [{ key: 'ballSpeed', label: 'Ball speed', min: 150, max: 600, step: 10 },
+             { key: 'paddleW', label: 'Paddle size', min: 60, max: 140, step: 2 }],
+    snake: [{ key: 'speed', label: 'Snake speed', min: 4, max: 14, step: 0.5 }],
+    shooter: [{ key: 'shipSpeed', label: 'Ship speed', min: 200, max: 600, step: 10 },
+              { key: 'spawnEvery', label: 'Enemy delay', min: 0.4, max: 2, step: 0.1 }]
+  };
+  var COLORS = {
+    bounce: [['paddleColor', 'Paddle'], ['ballColor', 'Ball']],
+    snake: [['snakeColor', 'Snake'], ['foodColor', 'Food']],
+    shooter: [['shipColor', 'Ship'], ['enemyColor', 'Enemy']]
+  };
+  var kidMech = 'bounce', kidParams = {};
+  function kidBaseParams() { return JSON.parse(JSON.stringify(GAMES[kidMech].params)); }
+  kidParams = kidBaseParams();
+  function renderKidControls() {
+    var sh = document.getElementById('kidSliders'); sh.innerHTML = '';
+    SLIDERS[kidMech].forEach(function (s) {
+      var row = document.createElement('div'); row.className = 'sliderow';
+      row.innerHTML = '<label>' + s.label + '</label>';
+      var inp = document.createElement('input');
+      inp.type = 'range'; inp.min = s.min; inp.max = s.max; inp.step = s.step || 1; inp.value = kidParams[s.key];
+      var val = document.createElement('span'); val.className = 'val'; val.textContent = inp.value;
+      inp.addEventListener('input', function () { kidParams[s.key] = parseFloat(inp.value); val.textContent = inp.value; });
+      row.appendChild(inp); row.appendChild(val); sh.appendChild(row);
+    });
+    var ch = document.getElementById('kidColors'); ch.innerHTML = '';
+    COLORS[kidMech].forEach(function (c) {
+      var lab = document.createElement('label'); lab.textContent = c[1];
+      var inp = document.createElement('input'); inp.type = 'color'; inp.value = kidParams[c[0]];
+      inp.addEventListener('input', function () { kidParams[c[0]] = inp.value; });
+      lab.appendChild(inp); ch.appendChild(lab);
+    });
+    document.getElementById('kidName').value = 'My ' + GAMES[kidMech].name;
+  }
+  document.getElementById('kidMechs').addEventListener('click', function (e) {
+    var b = e.target.closest('.mechbtn'); if (!b) return;
+    this.querySelectorAll('.mechbtn').forEach(function (x) { x.classList.remove('sel'); });
+    b.classList.add('sel'); kidMech = b.dataset.m; kidParams = kidBaseParams(); renderKidControls();
+  });
+  var kidEng = new BlobEngine(document.getElementById('cv-kid'), GAMES.bounce);
+  document.getElementById('kidPreview').addEventListener('click', function () {
+    document.getElementById('kidErr').textContent = '';
+    try {
+      kidEng.load({ params: kidParams, code: GAMES[kidMech].code });
+      kidEng.start();
+    } catch (err) { document.getElementById('kidErr').textContent = 'preview failed: ' + err.message; }
+  });
+  document.getElementById('kidSeal').addEventListener('click', function () {
+    sealGame({
+      name: document.getElementById('kidName').value.trim() || 'Untitled',
+      mechanic: kidMech, params: kidParams,
+      code: { init: GAMES[kidMech].code.init.toString(), tick: GAMES[kidMech].code.tick.toString(), draw: GAMES[kidMech].code.draw.toString() }
+    }, 'kidErr');
+  });
+  renderKidControls();
+
+  /* ---------- adult builder ---------- */
+  var adultMech = 'bounce';
+  function renderAdult() {
+    document.getElementById('adultTick').value = GAMES[adultMech].code.tick.toString();
+    document.getElementById('adultParams').value = JSON.stringify(GAMES[adultMech].params, null, 1);
+    document.getElementById('adultName').value = 'My Custom ' + GAMES[adultMech].name;
+  }
+  document.getElementById('adultMechs').addEventListener('click', function (e) {
+    var b = e.target.closest('.mechbtn'); if (!b) return;
+    this.querySelectorAll('.mechbtn').forEach(function (x) { x.classList.remove('sel'); });
+    b.classList.add('sel'); adultMech = b.dataset.m; renderAdult();
+  });
+  var adultEng = new BlobEngine(document.getElementById('cv-adult'), GAMES.bounce);
+  function adultDef() {
+    var tickSrc = document.getElementById('adultTick').value;
+    var params = JSON.parse(document.getElementById('adultParams').value);
+    BlobCompile(tickSrc); // syntax check
+    return {
+      name: document.getElementById('adultName').value.trim() || 'Untitled',
+      mechanic: adultMech, params: params,
+      code: { init: GAMES[adultMech].code.init.toString(), tick: tickSrc, draw: GAMES[adultMech].code.draw.toString() }
+    };
+  }
+  document.getElementById('adultPreview').addEventListener('click', function () {
+    var errEl = document.getElementById('adultErr'); errEl.textContent = '';
+    try {
+      var d = adultDef();
+      adultEng.load({ params: d.params, code: d.code });
+      adultEng.start();
+    } catch (err) { errEl.textContent = 'preview failed: ' + err.message; }
+  });
+  document.getElementById('adultSeal').addEventListener('click', function () {
+    var errEl = document.getElementById('adultErr'); errEl.textContent = '';
+    try { sealGame(adultDef(), 'adultErr'); }
+    catch (err) { errEl.textContent = 'seal failed: ' + err.message; }
+  });
+  renderAdult();
+
+  /* ---------- seal ---------- */
+  function sealGame(def, errId) {
+    var pkg = {
+      format: 'blob-arcade-game/v0.1',
+      name: def.name, mechanic: def.mechanic, params: def.params, code: def.code,
+      created: new Date().toISOString(), key_id: KEY_ID
+    };
+    var canonical = canonicalJSON(pkg);
+    sha256hex(canonical).then(function (hash) {
+      var manifest = {
+        game: pkg.name, mechanic: pkg.mechanic, sha256: hash, key_id: KEY_ID,
+        sealed_at: pkg.created, blob_id: null, epochs: 5,
+        reblob: 'same key, fresh nonce -> new blob IDs every cycle'
+      };
+      var out = document.getElementById('sealOut');
+      out.style.display = 'block';
+      out.innerHTML = '<span class="k">PACKAGE</span> ' + pkg.name + ' · ' + canonical.length + ' bytes\n' +
+        '<span class="k">SHA256</span> ' + hash + '\n' +
+        '<span class="k">MANIFEST</span>\n' + JSON.stringify(manifest, null, 1) + '\n' +
+        '<span class="k">NEXT</span> save the package, then run:\n  python3 seal-game.py &lt;package.json&gt;\n' +
+        'to put the bytes on Walrus testnet under ' + KEY_ID + '.';
+      var blob = new Blob([JSON.stringify(pkg, null, 1)], { type: 'application/json' });
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = pkg.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '.blob-arcade.json';
+      a.className = 'dl'; a.textContent = '⬇ download package JSON';
+      out.appendChild(document.createElement('br')); out.appendChild(a);
+      out.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }).catch(function (err) {
+      document.getElementById(errId).textContent = 'seal failed: ' + err.message;
+    });
+  }
+})();
+</script>
+</body>
+</html>
