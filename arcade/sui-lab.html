@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SUI LAB — the build floor · Arcades of Time</title>
+<style>
+  :root { --neon:#22d3ee; --pink:#f0f; --bg:#0a0a18; --panel:#12122a; --gold:#ffd76b; --green:#7CFF6B; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:var(--bg); color:#e8e8f5; font-family:'Courier New',monospace; min-height:100vh;
+         background-image:radial-gradient(circle at 50% 0%, #1a1a3a 0%, var(--bg) 60%); }
+  .wrap { max-width:1100px; margin:0 auto; padding:32px 20px 60px; }
+  header { text-align:center; margin-bottom:26px; }
+  h1 { font-size:clamp(1.6rem,5vw,2.6rem); color:var(--neon); letter-spacing:.1em; text-shadow:0 0 18px var(--neon); }
+  .sub { color:var(--pink); letter-spacing:.2em; margin-top:10px; font-size:.85rem; }
+  .nav { text-align:center; margin:18px 0 30px; }
+  .nav a { display:inline-block; margin:0 8px; padding:8px 20px; border:1px solid var(--neon); border-radius:999px;
+           color:var(--neon); text-decoration:none; letter-spacing:.15em; font-size:.8rem; }
+  .nav a:hover { background:var(--neon); color:#000; }
+  h2.sec { color:var(--pink); letter-spacing:.15em; margin:34px 0 16px; font-size:1.25rem; text-shadow:0 0 12px var(--pink); }
+  h2.sec .tag { font-size:.62rem; border:1px solid var(--gold); color:var(--gold); border-radius:999px; padding:3px 12px; letter-spacing:.1em; vertical-align:middle; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:14px; }
+  .card { background:var(--panel); border:1px solid #2a2a5a; border-radius:12px; padding:18px; }
+  .card:hover { border-color:var(--neon); }
+  .card h3 { color:#fff; font-size:1rem; letter-spacing:.05em; }
+  .card p { color:#b9b9d8; font-size:.82rem; line-height:1.6; margin:8px 0; }
+  .card audio { width:100%; margin-top:8px; }
+  .coming { color:var(--gold); font-size:.8rem; letter-spacing:.1em; }
+  table { width:100%; border-collapse:collapse; font-size:.78rem; }
+  th { color:var(--gold); text-align:left; padding:10px 12px; border-bottom:1px solid #2a2a5a; letter-spacing:.08em; }
+  td { padding:10px 12px; border-bottom:1px solid #1a1a3a; color:#b9b9d8; vertical-align:top; line-height:1.55; }
+  td b { color:#fff; }
+  .panel { background:var(--panel); border:1px solid #2a2a5a; border-radius:12px; padding:22px; overflow-x:auto; }
+  pre { background:#0a0a18; border:1px solid #2a2a5a; border-radius:8px; padding:14px 16px; font-size:.76rem;
+        line-height:1.7; color:var(--green); overflow-x:auto; margin:10px 0; }
+  .bound { border:1px dashed var(--gold); border-radius:10px; padding:14px 18px; margin-top:12px; }
+  .bound .t { color:var(--gold); letter-spacing:.1em; font-size:.85rem; }
+  .bound p { color:#b9b9d8; font-size:.8rem; line-height:1.7; margin-top:6px; }
+  .rule { color:var(--pink); font-size:.8rem; margin-top:14px; line-height:1.8; }
+  footer { text-align:center; color:#66668a; font-size:.8rem; margin-top:30px; line-height:2; }
+  footer a { color:var(--neon); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>🧪 SUI LAB</h1>
+    <div class="sub">THE BUILD FLOOR OF THE DECODING SUI SERIES — LISTEN · BUILD · LEARN</div>
+  </header>
+  <div class="nav">
+    <a href="index.html">← ARCADE</a>
+    <a href="github.html">💻 GITHUB</a>
+    <a href="linktree.html">🔗 LINKTREE</a>
+  </div>
+
+  <h2 class="sec">🎧 LISTEN <span class="tag">THE SERIES</span></h2>
+  <div class="grid">
+    <div class="card">
+      <h3>EP1 — The Object Changes Everything</h3>
+      <p>Ezra &amp; Wren · ~13 min. Why Sui does objects, not accounts. Mysticeti, rent-and-refund gas, Move's compile-time safety, the player who never sees a chain.</p>
+      <audio controls preload="none" src="sui-lab/ep1.mp3"></audio>
+    </div>
+    <div class="card">
+      <h3>EP2 — Move and the First Build</h3>
+      <p>Ezra &amp; Wren · ~11 min. The Plinko teardown, our cabinet scoped, and the full stack assembled: Sui, Walrus, Seal, Nautilus, Enoki, DeepBook, SuiNS as one machine.</p>
+      <audio controls preload="none" src="sui-lab/ep2.mp3"></audio>
+    </div>
+    <div class="card">
+      <h3>EP3 — The Agentic Keeper</h3>
+      <p class="coming">◉ RENDERING — Genie Sui: specialist avatars, the self-updating mirror, and the five-rule verification doctrine. Drops here when done.</p>
+    </div>
+  </div>
+
+  <h2 class="sec">🔨 BUILD <span class="tag">W1 · PLINKO TEARDOWN</span></h2>
+  <div class="panel">
+    <p style="color:#b9b9d8;font-size:.85rem;line-height:1.7;margin-bottom:10px">The first real walkthrough. Out of the box: clone it, read it, prove it. Everything below runs up to the wallet boundary.</p>
+    <pre>git clone https://github.com/mystenlabs/plinko-poc
+cd plinko-poc/plinko
+# install the toolchain
+curl -sSfL https://raw.githubusercontent.com/MystenLabs/suiup/main/install.sh | sh
+export PATH="$HOME/.local/bin:$PATH"
+suiup install sui@testnet
+# prove it
+sui move build
+sui move test</pre>
+    <div class="bound">
+      <div class="t">🛑 THE WALLET BOUNDARY — DAVID'S ACTION</div>
+      <p>Publishing needs testnet SUI (web faucet only): claim at <b>faucet.sui.io</b>, then <b>sui client publish</b>. Nothing past this line runs without his key. Everything provable without a wallet is proven; the wallet step is his.</p>
+    </div>
+    <p class="rule">RULE: the podcast may <b>describe</b> a mechanic, but the lists below only advance on <b>evidence</b> — inspected code, green tests, live deploys.</p>
+  </div>
+
+  <h2 class="sec">📦 OBJECTS <span class="tag">GROWS EVERY BUILD</span></h2>
+  <div class="panel">
+  <table>
+    <tr><th>Object</th><th>What it is</th><th>Status</th></tr>
+    <tr><td><b>HouseData</b></td><td>Plinko's house registry — games as dynamic object fields, balance, payout table</td><td>🔍 inspected</td></tr>
+    <tr><td><b>Game</b> <span style="color:#66668a">key, store</span></td><td>Owned game object; stake as <b>Balance&lt;SUI&gt;</b>, not a Coin</td><td>🔍 inspected</td></tr>
+    <tr><td><b>NewGameStarted / GameFinished</b> <span style="color:#66668a">copy, drop</span></td><td>Events — the frontend score feed, with beacon trace</td><td>🔍 inspected</td></tr>
+    <tr><td><b>Cabinet</b></td><td>Ours: one per arcade machine (DOOM first), owns config + treasury</td><td>📝 designed</td></tr>
+    <tr><td><b>Fin</b></td><td>Ours: closed-loop credit — non-transferable by design, the kill-vote as code</td><td>📝 designed</td></tr>
+    <tr><td><b>Scoreboard</b> <span style="color:#66668a">shared</span></td><td>Ours: ordered only against itself; separate human/agent boards</td><td>📝 designed</td></tr>
+    <tr><td><b>CabinetAdminCap</b></td><td>Ours: privilege as property — transferable, wrappable, burnable</td><td>📝 designed</td></tr>
+  </table>
+  </div>
+
+  <h2 class="sec">⚙️ MECHANICS <span class="tag">PROOF QUEUE</span></h2>
+  <div class="panel">
+  <table>
+    <tr><th>#</th><th>Mechanic</th><th>Proof</th></tr>
+    <tr><td><b>M1</b></td><td>Randomness draw is <b>entry</b>-only — can't be composed/abort-filtered</td><td>🔍 <span style="color:#66668a">plinko.move L62 inspected</span></td></tr>
+    <tr><td><b>M2</b></td><td>Payout table as on-chain data — auditable, house-editable only</td><td>🔍 <span style="color:#66668a">multiplier vector inspected</span></td></tr>
+    <tr><td><b>M3</b></td><td>House solvency check before every payout</td><td>🔍 <span style="color:#66668a">assert! inspected</span></td></tr>
+    <tr><td><b>M4</b></td><td>Stake as <b>Balance</b>, not Coin — no object per stake</td><td>🔍 inspected</td></tr>
+    <tr><td><b>M5</b></td><td>Games as dynamic object fields — registry grows without migration</td><td>🔍 inspected</td></tr>
+    <tr><td><b>M6</b></td><td>Events as the score feed</td><td>🔍 inspected</td></tr>
+    <tr><td><b>M7</b></td><td>Sponsored (gasless) play — player holds zero SUI</td><td>📖 <span style="color:#66668a">→ W4 testnet</span></td></tr>
+    <tr><td><b>M8</b></td><td>Atomic play turn — insert→play→score→prize can't partially fail</td><td>📖 <span style="color:#66668a">→ W3 Cabinet module</span></td></tr>
+    <tr><td><b>M9</b></td><td>Session reaping pays for itself — 99% storage rebate</td><td>📖 <span style="color:#66668a">→ W5 reaping demo</span></td></tr>
+    <tr><td><b>M10</b></td><td>Closed-loop fins — the kill-vote as code</td><td>📝 <span style="color:#66668a">→ W3</span></td></tr>
+  </table>
+  </div>
+
+  <h2 class="sec">📖 LEARN <span class="tag">THE LESSONS</span></h2>
+  <div class="grid">
+    <div class="card"><h3>Part 1 — The Object Changes Everything</h3><p>Objects vs accounts. Five ownership types. Mysticeti's three engine swaps, zero forks. Rent-and-refund gas. zkLogin + sponsored play. The six-primitive keeper.</p></div>
+    <div class="card"><h3>Part 2 — Move and the First Build</h3><p>Plinko dissected. Randomness with teeth. Privilege as property. Our cabinet scoped. The stack assembled: Sui the court, Walrus the data, Seal the permission, Nautilus the fair secrets.</p></div>
+    <div class="card"><h3>Part 3 — The Agentic Keeper</h3><p>Genie Sui: the copilot for blockchains. Four specialist avatars. The self-updating mirror (pulling weekly). The five-rule verification doctrine — two avatars corroborate, code proves itself.</p></div>
+    <div class="card"><h3>Part 4 — Ship It</h3><p class="coming">◉ NEXT — testnet deploy path, the genie interface live, the roadmap to the keeper running. Gated on David's exact word.</p></div>
+  </div>
+
+  <footer>
+    DECODING SUI · a Koda Kai builder series · nothing here touches a wallet ·<br>
+    fins stay closed-loop · mainnet waits on the tripwires · <a href="index.html">← back to the arcade</a>
+  </footer>
+</div>
+</body>
+</html>
