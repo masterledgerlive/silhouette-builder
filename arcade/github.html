@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Open Source — github.com/masterledgerlive · Arcades of Time</title>
+<style>
+  :root { --neon:#22d3ee; --pink:#f0f; --bg:#0a0a18; --panel:#12122a; --gold:#ffd76b; --green:#7CFF6B; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:var(--bg); color:#e8e8f5; font-family:'Courier New',monospace; min-height:100vh;
+         background-image:radial-gradient(circle at 50% 0%, #1a1a3a 0%, var(--bg) 60%); }
+  .wrap { max-width:1100px; margin:0 auto; padding:32px 20px 60px; }
+  header { text-align:center; margin-bottom:30px; }
+  h1 { font-size:clamp(1.6rem,5vw,2.6rem); color:var(--neon); letter-spacing:.1em; text-shadow:0 0 18px var(--neon); }
+  .sub { color:var(--pink); letter-spacing:.25em; margin-top:10px; font-size:.85rem; }
+  .sub a { color:var(--pink); }
+  .nav { text-align:center; margin:18px 0 30px; }
+  .nav a { display:inline-block; margin:0 8px; padding:8px 20px; border:1px solid var(--neon); border-radius:999px;
+           color:var(--neon); text-decoration:none; letter-spacing:.15em; font-size:.8rem; }
+  .nav a:hover { background:var(--neon); color:#000; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:14px; }
+  .repo { background:var(--panel); border:1px solid #2a2a5a; border-radius:12px; padding:18px; transition:.2s; display:flex; flex-direction:column; }
+  .repo:hover { border-color:var(--neon); box-shadow:0 0 18px #0af5; transform:translateY(-2px); }
+  .repo h3 { color:#fff; font-size:1rem; letter-spacing:.05em; word-break:break-all; }
+  .repo h3 .octo { color:var(--neon); }
+  .repo p { color:#b9b9d8; font-size:.82rem; line-height:1.6; margin:8px 0; flex:1; }
+  .meta { font-size:.72rem; color:#8888aa; margin-bottom:10px; }
+  .meta .lang { color:var(--gold); } .meta .upd { color:var(--green); }
+  .links { display:flex; gap:10px; }
+  .links a { font-size:.78rem; padding:6px 14px; border-radius:999px; text-decoration:none; letter-spacing:.1em; }
+  .links a.code { border:1px solid var(--neon); color:var(--neon); }
+  .links a.code:hover { background:var(--neon); color:#000; }
+  .links a.live { border:1px solid var(--green); color:var(--green); }
+  .links a.live:hover { background:var(--green); color:#000; }
+  .note { text-align:center; color:#66668a; font-size:.8rem; margin-top:34px; line-height:2; }
+  .note a { color:var(--neon); }
+  footer { text-align:center; color:#66668a; font-size:.8rem; margin-top:26px; }
+  footer a { color:var(--neon); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>💻 OPEN SOURCE</h1>
+    <div class="sub"><a href="https://github.com/masterledgerlive">github.com/masterledgerlive</a> — every build, in the open</div>
+  </header>
+  <div class="nav">
+    <a href="index.html">← ARCADE</a>
+    <a href="linktree.html">🔗 LINKTREE</a>
+    <a href="https://github.com/masterledgerlive" target="_blank" rel="noopener">GITHUB PROFILE ↗</a>
+  </div>
+  <div class="grid" id="grid"></div>
+  <div class="note">
+    Working versions linked with ▶ LIVE wherever a build is already deployed.<br>
+    If we built it, it's linked here. New builds land here automatically.
+  </div>
+  <footer><a href="index.html">← highscores.live/arcade</a></footer>
+</div>
+<script>
+const REPOS = [
+  {n:"silhouette-builder", d:"A shadow box builder and cut library for sports and trading card artists. Hosts this arcade.", lang:"HTML", u:"2026-10-19", live:"https://arcade.highscores.live/arcade/"},
+  {n:"koda-kai-decoder", d:"Koda Kai the Decoder — the open universal decoder: every cipher and codec in library form.", lang:"—", u:"2026-10-19"},
+  {n:"blob-cinema", d:"A full-length film playing purely from chained encrypted Walrus blobs. Zero video bytes on the page.", lang:"HTML", u:"2026-10-16", live:"https://arcade.highscores.live/arcade/blob-cinema/"},
+  {n:"koda-kai", d:"Koda Kai — the kid-safe personal operating system. AI clay that learns with your kid.", lang:"HTML", u:"2026-10-14", live:"https://masterledgerlive.github.io/koda-kai/"},
+  {n:"guardian-protocol-agent", d:"Guardian Protocol — AI agent wallet on Base Sepolia testnet.", lang:"JavaScript", u:"2026-09-28"},
+  {n:"robinhood-agent-plugin", d:"MIT open-source Cursor/agent plugin for Robinhood agentic trading MCP — machine logs, risk rails.", lang:"TypeScript", u:"2026-09-19"},
+  {n:"pinellas-xd-virtual-city", d:"Pinellas XD Virtual City — open-source 3D civic map, demo municipal ledger, wallet-connected landing.", lang:"TypeScript", u:"2026-09-16"},
+  {n:"StorageToken", d:"Unified $STORE StorageToken — storage credits as the only storage payment, plug-and-play.", lang:"TypeScript", u:"2026-09-06", live:"https://masterledgerlive.github.io/StorageToken/"},
+  {n:"injection-service", d:"Injection service for the agent stack.", lang:"TypeScript", u:"2026-09-06"},
+  {n:"coinbase-multi-injector", d:"Multi-injector for Coinbase agent flows.", lang:"TypeScript", u:"2026-08-30"},
+  {n:"kite-agentic-layer", d:"Agentic layer for Kite.", lang:"TypeScript", u:"2026-08-30"},
+  {n:"agent-orchestrator", d:"Orchestrator for the agent cluster.", lang:"TypeScript", u:"2026-08-30"},
+  {n:"agent-genome", d:"Genome definitions for agents.", lang:"TypeScript", u:"2026-08-30"},
+  {n:"silouttes-api", d:"Silouttes accounts + shared inventory API.", lang:"TypeScript", u:"2026-08-30"},
+  {n:"manualai", d:"Preserved deployed frontend for Manual.ai.", lang:"HTML", u:"2026-08-19", live:"https://masterledgerlive.github.io/manualai/"},
+  {n:"nba-ai-predictor", d:"NBA AI predictor.", lang:"TypeScript", u:"2026-04-21"},
+  {n:"blockchain-pizza-chain", d:"Blockchain pizza chain experiment.", lang:"TypeScript", u:"2026-04-12"},
+  {n:"master-key-platform", d:"Master key platform.", lang:"TypeScript", u:"2026-04-11"},
+  {n:"recursive-physics-sandbox-site", d:"Frontend for the recursive physics sandbox.", lang:"TypeScript", u:"2026-04-11"},
+  {n:"recursive-physics-sandbox", d:"Recursive physics sandbox.", lang:"Python", u:"2026-04-11"},
+  {n:"scn-blockchain", d:"SCN — Sovereign Collectible Network. Ownerless Layer 1 for physical & digital sports collectibles. MIT.", lang:"TypeScript", u:"2026-04-05"},
+  {n:"eternal-memory-architecture", d:"The home for AGI memory forever. Indestructible, geometrically addressed, living in the ether.", lang:"Python", u:"2026-03-25"},
+  {n:"ikn-protocol", d:"Universal addressing layer for AI knowledge provenance. Every truth has a deterministic coordinate.", lang:"—", u:"2026-03-24"},
+  {n:"coinbase-agent", d:"Coinbase agent.", lang:"JavaScript", u:"2026-03-15"},
+];
+const g = document.getElementById('grid');
+REPOS.forEach(r => {
+  const d = document.createElement('div');
+  d.className = 'repo';
+  d.innerHTML =
+    '<h3><span class="octo">⌁</span> ' + r.n + '</h3>' +
+    '<p>' + r.d + '</p>' +
+    '<div class="meta"><span class="lang">' + r.lang + '</span> · updated <span class="upd">' + r.u + '</span></div>' +
+    '<div class="links"><a class="code" href="https://github.com/masterledgerlive/' + r.n + '" target="_blank" rel="noopener">CODE</a>' +
+    (r.live ? '<a class="live" href="' + r.live + '" target="_blank" rel="noopener">▶ LIVE</a>' : '') + '</div>';
+  g.appendChild(d);
+});
+</script>
+</body>
+</html>
