@@ -132,6 +132,7 @@ Every duel hit is written as a real blob. Moves chain locally, anchor on demand.
         <span>⛓ chain <span class="ch" id="chainHead">00000000</span></span>
         <span>tick <span class="ch" id="chainTick">0</span></span>
         <button class="mini seal" id="btnAnchor">⚓ ANCHOR CHAIN</button>
+        <button class="mini" id="btnReset" style="border-color:var(--gold);color:var(--gold)">↻ RESET DUEL</button>
       </div>
       <h3>📡 BLOB FEED — every real write</h3>
       <div id="blobfeed"><div class="fr"><span class="st" style="color:#8888aa">…ready — press SEAL BUILD, play the duel, anchor the chain…</span></div></div>
@@ -580,6 +581,13 @@ document.getElementById('btnAnchor').addEventListener('click', function(){
   }).catch(function(e){
     feedLog('<span class="st">✖</span> anchor failed: '+esc(e.message), 'bad');
   });
+});
+document.getElementById('btnReset').addEventListener('click', function(){
+  duel = createDuel(1); S = duel.S;
+  tickCount = 0; chainHead = '00000000'; anchorFrom = 0;
+  document.getElementById('chainHead').textContent = chainHead;
+  document.getElementById('chainTick').textContent = '0';
+  feedLog('<span class="st">↻</span> duel reset — fresh ships, chain restarted', 'ok');
 });
 
 document.getElementById('btnSealBuild').addEventListener('click', function(){
