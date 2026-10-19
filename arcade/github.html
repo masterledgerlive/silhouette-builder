@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Open Source — github.com/masterledgerlive · Arcades of Time</title>
+<title>GitHub Control Room — github.com/masterledgerlive · Arcades of Time</title>
 <style>
   :root { --neon:#22d3ee; --pink:#f0f; --bg:#0a0a18; --panel:#12122a; --gold:#ffd76b; --green:#7CFF6B; }
   * { box-sizing:border-box; margin:0; padding:0; }
@@ -34,6 +34,16 @@
   .links a.live:hover { background:var(--green); color:#000; }
   .note { text-align:center; color:#66668a; font-size:.8rem; margin-top:34px; line-height:2; }
   .note a { color:var(--neon); }
+  h2.sec2 { color:var(--pink); letter-spacing:.15em; margin:34px 0 18px; font-size:1.2rem; text-shadow:0 0 12px var(--pink); }
+  h2.sec2 .tag { font-size:.65rem; border:1px solid var(--gold); color:var(--gold); border-radius:999px; padding:3px 12px; letter-spacing:.1em; vertical-align:middle; }
+  .panel2 { background:var(--panel); border:1px solid #2a2a5a; border-radius:12px; padding:22px; }
+  .panel2 p { color:#b9b9d8; font-size:.85rem; line-height:1.7; margin-bottom:12px; }
+  .panel2 p b { color:#fff; }
+  .panel2 .empty { color:#66668a; font-style:italic; }
+  .panel2 ol { color:#b9b9d8; font-size:.82rem; line-height:1.9; margin:0 0 12px 22px; }
+  .keyslot { border:1px dashed #3a3a6a; border-radius:10px; padding:14px 18px; margin-top:10px; }
+  .keyslot .kn { color:var(--gold); font-size:.9rem; letter-spacing:.05em; }
+  .keyslot .kd { color:#8888aa; font-size:.78rem; margin-top:4px; }
   footer { text-align:center; color:#66668a; font-size:.8rem; margin-top:26px; }
   footer a { color:var(--neon); }
 </style>
@@ -41,8 +51,8 @@
 <body>
 <div class="wrap">
   <header>
-    <h1>💻 OPEN SOURCE</h1>
-    <div class="sub"><a href="https://github.com/masterledgerlive">github.com/masterledgerlive</a> — every build, in the open</div>
+    <h1>💻 GITHUB CONTROL ROOM</h1>
+    <div class="sub"><a href="https://github.com/masterledgerlive">github.com/masterledgerlive</a> — repos · agents · sealed keys</div>
   </header>
   <div class="nav">
     <a href="index.html">← ARCADE</a>
@@ -50,6 +60,25 @@
     <a href="https://github.com/masterledgerlive" target="_blank" rel="noopener">GITHUB PROFILE ↗</a>
   </div>
   <div class="grid" id="grid"></div>
+
+  <h2 class="sec2">🤖 AGENTS / INJECTION SYSTEMS</h2>
+  <div class="grid" id="agents"></div>
+
+  <h2 class="sec2">🔐 SEALED KEYS <span class="tag">TrueKey vault</span></h2>
+  <div class="panel2">
+    <p><b>How the vault works:</b> API keys are never stored here in plaintext. Each key is sealed client-side into an
+    encrypted Walrus blob (NaCl secretbox, key derived from your true key). This room only lists <b>sealed key slots</b> —
+    names and purposes. Revealing a key requires the true key, typed on your device, which never leaves it and is never sent anywhere.</p>
+    <ol>
+      <li>Seal: paste a key once → encrypted in your browser → ciphertext blob goes to Walrus.</li>
+      <li>Slot: this room records the blob ID + purpose. The ciphertext is useless without the true key.</li>
+      <li>Reveal: enter the true key → decrypted in memory only → copied, never stored.</li>
+      <li>Revoke: re-seal under a new true key. Old ciphertext becomes permanently unreadable.</li>
+    </ol>
+    <div id="vault"><p class="empty">No sealed keys yet — seal the first one from the Forge when it lands.</p></div>
+    <p style="margin-top:14px">Design: <span style="color:#8888aa">TrueKey Vault (walrus-nest) — data reveals itself only under correct conditions, in order, to the right key.</span></p>
+  </div>
+
   <div class="note">
     Working versions linked with ▶ LIVE wherever a build is already deployed.<br>
     If we built it, it's linked here. New builds land here automatically.
@@ -95,6 +124,41 @@ REPOS.forEach(r => {
     (r.live ? '<a class="live" href="' + r.live + '" target="_blank" rel="noopener">▶ LIVE</a>' : '') + '</div>';
   g.appendChild(d);
 });
+/* ---- agents / injection systems ---- */
+const AGENTS = [
+  {n:"agent-orchestrator", d:"Orchestrator for the agent cluster — runs the stack.", lang:"TypeScript", u:"2026-08-30"},
+  {n:"agent-genome", d:"Genome definitions for agents — what an agent is.", lang:"TypeScript", u:"2026-08-30"},
+  {n:"kite-agentic-layer", d:"Agentic layer for Kite.", lang:"TypeScript", u:"2026-08-30"},
+  {n:"injection-service", d:"Injection service for the agent stack.", lang:"TypeScript", u:"2026-09-06"},
+  {n:"coinbase-multi-injector", d:"Multi-injector for Coinbase agent flows.", lang:"TypeScript", u:"2026-08-30"},
+  {n:"coinbase-agent", d:"Coinbase agent.", lang:"JavaScript", u:"2026-03-15"},
+  {n:"guardian-protocol-agent", d:"Guardian Protocol — AI agent wallet on Base Sepolia testnet.", lang:"JavaScript", u:"2026-09-28"},
+  {n:"robinhood-agent-plugin", d:"MIT open-source Cursor/agent plugin for Robinhood agentic trading MCP.", lang:"TypeScript", u:"2026-09-19"},
+];
+const ag = document.getElementById('agents');
+AGENTS.forEach(r => {
+  const d = document.createElement('div');
+  d.className = 'repo';
+  d.innerHTML =
+    '<h3><span class="octo">🤖</span> ' + r.n + '</h3>' +
+    '<p>' + r.d + '</p>' +
+    '<div class="meta"><span class="lang">' + r.lang + '</span> · updated <span class="upd">' + r.u + '</span></div>' +
+    '<div class="links"><a class="code" href="https://github.com/masterledgerlive/' + r.n + '" target="_blank" rel="noopener">CODE</a></div>';
+  ag.appendChild(d);
+});
+/* ---- sealed-key vault: loads vault-manifest.json when it exists ---- */
+fetch('vault-manifest.json').then(r => r.ok ? r.json() : null).then(m => {
+  if(!m || !m.keys || !m.keys.length) return;
+  const v = document.getElementById('vault');
+  v.innerHTML = '';
+  m.keys.forEach(k => {
+    const d = document.createElement('div');
+    d.className = 'keyslot';
+    d.innerHTML = '<div class="kn">🔐 ' + k.name + '</div><div class="kd">' + (k.purpose || '') +
+      ' · sealed ' + (k.sealed || 'unknown') + ' · blob <span style="color:#66668a">' + (k.blob || '').slice(0,12) + '…</span></div>';
+    v.appendChild(d);
+  });
+}).catch(() => {});
 </script>
 </body>
 </html>
