@@ -212,6 +212,77 @@ sui move test</pre>
   </div>
   <p class="rule">THE DIRECTION IS QUANTINUUM + SUI — THE LOOP IS DESIGNED, THE TOKEN IS BACKED BY REAL COMPUTE, THE HUNT BEGINS AT ZERO DOLLARS.</p>
 
+  <h2 class="sec">🎬 BLOB CINEMA — MOCKUP <span class="tag">INTERACTIVE · ONE SECOND OF LIVESTREAM</span></h2>
+  <div class="grid" style="margin-bottom:14px">
+    <div class="card">
+      <h3>THE BLOB NETWORK <span class="tag">specialist: HARBOR · LIVE</span></h3>
+      <p>Ezra &amp; Wren + <b style="color:#fff">Harbor, the Blob Keeper</b>. The build series for our Walrus blob network — what we built, the key, how blobs move and get found, how the livestream works.</p>
+      <p><b>P1 — What We Built</b> · ~3 min. Blob Cinema: the encrypted live-video pipeline to Walrus with a derived key chain — our verified first. The keeper, the VERIFIED GAME, the renewal economy.</p>
+      <audio controls preload="none" src="sui-lab/bn1.mp3"></audio>
+      <p><b>P2 — The Key</b> · ~3 min. One master secret, per-chunk derived keys, no key ever travels with the video. Why a leaked chunk key buys seconds, not the film.</p>
+      <audio controls preload="none" src="sui-lab/bn2.mp3"></audio>
+      <p><b>P3 — Moving Blobs</b> · ~4 min. Content addressing, erasure-coded shards, manifests, the loader that survives a blob move. Trust the hash, not the server.</p>
+      <audio controls preload="none" src="sui-lab/bn3.mp3"></audio>
+      <p><b>P4 — The Livestream</b> · ~5 min. The 8-stage loop end to end, the honest failure modes — then run the mockup below, one second of livestream, live.</p>
+      <audio controls preload="none" src="sui-lab/bn4.mp3"></audio>
+    </div>
+  </div>
+  <div class="panel">
+    <p style="color:#b9b9d8;font-size:.82rem;line-height:1.7;margin-bottom:14px">Follow one chunk of livestream through all eight stages. Press run and watch it travel — the key chain derives beside it, the shards scatter, the manifest updates. <b style="color:#fff">Every value here is a demo value.</b> The real keys never leave the vault. Same river, demo water.</p>
+    <div id="bmock-stages" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px"></div>
+    <div id="bmock-keychain" style="font-size:.75rem;color:#7CFF6B;margin-bottom:14px;line-height:2"></div>
+    <div id="bmock-cap" style="min-height:3.2em;color:#fff;font-size:.85rem;line-height:1.7;margin-bottom:14px;border-left:3px solid #22d3ee;padding-left:12px">Press RUN to send a chunk through the pipeline.</div>
+    <button id="bmock-run" onclick="bmockRun()" style="background:#22d3ee;border:none;border-radius:999px;padding:10px 28px;font-family:inherit;font-weight:bold;letter-spacing:.15em;cursor:pointer;color:#000">▶ RUN THE MOCKUP</button>
+    <p style="color:#66668a;font-size:.72rem;margin-top:12px">Demo only — illustrates the real Blob Cinema flow. Blob IDs, keys and nonces shown are invented for the walkthrough.</p>
+  </div>
+  <script>
+  const BMOCK_STAGES = [
+    ["CAMERA","Capture — the camera cuts the stream into chunks, a few seconds each. Demo chunk #42 enters the pipeline."],
+    ["ENCRYPT","Encrypt — a fresh key derives down the key chain for chunk #42. Ciphertext out. The key never travels with the video."],
+    ["WALRUS","Upload — the ciphertext is erasure-coded into ~1,000 shards and scattered across storage nodes. ~4–5 nodes of redundancy carries it."],
+    ["BLOB ID","Blob ID — sha256 of the bytes: demo 9f2c…a1. The ID is the integrity check. New bytes would mean a new ID."],
+    ["MANIFEST","Manifest — the keeper writes: film X, chunk #42 → blob ID 9f2c…a1. The living index updates; the blobs stay immutable."],
+    ["PLAYER","Player — polls the manifest, sees chunk #42, fetches 9f2c…a1 from an aggregator. Hash verified ✓. Trust the math, not the server."],
+    ["DECRYPT","Decrypt — the viewer derives chunk #42's key locally from the key chain. Plaintext exists in memory for seconds."],
+    ["PLAY","Play — chunk #42 hits the screen… while chunk #43 is already at stage 1. The pipeline never stops."]
+  ];
+  const BMOCK_KEYS = ["master ★ (vault, never moves)","→ chunk key #40","→ chunk key #41","→ chunk key #42 ← encrypting now"];
+  let bmockTimers = [];
+  function bmockRun(){
+    bmockTimers.forEach(clearTimeout); bmockTimers = [];
+    const box = document.getElementById('bmock-stages');
+    const kc = document.getElementById('bmock-keychain');
+    const cap = document.getElementById('bmock-cap');
+    const btn = document.getElementById('bmock-run');
+    box.innerHTML = ''; btn.disabled = true; btn.style.opacity = .4;
+    BMOCK_STAGES.forEach(([name], i) => {
+      const d = document.createElement('div');
+      d.id = 'bms'+i;
+      d.textContent = (i+1) + ' · ' + name;
+      d.style.cssText = 'flex:1 1 110px;border:1px solid #2a2a5a;border-radius:8px;padding:10px 6px;text-align:center;font-size:.68rem;letter-spacing:.08em;color:#66668a;transition:all .3s';
+      box.appendChild(d);
+    });
+    kc.innerHTML = 'key chain: ' + BMOCK_KEYS.map((k,i)=>'<span id="bmk'+i+'" style="opacity:.35">'+k+'</span>').join(' ');
+    let t = 400;
+    BMOCK_STAGES.forEach(([name, text], i) => {
+      bmockTimers.push(setTimeout(() => {
+        BMOCK_STAGES.forEach((_, j) => {
+          const el = document.getElementById('bms'+j);
+          if (j < i) { el.style.borderColor = '#7CFF6B'; el.style.color = '#7CFF6B'; }
+          if (j === i) { el.style.borderColor = '#22d3ee'; el.style.color = '#fff'; el.style.boxShadow = '0 0 14px #22d3ee'; }
+        });
+        if (i === 1) document.getElementById('bmk3').style.opacity = 1;
+        cap.textContent = text;
+        if (i === BMOCK_STAGES.length - 1) bmockTimers.push(setTimeout(() => {
+          btn.disabled = false; btn.style.opacity = 1;
+          cap.textContent = 'Done — one chunk, eight stages, ' + '≈' + ' seconds of video kept forever-ish (until the keeper decides otherwise). Run it again.';
+        }, 1200));
+      }, t));
+      t += 1400;
+    });
+  }
+  </script>
+
   <h2 class="sec">🧠 BRAIN <span class="tag">RECURSIVE MEMORY · V0.1 LIVE</span></h2>
   <div class="panel">
     <p style="color:#b9b9d8;font-size:.85rem;line-height:1.7;margin-bottom:10px">
