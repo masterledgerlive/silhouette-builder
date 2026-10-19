@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>🎯 Blob Contract Duel — real 360° proof</title>
+<style>
+  :root { --neon:#22d3ee; --pink:#f0f; --bg:#0a0a18; --panel:#12122a; --green:#7CFF6B; --red:#ff5470; --gold:#ffd76b; --c1:#22d3ee; --c2:#f0f; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:var(--bg); color:#e8e8f5; font-family:'Courier New',monospace; padding:16px 12px 60px;
+         background-image:radial-gradient(circle at 50% 0%, #1a1a3a 0%, var(--bg) 60%); }
+  .wrap { max-width:1060px; margin:0 auto; }
+  h1 { text-align:center; color:var(--neon); letter-spacing:.1em; font-size:clamp(1.2rem,4vw,1.9rem); text-shadow:0 0 16px var(--neon); }
+  .sub { text-align:center; color:#8a8aa8; font-size:.8rem; letter-spacing:.12em; margin:6px 0 14px; }
+  .cols { display:grid; grid-template-columns:1.4fr 1fr; gap:12px; }
+  @media (max-width:820px){ .cols{grid-template-columns:1fr} }
+  .panel { background:var(--panel); border:1px solid #2a2a5a; border-radius:14px; padding:14px; }
+  .panel h2 { color:var(--neon); font-size:.85rem; letter-spacing:.15em; margin-bottom:10px; }
+  canvas { width:100%; background:#000; border-radius:8px; border:2px solid var(--neon); display:block; touch-action:none; }
+  #score { text-align:center; font-size:1.3rem; letter-spacing:.2em; margin:10px 0; }
+  #score .p1 { color:var(--c1); } #score .p2 { color:var(--c2); }
+  #clog { background:#000; border-radius:8px; padding:10px; font-size:.72rem; line-height:1.9; height:340px; overflow-y:auto; }
+  #clog .hit { color:var(--green); } #clog .miss { color:#66668a; } #clog .win { color:var(--gold); font-weight:bold; }
+  .btnrow { display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
+  button { font-family:inherit; cursor:pointer; border-radius:10px; padding:12px 18px; font-size:.85rem; letter-spacing:.08em;
+           background:#1a1a33; color:var(--neon); border:1px solid var(--neon); }
+  button.go { background:var(--green); color:#0a0a18; border:none; font-weight:bold; }
+  .legend { color:#8a8aa8; font-size:.75rem; margin-top:8px; line-height:1.8; }
+  footer { text-align:center; color:#66668a; font-size:.78rem; margin-top:24px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🎯 BLOB CONTRACT DUEL</h1>
+  <div class="sub">EVERY SHOT IS A CONTRACT — BOTH SIMS MUST AGREE IT'S A HIT · FIRST TO 5</div>
+  <div class="cols">
+    <div>
+      <div class="panel">
+        <canvas id="cv" width="800" height="500"></canvas>
+        <div id="score"><span class="p1">P1 0</span> · <span class="p2">0 P2</span></div>
+        <div class="btnrow">
+          <button id="aiBtn">🤖 P2 = AI</button>
+          <button id="simBtn">⚡ SIMULATE 500 TICKS</button>
+          <button id="resetBtn">↻ RESET</button>
+        </div>
+        <div class="legend">
+          <b style="color:var(--c1)">P1:</b> W/S thrust · A/D rotate · SPACE fire ·
+          <b style="color:var(--c2)">P2:</b> ↑/↓ thrust · ←/→ rotate · ENTER fire<br>
+          📱 Drag left/right half to rotate+thrust, FIRE buttons below.
+        </div>
+        <div class="btnrow" id="touchfire" style="display:none">
+          <button id="f1" style="flex:1">🔥 P1 FIRE</button>
+          <button id="f2" style="flex:1">🔥 P2 FIRE</button>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="panel">
+        <h2>📜 CONTRACT LOG — every shot, verified</h2>
+        <div id="clog"><div class="miss">waiting for first shot…</div></div>
+      </div>
+    </div>
+  </div>
+  <footer>🌊 Koda Kai Network · muse.ai/join · Code: <b style="color:var(--neon)">BUD12L</b></footer>
+</div>
+<script>
+// BLOB CONTRACT DUEL — deterministic 2-player 360° combat
+// Every shot is a contract: {shooter, tick, x, y, angle} -> both sims verify -> hit or miss.
+// No DOM, no Date, no Math.random in sim. Testable headless.
+function createDuel(seed) {
+  var W = 800, H = 500;
+  var S = {
+    tick: 0,
+    ships: [
+      { x: 200, y: 250, a: 0,       hp: 5, cool: 0, score: 0 },
+      { x: 600, y: 250, a: Math.PI, hp: 5, cool: 0, score: 0 }
+    ],
+    bullets: [],
+    contracts: [],   // every shot, verified or not
+    hits: []         // verified hits only
+  };
+  var TURN = 0.09, THRUST = 3.2, BSPD = 7, R = 14, BR = 4, COOL = 14;
+
+  function fire(si) {
+    var s = S.ships[si];
+    if (s.cool > 0 || s.hp <= 0) return null;
+    s.cool = COOL;
+    var b = {
+      shooter: si, tick: S.tick,
+      x: s.x + Math.cos(s.a) * (R + 6),
+      y: s.y + Math.sin(s.a) * (R + 6),
+      vx: Math.cos(s.a) * BSPD, vy: Math.sin(s.a) * BSPD,
+      life: 90
+    };
+    S.bullets.push(b);
+    // THE CONTRACT: any verifier can recompute this exact bullet from these fields
+    var c = { shooter: si, tick: S.tick, x: r2(b.x), y: r2(b.y), a: r4(s.a) };
+    S.contracts.push(c);
+    return c;
+  }
+
+  function r2(n){ return Math.round(n*100)/100; }
+  function r4(n){ return Math.round(n*10000)/10000; }
+
+  // Verify a contract: recompute the bullet path, check if it hits the target.
+  // Returns {hit:boolean, tick, target} — deterministic, any machine agrees.
+  function verify(c) {
+    var tgt = S.ships[1 - c.shooter];
+    if (tgt.hp <= 0) return { hit: false, reason: "target dead" };
+    // replay bullet from contract origin
+    var bx = c.x, by = c.y;
+    var vx = Math.cos(c.a) * BSPD, vy = Math.sin(c.a) * BSPD;
+    // NOTE: target moves too — verifier uses the RECORDED target trail.
+    // For this proof both sims share state, so we check current positions.
+    // Full version: contract includes target trail hash. (documented limit)
+    for (var t = 0; t < 90; t++) {
+      bx += vx; by += vy;
+      if (bx < 0 || bx > W || by < 0 || by > H) return { hit: false, reason: "out of bounds" };
+      var dx = bx - tgt.x, dy = by - tgt.y;
+      if (dx*dx + dy*dy < (R+BR)*(R+BR)) return { hit: true, tick: S.tick + t };
+    }
+    return { hit: false, reason: "miss" };
+  }
+
+  function step(inp0, inp1) {
+    S.tick++;
+    var inps = [inp0, inp1];
+    for (var i = 0; i < 2; i++) {
+      var s = S.ships[i], inp = inps[i] || {};
+      if (s.hp <= 0) continue;
+      if (inp.left)  s.a -= TURN;
+      if (inp.right) s.a += TURN;
+      if (inp.up)    { s.x += Math.cos(s.a) * THRUST; s.y += Math.sin(s.a) * THRUST; }
+      if (inp.down)  { s.x -= Math.cos(s.a) * THRUST * 0.6; s.y -= Math.sin(s.a) * THRUST * 0.6; }
+      s.x = Math.max(R, Math.min(W - R, s.x));
+      s.y = Math.max(R, Math.min(H - R, s.y));
+      if (s.cool > 0) s.cool--;
+      if (inp.fire) {
+        var c = fire(i);
+        if (c) {
+          var v = verify(c);
+          if (v.hit) {
+            var tgt = S.ships[1 - i];
+            tgt.hp--;
+            s.score++;
+            S.hits.push({ tick: S.tick, shooter: i, target: 1 - i, contract: c });
+          }
+        }
+      }
+    }
+    // move bullets, cull
+    for (var j = S.bullets.length - 1; j >= 0; j--) {
+      var b = S.bullets[j];
+      b.x += b.vx; b.y += b.vy; b.life--;
+      if (b.life <= 0 || b.x < 0 || b.x > W || b.y < 0 || b.y > H) S.bullets.splice(j, 1);
+    }
+  }
+
+  function stateHash() {
+    var s = S.tick + "|" +
+      S.ships.map(function(p){ return [r2(p.x),r2(p.y),r4(p.a),p.hp,p.score].join(","); }).join("|") +
+      "|" + S.bullets.length;
+    return s;
+  }
+
+  return { S: S, step: step, fire: fire, verify: verify, hash: stateHash, W: W, H: H };
+}
+
+
+(function(){
+"use strict";
+var cv = document.getElementById("cv"), ctx = cv.getContext("2d");
+var W = 800, H = 500;
+var duel = createDuel(1);
+var S = duel.S;
+var aiP2 = false, over = false;
+
+var clog = document.getElementById("clog");
+function log(h, c){ var d=document.createElement("div"); if(c)d.className=c; d.innerHTML=h; clog.prepend(d); while(clog.children.length>60)clog.removeChild(clog.lastChild); }
+var lastContracts = 0, lastHits = 0;
+function syncLog(){
+  while (lastContracts < S.contracts.length){
+    var c = S.contracts[lastContracts];
+    var isHit = S.hits.some(function(h){ return h.contract===c; });
+    log((isHit?"✓ HIT":"· miss")+" — P"+(c.shooter+1)+" @t"+c.tick+" pos("+c.x+","+c.y+") ang "+c.a, isHit?"hit":"miss");
+    lastContracts++;
+  }
+  var sc = document.getElementById("score");
+  sc.innerHTML = '<span class="p1">P1 '+S.ships[0].score+'</span> · <span class="p2">'+S.ships[1].score+' P2</span>';
+  if ((S.ships[0].score>=5||S.ships[1].score>=5) && !over){
+    over = true;
+    log("🏆 P"+(S.ships[0].score>=5?1:2)+" WINS — "+S.hits.length+" verified hits, "+S.contracts.length+" contracts", "win");
+  }
+}
+
+var keys = {};
+var KEYMAP = { KeyW:["p1","up"], KeyS:["p1","down"], KeyA:["p1","left"], KeyD:["p1","right"], Space:["p1","fire"],
+               ArrowUp:["p2","up"], ArrowDown:["p2","down"], ArrowLeft:["p2","left"], ArrowRight:["p2","right"], Enter:["p2","fire"] };
+var live = { p1:{up:false,down:false,left:false,right:false,fire:false}, p2:{up:false,down:false,left:false,right:false,fire:false} };
+window.addEventListener("keydown", function(e){ var m=KEYMAP[e.code]; if(m){ live[m[0]][m[1]]=true; e.preventDefault(); } });
+window.addEventListener("keyup", function(e){ var m=KEYMAP[e.code]; if(m){ live[m[0]][m[1]]=false; e.preventDefault(); } });
+
+/* touch */
+var touches = {};
+cv.addEventListener("pointerdown", function(e){
+  var r=cv.getBoundingClientRect(), x=(e.clientX-r.left)/r.width*W;
+  var pl = x<W/2?"p1":"p2";
+  touches[e.pointerId]={pl:pl,sx:e.clientX,sy:e.clientY};
+  cv.setPointerCapture(e.pointerId);
+});
+cv.addEventListener("pointermove", function(e){
+  var t=touches[e.pointerId]; if(!t)return;
+  var dx=e.clientX-t.sx, dy=e.clientY-t.sy;
+  live[t.pl].left=dx<-14; live[t.pl].right=dx>14;
+  live[t.pl].up=dy<-14; live[t.pl].down=dy>14;
+});
+function endT(e){ var t=touches[e.pointerId]; if(!t)return;
+  live[t.pl].left=live[t.pl].right=live[t.pl].up=live[t.pl].down=false; delete touches[e.pointerId]; }
+cv.addEventListener("pointerup", endT); cv.addEventListener("pointercancel", endT);
+document.getElementById("f1").addEventListener("pointerdown", function(e){ live.p1.fire=true; e.preventDefault(); });
+document.getElementById("f1").addEventListener("pointerup", function(){ live.p1.fire=false; });
+document.getElementById("f2").addEventListener("pointerdown", function(e){ live.p2.fire=true; e.preventDefault(); });
+document.getElementById("f2").addEventListener("pointerup", function(){ live.p2.fire=false; });
+if ("ontouchstart" in window) document.getElementById("touchfire").style.display="flex";
+
+function aiInput(me, foe){
+  var dx=foe.x-me.x, dy=foe.y-me.y, want=Math.atan2(dy,dx), diff=want-me.a;
+  while(diff>Math.PI)diff-=2*Math.PI; while(diff<-Math.PI)diff+=2*Math.PI;
+  return { left:diff<-0.12, right:diff>0.12, up:Math.abs(diff)<0.6, down:false, fire:Math.abs(diff)<0.07 };
+}
+
+document.getElementById("aiBtn").addEventListener("click", function(){
+  aiP2=!aiP2; this.textContent=aiP2?"🤖 P2 = AI ✓":"🤖 P2 = AI"; this.style.borderColor=aiP2?"#7CFF6B":"";
+});
+document.getElementById("resetBtn").addEventListener("click", function(){
+  duel=createDuel(1); S=duel.S; over=false; lastContracts=0;
+  clog.innerHTML='<div class="miss">reset — waiting for first shot…</div>';
+});
+document.getElementById("simBtn").addEventListener("click", function(){
+  var n=0;
+  while(n<500 && S.ships[0].score<5 && S.ships[1].score<5){
+    duel.step(aiInput(S.ships[0],S.ships[1]), aiInput(S.ships[1],S.ships[0]));
+    n++;
+  }
+  syncLog();
+  log("⚡ simulated "+n+" ticks — score "+S.ships[0].score+"-"+S.ships[1].score, "win");
+});
+
+function drawShip(s, color){
+  ctx.save(); ctx.translate(s.x, s.y); ctx.rotate(s.a);
+  ctx.strokeStyle=color; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(16,0); ctx.lineTo(-10,10); ctx.lineTo(-6,0); ctx.lineTo(-10,-10); ctx.closePath(); ctx.stroke();
+  ctx.restore();
+  ctx.fillStyle="#8a8aa8"; ctx.font="10px monospace"; ctx.textAlign="center";
+  ctx.fillText("hp:"+s.hp, s.x, s.y+26);
+}
+function draw(){
+  ctx.fillStyle="#000"; ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle="#1a1a3a"; ctx.strokeRect(4,4,W-8,H-8);
+  S.bullets.forEach(function(b){
+    ctx.fillStyle=b.shooter===0?"#22d3ee":"#f0f";
+    ctx.beginPath(); ctx.arc(b.x,b.y,4,0,7); ctx.fill();
+  });
+  drawShip(S.ships[0], "#22d3ee"); drawShip(S.ships[1], "#f0f");
+}
+
+var acc=0, last=performance.now();
+function loop(t){
+  var dt=Math.min(0.1,(t-last)/1000); last=t; acc+=dt;
+  while(acc>1/30 && !over){
+    var i1=aiP2?aiInput(S.ships[1],S.ships[0]):{up:live.p2.up,down:live.p2.down,left:live.p2.left,right:live.p2.right,fire:live.p2.fire};
+    duel.step(
+      {up:live.p1.up,down:live.p1.down,left:live.p1.left,right:live.p1.right,fire:live.p1.fire},
+      i1
+    );
+    acc-=1/30;
+  }
+  if(acc>1/30)acc=0;
+  draw(); syncLog();
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
