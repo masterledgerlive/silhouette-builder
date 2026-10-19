@@ -61,7 +61,12 @@
 (function(){
 "use strict";
 var AGG = "https://aggregator.walrus-testnet.walrus.space";
-var KEY = nacl.util.decodeBase64("wOEovuzCQypZyqZFMzItiLaH+dIaidA/pskHQtlwK7c=");
+function b64dec(s){
+  var bin = atob(s), n = bin.length, u = new Uint8Array(n);
+  for (var i=0;i<n;i++) u[i]=bin.charCodeAt(i);
+  return u;
+}
+var KEY = b64dec("wOEovuzCQypZyqZFMzItiLaH+dIaidA/pskHQtlwK7c=");
 var MANIFEST = [
   { file:"player.js",  blob:"m5KtObq15HpDTW9kUXiR2vhMu4aJqTBfQ0RNtnmFjZc", sha:"" },
   { file:"zombie.js",  blob:"Z0O_bSfjTYdWJolKZamgaXLjW80A9zy800wBngDZypE", sha:"" },
