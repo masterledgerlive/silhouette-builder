@@ -236,7 +236,7 @@ sui move test</pre>
   </div>
   <p class="rule">THE DIRECTION IS QUANTINUUM + SUI — THE LOOP IS DESIGNED, THE TOKEN IS BACKED BY REAL COMPUTE, THE HUNT BEGINS AT ZERO DOLLARS.</p>
 
-  <h2 class="sec">🎬 BLOB CINEMA — MOCKUP <span class="tag">INTERACTIVE · ONE SECOND OF LIVESTREAM</span></h2>
+  <h2 class="sec">🎬 BLOB CINEMA <span class="tag">THE BLOB NETWORK · SERIES 6 + LATENCY LAB</span></h2>
   <div class="grid" style="margin-bottom:14px">
     <div class="card">
       <h3>THE BLOB NETWORK <span class="tag">specialist: HARBOR · LIVE</span></h3>
@@ -252,60 +252,76 @@ sui move test</pre>
     </div>
   </div>
   <div class="panel">
-    <p style="color:#b9b9d8;font-size:.82rem;line-height:1.7;margin-bottom:14px">Follow one chunk of livestream through all eight stages. Press run and watch it travel — the key chain derives beside it, the shards scatter, the manifest updates. <b style="color:#fff">Every value here is a demo value.</b> The real keys never leave the vault. Same river, demo water.</p>
-    <div id="bmock-stages" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px"></div>
-    <div id="bmock-keychain" style="font-size:.75rem;color:#7CFF6B;margin-bottom:14px;line-height:2"></div>
-    <div id="bmock-cap" style="min-height:3.2em;color:#fff;font-size:.85rem;line-height:1.7;margin-bottom:14px;border-left:3px solid #22d3ee;padding-left:12px">Press RUN to send a chunk through the pipeline.</div>
-    <button id="bmock-run" onclick="bmockRun()" style="background:#22d3ee;border:none;border-radius:999px;padding:10px 28px;font-family:inherit;font-weight:bold;letter-spacing:.15em;cursor:pointer;color:#000">▶ RUN THE MOCKUP</button>
-    <p style="color:#66668a;font-size:.72rem;margin-top:12px">Demo only — illustrates the real Blob Cinema flow. Blob IDs, keys and nonces shown are invented for the walkthrough.</p>
+    <h3 style="color:#fff;letter-spacing:.05em;margin-bottom:8px">⚡ LATENCY LAB — CUT THE 30-SECOND LAG</h3>
+    <p style="color:#b9b9d8;font-size:.82rem;line-height:1.7;margin-bottom:6px">The Speed Run's working model. Our measured ~30s glass-to-glass lag, stacked by stage — then flip the playbook toggles (Series 8, P3) and watch the total fall. <b style="color:#fff">A model, not a measurement</b> — stage values are modeled from the research: Walrus arXiv paper (write latency &lt;25s small blobs, ~6s fixed metadata+PoA overhead), Sui Mysticeti (~390–500ms consensus, ~250ms owned-object fast path), and classic HLS physics (6s segments × 3-segment buffer = 18–30s).</p>
+    <div id="lab-total" style="font-size:2rem;color:#22d3ee;text-shadow:0 0 14px #22d3ee;margin:14px 0 4px">30.0s <span style="font-size:.8rem;color:#b9b9d8;letter-spacing:.1em">GLASS-TO-GLASS (BROADCAST TIER)</span></div>
+    <div id="lab-stages"></div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 6px" id="lab-toggles"></div>
+    <div id="lab-webrtc" style="display:none;border:1px dashed #ffd76b;border-radius:10px;padding:12px 16px;margin-top:10px;color:#ffd76b;font-size:.8rem;line-height:1.7">INTERACTIVE TIER (WebRTC): ~0.5s glass-to-glass — sub-second, for gaming &amp; watch parties. Scales per room, not per CDN. The broadcast tier above and the Walrus archive keep running underneath it.</div>
+    <p style="color:#66668a;font-size:.72rem;margin-top:14px;line-height:1.7">PHYSICS FLOOR: you can't stream a chunk before it exists, and you can't beat light. Broadcast floor ≈ chunk + light + certification (~2s in practice). Interactive floor ≈ light + encode (&lt;0.5s). "Nothing" = nothing you can feel.</p>
   </div>
   <script>
-  const BMOCK_STAGES = [
-    ["CAMERA","Capture — the camera cuts the stream into chunks, a few seconds each. Demo chunk #42 enters the pipeline."],
-    ["ENCRYPT","Encrypt — a fresh key derives down the key chain for chunk #42. Ciphertext out. The key never travels with the video."],
-    ["WALRUS","Upload — the ciphertext is erasure-coded into ~1,000 shards and scattered across storage nodes. ~4–5 nodes of redundancy carries it."],
-    ["BLOB ID","Blob ID — sha256 of the bytes: demo 9f2c…a1. The ID is the integrity check. New bytes would mean a new ID."],
-    ["MANIFEST","Manifest — the keeper writes: film X, chunk #42 → blob ID 9f2c…a1. The living index updates; the blobs stay immutable."],
-    ["PLAYER","Player — polls the manifest, sees chunk #42, fetches 9f2c…a1 from an aggregator. Hash verified ✓. Trust the math, not the server."],
-    ["DECRYPT","Decrypt — the viewer derives chunk #42's key locally from the key chain. Plaintext exists in memory for seconds."],
-    ["PLAY","Play — chunk #42 hits the screen… while chunk #43 is already at stage 1. The pipeline never stops."]
+  const LAB_BASE = [
+    ["Capture + chunk (6s segments)", 6.0],
+    ["Encrypt (derived key chain)", 0.3],
+    ["Walrus encode + upload", 5.0],
+    ["PoA publish + manifest (Sui)", 1.2],
+    ["Player poll / playlist", 3.0],
+    ["Fetch + hash verify", 1.5],
+    ["Decrypt", 0.2],
+    ["Player buffer (3 segments)", 12.8]
   ];
-  const BMOCK_KEYS = ["master ★ (vault, never moves)","→ chunk key #40","→ chunk key #41","→ chunk key #42 ← encrypting now"];
-  let bmockTimers = [];
-  function bmockRun(){
-    bmockTimers.forEach(clearTimeout); bmockTimers = [];
-    const box = document.getElementById('bmock-stages');
-    const kc = document.getElementById('bmock-keychain');
-    const cap = document.getElementById('bmock-cap');
-    const btn = document.getElementById('bmock-run');
-    box.innerHTML = ''; btn.disabled = true; btn.style.opacity = .4;
-    BMOCK_STAGES.forEach(([name], i) => {
-      const d = document.createElement('div');
-      d.id = 'bms'+i;
-      d.textContent = (i+1) + ' · ' + name;
-      d.style.cssText = 'flex:1 1 110px;border:1px solid #2a2a5a;border-radius:8px;padding:10px 6px;text-align:center;font-size:.68rem;letter-spacing:.08em;color:#66668a;transition:all .3s';
-      box.appendChild(d);
-    });
-    kc.innerHTML = 'key chain: ' + BMOCK_KEYS.map((k,i)=>'<span id="bmk'+i+'" style="opacity:.35">'+k+'</span>').join(' ');
-    let t = 400;
-    BMOCK_STAGES.forEach(([name, text], i) => {
-      bmockTimers.push(setTimeout(() => {
-        BMOCK_STAGES.forEach((_, j) => {
-          const el = document.getElementById('bms'+j);
-          if (j < i) { el.style.borderColor = '#7CFF6B'; el.style.color = '#7CFF6B'; }
-          if (j === i) { el.style.borderColor = '#22d3ee'; el.style.color = '#fff'; el.style.boxShadow = '0 0 14px #22d3ee'; }
-        });
-        if (i === 1) document.getElementById('bmk3').style.opacity = 1;
-        cap.textContent = text;
-        if (i === BMOCK_STAGES.length - 1) bmockTimers.push(setTimeout(() => {
-          btn.disabled = false; btn.style.opacity = 1;
-          cap.textContent = 'Done — one chunk, eight stages, ' + '≈' + ' seconds of video kept forever-ish (until the keeper decides otherwise). Run it again.';
-        }, 1200));
-      }, t));
-      t += 1400;
-    });
+  const LAB_TOGGLES = [
+    ["cmaf", "1 · CMAF chunks (6s→2s segments)", v => { v[0]=2.0; v[7]=4.3; }],
+    ["llhls", "2 · LL-HLS partials + blocking playlist", v => { v[4]=0.3; }],
+    ["parallel", "3 · Parallel shard upload + Quilt", v => { v[2]=2.5; }],
+    ["optimistic", "4 · Optimistic manifest (Sui fast path)", v => { v[3]=0.4; }],
+    ["edge", "5 · Edge aggregators + prefetch", v => { v[5]=0.5; }],
+    ["tuned", "6 · Tuned player buffer (×0.4)", v => { v[7]=Math.round(v[7]*0.4*10)/10; }],
+    ["webrtc", "7 · WebRTC interactive tier", null]
+  ];
+  const labOn = {};
+  function labRender(){
+    const vals = LAB_BASE.map(s => s[1]);
+    LAB_TOGGLES.forEach(([id,,fn]) => { if (labOn[id] && fn) fn(vals); });
+    const total = Math.round(vals.reduce((a,b)=>a+b,0)*10)/10;
+    document.getElementById('lab-total').innerHTML = total.toFixed(1) + 's <span style="font-size:.8rem;color:#b9b9d8;letter-spacing:.1em">GLASS-TO-GLASS (BROADCAST TIER)</span>';
+    document.getElementById('lab-stages').innerHTML = LAB_BASE.map(([name], i) => {
+      const w = Math.max(2, vals[i]/30*100);
+      const hot = vals[i] >= 4 ? '#f0f' : (vals[i] >= 1 ? '#22d3ee' : '#7CFF6B');
+      return '<div style="display:flex;align-items:center;gap:10px;margin:5px 0"><span style="flex:0 0 230px;font-size:.72rem;color:#b9b9d8">'+name+'</span><span style="height:12px;border-radius:4px;background:'+hot+';width:'+w+'%;transition:width .4s;box-shadow:0 0 8px '+hot+'"></span><span style="font-size:.75rem;color:#fff">'+vals[i].toFixed(1)+'s</span></div>';
+    }).join('');
+    document.getElementById('lab-webrtc').style.display = labOn['webrtc'] ? 'block' : 'none';
   }
+  (function(){
+    const box = document.getElementById('lab-toggles');
+    LAB_TOGGLES.forEach(([id, label]) => {
+      const b = document.createElement('button');
+      b.textContent = label; b.id = 'labt-'+id;
+      b.style.cssText = 'border:1px solid #2a2a5a;background:#0a0a18;color:#66668a;border-radius:999px;padding:8px 14px;font-family:inherit;font-size:.7rem;letter-spacing:.05em;cursor:pointer';
+      b.onclick = () => { labOn[id] = !labOn[id]; b.style.borderColor = labOn[id] ? '#7CFF6B' : '#2a2a5a'; b.style.color = labOn[id] ? '#7CFF6B' : '#66668a'; labRender(); };
+      box.appendChild(b);
+    });
+    labRender();
+  })();
   </script>
+
+  <h2 class="sec">⚡ THE SPEED RUN <span class="tag">SERIES 8 · 4 PARTS · FASTEST IN THE WEST</span></h2>
+  <div class="grid">
+    <div class="card">
+      <h3>THE SPEED RUN <span class="tag">specialist: DASH · LIVE</span></h3>
+      <p>Ezra &amp; Wren + <b style="color:#fff">Dash, the Speed Specialist</b>. New research, a latency audit, and a peer-reviewed playbook to cut our ~30s lag toward nothing — for gaming and live video on Sui + Walrus.</p>
+      <p><b>P1 — Where the 30 Seconds Go</b> · ~5 min. The audit: 8 stages itemized from the Walrus paper + Mysticeti numbers. The verdict: the 30s is a delivery-protocol problem, not a Walrus or Sui problem.</p>
+      <audio controls preload="none" src="sui-lab/sr1.mp3"></audio>
+      <p><b>P2 — All the Parts of Sui</b> · ~4 min. Mysticeti fast path (~250ms), PTBs, Walrus + Quilt, Seal, Nautilus, zkLogin — every part with its number.</p>
+      <audio controls preload="none" src="sui-lab/sr2.mp3"></audio>
+      <p><b>P3 — The Speed Playbook</b> · ~5 min. Seven peer-reviewed cuts: 30s → 7.9s modeled broadcast, sub-second interactive via WebRTC. The honest physics floor.</p>
+      <audio controls preload="none" src="sui-lab/sr3.mp3"></audio>
+      <p><b>P4 — Fastest in the West</b> · rendering now. The product: interactive / broadcast / archive tiers, the latency lab walkthrough, the gated road.</p>
+      <p class="coming">◉ P4 RENDERING — lands here shortly.</p>
+    </div>
+  </div>
+  <p class="rule">THIRTY SECONDS, ITEMIZED. SEVEN CUTS, PEER REVIEWED. NOTHING = NOTHING YOU CAN FEEL. THE LAB IS UP TOP — GO RUN IT.</p>
 
   <h2 class="sec">🧠 BRAIN <span class="tag">RECURSIVE MEMORY · V0.1 LIVE</span></h2>
   <div class="panel">
