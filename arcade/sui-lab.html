@@ -323,6 +323,239 @@ sui move test</pre>
   </div>
   <p class="rule">THIRTY SECONDS, ITEMIZED. SEVEN CUTS, PEER REVIEWED. NOTHING = NOTHING YOU CAN FEEL. THE LAB IS UP TOP — GO RUN IT.</p>
 
+
+  <h2 class="sec" id="build-league">🏆 THE BUILD LEAGUE <span class="tag">ONE-SHOT PROMPTS · PEER REVIEWED · FORK &amp; BUILD</span></h2>
+  <div class="panel">
+    <p style="color:#b9b9d8;font-size:.85rem;line-height:1.7;margin-bottom:10px">Three build series, each distilled into <b style="color:#fff">one ultimate prompt</b>. Hand it to any agentic AI in one shot and it should build a system <b style="color:#fff">superior</b> to the one the podcast showed — the series' peer-reviewed facts are baked in as hard constraints. <b style="color:#fff">Fork a prompt, build it, share your build.</b> A specialist corners each entry and teaches what the build must prove. Vote your favorite up — the leaderboard re-sorts live. Judge's scores are from Peer Review Round 1; the crowd score is yours.</p>
+    <div id="league-desk" style="border-left:3px solid #ffd76b;padding:8px 14px;margin:12px 0;color:#ffd76b;font-size:.85rem;min-height:2.6em;line-height:1.6">🎙 THE DESK: warm-up…</div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:10px 0">
+      <span style="color:#b9b9d8;font-size:.78rem;letter-spacing:.08em">CAST YOUR VOTES AS:</span>
+      <button id="vt-human" onclick="leagueSetVoter('human')" style="border:1px solid #7CFF6B;background:#0a0a18;color:#7CFF6B;border-radius:999px;padding:6px 16px;font-family:inherit;font-size:.75rem;cursor:pointer">🧑 HUMAN (VERIFIED)</button>
+      <button id="vt-agent" onclick="leagueSetVoter('agent')" style="border:1px solid #2a2a5a;background:#0a0a18;color:#66668a;border-radius:999px;padding:6px 16px;font-family:inherit;font-size:.75rem;cursor:pointer">🤖 AGENT</button>
+      <span style="color:#66668a;font-size:.7rem">Votes live in this browser for now — the global tally board is a future build. Honest demo, real ordering.</span>
+    </div>
+    <div id="league-board"></div>
+    <p style="color:#66668a;font-size:.72rem;margin-top:14px;line-height:1.7">LEAGUE RULES: the peer-reviewed facts inside each prompt are not negotiable · simulated things must be labeled simulated · a build that admits a limit beats one that hides it · builds are scored by acceptance tests run by someone other than the builder.</p>
+  </div>
+
+  <template id="prompt-p1"># ULTIMATE PROMPT 01 — &quot;BUILD THE AGENTIC QUANTUM LOOP&quot;
+### One-shot build prompt for any agentic AI. Fork it, run it, share your build.
+### Source series: THE AGENTIC QUANTUM (Sui Series 5). Facts below are peer-reviewed against primary research (Oct 2026).
+
+---
+
+**YOUR MISSION**
+Build, in one shot, a working end-to-end demonstration of an agentic AI that earns its own compute: it hunts paid questions, solves them with a real optimization backend, verifies its own work, and settles everything in a closed-loop token economy. Not a slide deck. A running loop a visitor can drive.
+
+**THE SYSTEM TO BUILD (superior to the reference design)**
+1. **The Loop** — a visible 5-stage engine: PERCEIVE → PLAN → ACT → VERIFY → LEARN. Each stage lights up live as the agent works. The agent accepts a &quot;mission&quot; (a paid question or proof request) from a built-in mission board with at least 3 mission types: forecasting, research/verification, and optimization.
+2. **Real compute, classical-first** — the ACT stage must run a REAL solver, not a canned answer: implement a small QAOA-style or brute-force-verified portfolio/assignment optimizer (≤12 assets) in the page or a local script. Show the objective value improving across iterations. A &quot;quantum backend&quot; toggle may exist but must be labeled SIMULATED until a real provider key is supplied.
+3. **The token: FIN, closed-loop** — FIN is worth exactly $0.10, is NON-transferable, NON-redeemable, and is BURNED on use. Every mission costs FIN; every completed mission&#x27;s payment buys compute credits in a visible treasury ledger. Hard rule, do not soften it: **FIN must never be tradable, sellable, or cash-out-able in your build.** If you think it should be, you have failed the brief.
+4. **Proof-of-useful-work receipts** — every completed mission mints a receipt record: mission hash, solver output, objective value, timestamp, verification status. Receipts render as inspectable objects in a &quot;receipt wall.&quot;
+5. **Reputation** — the agent carries a non-transferable reputation score that rises only on VERIFIED missions and falls on failed verification. VERIFY must actually re-check the solver&#x27;s answer with an independent method (e.g., exhaustive search at small n) and visibly pass/fail it.
+6. **The crossover meter — with a real cost model** — a live chart: hunt revenue vs compute cost, computed as ONE arithmetic line the visitor can recompute by hand: revenue = $0.10 × verified missions; cost = compute credits consumed × $/credit rate, where the $/credit rate is printed on the page (pick it from the Azure/Quantinuum figures above and cite the choice). Each mission consumes a stated number of credits. A failed-verification mission still burns its compute cost. The demo is won only if revenue ≥ cost over ≥10 completed missions — never before. Simulated compute is not $0; price it.
+
+**PEER-REVIEWED FACTS YOU MUST HONOR (do not contradict these on the page)**
+- Real quantum access routes (Oct 2026): Quantinuum Nexus (HQC credits) and Azure Quantum (reported Standard ~$125k/mo, Premium ~$175k/mo — could not be re-confirmed live at research time; re-check before quoting). Oracle OCI route is ANNOUNCED, NOT LIVE. AWS Braket does not carry Quantinuum.
+- The proven quantum-finance result is portfolio optimization (JPMC + Quantinuum on Helios, 225 assets, beat standard QAOA baselines). There is NO published quantum Monte Carlo result on Quantinuum hardware — never claim one.
+- Helios: 98 physical / 48 logical qubits. QAOA lane = buildable today; QMC/QML lanes = aspirational, ship classical-first.
+- Sui settlement facts: Mysticeti consensus ~390–500ms; owned-object fast path ~250ms; PTBs batch up to 1,024 commands atomically.
+
+**HARD CONSTRAINTS**
+- 100% free to build and run: no paid APIs, no real chain transactions, no wallet connections. Simulate settlement locally; label every simulation as a simulation.
+- Demo data only. No real user funds, keys, or personal data anywhere.
+- Honesty labels are UI, not footnotes: SIMULATED / CLASSICAL / LIVE must appear on the component they describe.
+- Single deliverable: one self-contained page (plus any local scripts it needs) that runs the whole loop from one &quot;RUN THE HUNT&quot; button.
+
+**ACCEPTANCE TEST (your build passes only if all are true)**
+- [ ] A visitor can start a mission and watch all 5 loop stages execute with real intermediate values.
+- [ ] The optimizer&#x27;s answer is independently verified on-screen at least once (pass AND a forced-fail case).
+- [ ] FIN balance decreases on mission start (burn) and the treasury ledger increases on verified completion.
+- [ ] The quantum toggle, if present, is labeled SIMULATED and the classical path is the default.
+- [ ] No element anywhere offers to buy, sell, trade, or redeem FIN.
+- [ ] Crossover arithmetic matches the on-page cost model line for ≥10 missions, and at least one mission that failed verification still shows its compute cost burned.
+
+**SHARE YOUR BUILD**: publish your fork with this prompt attached and note what you changed and why. Builds that break the FIN rule or fake the compute are disqualified by design — the receipts must verify.
+</template>
+  <template id="prompt-p2"># ULTIMATE PROMPT 02 — &quot;BUILD THE BLOB CINEMA, FOR REAL&quot;
+### One-shot build prompt for any agentic AI. Fork it, run it, share your build.
+### Source series: THE BLOB NETWORK (Sui Series 6). Facts below are peer-reviewed against the Walrus paper + Sui docs (Oct 2026).
+
+---
+
+**YOUR MISSION**
+Build, in one shot, a REAL working encrypted-video-to-decentralized-storage pipeline in the browser — not an animation of one. A visitor records or loads a short clip, watches it get chunked, encrypted with per-chunk derived keys, content-addressed, and stored as blobs; then a player resolves a manifest, fetches the blobs back, verifies their hashes, decrypts, and plays the video. Every cryptographic claim on the page must be true of the code underneath it.
+
+**THE SYSTEM TO BUILD (superior to the reference mockup, which only animated the flow)**
+1. **Capture &amp; chunk** — accept a webcam stream or an uploaded clip; cut it into chunks of 2–6 seconds (MediaRecorder timeslice or equivalent).
+2. **The key chain** — one master secret generated in-page (never transmitted, never stored server-side). Each chunk&#x27;s key is DERIVED from the master + chunk index via HKDF or iterated SHA-256. Display the chain visually. A leaked chunk key must decrypt exactly one chunk — prove it with a &quot;leak test&quot; button that reveals chunk N&#x27;s key and shows chunks N−1 and N+1 still locked.
+3. **Encrypt** — AES-GCM (WebCrypto) per chunk with a fresh nonce. If your page is served over HTTP, WebCrypto is unavailable — you must then inline a verified pure-JS SHA-256/AES implementation and say so on the page. Never silently skip encryption.
+4. **Content addressing** — blob ID = SHA-256 of the ciphertext. Show it. On playback, re-hash every fetched blob and refuse to play on mismatch (show the refusal once, deliberately, via a &quot;corrupt a blob&quot; test button).
+5. **Storage** — store blobs in a pluggable backend with this minimum schema (IndexedDB): store `blobs`, key = blobId → {ciphertext, nonce, chunkIndex}; store `manifests`, key = filmId → the manifest JSON. Default backend: local/IndexedDB (labeled LOCAL DEMO STORE), with an adapter stub for Walrus testnet (free, ephemeral) that activates only with a user-supplied endpoint. Erasure coding may be simulated ONLY if labeled SIMULATED, with the real parameters stated: reads need f+1 slivers (~⅓ of shards); writes carry ~4–5× bandwidth overhead; reads download ~1×.
+6. **Manifest + resolver** — a JSON manifest maps film → ordered chunk blob IDs + nonces. The player loads ONLY the manifest, resolves IDs through the storage adapter, and plays. Moving a blob (re-store under a new backend) must not break playback — demonstrate with a &quot;move all blobs&quot; button that playback survives.
+7. **Renewal** — a &quot;renew&quot; action re-encrypts a film with a fresh nonce, producing NEW blob IDs and an updated manifest, exactly like a keeper rotation. Old IDs stop resolving.
+
+**PEER-REVIEWED FACTS YOU MUST HONOR**
+- Walrus write latency (paper): small blobs (&lt;20MB) &lt;25s, flat; ~6s is fixed overhead (metadata + proof-of-availability publication) ≈ 50% of small-blob write latency. Reads: small blobs &lt;15s worst measured case.
+- Walrus mainnet Mar 2025; ~450TB stored by Mar 2026; Quilt (small-file batching) shipped Jul 2026; Seal = encryption + access control (Sep 2026).
+- Sui pattern: small consensus-critical state as Sui objects; blob ID + access policy live in a Sui object; Mysticeti ~390–500ms consensus, ~250ms owned-object fast path.
+- Walrus vs Shadow Drive verdict stands: Walrus is the live, funded, shipping network; Shadow Drive/GenesysGo has ~21 months of public silence (Oct 2026). Build on Walrus assumptions, not Shadow&#x27;s.
+
+**HARD CONSTRAINTS**
+- 100% free: no paid storage, no wallet, no mainnet. Testnet or local only, labeled.
+- The master secret never leaves the page. Demo content only — no real user media retained after the session.
+- Every stage label must match the code: if it says ENCRYPTED, it is; if a stage is simulated, the label says SIMULATED in the same size type.
+
+**ACCEPTANCE TEST (all must pass)**
+- [ ] Record/load → encrypt → store → play round trip works with sound, start to finish.
+- [ ] Hash verification visibly rejects a corrupted blob.
+- [ ] Leak test: one revealed chunk key opens exactly one chunk.
+- [ ] &quot;Move all blobs&quot; does not break playback (manifest resolution survives).
+- [ ] Renew produces new blob IDs and the old manifest no longer plays.
+- [ ] No stage is labeled with a capability the code doesn&#x27;t implement.
+
+**SHARE YOUR BUILD**: publish your fork with this prompt attached; note deviations. The winning build is the one whose page tells the fewest lies — ideally zero.
+</template>
+  <template id="prompt-p3"># ULTIMATE PROMPT 03 — &quot;BUILD THE LATENCY LAB THAT MEASURES&quot;
+### One-shot build prompt for any agentic AI. Fork it, run it, share your build.
+### Source series: THE SPEED RUN (Sui Series 8). Facts below are peer-reviewed (Oct 2026); the budget model survived an adversarial review with 7 corrections applied.
+
+---
+
+**YOUR MISSION**
+Build, in one shot, a latency instrument for a decentralized live-video pipeline (camera → encrypt → Walrus → Sui manifest → player) that does what the reference lab only modeled: MEASURE the stages you can measure live in the browser, model only the ones you can&#x27;t, and never blur the two. Then let a visitor flip the seven playbook optimizations and see the projected glass-to-glass lag fall from ~30s toward the physics floor.
+
+**THE SYSTEM TO BUILD (superior to the reference model-only lab)**
+1. **Live measurement panel** — on load (and on a MEASURE button), time what a browser honestly can:
+   - Sui RPC round trip (a public testnet/fullnode `sui_getLatestCheckpointSequenceNumber` or equivalent read) — report ms, label it RPC RTT, not &quot;consensus time.&quot;
+   - Walrus aggregator fetch of a small test blob — default: store a 1KB blob via the public Walrus testnet publisher first and paste its blob ID into the page config. Report ms and bytes; if unreachable, report UNREACHABLE, never invent a number.
+   - Local AES-GCM encrypt + SHA-256 hash of a 1MB buffer — report ms/MB. This is the visitor&#x27;s own device cost for the encrypt/verify stages.
+   - Player buffer simulation: run an actual HLS.js (or native HLS) test stream (default: https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8) with configurable segment length and buffer target, and display the REAL startup delay the player reports.
+2. **The budget model** — the peer-reviewed 8-stage budget, EXACTLY these base values (seconds): capture+chunk 6.0 · encrypt 0.3 · Walrus encode+upload 5.0 · PoA+manifest 1.2 · player poll 3.0 · fetch+verify 1.5 · decrypt 0.2 · player buffer 12.8 → **30.0 total**. The model panel ALWAYS keeps these peer-reviewed totals so the arithmetic stays hand-checkable. Measured values appear in a SEPARATE &quot;measured projection&quot; column beside the model — they never overwrite the model. The distinction is visual: measured = solid, modeled = hatched/outlined.
+3. **The seven toggles** — apply EXACTLY these modeled effects: (1) CMAF 2s chunks: capture 6.0→2.0, buffer 12.8→4.3. (2) LL-HLS partials + blocking playlist: poll 3.0→0.3. (3) Parallel upload + Quilt: upload 5.0→2.5. (4) Optimistic manifest (fast path): PoA 1.2→0.4. (5) Edge + prefetch: fetch 1.5→0.5. (6) Tuned buffer ×0.4 of current buffer. (7) WebRTC tier: separate readout, ~0.5s, per-room scale. All toggles on → broadcast total **7.9s**. If your build says anything else, your build is wrong — the arithmetic was peer-reviewed: savings sum to 22.1s.
+4. **The physics floor, stated on the page**: you can&#x27;t stream a chunk before it exists; you can&#x27;t beat light; certification costs work. Broadcast floor ≈2s in practice; interactive &lt;0.5s. &quot;Nothing&quot; = nothing you can feel.
+
+**PEER-REVIEWED FACTS YOU MUST HONOR**
+- Walrus paper: small-blob write &lt;25s flat, ~6s fixed overhead ≈ 50% of small-blob writes; reads &lt;15s small blobs; reads need f+1 slivers; writes 4–5× bandwidth, reads ~1×.
+- Sui: Mysticeti ~390–500ms consensus commit; owned-object fast path ~250ms; PTBs up to 1,024 commands.
+- Streaming: classic HLS (6s segments × ~2–3 segment buffer) = 18–30s behind live. LL-HLS + CMAF partials (200–500ms) = 2–5s glass-to-glass, tuned 1.5–2s. WebRTC &lt;500ms, scales per room not per CDN. Thinner buffers raise rebuffering risk — say so next to toggle 6.
+
+**HARD CONSTRAINTS**
+- 100% free: public testnet endpoints only; no keys, no wallet, no accounts.
+- A failed measurement renders as FAILED/UNREACHABLE with the error — never as a plausible-looking number. This is the entire point of the build.
+- Modeled vs measured must be distinguishable at a glance, in the bars and in the total.
+- Single self-contained page; runs from a static host.
+
+**ACCEPTANCE TEST (all must pass)**
+- [ ] At least two stages show LIVE measured values from the visitor&#x27;s own browser session, in the measured-projection column, each labeled with what was actually measured.
+- [ ] Model panel: base total = 30.0s; all-toggles total = 7.9s; both reproducible by hand from the stage values shown. Measured values never alter these.
+- [ ] Toggling measured stages keeps the measured flag (optimizations apply to modeled stages only, or the UI explains the interaction).
+- [ ] Disconnect the network: measurement panel degrades to honest UNREACHABLE states; the model still runs.
+- [ ] The page states the physics floor and the rebuffering trade-off.
+
+**SHARE YOUR BUILD**: publish your fork with this prompt attached. The winning build measures the most stages honestly — a lab that fakes a measurement loses to one that admits it can&#x27;t.
+</template>
+  <script>
+  const LEAGUE = [
+    { id:'p2', anchor:'league-p2', title:'THE BLOB CINEMA, FOR REAL', series:'SERIES 6 · THE BLOB NETWORK', judge:8.7,
+      spec:'HARBOR, the Blob Keeper', catch_:'"show me the blob"',
+      teach:'What it must prove: record → encrypt → store → play, FOR REAL. Leak one chunk key and exactly one chunk opens. Corrupt a blob and the player refuses. Every claim on the page must be true of the code underneath it.' },
+    { id:'p3', anchor:'league-p3', title:'THE LATENCY LAB THAT MEASURES', series:'SERIES 8 · THE SPEED RUN', judge:8.0,
+      spec:'DASH, the Speed Specialist', catch_:'"show me the milliseconds"',
+      teach:'What it must prove: measure what you can live, model only what you can\'t, never blur them. 30.0 and 7.9 — hand-checkable, or it doesn\'t count. A failed measurement shown honestly beats a pretty fake.' },
+    { id:'p1', anchor:'league-p1', title:'THE AGENTIC QUANTUM LOOP', series:'SERIES 5 · THE AGENTIC QUANTUM', judge:7.5,
+      spec:'NOVA, the Agentic Quantum Architect', catch_:'"show me the loop"',
+      teach:'What it must prove: the loop really runs, the solver really solves, verification can FAIL — and FIN can never be traded, sold, or redeemed. If your build sells FIN, it loses on the spot.' }
+  ];
+  const DESK = [
+    'NOVA: Show me the loop — perceive, plan, act, verify, learn. No stage may be theater.',
+    'HARBOR: Show me the blob — the ID is the integrity check. Trust the hash, not the server.',
+    'DASH: Show me the milliseconds — 30 seconds is a tuning choice from 2009. The playbook cuts it to 7.9, with proof.',
+    'NOVA: Receipts or it didn\'t happen. Verification that can\'t fail isn\'t verification.',
+    'HARBOR: Renewal means new blob IDs. If the old manifest still plays, your keeper is asleep.',
+    'DASH: A failed measurement shown honestly beats a plausible fake. That is the entire sport.'
+  ];
+  let deskI = 0;
+  setInterval(() => { const d = document.getElementById('league-desk'); if (d) { d.textContent = '🎙 THE DESK: ' + DESK[deskI % DESK.length]; deskI++; } }, 7000);
+  function leagueLoad(k, def){ try { return JSON.parse(localStorage.getItem(k)) || def; } catch(e){ return def; } }
+  function leagueSave(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} }
+  let leagueVoter = leagueLoad('league-voter', 'human');
+  let leagueVotes = leagueLoad('league-votes-v1', {});
+  let leagueBuilds = leagueLoad('league-builds-v1', {});
+  LEAGUE.forEach(e => { if (!leagueVotes[e.id]) leagueVotes[e.id] = {upH:0, upA:0, downH:0, downA:0, my:null}; if (!leagueBuilds[e.id]) leagueBuilds[e.id] = []; });
+  function leagueScore(v){ return (v.upH + v.upA) - (v.downH + v.downA); }
+  function leagueSetVoter(t){ leagueVoter = t; leagueSave('league-voter', t); leagueRender(); }
+  function leagueVote(id, dir){
+    const v = leagueVotes[id];
+    if (v.my === dir) { return; }
+    const who = leagueVoter === 'human' ? 'H' : 'A';
+    if (v.my) { v[(v.my === 'up' ? 'up' : 'down') + (v.myBy || who)]--; }
+    v[(dir === 'up' ? 'up' : 'down') + who]++;
+    v.my = dir; v.myBy = who; leagueSave('league-votes-v1', leagueVotes); leagueRender();
+  }
+  function leagueCopy(text, msg){
+    const done = () => leagueToast(msg);
+    if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(text).then(done).catch(() => leagueFallbackCopy(text, done)); }
+    else leagueFallbackCopy(text, done);
+  }
+  function leagueFallbackCopy(text, done){
+    const ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = 0;
+    document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); } catch(e){}
+    document.body.removeChild(ta); done();
+  }
+  function leagueToast(msg){
+    let t = document.getElementById('league-toast');
+    if (!t) { t = document.createElement('div'); t.id = 'league-toast'; t.style.cssText = 'position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#22d3ee;color:#000;padding:10px 22px;border-radius:999px;font-family:Courier,monospace;font-size:.8rem;font-weight:bold;z-index:999;box-shadow:0 0 18px #22d3ee'; document.body.appendChild(t); }
+    t.textContent = msg; t.style.display = 'block'; clearTimeout(t._h); t._h = setTimeout(() => t.style.display = 'none', 2600);
+  }
+  function leaguePromptText(id){ return document.getElementById('prompt-' + id).textContent.trim(); }
+  function leagueTogglePrompt(id){ const el = document.getElementById('lp-' + id); el.style.display = el.style.display === 'block' ? 'none' : 'block'; }
+  function leagueDownload(id, title){
+    const blob = new Blob([leaguePromptText(id)], {type:'text/markdown'});
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = title.toLowerCase().replace(/[^a-z0-9]+/g,'-') + '-ultimate-prompt.md'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  }
+  function leagueFork(id, title){
+    leagueCopy('# FORK of "' + title + '" — from the SUI LAB Build League\nMy changes / what I will build better:\n- \n\n---\n\n' + leaguePromptText(id), 'Fork copied — paste it into your agent with your changes.');
+  }
+  function leagueAddBuild(id){
+    const n = document.getElementById('lb-name-' + id).value.trim();
+    const u = document.getElementById('lb-url-' + id).value.trim();
+    if (!n || !u) { leagueToast('A build needs a name and a link.'); return; }
+    leagueBuilds[id].push({n:n, u:u}); leagueSave('league-builds-v1', leagueBuilds); leagueRender(); leagueToast('Build entered. The desk is watching.');
+  }
+  function leagueRender(){
+    document.getElementById('vt-human').style.borderColor = leagueVoter === 'human' ? '#7CFF6B' : '#2a2a5a';
+    document.getElementById('vt-human').style.color = leagueVoter === 'human' ? '#7CFF6B' : '#66668a';
+    document.getElementById('vt-agent').style.borderColor = leagueVoter === 'agent' ? '#22d3ee' : '#2a2a5a';
+    document.getElementById('vt-agent').style.color = leagueVoter === 'agent' ? '#22d3ee' : '#66668a';
+    const order = LEAGUE.slice().sort((a,b) => (leagueScore(leagueVotes[b.id]) - leagueScore(leagueVotes[a.id])) || (b.judge - a.judge));
+    document.getElementById('league-board').innerHTML = order.map((e, i) => {
+      const v = leagueVotes[e.id]; const s = leagueScore(v);
+      const builds = leagueBuilds[e.id].map(b => '<div style="font-size:.78rem;margin:3px 0">🔨 <a href="' + b.u.replace(/"/g,'&quot;') + '" target="_blank" rel="noopener" style="color:#22d3ee">' + b.n.replace(/</g,'&lt;') + '</a></div>').join('');
+      return '<div class="card" id="' + e.anchor + '" style="margin-bottom:14px">' +
+        '<h3><span style="color:#ffd76b">#' + (i+1) + '</span> ' + e.title + ' <span class="tag">' + e.series + '</span></h3>' +
+        '<p style="font-size:.8rem;color:#b9b9d8">🎙 Corner: <b style="color:#fff">' + e.spec + '</b> · ' + e.catch_ + '<br>' + e.teach + '</p>' +
+        '<p style="font-size:.8rem">Judge (peer review): <b style="color:#fff">' + e.judge.toFixed(1) + '</b> · Crowd: <b style="color:' + (s >= 0 ? '#7CFF6B' : '#f0f') + '">' + (s >= 0 ? '+' : '') + s + '</b> <span style="color:#66668a">(🧑 ' + v.upH + '▲ ' + v.downH + '▼ · 🤖 ' + v.upA + '▲ ' + v.downA + '▼)</span></p>' +
+        '<div style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0">' +
+          '<button onclick="leagueVote(\'' + e.id + '\',\'up\')" style="border:1px solid ' + (v.my === 'up' ? '#7CFF6B' : '#2a2a5a') + ';background:#0a0a18;color:#7CFF6B;border-radius:999px;padding:7px 18px;font-family:inherit;font-size:.75rem;cursor:pointer">▲ UP</button>' +
+          '<button onclick="leagueVote(\'' + e.id + '\',\'down\')" style="border:1px solid ' + (v.my === 'down' ? '#f0f' : '#2a2a5a') + ';background:#0a0a18;color:#f0f;border-radius:999px;padding:7px 18px;font-family:inherit;font-size:.75rem;cursor:pointer">▼ DOWN</button>' +
+          '<button onclick="leagueTogglePrompt(\'' + e.id + '\')" style="border:1px solid #2a2a5a;background:#0a0a18;color:#b9b9d8;border-radius:999px;padding:7px 18px;font-family:inherit;font-size:.75rem;cursor:pointer">📖 PROMPT</button>' +
+          '<button onclick="leagueCopy(leaguePromptText(\'' + e.id + '\'), \'Prompt copied — hand it to your agent.\')" style="border:1px solid #2a2a5a;background:#0a0a18;color:#b9b9d8;border-radius:999px;padding:7px 18px;font-family:inherit;font-size:.75rem;cursor:pointer">📋 COPY</button>' +
+          '<button onclick="leagueFork(\'' + e.id + '\', \'' + e.title + '\')" style="border:1px solid #ffd76b;background:#0a0a18;color:#ffd76b;border-radius:999px;padding:7px 18px;font-family:inherit;font-size:.75rem;cursor:pointer">🍴 FORK</button>' +
+          '<button onclick="leagueDownload(\'' + e.id + '\', \'' + e.title + '\')" style="border:1px solid #2a2a5a;background:#0a0a18;color:#b9b9d8;border-radius:999px;padding:7px 18px;font-family:inherit;font-size:.75rem;cursor:pointer">⬇ .MD</button>' +
+          '<button onclick="leagueCopy(location.origin + location.pathname + \'#' + e.anchor + '\', \'Share link copied.\')" style="border:1px solid #2a2a5a;background:#0a0a18;color:#b9b9d8;border-radius:999px;padding:7px 18px;font-family:inherit;font-size:.75rem;cursor:pointer">🔗 SHARE</button>' +
+        '</div>' +
+        '<pre id="lp-' + e.id + '" style="display:none;white-space:pre-wrap;word-break:break-word;background:#05050f;border:1px solid #2a2a5a;border-radius:10px;padding:14px;font-size:.72rem;line-height:1.6;color:#b9b9d8;max-height:420px;overflow:auto"></pre>' +
+        '<div style="border-top:1px dashed #2a2a5a;padding-top:10px;margin-top:6px"><b style="color:#fff;font-size:.8rem">BUILDS ENTERED</b>' + (builds || '<div style="color:#66668a;font-size:.78rem;margin-top:4px">None yet — be the first build on this prompt.</div>') +
+        '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px"><input id="lb-name-' + e.id + '" placeholder="your build name" style="background:#0a0a18;border:1px solid #2a2a5a;color:#fff;border-radius:8px;padding:7px 10px;font-family:inherit;font-size:.75rem;flex:1 1 140px"><input id="lb-url-' + e.id + '" placeholder="link to your build" style="background:#0a0a18;border:1px solid #2a2a5a;color:#fff;border-radius:8px;padding:7px 10px;font-family:inherit;font-size:.75rem;flex:2 1 200px"><button onclick="leagueAddBuild(\'' + e.id + '\')" style="background:#22d3ee;border:none;border-radius:999px;padding:7px 18px;font-family:inherit;font-size:.75rem;font-weight:bold;cursor:pointer;color:#000">ENTER BUILD</button></div>' +
+        '<div style="color:#66668a;font-size:.68rem;margin-top:5px">Entries save in this browser — the shared wall arrives with the league backend build.</div></div>' +
+      '</div>';
+    }).join('');
+    LEAGUE.forEach(e => { document.getElementById('lp-' + e.id).textContent = leaguePromptText(e.id); });
+  }
+  leagueRender();
+  </script>
+
   <h2 class="sec">🧠 BRAIN <span class="tag">RECURSIVE MEMORY · V0.1 LIVE</span></h2>
   <div class="panel">
     <p style="color:#b9b9d8;font-size:.85rem;line-height:1.7;margin-bottom:10px">
