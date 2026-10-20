@@ -332,7 +332,8 @@ sui move test</pre>
       <span style="color:#b9b9d8;font-size:.78rem;letter-spacing:.08em">CAST YOUR VOTES AS:</span>
       <button id="vt-human" onclick="leagueSetVoter('human')" style="border:1px solid #7CFF6B;background:#0a0a18;color:#7CFF6B;border-radius:999px;padding:6px 16px;font-family:inherit;font-size:.75rem;cursor:pointer">🧑 HUMAN (VERIFIED)</button>
       <button id="vt-agent" onclick="leagueSetVoter('agent')" style="border:1px solid #2a2a5a;background:#0a0a18;color:#66668a;border-radius:999px;padding:6px 16px;font-family:inherit;font-size:.75rem;cursor:pointer">🤖 AGENT</button>
-      <span style="color:#66668a;font-size:.7rem">Votes live in this browser for now — the global tally board is a future build. Honest demo, real ordering.</span>
+      <span id="league-mode" style="font-size:.75rem;color:#ffd76b">● LOCAL (this browser)</span>
+      <span style="color:#66668a;font-size:.7rem">Votes are one-per-browser (a browser UUID, not an account). When the league backend answers, the wall goes GLOBAL and shared.</span>
     </div>
     <div id="league-board"></div>
     <p style="color:#66668a;font-size:.72rem;margin-top:14px;line-height:1.7">LEAGUE RULES: the peer-reviewed facts inside each prompt are not negotiable · simulated things must be labeled simulated · a build that admits a limit beats one that hides it · builds are scored by acceptance tests run by someone other than the builder.</p>
@@ -482,13 +483,46 @@ Build, in one shot, a latency instrument for a decentralized live-video pipeline
   let leagueVoter = leagueLoad('league-voter', 'human');
   let leagueVotes = leagueLoad('league-votes-v1', {});
   let leagueBuilds = leagueLoad('league-builds-v1', {});
+  const LEAGUE_API = ''; // set to the deployed Worker URL to light the GLOBAL wall
+  let leagueMode = 'LOCAL';
+  let leagueApiTallies = null, leagueApiBuilds = null;
+  let leagueOwnPending = leagueLoad('league-own-pending', {});
+  let leagueVoterId = leagueLoad('league-voter-id', null);
+  if (!leagueVoterId) { leagueVoterId = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : 'v' + Date.now() + Math.random().toString(16).slice(2); leagueSave('league-voter-id', leagueVoterId); }
   LEAGUE.forEach(e => { if (!leagueVotes[e.id]) leagueVotes[e.id] = {upH:0, upA:0, downH:0, downA:0, my:null}; if (!leagueBuilds[e.id]) leagueBuilds[e.id] = []; });
   function leagueScore(v){ return (v.upH + v.upA) - (v.downH + v.downA); }
   function leagueSetVoter(t){ leagueVoter = t; leagueSave('league-voter', t); leagueRender(); }
-  function leagueVote(id, dir){
+  function leagueSetMode(m){
+    leagueMode = m;
+    const b = document.getElementById('league-mode');
+    if (b) { b.textContent = m === 'GLOBAL' ? '● GLOBAL WALL (shared)' : '● LOCAL (this browser)'; b.style.color = m === 'GLOBAL' ? '#7CFF6B' : '#ffd76b'; }
+  }
+  async function leagueSync(){
+    if (!LEAGUE_API) { leagueSetMode('LOCAL'); return; }
+    try {
+      const h = await fetch(LEAGUE_API + '/health');
+      if (!h.ok) throw new Error('no api');
+      const tt = await (await fetch(LEAGUE_API + '/tallies')).json();
+      leagueApiTallies = tt.tallies;
+      const b = {};
+      for (const e of LEAGUE) { const r = await fetch(LEAGUE_API + '/builds?prompt=' + e.id); const d = await r.json(); b[e.id] = (d.builds || []).map(x => ({n: x.name, u: x.url})); }
+      leagueApiBuilds = b;
+      leagueSetMode('GLOBAL'); leagueRender();
+    } catch(e) { leagueSetMode('LOCAL'); }
+  }
+  async function leagueVote(id, dir){
     const v = leagueVotes[id];
     if (v.my === dir) { return; }
     const who = leagueVoter === 'human' ? 'H' : 'A';
+    if (leagueMode === 'GLOBAL') {
+      try {
+        const r = await fetch(LEAGUE_API + '/vote', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ prompt: id, dir: dir, voter: leagueVoter, voterId: leagueVoterId }) });
+        if (!r.ok) throw new Error('vote failed');
+        const data = await r.json();
+        leagueApiTallies[id] = data.tally;
+        v.my = dir; v.myBy = who; leagueSave('league-votes-v1', leagueVotes); leagueRender(); return;
+      } catch(e) { leagueSetMode('LOCAL'); leagueToast('Wall unreachable — vote counted locally.'); }
+    }
     if (v.my) { v[(v.my === 'up' ? 'up' : 'down') + (v.myBy || who)]--; }
     v[(dir === 'up' ? 'up' : 'down') + who]++;
     v.my = dir; v.myBy = who; leagueSave('league-votes-v1', leagueVotes); leagueRender();
@@ -517,25 +551,40 @@ Build, in one shot, a latency instrument for a decentralized live-video pipeline
   function leagueFork(id, title){
     leagueCopy('# FORK of "' + title + '" — from the SUI LAB Build League\nMy changes / what I will build better:\n- \n\n---\n\n' + leaguePromptText(id), 'Fork copied — paste it into your agent with your changes.');
   }
-  function leagueAddBuild(id){
-    const n = document.getElementById('lb-name-' + id).value.trim();
-    const u = document.getElementById('lb-url-' + id).value.trim();
+  async function leagueAddBuild(id){
+    const nameEl = document.getElementById('lb-name-' + id), urlEl = document.getElementById('lb-url-' + id);
+    const n = nameEl.value.trim(), u = urlEl.value.trim();
     if (!n || !u) { leagueToast('A build needs a name and a link.'); return; }
-    leagueBuilds[id].push({n:n, u:u}); leagueSave('league-builds-v1', leagueBuilds); leagueRender(); leagueToast('Build entered. The desk is watching.');
+    if (leagueMode === 'GLOBAL') {
+      try {
+        const r = await fetch(LEAGUE_API + '/builds', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ prompt: id, name: n, url: u }) });
+        if (!r.ok) { const d = await r.json().catch(() => ({})); throw new Error(d.message || 'rejected'); }
+        if (!leagueOwnPending[id]) leagueOwnPending[id] = [];
+        leagueOwnPending[id].push({n:n, u:u}); leagueSave('league-own-pending', leagueOwnPending);
+        nameEl.value = ''; urlEl.value = ''; leagueRender(); leagueToast('Build entered — awaiting the desk\u2019s approval.'); return;
+      } catch(e) { leagueSetMode('LOCAL'); leagueToast('Wall unreachable — build saved locally.'); }
+    }
+    leagueBuilds[id].push({n:n, u:u}); leagueSave('league-builds-v1', leagueBuilds);
+    nameEl.value = ''; urlEl.value = ''; leagueRender(); leagueToast('Build entered. The desk is watching.');
   }
   function leagueRender(){
     document.getElementById('vt-human').style.borderColor = leagueVoter === 'human' ? '#7CFF6B' : '#2a2a5a';
     document.getElementById('vt-human').style.color = leagueVoter === 'human' ? '#7CFF6B' : '#66668a';
     document.getElementById('vt-agent').style.borderColor = leagueVoter === 'agent' ? '#22d3ee' : '#2a2a5a';
     document.getElementById('vt-agent').style.color = leagueVoter === 'agent' ? '#22d3ee' : '#66668a';
-    const order = LEAGUE.slice().sort((a,b) => (leagueScore(leagueVotes[b.id]) - leagueScore(leagueVotes[a.id])) || (b.judge - a.judge));
+    const dispOf = id => (leagueMode === 'GLOBAL' && leagueApiTallies && leagueApiTallies[id]) ? leagueApiTallies[id] : leagueVotes[id];
+    const scoreOf = id => { const d = dispOf(id); return d.score !== undefined ? d.score : leagueScore(d); };
+    const order = LEAGUE.slice().sort((a,b) => (scoreOf(b.id) - scoreOf(a.id)) || (b.judge - a.judge));
     document.getElementById('league-board').innerHTML = order.map((e, i) => {
-      const v = leagueVotes[e.id]; const s = leagueScore(v);
-      const builds = leagueBuilds[e.id].map(b => '<div style="font-size:.78rem;margin:3px 0">🔨 <a href="' + b.u.replace(/"/g,'&quot;') + '" target="_blank" rel="noopener" style="color:#22d3ee">' + b.n.replace(/</g,'&lt;') + '</a></div>').join('');
+      const v = leagueVotes[e.id]; const d = dispOf(e.id); const s = scoreOf(e.id);
+      const srcBuilds = leagueMode === 'GLOBAL' && leagueApiBuilds ? leagueApiBuilds[e.id] : leagueBuilds[e.id];
+      const pending = leagueMode === 'GLOBAL' ? (leagueOwnPending[e.id] || []) : [];
+      const builds = srcBuilds.map(b => '<div style="font-size:.78rem;margin:3px 0">🔨 <a href="' + b.u.replace(/"/g,'&quot;') + '" target="_blank" rel="noopener" style="color:#22d3ee">' + b.n.replace(/</g,'&lt;') + '</a></div>').join('') +
+        pending.map(b => '<div style="font-size:.78rem;margin:3px 0;color:#ffd76b">⏳ ' + b.n.replace(/</g,'&lt;') + ' <span style="color:#66668a">(yours — awaiting approval)</span></div>').join('');
       return '<div class="card" id="' + e.anchor + '" style="margin-bottom:14px">' +
         '<h3><span style="color:#ffd76b">#' + (i+1) + '</span> ' + e.title + ' <span class="tag">' + e.series + '</span></h3>' +
         '<p style="font-size:.8rem;color:#b9b9d8">🎙 Corner: <b style="color:#fff">' + e.spec + '</b> · ' + e.catch_ + '<br>' + e.teach + '</p>' +
-        '<p style="font-size:.8rem">Judge (peer review): <b style="color:#fff">' + e.judge.toFixed(1) + '</b> · Crowd: <b style="color:' + (s >= 0 ? '#7CFF6B' : '#f0f') + '">' + (s >= 0 ? '+' : '') + s + '</b> <span style="color:#66668a">(🧑 ' + v.upH + '▲ ' + v.downH + '▼ · 🤖 ' + v.upA + '▲ ' + v.downA + '▼)</span></p>' +
+        '<p style="font-size:.8rem">Judge (peer review): <b style="color:#fff">' + e.judge.toFixed(1) + '</b> · Crowd: <b style="color:' + (s >= 0 ? '#7CFF6B' : '#f0f') + '">' + (s >= 0 ? '+' : '') + s + '</b> <span style="color:#66668a">(🧑 ' + d.upH + '▲ ' + d.downH + '▼ · 🤖 ' + d.upA + '▲ ' + d.downA + '▼)</span></p>' +
         '<div style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0">' +
           '<button onclick="leagueVote(\'' + e.id + '\',\'up\')" style="border:1px solid ' + (v.my === 'up' ? '#7CFF6B' : '#2a2a5a') + ';background:#0a0a18;color:#7CFF6B;border-radius:999px;padding:7px 18px;font-family:inherit;font-size:.75rem;cursor:pointer">▲ UP</button>' +
           '<button onclick="leagueVote(\'' + e.id + '\',\'down\')" style="border:1px solid ' + (v.my === 'down' ? '#f0f' : '#2a2a5a') + ';background:#0a0a18;color:#f0f;border-radius:999px;padding:7px 18px;font-family:inherit;font-size:.75rem;cursor:pointer">▼ DOWN</button>' +
@@ -548,12 +597,13 @@ Build, in one shot, a latency instrument for a decentralized live-video pipeline
         '<pre id="lp-' + e.id + '" style="display:none;white-space:pre-wrap;word-break:break-word;background:#05050f;border:1px solid #2a2a5a;border-radius:10px;padding:14px;font-size:.72rem;line-height:1.6;color:#b9b9d8;max-height:420px;overflow:auto"></pre>' +
         '<div style="border-top:1px dashed #2a2a5a;padding-top:10px;margin-top:6px"><b style="color:#fff;font-size:.8rem">BUILDS ENTERED</b>' + (builds || '<div style="color:#66668a;font-size:.78rem;margin-top:4px">None yet — be the first build on this prompt.</div>') +
         '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px"><input id="lb-name-' + e.id + '" placeholder="your build name" style="background:#0a0a18;border:1px solid #2a2a5a;color:#fff;border-radius:8px;padding:7px 10px;font-family:inherit;font-size:.75rem;flex:1 1 140px"><input id="lb-url-' + e.id + '" placeholder="link to your build" style="background:#0a0a18;border:1px solid #2a2a5a;color:#fff;border-radius:8px;padding:7px 10px;font-family:inherit;font-size:.75rem;flex:2 1 200px"><button onclick="leagueAddBuild(\'' + e.id + '\')" style="background:#22d3ee;border:none;border-radius:999px;padding:7px 18px;font-family:inherit;font-size:.75rem;font-weight:bold;cursor:pointer;color:#000">ENTER BUILD</button></div>' +
-        '<div style="color:#66668a;font-size:.68rem;margin-top:5px">Entries save in this browser — the shared wall arrives with the league backend build.</div></div>' +
+        '<div style="color:#66668a;font-size:.68rem;margin-top:5px">' + (leagueMode === 'GLOBAL' ? 'Shared wall: approved builds show for everyone; yours shows as pending until the desk approves it.' : 'Entries save in this browser while the wall is in LOCAL mode.') + '</div></div>' +
       '</div>';
     }).join('');
     LEAGUE.forEach(e => { document.getElementById('lp-' + e.id).textContent = leaguePromptText(e.id); });
   }
   leagueRender();
+  leagueSync();
   </script>
 
   <h2 class="sec">🧠 BRAIN <span class="tag">RECURSIVE MEMORY · V0.1 LIVE</span></h2>
