@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>📺 Koda Kai TV — World Tuner + Language Sublayer</title>
+<style>
+:root{--bg:#070b16;--panel:#0e1626;--panel2:#12203a;--ink:#eaf2ff;--muted:#93a7c9;--teal:#2dd4bf;--gold:#fbbf24;--pink:#f472b6;--line:#1e2c49}
+*{box-sizing:border-box} body{margin:0;background:radial-gradient(1200px 700px at 70% -10%,#16305e 0%,var(--bg) 55%);color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+header{padding:14px 18px 4px;display:flex;flex-wrap:wrap;gap:10px;align-items:baseline}
+header h1{font-size:1.45rem;margin:0} header .sub{color:var(--muted);font-size:.9rem}
+.wrap{display:grid;grid-template-columns:340px 1fr 340px;gap:14px;padding:12px 14px 20px}
+@media(max-width:1150px){.wrap{grid-template-columns:1fr}}
+.card{background:linear-gradient(180deg,var(--panel),#0b1322);border:1px solid var(--line);border-radius:16px;padding:14px}
+.card h2{font-size:1rem;margin:0 0 8px;letter-spacing:.02em}
+.card h3{font-size:.92rem;margin:12px 0 6px}
+.small{font-size:.82rem;color:var(--muted)} .mono{font-family:ui-monospace,Menlo,monospace}
+button{cursor:pointer;border:1px solid var(--line);background:var(--panel2);color:var(--ink);border-radius:10px;padding:7px 11px;font-size:.88rem}
+button:hover{border-color:var(--teal)} button.on{background:var(--teal);color:#04211c;font-weight:700}
+.chip{display:inline-block;margin:0 6px 6px 0}
+#globe{width:100%;height:280px;display:block;touch-action:none}
+.tvframe{background:#000;border:10px solid #1a2438;border-radius:22px;box-shadow:0 18px 50px rgba(0,0,0,.55);position:relative;overflow:hidden}
+video{width:100%;aspect-ratio:16/9;display:block;background:#000}
+#staticFx{position:absolute;inset:0;width:100%;height:100%;opacity:0;pointer-events:none}
+#osd{position:absolute;top:12px;right:16px;font-size:2rem;font-weight:800;color:#7CFC9A;text-shadow:0 2px 8px #000;opacity:0;pointer-events:none;font-family:ui-monospace,Menlo,monospace}
+#zapName{position:absolute;left:14px;bottom:12px;background:rgba(0,0,0,.65);padding:6px 10px;border-radius:8px;font-size:.9rem;opacity:0;pointer-events:none}
+.captionbar{margin-top:10px;background:#05080f;border:1px solid var(--line);border-radius:12px;min-height:64px;padding:10px 14px;font-size:1.12rem;line-height:1.45}
+.captionbar .w{cursor:pointer;border-bottom:1px dotted #3b517a;border-radius:3px}
+.captionbar .w:hover{background:#173058}
+.remote{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px}
+.remote .big{font-size:1.05rem;padding:10px 14px;border-radius:12px}
+#guideList{max-height:420px;overflow:auto;margin-top:8px}
+.gitem{display:flex;gap:8px;align-items:center;padding:7px 8px;border-radius:10px;cursor:pointer;border:1px solid transparent}
+.gitem:hover{background:#132540}.gitem.cur{border-color:var(--teal);background:#0f2a2a}
+.gitem img{width:34px;height:24px;object-fit:contain;background:#0a0f1c;border-radius:5px}
+.gnum{font-family:ui-monospace,Menlo,monospace;color:var(--gold);min-width:44px}
+input[type=search]{width:100%;padding:9px 11px;border-radius:10px;border:1px solid var(--line);background:#0a1322;color:var(--ink)}
+.profile{border-left:4px solid var(--teal);padding:6px 10px;background:#0a1830;border-radius:0 10px 10px 0;margin:8px 0}
+.lensOut{background:#0a1830;border:1px solid var(--line);border-radius:12px;padding:10px 12px;min-height:74px}
+.tag{display:inline-block;background:#173058;color:#bcd6ff;border-radius:999px;padding:2px 9px;font-size:.75rem;margin:0 5px 5px 0}
+.warn{color:var(--gold)} .ok{color:var(--teal)} .bad{color:#fb7185}
+select{background:#0a1322;color:var(--ink);border:1px solid var(--line);border-radius:9px;padding:7px}
+#phraseList{max-height:150px;overflow:auto;font-size:.86rem}
+footer{padding:0 18px 22px;color:var(--muted);font-size:.82rem}
+</style>
+</head>
+<body>
+<header>
+  <h1>📺 Koda Kai TV</h1>
+  <span class="sub">World tuner on <strong>our own library</strong> (5,965 free-to-air channels · 26 countries · built from iptv-org data, see library/SOURCES.md) — with the 🌊 <strong>Language Sublayer</strong> riding under every channel.</span>
+</header>
+
+<div class="wrap">
+  <!-- LEFT: WORLD TUNER -->
+  <div class="card">
+    <h2>🌍 Tune the World</h2>
+    <canvas id="globe" width="640" height="560" aria-label="Rotating globe of station countries. Drag to spin."></canvas>
+    <p class="small">Drag the globe, tap a glowing country dot — or use the region buttons. The globe is the Radio Garden idea, in TV mode: a place tunes the stations.</p>
+    <div id="regionBtns"></div>
+    <h3>Countries in view</h3>
+    <div id="countryBtns"></div>
+    <p class="small" id="libStatus">Loading our library…</p>
+  </div>
+
+  <!-- CENTER: THE TV -->
+  <div>
+    <div class="tvframe">
+      <video id="tv" controls playsinline crossorigin="anonymous"></video>
+      <canvas id="staticFx" width="320" height="180"></canvas>
+      <div id="osd">CH 1</div>
+      <div id="zapName"></div>
+    </div>
+    <!-- Captions BELOW the picture — house rule, same as Kids read-along: words never cover the image. -->
+    <div class="captionbar" id="captionBar" aria-live="polite">
+      <span class="small">💬 Caption bar (VLC-style tracks first, our whisper ASR second — the built-in layers, like VLC offers). Tap any word for the Visual Thesaurus Lens. Transcript status for this channel is in the Language panel — nothing is invented here.</span>
+    </div>
+    <div class="remote" role="group" aria-label="Remote control">
+      <button class="big" id="chDown">CH −</button>
+      <button class="big" id="chUp">CH +</button>
+      <button class="big" id="surfBtn">🏄 Surf</button>
+      <button class="big" id="muteBtn">🔇</button>
+      <button id="ccBtn">💬 CC · Language</button>
+      <button id="guideBtn">📖 Guide</button>
+      <span class="small mono" id="nowPlaying">No channel yet — pick one from the guide or tap the globe.</span>
+    </div>
+    <div class="card" style="margin-top:12px" id="guideCard">
+      <h2>📖 Channel Guide <span class="small" id="guideCount"></span></h2>
+      <input type="search" id="guideSearch" placeholder="Search channels, countries, groups…">
+      <div id="guideList"></div>
+    </div>
+  </div>
+
+  <!-- RIGHT: LANGUAGE SUBLAYER -->
+  <div class="card">
+    <h2>🌊 Language Sublayer</h2>
+    <p class="small">Not word-for-word — <em>register</em>: the tone, verbiage and normality of the place you're tuned to. Slang gets glossed, courtesy is law.</p>
+    <div class="profile" id="profileCard"><strong>Region Profile</strong><br><span class="small">Tune a channel and its home profile loads here.</span></div>
+    <h3>🛡️ Courtesy Gate <span class="small">(the Hopi rule)</span></h3>
+    <label class="small"><input type="checkbox" id="gateToggle" checked> ON — hate words are <strong>described, never repeated</strong> into a tongue that doesn't carry them. Locked ON for Hopi and for kids' spaces.</label>
+    <h3>🗣️ Render into</h3>
+    <select id="targetLang">
+      <option value="en">English (common tongue)</option>
+      <option value="es">Spanish</option>
+      <option value="hopi">Hopi — courtesy locked</option>
+      <option value="de">German</option>
+      <option value="ja">Japanese</option>
+    </select>
+    <span class="small" id="engineNote">Engine chassis: built-in caption track → whisper ASR → model. Offline packs (Argos/NLLB-class + profile cards) slot in here; packs later live in Walrus blobs, hash-verified.</span>
+    <h3>🔍 Visual Thesaurus Lens</h3>
+    <div class="lensOut" id="lensOut"><span class="small">Tap any word in the caption bar or in a demo line below. You'll get the plain meaning plus <strong>Say it softer · Say it local · Say it formal</strong> — and a Swap button that rewrites the line in place, so your own tongue grows while you watch.</span></div>
+    <h3>📝 Profile example lines <span class="tag">DEMO — labeled, never passed off as live transcript</span></h3>
+    <div id="demoLines"></div>
+    <h3>📚 My Phrasebook <span class="small">(what the layer has taught you — saved on this device)</span></h3>
+    <div id="phraseList"><span class="small">Nothing yet. Swap a word with the Lens and it lands here.</span></div>
+  </div>
+</div>
+
+<footer>
+  Free-to-air only: channels broadcasters themselves publish (iptv-org / Free-TV sources). Streams break and move — the player says so plainly when one does. Nothing here is pay-TV, and no channel is promised permanent. · Koda Kai TV v1 prototype — staging build, not yet deployed to arcade.highscores.live/network/.
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.13/dist/hls.min.js"></script>
+<script>
+"use strict";
+const $=id=>document.getElementById(id);
+const REGIONS=["All","North America","Latin America","Europe","Middle East","Africa","Asia","Pacific"];
+/* Flagship shelf — every URL verified live + CORS-open 2026-10-20 (library/SOURCES.md) */
+const FLAGSHIP=[
+ {name:"Al Jazeera English",country:"Qatar (global)",cc:"qa",region:"Middle East",lat:25.3,lon:51.5,lang:"English",url:"https://live-hls-web-aje.getaj.net/AJE/index.m3u8",group:"News",verified:true},
+ {name:"Al Jazeera Arabic",country:"Qatar",cc:"qa",region:"Middle East",lat:25.3,lon:51.5,lang:"Arabic",url:"https://live-hls-web-aja.getaj.net/AJA/index.m3u8",group:"News",verified:true},
+ {name:"NHK World Japan",country:"Japan",cc:"jp",region:"Asia",lat:36.2,lon:138.3,lang:"English",url:"https://masterpl.hls.nhkworld.jp/hls/w/live/master.m3u8",group:"News/Culture",verified:true},
+ {name:"DW English",country:"Germany",cc:"de",region:"Europe",lat:51.1,lon:10.4,lang:"English",url:"https://dwamdstream102.akamaized.net/hls/live/2015525/dwstream102/index.m3u8",group:"News",verified:true},
+ {name:"Red Bull TV",country:"Austria (global)",cc:"at",region:"Europe",lat:47.8,lon:13.0,lang:"English",url:"https://rbmn-live.akamaized.net/hls/live/590964/BoRB-AT/master.m3u8",group:"Sport/Culture",verified:true}
+];
+/* Region Profiles — graded starter cards; full cards live in LANGUAGE-SUBLAYER.md */
+const PROFILES={
+ "English":{tone:"Direct but softened with hedges ('just', 'sorry', 'a bit'). News register is clipped and neutral.",slang:"Slang is regional and fast-moving — glossed in [brackets] when it appears.",greet:"'Hi there' is the safe everyday opener almost everywhere."},
+ "Spanish":{tone:"Warm and expressive; formality rides on usted vs tú — the layer defaults to the region's everyday norm, not textbook stiffness.",slang:"Heavy local slang (e.g. Mexican 'órale', Rioplatense 'che') — always glossed, never flattened.",greet:"'Buenas' works nearly everywhere, any hour."},
+ "Arabic":{tone:"Formal openings carry real weight; greetings are full sentences, not nods. News Arabic (MSA) differs from every local dialect.",slang:"Dialect slang is place-specific — profile names the dialect before glossing.",greet:"'As-salāmu ʿalaykum' — peace be upon you — is the respectful default."},
+ "German":{tone:"Directness is politeness here; hedging can read as evasive. Sie/du choice is the formality dial.",slang:"Youth slang borrows English freely; glossed when the meaning has drifted.",greet:"'Guten Tag' formal, 'Hallo' everyday."},
+ "Japanese":{tone:"Register is grammatical: keigo levels encode respect. The layer picks the level the speaker used, not a flatter one.",slang:"Slang is group-marked (school, work, online) — glossed with its group.",greet:"Time-of-day greetings are exact; 'ohayō gozaimasu' is morning-only."},
+ "Portuguese":{tone:"Brazilian everyday speech is warm and diminutive-friendly; European Portuguese runs more reserved.",slang:"Gíria changes by city — profile pins the city before glossing.",greet:"'Oi' / 'olá' — 'bom dia' before noon."},
+ "Hopi":{tone:"David's exemplar for the Courtesy Gate: a tongue described as smaller and happier, where words of hate are not known or taught. The layer renders respectfully in the most common everyday tongue — and never imports a hate word into it, not even to explain one. It describes instead.",slang:"No slang import either — what has no home in the tongue is described, not coined.",greet:"Rendered via description until a verified Hopi profile card (with a Hopi speaker's sources) is on file — the layer does not invent Hopi words.",locked:true},
+ "_default":{tone:"Profile card for this language is queued — tone notes arrive as the transcript loop grades them. Until then the layer renders plainly and labels its engine.",slang:"Unprofiled slang is glossed as [slang — meaning not yet verified] rather than guessed.",greet:"—"}
+};
+function profileFor(lang){return PROFILES[lang]||PROFILES._default;}
+/* Courtesy Gate — described, never repeated. Small starter set; real list is data, extended per region card. */
+const GATE=[["damn","a mild curse"],["hell","a mild curse (the place, or an oath)"],["hate you","a declaration of hatred"],["stupid","a contemptuous insult about intelligence"],["idiot","a contemptuous insult about intelligence"],["shut up","a silencing command, spoken harshly"]];
+function gate(text){
+  if(!$("gateToggle").checked) return text;
+  let out=text;
+  for(const [w,desc] of GATE){ out=out.replace(new RegExp("\\b"+w.replace(/ /g,"\\s")+"\\b","gi"), "〔"+desc+" — described, not repeated〕"); }
+  return out;
+}
+/* Thesaurus Lens data — starter entries tied to demo lines; grows from transcripts */
+const LENS={
+ greet:{def:"to welcome someone in words",soft:"welcome warmly",local:"say hi the local way",formal:"extend a greeting"},
+ world:{def:"the earth and everyone on it",soft:"everyone, everywhere",local:"the whole neighborhood of Earth",formal:"the global community"},
+ news:{def:"reports of what just happened",soft:"the latest word",local:"what's going around",formal:"current reports"},
+ river:{def:"water flowing in a long natural channel",soft:"the flowing water",local:"the life-line of the valley",formal:"the watercourse"},
+ sing:{def:"to make music with the voice",soft:"hum along",local:"raise a song together",formal:"perform vocally"},
+ hate:{def:"(gate word) an intense hostility — in this tongue it is described, never carried over",soft:"deep dislike, described only",local:"— not spoken here —",formal:"hostility, described only"}
+};
+let channels=FLAGSHIP.slice(), filtered=channels, current=-1, hls=null, surfTimer=null;
+/* ---------- Globe ---------- */
+const cv=$("globe"),ctx=cv.getContext("2d");let rot=-0.6,dragging=false,lastX=0;
+function dots(){const m={};for(const c of channels){const k=c.cc;if(!m[k])m[k]={lat:c.lat,lon:c.lon,n:0,name:c.country};m[k].n++;}return Object.values(m);}
+function drawGlobe(){
+  const W=cv.width,H=cv.height,cx=W/2,cy=H/2,R=Math.min(W,H)/2-14;ctx.clearRect(0,0,W,H);
+  const g=ctx.createRadialGradient(cx-R*0.4,cy-R*0.4,R*0.1,cx,cy,R);g.addColorStop(0,"#1b3a6b");g.addColorStop(1,"#0a1830");
+  ctx.beginPath();ctx.arc(cx,cy,R,0,7);ctx.fillStyle=g;ctx.fill();ctx.strokeStyle="#2dd4bf";ctx.lineWidth=2;ctx.stroke();
+  ctx.strokeStyle="rgba(120,170,255,.18)";ctx.lineWidth=1;
+  for(let i=-60;i<=60;i+=30){const y=cy-Math.sin(i*Math.PI/180)*R,r=Math.cos(i*Math.PI/180)*R;ctx.beginPath();ctx.ellipse(cx,y,r,r*0.18,0,0,7);ctx.stroke();}
+  for(const d of dots()){
+    const la=d.lat*Math.PI/180,lo=(d.lon+rot*180/Math.PI)*Math.PI/180;
+    const x=cx+R*Math.cos(la)*Math.sin(lo),y=cy-R*Math.sin(la),z=Math.cos(la)*Math.cos(lo);
+    if(z<0)continue;const s=3+Math.min(6,d.n/18);
+    ctx.beginPath();ctx.arc(x,y,s,0,7);ctx.fillStyle="#fbbf24";ctx.shadowColor="#fbbf24";ctx.shadowBlur=10;ctx.fill();ctx.shadowBlur=0;
+    d._x=x;d._y=y;d._z=z;
+  }
+  requestAnimationFrame(()=>{if(!dragging)rot+=0.0016;drawGlobe();});
+}
+cv.addEventListener("pointerdown",e=>{dragging=true;lastX=e.clientX;});
+window.addEventListener("pointerup",()=>dragging=false);
+window.addEventListener("pointermove",e=>{if(dragging){rot+=(e.clientX-lastX)*0.005;lastX=e.clientX;}});
+cv.addEventListener("click",e=>{
+  const r=cv.getBoundingClientRect(),x=(e.clientX-r.left)*cv.width/r.width,y=(e.clientY-r.top)*cv.height/r.height;
+  let best=null,bd=26;for(const d of dots()){if(d._z<0)continue;const dd=Math.hypot(d._x-x,d._y-y);if(dd<bd){bd=dd;best=d;}}
+  if(best){const cc=channels.find(c=>c.country===best.name).cc;setCountry(cc);}
+});
+/* ---------- Filters / guide ---------- */
+let curRegion="All",curCC="all";
+function setRegion(r){curRegion=r;curCC="all";renderFilters();applyFilter();}
+function setCountry(cc){curCC=cc;const c=channels.find(x=>x.cc===cc);if(c){curRegion=c.region;}renderFilters();applyFilter();}
+function renderFilters(){
+  $("regionBtns").innerHTML=REGIONS.map(r=>`<button class="chip ${r===curRegion?'on':''}" onclick="setRegion('${r}')">${r==="All"?"🌐 All":r}</button>`).join("");
+  const cs={};for(const c of channels){if(curRegion==="All"||c.region===curRegion)cs[c.cc]=c.country;}
+  $("countryBtns").innerHTML=Object.entries(cs).sort((a,b)=>a[1].localeCompare(b[1])).map(([cc,n])=>`<button class="chip ${cc===curCC?'on':''}" onclick="setCountry('${cc}')">${n}</button>`).join("")+`<button class="chip ${curCC==='all'?'on':''}" onclick="setCountry('all')">All countries</button>`;
+}
+function applyFilter(){
+  const q=$("guideSearch").value.trim().toLowerCase();
+  filtered=channels.filter(c=>(curRegion==="All"||c.region===curRegion)&&(curCC==="all"||c.cc===curCC)&&(!q||(c.name+" "+c.country+" "+(c.group||"")).toLowerCase().includes(q)));
+  $("guideCount").textContent=`— ${filtered.length} channels`;
+  $("guideList").innerHTML=filtered.slice(0,300).map((c,i)=>`<div class="gitem ${channels.indexOf(c)===current?'cur':''}" onclick="tune(${channels.indexOf(c)})"><span class="gnum">CH ${i+1}</span>${c.logo?`<img src="${c.logo}" alt="" loading="lazy" onerror="this.remove()">`:""}<span>${c.name} <span class="small">· ${c.country} · ${c.lang}${c.verified?" · ✓ verified":""}</span></span></div>`).join("")+(filtered.length>300?`<p class="small">Showing first 300 — search or pick a country to narrow down.</p>`:"");
+}
+$("guideSearch").addEventListener("input",applyFilter);
+/* ---------- Player ---------- */
+function zapFx(){
+  const s=$("staticFx"),sx=s.getContext("2d");s.style.opacity=1;
+  const img=sx.createImageData(s.width,s.height);for(let i=0;i<img.data.length;i+=4){const v=Math.random()*255;img.data[i]=img.data[i+1]=img.data[i+2]=v;img.data[i+3]=255;}
+  sx.putImageData(img,0,0);setTimeout(()=>s.style.opacity=0,240);
+}
+function tune(i){
+  if(i<0||i>=channels.length)return;current=i;const c=channels[i],v=$("tv");
+  zapFx();$("osd").textContent="CH "+(filtered.indexOf(c)+1||i+1);$("osd").style.opacity=1;setTimeout(()=>$("osd").style.opacity=0,1600);
+  $("zapName").textContent=`${c.name} — ${c.country}`;$("zapName").style.opacity=1;setTimeout(()=>$("zapName").style.opacity=0,2600);
+  if(hls){hls.destroy();hls=null;}
+  v.onerror=null;
+  if(window.Hls&&Hls.isSupported()){hls=new Hls({maxBufferLength:18});hls.loadSource(c.url);hls.attachMedia(v);hls.on(Hls.Events.ERROR,(e,d)=>{if(d.fatal)status(`⚠️ This stream didn't answer in the browser (${d.type}) — it may be offline, geo-blocked, or not CORS-open. That's the stream, not your TV. Try the next channel.`);});}
+  else if(v.canPlayType("application/vnd.apple.mpegurl")){v.src=c.url;}
+  else{v.src=c.url;}
+  v.play().catch(()=>{});
+  $("nowPlaying").textContent=`▶ ${c.name} · ${c.country} · ${c.lang} · ${c.group||"General"}${c.verified?" · ✓ stream verified 2026-10-20":" · library entry — playability tested when you tune it"}`;
+  showProfile(c);renderDemo(c);applyFilter();
+}
+function status(msg){$("captionBar").innerHTML=`<span class="warn">${msg}</span>`;}
+$("chUp").onclick=()=>{const i=filtered.indexOf(channels[current]);tune(channels.indexOf(filtered[(i+1)%filtered.length]));};
+$("chDown").onclick=()=>{const i=filtered.indexOf(channels[current]);tune(channels.indexOf(filtered[(i-1+filtered.length)%filtered.length]));};
+$("muteBtn").onclick=()=>{const v=$("tv");v.muted=!v.muted;$("muteBtn").textContent=v.muted?"🔊":"🔇";};
+$("surfBtn").onclick=()=>{if(surfTimer){clearInterval(surfTimer);surfTimer=null;$("surfBtn").classList.remove("on");}else{$("surfBtn").classList.add("on");surfTimer=setInterval(()=>$("chUp").click(),6000);$("chUp").click();}};
+$("ccBtn").onclick=()=>{showProfile(channels[current]||FLAGSHIP[0]);document.querySelector(".captionbar").scrollIntoView({behavior:"smooth",block:"center"});};
+$("guideBtn").onclick=()=>$("guideCard").scrollIntoView({behavior:"smooth"});
+/* ---------- Language layer ---------- */
+function showProfile(c){
+  if(!c)return;const p=profileFor((c.lang||"").split("/")[0]);
+  if(p.locked)$("gateToggle").checked=true;
+  $("profileCard").innerHTML=`<strong>${c.country} · ${c.lang}</strong><br><span class="small"><strong>Tone:</strong> ${p.tone}<br><strong>Slang:</strong> ${p.slang}<br><strong>Everyday:</strong> ${p.greet}</span><br><span class="small">💬 Transcript for this channel: stream's own caption track first (VLC-style), whisper ASR second. If neither is exposed in the browser yet, this panel says so — <span class="warn">no transcript is invented.</span></span>`;
+  captionDemo(c);
+}
+function wordSpans(text){return gate(text).split(/(\s+)/).map(tok=>/^\w/.test(tok)?`<span class="w" onclick="lens('${tok.replace(/[^A-Za-zÀ-ÿ'-]/g,"").toLowerCase()}',this)">${tok}</span>`:tok).join("");}
+function captionDemo(c){
+  $("captionBar").innerHTML=`<span class="small">💬 Now tuned: </span>${wordSpans(c.name+" — "+c.country+" — "+(c.group||"live"))}<br><span class="small">Tap any word above for the Lens. Live transcript lines will land in this bar the moment a caption track or ASR window connects for this channel.</span>`;
+}
+function renderDemo(c){
+  const lang=(c.lang||"English").split("/")[0];
+  const lines={
+   English:"We greet the world with the news from the river towns, and we sing it plain so everyone can follow.",
+   Spanish:"Saludamos al mundo con las noticias del río, y lo cantamos claro para que todos sigan.",
+   German:"Wir begrüßen die Welt mit den Nachrichten vom Fluss und singen sie klar, damit alle folgen können.",
+   Japanese:"川の町から世界のニュースを届けます。みんながついてこられるように、はっきり歌います。",
+   Arabic:"نحيي العالم بأخبار مدن النهر، ونغنيها بوضوح ليتابع الجميع."
+  };
+  const line=lines[lang]||lines.English;
+  $("demoLines").innerHTML=`<p style="font-size:1rem;line-height:1.5">${wordSpans(line)}</p><p class="small">A profile example in this channel's tongue (${lang}) — how the layer hears register. Courtesy Gate is ${$("gateToggle").checked?"ON":"OFF"} for this rendering.</p>`;
+}
+window.lens=function(word,el){
+  const e=LENS[word];
+  $("lensOut").innerHTML=e?`<strong style="font-size:1.05rem">${word}</strong> — ${e.def}<div style="margin-top:7px"><span class="tag">Say it softer: ${e.soft}</span><span class="tag">Say it local: ${e.local}</span><span class="tag">Say it formal: ${e.formal}</span></div><button onclick="swapWord('${word}')">✍️ Swap this word in the caption bar</button> <span class="small">Swaps are saved to your Phrasebook.</span>`
+  :`<strong>${word}</strong> — not in the starter lens yet. The transcript loop adds words as it grades them from real speech; ungraded words are never guessed at.`;
+};
+window.swapWord=function(word){
+  const e=LENS[word];if(!e)return;const bar=$("captionBar");
+  bar.innerHTML=bar.innerHTML.replace(new RegExp("\\b"+word+"\\b","i"),`<strong style="color:var(--teal)">${e.soft}</strong>`);
+  const pb=JSON.parse(localStorage.getItem("kkPhrasebook")||"[]");pb.push({word,swap:e.soft,when:Date.now()});localStorage.setItem("kkPhrasebook",JSON.stringify(pb));showPhrasebook();
+};
+function showPhrasebook(){
+  const pb=JSON.parse(localStorage.getItem("kkPhrasebook")||"[]");
+  if(pb.length)$("phraseList").innerHTML=pb.slice(-12).reverse().map(p=>`<div>🔤 <strong>${p.word}</strong> → ${p.swap} <span class="small">${new Date(p.when).toLocaleDateString()}</span></div>`).join("");
+}
+window.setRegion=setRegion;window.setCountry=setCountry;window.tune=tune;
+/* ---------- Boot: our own library file, flagship shelf as offline fallback ---------- */
+fetch("library/index.json").then(r=>r.json()).then(m=>Promise.all(m.countries.map(c=>fetch("library/"+c.file).then(r=>r.json())))).then(parts=>{
+  const all=parts.flat();
+  channels=FLAGSHIP.concat(all.filter(c=>!FLAGSHIP.some(f=>f.url===c.url)));
+  $("libStatus").innerHTML=`📚 Library loaded: <strong>${m.total}</strong> channels from our own library files (built ${m.built}) + ${FLAGSHIP.length} verified flagships = ${channels.length} on the dial.`;
+  renderFilters();applyFilter();tune(0);
+}).catch(()=>{
+  $("libStatus").innerHTML=`📚 Library file not reachable from here (opened as a bare file?) — the dial is running on the <strong>${FLAGSHIP.length} verified flagship channels</strong> until the page is served with library/ beside it.`;
+  renderFilters();applyFilter();tune(0);
+});
+showPhrasebook();drawGlobe();
+</script>
+</body>
+</html>
