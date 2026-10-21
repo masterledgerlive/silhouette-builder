@@ -42,6 +42,15 @@ input[type=search]{width:100%;padding:9px 11px;border-radius:10px;border:1px sol
 select{background:#0a1322;color:var(--ink);border:1px solid var(--line);border-radius:9px;padding:7px}
 #phraseList{max-height:150px;overflow:auto;font-size:.86rem}
 footer{padding:0 18px 22px;color:var(--muted);font-size:.82rem}
+.wrap2{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:0 14px 14px}
+@media(max-width:1150px){.wrap2{grid-template-columns:1fr}}
+.fcard{display:flex;gap:10px;background:#0a1830;border:1px solid var(--line);border-radius:12px;padding:9px;margin:0 0 8px;align-items:flex-start}
+.fcard img{width:52px;height:70px;object-fit:cover;border-radius:7px;background:#000}
+.fcard .t{font-weight:700}.lane{font-size:.7rem;background:#173058;color:#bcd6ff;border-radius:999px;padding:2px 8px;margin-right:5px}
+#carousel{display:flex;gap:10px;overflow-x:auto;padding:6px 2px 10px;scroll-snap-type:x mandatory}
+.ccard{min-width:190px;max-width:190px;scroll-snap-align:start;background:#0a1830;border:1px solid var(--line);border-radius:14px;padding:10px;cursor:pointer}
+.ccard:hover{border-color:var(--gold)}.ccard .big{font-size:1.6rem}
+.like{background:none;border:none;font-size:1.05rem;padding:2px 4px;cursor:pointer}
 </style>
 </head>
 <body>
@@ -112,6 +121,28 @@ footer{padding:0 18px 22px;color:var(--muted);font-size:.82rem}
     <div id="demoLines"></div>
     <h3>📚 My Phrasebook <span class="small">(what the layer has taught you — saved on this device)</span></h3>
     <div id="phraseList"><span class="small">Nothing yet. Swap a word with the Lens and it lands here.</span></div>
+  </div>
+</div>
+
+<div class="wrap2">
+  <div class="card">
+    <h2>🔎 The Finder — one search, every avenue</h2>
+    <p class="small">KK-FIND: our dial + Blob Cinema + TVmaze (world TV) + iTunes (movies, TV, podcasts, audiobooks). Subscription titles are <em>found and pointed to</em> — they play in their own apps; free streams play right here.</p>
+    <div style="display:flex;gap:8px"><input type="search" id="findQ" placeholder="A title, a show, a podcast, an audiobook…"><button id="findBtn" class="big">Find</button></div>
+    <div id="findOut" style="margin-top:10px"><span class="small">Try a title you love. Results are labeled by lane and source — educated guesses say why they were picked.</span></div>
+    <h3>🎬 Blob Cinema — our own shelf</h3>
+    <p class="small">Our Walrus-blob films, chained and keeper-renewed: <a style="color:var(--teal)" href="https://arcade.highscores.live/arcade/blob-cinema/library.html" target="_blank" rel="noopener">open the Cinema library</a> — when a title you search is ours, it plays from the blobs.</p>
+  </div>
+  <div class="card">
+    <h2>🎠 Surprise Carousel — picked to your taste</h2>
+    <p class="small">KK-TASTE: ♡ channels and titles as you browse; the carousel learns the *shape* of what you like — groups, countries, languages — then deals in a slice of somewhere else on purpose. <button id="surpriseBtn">🎲 Surprise me on TV</button></p>
+    <div id="carousel"><span class="small">Like a few channels in the guide and your carousel populates here.</span></div>
+    <h3>🎮 One controller, every screen</h3>
+    <p class="small">KK-CONTROL: this page already answers your <strong>keyboard</strong> (↑/↓ = channels, G = guide, S = surf) and any <strong>game controller</strong> paired to this computer (D-pad = channels, A = play/pause, B = mute, Y = surf) — <span id="padStatus">no controller detected yet — press any button on it.</span> The big surface is the Kodakai Control Plane (VIDEO skin): <a style="color:var(--teal)" href="https://midi.gamemaster.quest/capture" target="_blank" rel="noopener">midi.gamemaster.quest/capture</a> — the same controller that runs TikTok and Music drives this station.</p>
+    <h3>🌐 VPN Country Switch <span class="small">(KK-RELAY)</span></h3>
+    <p class="small">Pick a country to see what this station can reach from there. The switch *plans* the watching — actual routing is the VPN app's job, and this page will never claim a country it isn't routed through. Status: <strong class="warn">VPN not connected</strong>.</p>
+    <select id="vpnCountry"></select> <span class="small" id="vpnOut"></span>
+    <div id="vpnShowdown" style="margin-top:8px"><span class="small">🏁 <strong>The Four-VPN Showdown</strong> is being researched now (speed, streaming unlocks, offers, affiliate codes). A panel-of-judges podcast will crown <strong>two</strong> winners — primary + backup — and their codes land here, on the page, for anyone to use. Nothing gets signed up without David's exact word.</span></div>
   </div>
 </div>
 
@@ -201,7 +232,7 @@ function applyFilter(){
   const q=$("guideSearch").value.trim().toLowerCase();
   filtered=channels.filter(c=>(curRegion==="All"||c.region===curRegion)&&(curCC==="all"||c.cc===curCC)&&(!q||(c.name+" "+c.country+" "+(c.group||"")).toLowerCase().includes(q)));
   $("guideCount").textContent=`— ${filtered.length} channels`;
-  $("guideList").innerHTML=filtered.slice(0,300).map((c,i)=>`<div class="gitem ${channels.indexOf(c)===current?'cur':''}" onclick="tune(${channels.indexOf(c)})"><span class="gnum">CH ${i+1}</span>${c.logo?`<img src="${c.logo}" alt="" loading="lazy" onerror="this.remove()">`:""}<span>${c.name} <span class="small">· ${c.country} · ${c.lang}${c.verified?" · ✓ verified":""}</span></span></div>`).join("")+(filtered.length>300?`<p class="small">Showing first 300 — search or pick a country to narrow down.</p>`:"");
+  $("guideList").innerHTML=filtered.slice(0,300).map((c,i)=>`<div class="gitem ${channels.indexOf(c)===current?'cur':''}" onclick="tune(${channels.indexOf(c)})"><span class="gnum">CH ${i+1}</span>${c.logo?`<img src="${c.logo}" alt="" loading="lazy" onerror="this.remove()">`:""}<span>${c.name} <span class="small">· ${c.country} · ${c.lang}${c.verified?" · ✓ verified":""}</span></span><button class="like" title="Like — feeds your Surprise carousel" onclick="event.stopPropagation();likeUrl('${c.url.replace(/'/g,"")}','${(c.group||"General").replace(/'/g,"")}','${c.cc}')">🤍</button></div>`).join("")+(filtered.length>300?`<p class="small">Showing first 300 — search or pick a country to narrow down.</p>`:"");
 }
 $("guideSearch").addEventListener("input",applyFilter);
 /* ---------- Player ---------- */
@@ -273,11 +304,66 @@ fetch("library/index.json").then(r=>r.json()).then(m=>Promise.all(m.countries.ma
   const all=parts.flat();
   channels=FLAGSHIP.concat(all.filter(c=>!FLAGSHIP.some(f=>f.url===c.url)));
   $("libStatus").innerHTML=`📚 Library loaded: <strong>${m.total}</strong> channels from our own library files (built ${m.built}) + ${FLAGSHIP.length} verified flagships = ${channels.length} on the dial.`;
-  renderFilters();applyFilter();tune(0);
+  renderFilters();applyFilter();tune(0);buildCarousel();
 }).catch(()=>{
   $("libStatus").innerHTML=`📚 Library file not reachable from here (opened as a bare file?) — the dial is running on the <strong>${FLAGSHIP.length} verified flagship channels</strong> until the page is served with library/ beside it.`;
   renderFilters();applyFilter();tune(0);
 });
+/* ---------- KK-TASTE: likes + Surprise Carousel ---------- */
+function taste(){try{return JSON.parse(localStorage.getItem("kkTaste")||'{"urls":[],"groups":{},"ccs":{}}');}catch(e){return{urls:[],groups:{},ccs:{}};}}
+window.likeUrl=function(url,group,cc){const t=taste();if(!t.urls.includes(url)){t.urls.push(url);t.groups[group]=(t.groups[group]||0)+1;t.ccs[cc]=(t.ccs[cc]||0)+1;localStorage.setItem("kkTaste",JSON.stringify(t));}buildCarousel();};
+function buildCarousel(){
+  const t=taste(),pool=channels.slice(5);
+  const scored=pool.map(c=>({c,s:(t.groups[c.group||"General"]||0)*3+(t.ccs[c.cc]||0)*2+Math.random()*2}));
+  scored.sort((a,b)=>b.s-a.s);
+  const picks=scored.slice(0,10).map(x=>x.c);
+  if(!picks.length)return;
+  $("carousel").innerHTML=picks.map(c=>`<div class="ccard" onclick="tune(${channels.indexOf(c)})"><div class="big">📺</div><strong>${c.name}</strong><br><span class="small">${c.country} · ${c.lang}<br>${(t.groups[c.group||"General"]||t.ccs[c.cc])?"Picked because it matches your likes":"A slice of somewhere else — serendipity slot"}</span></div>`).join("");
+}
+$("surpriseBtn").onclick=()=>{const cards=$("carousel").querySelectorAll(".ccard");if(cards.length)cards[Math.floor(Math.random()*cards.length)].click();};
+/* ---------- KK-FIND: one search, every avenue ---------- */
+function esc(s){return (s||"").replace(/</g,"&lt;");}
+async function finder(){
+  const q=$("findQ").value.trim();if(!q)return;const out=$("findOut");out.innerHTML='<span class="small">Searching every avenue…</span>';
+  let html="";
+  const ours=channels.filter(c=>(c.name+" "+(c.group||"")).toLowerCase().includes(q.toLowerCase())).slice(0,4);
+  if(ours.length)html+=ours.map(c=>`<div class="fcard"><div><span class="lane">OUR DIAL · plays here</span><div class="t">${esc(c.name)}</div><span class="small">${c.country} · ${c.lang} · ${esc(c.group||"")}</span><br><button onclick="tune(${channels.indexOf(c)})">▶ Tune in</button></div></div>`).join("");
+  try{const r=await fetch("https://api.tvmaze.com/search/shows?q="+encodeURIComponent(q));const d=await r.json();
+    if(d.length)html+=d.slice(0,4).map(x=>`<div class="fcard">${x.show.image?`<img src="${x.show.image.medium}" alt="">`:""}<div><span class="lane">TVMAZE · world TV index</span><div class="t">${esc(x.show.name)}</div><span class="small">${esc((x.show.genres||[]).join(", "))} · ${esc(x.show.network?x.show.network.name:(x.show.webChannel?x.show.webChannel.name:""))} ${x.show.premiered?"· since "+x.show.premiered.slice(0,4):""}</span><br><a style="color:var(--teal)" href="${x.show.url}" target="_blank" rel="noopener">Where it lives &amp; details ↗</a></div></div>`).join("");
+  }catch(e){}
+  for(const media of ["movie","tvShow","podcast","audiobook"]){
+    try{const r=await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(q)}&media=${media}&limit=2`);const d=await r.json();
+      if(d.results&&d.results.length)html+=d.results.map(x=>`<div class="fcard">${x.artworkUrl100?`<img src="${x.artworkUrl100}" alt="">`:""}<div><span class="lane">ITUNES · ${media.toUpperCase()}</span><div class="t">${esc(x.trackName||x.collectionName)}</div><span class="small">${esc(x.artistName||"")}${x.trackPrice!=null?" · $"+x.trackPrice:""}</span><br><a style="color:var(--teal)" href="${x.trackViewUrl||x.collectionViewUrl}" target="_blank" rel="noopener">Open ↗</a> <span class="small">subscription/store titles play in their own app — we find, we point</span></div></div>`).join("");
+    }catch(e){}
+  }
+  out.innerHTML=html||'<span class="small">No avenue answered for that title. Try another spelling — and remember new lanes (Blob Cinema first) join this box as they come online.</span>';
+}
+$("findBtn").onclick=finder;$("findQ").addEventListener("keydown",e=>{if(e.key==="Enter")finder();});
+/* ---------- KK-CONTROL: keyboard + gamepad ---------- */
+document.addEventListener("keydown",e=>{
+  if(/INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName))return;
+  if(e.key==="ArrowDown")$("chUp").click();else if(e.key==="ArrowUp")$("chDown").click();
+  else if(e.key==="g"||e.key==="G")$("guideBtn").click();else if(e.key==="s"||e.key==="S")$("surfBtn").click();
+});
+let padState={};
+setInterval(()=>{
+  const gp=(navigator.getGamepads?navigator.getGamepads()[0]:null);if(!gp)return;
+  $("padStatus").textContent="controller connected: "+(gp.id||"gamepad").slice(0,40)+" — D-pad tunes, A plays, B mutes, Y surfs.";
+  const press=i=>gp.buttons[i]&&gp.buttons[i].pressed,edge=i=>{const p=press(i),was=padState[i];padState[i]=p;return p&&!was;};
+  if(edge(13))$("chUp").click(); if(edge(12))$("chDown").click();
+  if(edge(0)){const v=$("tv");v.paused?v.play().catch(()=>{}):v.pause();}
+  if(edge(1))$("muteBtn").click(); if(edge(3))$("surfBtn").click();
+},90);
+/* ---------- KK-RELAY: VPN country switch (planner) ---------- */
+function populateVpn(){
+  const sel=$("vpnCountry");if(sel.options.length)return;
+  const seen={};for(const c of channels)seen[c.cc]=c.country;
+  sel.innerHTML=Object.entries(seen).sort((a,b)=>a[1].localeCompare(b[1])).map(([cc,n])=>`<option value="${cc}">${n}</option>`).join("");
+  sel.onchange=()=>{const cc=sel.value,n=channels.filter(c=>c.cc===cc).length;
+    $("vpnOut").innerHTML=`— from <strong>${seen[cc]}</strong> this dial alone holds <strong>${n} channels</strong>, before any geo-unlocked streams or your subscriptions from there. Throw the winning VPN to ${seen[cc]} and this is your home row.`;};
+  sel.onchange();
+}
+setInterval(populateVpn,1500);
 showPhrasebook();drawGlobe();
 </script>
 </body>
