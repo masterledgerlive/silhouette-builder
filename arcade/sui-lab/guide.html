@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GENIE GUIDE — The Sui Overlay · SUI LAB</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#0a0a12; color:#eeeeff; font-family:'Segoe UI',system-ui,sans-serif; min-height:100vh; }
+  .wrap { max-width:980px; margin:0 auto; padding:24px 16px 60px; }
+  .back { color:#7CFC90; text-decoration:none; font-size:.85rem; letter-spacing:1px; }
+  h1 { font-size:2.2rem; letter-spacing:2px; margin:14px 0 4px;
+       background:linear-gradient(90deg,#7CFC90,#4da6ff,#c77dff); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .sub { color:#9a9ac8; font-size:.95rem; margin-bottom:6px; }
+  .wip { display:inline-block; background:#3a2a00; color:#ffd76a; border:1px solid #ffd76a; border-radius:20px;
+         padding:3px 12px; font-size:.72rem; letter-spacing:2px; margin:8px 0 18px; }
+  h2.sec { font-size:1.05rem; letter-spacing:2px; color:#fff; margin:30px 0 12px; border-bottom:1px solid #26263d; padding-bottom:8px; }
+  h2.sec .tag { color:#66668a; font-size:.7rem; letter-spacing:1px; }
+  .panel { background:#10101c; border:1px solid #26263d; border-radius:12px; padding:16px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:12px; }
+  .card { background:#12121e; border:1px solid #26263d; border-radius:10px; padding:14px; }
+  .card h3 { font-size:.92rem; margin-bottom:6px; color:#fff; }
+  .card p { color:#b9b9d8; font-size:.82rem; line-height:1.6; }
+  .card a { color:#7CFC90; font-size:.8rem; text-decoration:none; }
+  .console { background:#0d0d18; border:1px solid #4da6ff; border-radius:12px; padding:16px; }
+  .console .log { min-height:120px; max-height:320px; overflow-y:auto; font-size:.88rem; line-height:1.65; }
+  .console .log .you { color:#ffd76a; }
+  .console .log .guide { color:#b9e8ff; margin-bottom:12px; }
+  .console .log .guide b { color:#7CFC90; }
+  .console .row { display:flex; gap:8px; margin-top:10px; }
+  .console input { flex:1; background:#12121e; border:1px solid #26263d; border-radius:8px; color:#fff; padding:10px 12px; font-size:.9rem; }
+  .console button { background:#1d3a1d; color:#7CFC90; border:1px solid #7CFC90; border-radius:8px; padding:10px 18px; cursor:pointer; font-size:.9rem; }
+  .chips { margin-top:10px; display:flex; flex-wrap:wrap; gap:6px; }
+  .chip { background:#16162a; border:1px solid #33334f; color:#b9b9d8; border-radius:14px; padding:3px 10px; font-size:.75rem; cursor:pointer; }
+  .chip:hover { border-color:#7CFC90; color:#7CFC90; }
+  .rule { color:#66668a; font-size:.78rem; margin-top:14px; line-height:1.6; }
+  table { width:100%; border-collapse:collapse; font-size:.85rem; }
+  td { padding:7px 8px; border-bottom:1px solid #1d1d2e; color:#b9b9d8; vertical-align:top; }
+  td:first-child { color:#fff; white-space:nowrap; width:170px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="../sui-lab.html">← BACK TO SUI LAB</a>
+  <h1>🧞 GENIE GUIDE</h1>
+  <p class="sub">The overlay for Sui — a Copilot that lives on top of the page, knows every tab, and teaches while you build.</p>
+  <span class="wip">⚠ WORK IN PROGRESS · OVERLAY V0.1</span>
+
+  <div class="panel">
+    <p style="color:#b9b9d8;font-size:.88rem;line-height:1.7">
+      This is our first overlay, built inside our own system. Today the guide is <b style="color:#fff">mimicked</b> —
+      a knowledge router fed by the four specialist avatars and the self-updating mirror — while our own agentic AI
+      (the recursive brain on Walrus + Sui) is built to take its place. When the blob-blockchain system is in full
+      effect, we cut the cords: the guide becomes the eternal version, living on our own rails.
+    </p>
+    <table style="margin-top:10px">
+      <tr><td>Mirror freshness</td><td>Last pull Oct 21, 2026 (UTC) · 10 sources · blog + releases changed</td></tr>
+      <tr><td>Guide knowledge</td><td>4 specialist briefs + 3 series + Foundry build lists, proof-leveled</td></tr>
+      <tr><td>Road</td><td>v0.1 mimic (this page) → in-page overlay client → our own agentic AI on the blob chain</td></tr>
+    </table>
+  </div>
+
+  <h2 class="sec">💬 ASK THE GUIDE <span class="tag">ROUTED TO THE RIGHT AVATAR</span></h2>
+  <div class="console">
+    <div class="log" id="log">
+      <div class="guide"><b>🧞 Genie:</b> Welcome. I know every tab of Sui — the stack, the network, the solutions, the docs, the ideas page — and everything this lab has built and proven. Ask me anything, or tap a topic.</div>
+    </div>
+    <div class="row">
+      <input id="q" type="text" placeholder="Ask the guide… e.g. how does Seal work?" onkeydown="if(event.key==='Enter')ask()">
+      <button onclick="ask()">ASK</button>
+    </div>
+    <div class="chips" id="chips"></div>
+  </div>
+
+  <h2 class="sec">🧭 GUIDED ENTRIES <span class="tag">EVERY TAB · THE GUIDE'S NOTES</span></h2>
+  <div class="grid">
+    <div class="card"><h3>⚒️ The Stack (The Smith)</h3><p>Move, the framework, PTBs, the SDKs. The guide says: start with abilities — key/store/copy/drop decide what an object can be.</p><a href="https://docs.sui.io" target="_blank" rel="noopener">docs.sui.io →</a></div>
+    <div class="card"><h3>🗺️ The Network (The Cartographer)</h3><p>Objects, Mysticeti, staking, gas. The guide says: owned objects skip consensus; shared objects are ordered. That split is the whole speed story.</p><a href="https://sui.io" target="_blank" rel="noopener">sui.io →</a></div>
+    <div class="card"><h3>🧰 Solutions (The Quartermaster)</h3><p>Walrus, Seal, Nautilus, DeepBook, Enoki, SuiNS. The guide says: storage, permission, private compute, liquidity, onboarding, identity — one machine.</p><a href="https://www.sui.io/project-ideas" target="_blank" rel="noopener">project ideas →</a></div>
+    <div class="card"><h3>📚 Docs &amp; Blog (The Librarian)</h3><p>The learning path and what's new. The guide says: the mirror pulls weekly; freshness is cited, never assumed.</p><a href="https://sui.io/blog" target="_blank" rel="noopener">sui.io/blog →</a></div>
+    <div class="card"><h3>🗄️ Walrus</h3><p>Decentralized storage — content-addressed blobs, erasure coded. The guide says: our brain's home. Encrypt client-side; everything on Walrus is public.</p><a href="https://docs.wal.app" target="_blank" rel="noopener">docs.wal.app →</a></div>
+    <div class="card"><h3>🔐 Seal</h3><p>Identity-based encryption + MPC key servers. The guide says: encrypt against a policy, not a person. The chain decides who reads.</p><a href="https://seal.mystenlabs.com" target="_blank" rel="noopener">seal.mystenlabs.com →</a></div>
+    <div class="card"><h3>📈 DeepBook</h3><p>The native order book + Predict. The guide says: we read the live testnet board and built on its rails — see Foundry DB-5.</p><a href="https://deepbook.tech" target="_blank" rel="noopener">deepbook.tech →</a></div>
+    <div class="card"><h3>🚰 Testnet Faucet</h3><p>Free test SUI, web only. The guide says: this step is David's — the wallet boundary. Everything provable without a key is already proven.</p><a href="https://faucet.sui.io" target="_blank" rel="noopener">faucet.sui.io →</a></div>
+  </div>
+
+  <p class="rule">DOCTRINE: two avatars corroborate · code proved by build+test · freshness cited · receipts are receipts. The guide mimics the keeper until the keeper wakes — then this page becomes its window.</p>
+</div>
+
+<script>
+const KB = [
+  {k:['seal','encrypt','decrypt','key server','mpc'], a:'<b>🔐 The Quartermaster:</b> Seal is identity-based encryption. You encrypt against a <b>policy</b> written in Move — not a person. Key servers (5-of-8 MPC committee, mainnet Oct 18 2026) release decryption shares only when the on-chain policy passes. Our WL-1 series built the whole share flow. <a href="../sui-lab.html" style="color:#7CFC90">Listen: WL-1 Part 1 →</a>'},
+  {k:['walrus','blob','storage','store file'], a:'<b>🗄️ The Quartermaster:</b> Walrus stores bytes as content-addressed blobs, erasure coded across ~100 nodes (~4.5x expansion, ~$0.023/GB/mo). Everything on Walrus is public — encrypt client-side first (Seal or NaCl). Our brain mirrors Walrus semantics locally and swaps transport later.'},
+  {k:['move','ability','abilities','contract','module'], a:'<b>⚒️ The Smith:</b> Move abilities decide everything: key/store/copy/drop. An asset with no copy/drop cannot be duplicated or destroyed — double-spend is a compile error. Our proof: Plinko compiled green, 13/13 tests. Ask me about publishing or PTBs too.'},
+  {k:['ptb','transaction block','atomic'], a:'<b>⚒️ The Smith:</b> A Programmable Transaction Block packs up to 1,024 Move calls into one atomic transaction — all or nothing. For the keeper, that is a thought that cannot half-happen.'},
+  {k:['object','owned','shared','consensus','mysticeti','fast','tps'], a:'<b>🗺️ The Cartographer:</b> Sui is object-centric. Owned objects skip consensus (~250–400ms); shared objects are ordered by Mysticeti (~500ms WAN commit). The 40.6M TPS figure is off-chain tunnels, not base layer — capacity is not usage (~100 TPS live). We teach both numbers in one sentence.'},
+  {k:['gas','sponsored','gasless','fee'], a:'<b>🗺️ The Cartographer:</b> Gas = compute × ref price + storage × storage price, with a 99% rebate on deletion. Sponsored transactions (house pays) + gasless stablecoin transfers + zkLogin = players never see a chain. E4C onboarded ~1M players this way.'},
+  {k:['zklogin','login','onboard','wallet','seed phrase'], a:'<b>🧰 The Quartermaster:</b> zkLogin: Google/Twitch/Apple sign-in, no seed phrase, split-knowledge privacy (Google sees auth, never your address). Pair it with Enoki sponsored transactions for Web2-grade onboarding.'},
+  {k:['predict','prediction','market','deepbook','bet'], a:'<b>🧰 The Quartermaster:</b> DeepBook is the native CLOB ($15.97B cumulative). Predict runs expiry-based range contracts on it — we read its live testnet board (mainnet trading paused since Sep 30, flagged honestly) and built our own binary market, 4/4 tests green. <a href="../sui-lab.html" style="color:#7CFC90">Listen: DB-5 Part 1 →</a>'},
+  {k:['audit','security','vulnerab','exploit','prove'], a:'<b>⚒️ The Smith:</b> The auditor hunts authorization logic — the dominant Sui bug class is capability leaks into shared objects. Our demo: a vulnerable vault, exploit tests where a PASS means broken, the capability-separation fix, 5/5 green. Honest note: <i>sui move prove</i> does not exist in CLI 1.82.1. <a href="../sui-lab.html" style="color:#7CFC90">Listen: AI-4 Part 1 →</a>'},
+  {k:['agent','arbiter','vaa','keeper','genie','ai division','boon','cheng','ceo'], a:'<b>📚 The Librarian:</b> The big news (Oct 2026, confirmed): Kevin Boon is Mysten Labs CEO; Evan Cheng leads a new AI division for agent-trust products. Verifiable Agent Arbiter (with Google Cloud) proves agents stayed within authorized limits — records off-chain, proofs on Walrus, verification on Sui. That is our keeper\'s attest step, productized. <a href="../sui-lab.html" style="color:#7CFC90">Listen: The Bet series →</a>'},
+  {k:['news','latest','new','update','breaking'], a:'<b>📚 The Librarian:</b> Freshest, from the mirror (pulled Oct 21 UTC): the Sui blog changed, v1.83.0 still moving through CI (1.82.1 remains the latest testnet binary), and Basecamp\'s Agent Economy wrap landed — Agent Payments (Alibaba Cloud), Agent Pass, VAA. Top stories are pinned at the top of the SUI LAB page.'},
+  {k:['brain','memory','recursive','remember'], a:'<b>🧞 Genie:</b> The brain is content-addressed recursive memory: sha256 is the ID, lineage on every memory, invalidate-never-delete, sleep-time consolidation. 24 live memories and counting — it holds every series, including this conversation\'s builds. The Recursive Machine series is its story.'},
+  {k:['faucet','testnet','publish','deploy','ship'], a:'<b>⚒️ The Smith:</b> The deploy road: faucet.sui.io (web only) → <i>sui client publish</i> → verify-source → multisig the UpgradeCap → dApp frontend on gRPC. The faucet and publish steps are David\'s — the wallet boundary. Everything provable without a key is proven.'},
+  {k:['plinko','game','arcade','cabinet','fin'], a:'<b>⚒️ The Smith:</b> Plinko is our teaching build: entry-only randomness, house-managed solvency asserts, sponsored play. Our cabinet uses the same patterns — and fins stay closed-loop by the standing kill vote. No tradable FIN, ever.'},
+  {k:['stake','staking','validator','apy'], a:'<b>🗺️ The Cartographer:</b> ~106 validators, ~24h epochs, delegated proof-of-stake, APY roughly 2–7%, and no slashing of principal. Staking is the network\'s security budget, paid from gas + the storage fund.'},
+  {k:['price','sui price','cost','buyback'], a:'<b>📚 The Librarian:</b> SUI traded around $1.01 on Oct 19 (single-source market data). ~817,900 SUI repurchased this year per Mysten\'s Basecamp remarks, with stablecoin revenue earmarked for more buybacks. Sentiment context only — this lab never trades on it.'}
+];
+const FALLBACK = '<b>📚 The Librarian:</b> That routes outside my baked knowledge — in the full overlay I would pull the mirror and answer with sources. Try: Seal, Walrus, Move, objects, gas, prediction markets, the auditor, the agent news, the brain, or publishing.';
+const CHIPS = ['How does Seal work?','What is Walrus?','Explain PTBs','Latest news','Prediction markets','How does the brain remember?','Deploy road?','Who runs Mysten now?'];
+const chipsEl = document.getElementById('chips');
+CHIPS.forEach(c => { const s = document.createElement('span'); s.className='chip'; s.textContent=c; s.onclick=()=>{ document.getElementById('q').value=c; ask(); }; chipsEl.appendChild(s); });
+function ask(){
+  const input = document.getElementById('q'); const q = input.value.trim(); if(!q) return;
+  const log = document.getElementById('log');
+  log.innerHTML += '<div class="you">You: ' + q.replace(/</g,'&lt;') + '</div>';
+  const ql = q.toLowerCase(); let ans = FALLBACK;
+  for (const item of KB){ if (item.k.some(k => ql.includes(k))) { ans = item.a; break; } }
+  log.innerHTML += '<div class="guide">' + ans + '</div>';
+  log.scrollTop = log.scrollHeight; input.value='';
+}
+</script>
+</body>
+</html>
