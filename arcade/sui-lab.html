@@ -57,6 +57,7 @@
     <div style="letter-spacing:.15em;font-size:.8rem;opacity:.85">⚡ LATEST ON THE FLOOR — JUMP STRAIGHT THERE</div>
     <div style="margin-top:10px;font-size:1.05rem">
       <a href="#blob-vpn" style="color:#ffd700;text-decoration:none;border:1px solid #ffd700;border-radius:8px;padding:8px 16px;display:inline-block;margin:4px">🌐 BLOB VPN · THE RELEARN — our own Grass-style VPN, proven on the bench (NEW)</a>
+      <a href="#reblob" style="color:#7CFF6B;text-decoration:none;border:1px solid #7CFF6B;border-radius:8px;padding:8px 16px;display:inline-block;margin:4px">🔁 BLOB VPN · THE REBLOB — the living directory, tested 20/20 (NEW)</a>
       <a href="#the-free-lunch" style="color:#7df9ff;text-decoration:none;border:1px solid #7df9ff;border-radius:8px;padding:8px 16px;display:inline-block;margin:4px">🍽️ SERIES 12 · THE FREE LUNCH — every free door + the ladder</a>
       <a href="#the-layers" style="color:#7df9ff;text-decoration:none;border:1px solid #7df9ff;border-radius:8px;padding:8px 16px;display:inline-block;margin:4px">🏛️ SERIES 11 · THE LAYERS — the tested protocol</a>
       <a href="#geniq-loop" style="color:#7df9ff;text-decoration:none;border:1px solid #7df9ff;border-radius:8px;padding:8px 16px;display:inline-block;margin:4px">🪔 SERIES 10 · THE GENIQ LOOP — the token loop</a>
@@ -543,6 +544,35 @@ sui move test</pre>
       <p><b>Passed (local logic prototype, stdlib Python):</b> tamper → verification fails loudly · return mismatch → UNVERIFIED + zero · banking/login/non-allowlist refused pre-traffic · epoch recompute from receipts alone == published totals (pool 1,000 → phone node 800 / desk node 200 / idle node 0) · owner STOP seals session, refuses new ones · policy engine deterministic + replayable + fails closed · reputation derived from receipts.</p>
       <p><b>NOT proven, printed here on purpose:</b> Test 5 (live Nord benchmark — evening-peak, real devices, David's connection) has <b>not run</b>. The blob store + anchor in the prototype are local simulations with Walrus/Sui-shaped interfaces; no real WireGuard transport exists yet (Phase 1b). A passing bench proves the <i>logic</i>, not speed, unblocking, or privacy against a global observer. Research, design, code, and full test record live in the Blob VPN workspace.</p>
       <p>SHOW ME THE RETURN PATH. IT IS PINNED, RECEIPTED, AND VERIFIED — OR IT DID NOT HAPPEN.</p>
+    </div>
+  </div>
+
+  <h2 class="sec" id="reblob">🔁 BLOB VPN — THE REBLOB <span class="tag">4 PARTS · LEARN → BUILD → PROVE → SHIP · THE LIVING DIRECTORY</span></h2>
+  <div class="grid">
+    <div class="card">
+      <h3>THE REBLOB <span class="tag">new specialist: BEACON · LIVE</span></h3>
+      <p>The sequel to THE RELEARN. Ezra &amp; Wren return with Relay, Harbor, Vera, Basis, Warden, Penny, Nadia — and <b style="color:#fff">Beacon, the Directory Keeper</b> ("show me the living head"). The idea is David's: information lives as blobs; while it stays <b>relevant</b> it is reblobbed and stays in a huge world-visible directory that needs <b>no redirector</b>; stationary information takes one route, live links take another; other VPNs relay until route after route switches to direct blob relay. Peer review is structural — Vera, Basis and Warden grade the theory on air, and the bench runs <i>before</i> the ship episode.</p>
+      <p><b>P1 — Learn: Alive While Relevant</b> · ~6 min. Every living directory is three machines — immutable blobs, a mutable pointer, a keep-alive duty. Walrus blobs are <i>born dying</i> (storage is rented per epoch), so reblobbing is protocol-native; BitTorrent's measured warning (most torrents live 30–300 hours — keepers must be automated, paid, or owned); and the physics floor: a Walrus write certifies in ~10 seconds, so per-second blob-live is impossible and per-minute is the real cadence.</p>
+      <audio controls preload="none" src="sui-lab/rb1.mp3"></audio>
+      <p><b>P2 — Build: Two Routes, One Directory</b> · ~6.5 min. Names that are keys; resolution from the Sui anchor alone (portals are untrusted caches — "no redirector you can't replace"); extend vs reblob; the relevance rule with a 40% single-source cap and judgement receipts anyone can recompute; tombstones instead of dead links; announced vs certified live updates; leg-labelled routes and the old-internet share metric.</p>
+      <audio controls preload="none" src="sui-lab/rb2.mp3"></audio>
+      <p><b>P3 — Prove: Show Me The Living Head</b> · ~6.5 min. The real bench: <b>20/20 checks</b> — a tampered pointer caught (POISONED, serves nothing), non-owner and skipped-sequence head attacks refused, relevant entries extended, irrelevant entries dying <i>visibly</i> with a tombstone and reason, announced ≠ certified enforced, and the switch metric falling 1.0 → 0.667 → 0.0 as legs go ours. Plus the limitation the bench caught in our own cap — reported on air by its designer.</p>
+      <audio controls preload="none" src="sui-lab/rb3.mp3"></audio>
+      <p><b>P4 — Ship: The Number That Goes Down</b> · ~7.5 min. Plugin v0.2 ships staged (directory surface + the share panel); peer review's final verdicts; Penny's $0 audit ("the keeper is the real subscription"); and encouragement in a receipt culture — publish the old-internet share and let it fall in public, epoch by epoch.</p>
+      <audio controls preload="none" src="sui-lab/rb4.mp3"></audio>
+    </div>
+    <div class="card">
+      <h3>THE LIVING DIRECTORY <span class="tag">THE DESIGN IN ONE CARD</span></h3>
+      <p><b>Three machines, no exceptions:</b> (1) blobs — immutable, hash-named, born with an end epoch; (2) a pointer — a Sui object naming the current head blob, its sequence, and the owner's key (the Walrus Sites pattern, already in production); (3) the keeper — before any entry's final epoch it is re-judged. <b>Extend</b> = same blob, more epochs. <b>Reblob</b> = new blob, pointer advances, old head linked behind it.</p>
+      <p><b>Relevance is a rule, not a vibe:</b> weighted signals (reads, pins, paid use from the Blob VPN ledger, owner heartbeat), no single source above 40% of a score, and every judgement — extend or die — written as a receipt anyone can recompute. Death is <b>visible</b>: a tombstone in the index with the reason, never a silent 404. The root index is over-extended by default (it's tiny, it's the front door); leaf entries are mortal and re-judged per epoch.</p>
+      <p><b>Two routes:</b> Stationary — publish once, renew by relevance. Live — a chain of update blobs at ~1-minute cadence announced on a fast signal layer; <b>announced ≠ certified</b>, and the interface must show both states or it is lying. True real-time never enters blobs; its record settles to the chain.</p>
+    </div>
+    <div class="card">
+      <h3>THE BENCH + THE NUMBER <span class="tag">PROTOTYPE · 20/20 · ONE LIMIT CAUGHT</span></h3>
+      <p><b>Passed (local logic prototype, stdlib Python):</b> anchor-only resolution with hash verification · poisoned pointer caught · owner-only head advance + strict sequence · extend/reblob both proven · judgement receipts independently recomputed · tombstone death · announced-vs-certified separation · leg-labelled routes with old-internet share <b>1.000 → 0.667 → 0.000</b> as legs switch to ours/local-radio — the switch as arithmetic on receipts, addresses (keys) unchanged.</p>
+      <p><b>LIMITATION CAUGHT BY OUR OWN BENCH, printed on purpose:</b> the 40% cap limits a gaming source's <i>share</i> (a 100-read flood cut to 40%) but not the <i>outcome</i> — capped total 41.4 still beats the threshold of 10 beside a single real read. The v0.2 fix is a <b>diversity floor</b>: relevance must require ≥3 independent sources. Basis reported it on air himself in P3.</p>
+      <p><b>NOT proven, also printed on purpose:</b> real Walrus latency/costs (the ~10s figure is the Walrus paper's, not our measurement), a real signal layer (the prototype's "announced" is a state flag), and real transport legs (labels, not roads). Phase 2 is field work. The public directory itself is <b>not launched</b> — plugin v0.2 is staged locally; opening to outside writers is a Phase 3 gate (attorney review first).</p>
+      <p>SHOW ME THE LIVING HEAD — AND SHOW ME THE TOMBSTONES TOO.</p>
     </div>
   </div>
 
