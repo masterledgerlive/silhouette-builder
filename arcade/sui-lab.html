@@ -414,6 +414,40 @@ sui move test</pre>
   <p class="rule">SHOW ME THE TEST. SHOW ME THE PEG. SHOW ME THE GATE. 106 OF 106 — THE METER IS BUILT, THE GATES ARE DAVID'S.</p>
 
 
+  <h2 class="sec">🏛️ THE LAYERS <span class="tag">SERIES 11 · 2 PARTS · THE TALK + THE TESTED DESIGN</span></h2>
+  <div class="grid">
+    <div class="card">
+      <h3>THE LAYERS <span class="tag">new specialist: STRATA · LIVE</span></h3>
+      <p>Ezra &amp; Wren + <b style="color:#fff">Strata, the Protocol Architect</b> ("show me the layer"), with Vera, Basis &amp; Warden. October's Sui news, an outside panel of five LLMs, and GENIQ's move from prototype to a real Sui protocol — with tested Move code.</p>
+      <p><b>P1 — The Talk</b> · ~5 min. Post-quantum signatures on Devnet, the Tunnels record, Mysten's AI turn — plus two corrections to our own record and the queue-expiry hole the outside panel caught.</p>
+      <audio controls preload="none" src="sui-lab/ly1.mp3"></audio>
+      <p><b>P2 — The Tested Design</b> · ~7 min. The protocol as compiled Move: a token that cannot transfer, per-job escrows, the price rule verified on-chain, 15 of 15 — errors included.</p>
+      <audio controls preload="none" src="sui-lab/ly2.mp3"></audio>
+    </div>
+    <div class="card">
+      <h3>THE HIERARCHY OF CODE <span class="tag">GENIQ PROTOCOL V3</span></h3>
+      <p><b>L0 — CHAIN (Move, built + tested):</b> GENIQ exists only as numbers in a shared Ledger object — no coin is ever created, so transfer is impossible at the type level. Per-job <b>Escrow</b> objects (LOCKED → SETTLED | RELEASED, both final). <b>SpendingCap</b> enforces per-tx + per-epoch ceilings inside <i>reserve</i>. Settlement <b>verifies the price in Move</b>: actual × 5 ≤ quoted × 6, or the chain refuses. <b>PauseCap</b> (owner-held) blocks mint/reserve/settle — releases are never blocked. Soulbound receipts: salted commitment + meter readings only.</p>
+      <p><b>L1 — METERING:</b> hash-bound quotes in the Lamp (900s TTL, per-program); scale road = the Tunnels pattern (15.2B off-chain tx anchored by 1,920 on-chain tx, CertiK-verified Oct 2026).</p>
+      <p><b>L2 — SERVICE:</b> the Lamp — credentials (env only), routing, idempotency, durable job ledger; the 4 tools: cost_estimate · submit_job · job_status · get_result.</p>
+      <p><b>L3 — AGENTS (untrusted by construction):</b> the Genie (Muse) today, OpenRouter models beside it — same tools, same caps. An LLM can ask; the layers below refuse.</p>
+      <p><b>L4 — EVIDENCE:</b> Walrus for job artifacts; receipts shaped to be VAA-compatible (Mysten × Google Cloud's agent-evidence pattern).</p>
+    </div>
+    <div class="card">
+      <h3>TEST EVIDENCE + ERROR LOG <span class="tag">SUCCESS AND ERRORS, BOTH</span></h3>
+      <p><b>Move:</b> <b>15 passed, 0 failed</b> (sui 1.82.2, clean build, zero warnings) — conservation asserted (minted = balances + reserved + burned) · over-tolerance settle aborts · settle at exactly 1.2× passes · double-settle and release-after-settle abort · pause blocks reserves while a release still escapes · receipt carries the documented 5.66 HQC example · two-user isolation · cap revocation. <b>Service layer:</b> Lamp suite still <b>106/106</b>.</p>
+      <p><b>Errors, pointed out:</b> first compile failed on Move borrow rules (3 call sites). The ledger-only draft's first test run went 4/10 — all six failures were test-bench defects, zero logic assertions. The escrow redesign then passed 15/15 on its first run. Strata's first voice pick (MAI_04) silently fell back to Wren's voice in the renders — caught in diagnostics, reassigned, re-rendered clean.</p>
+      <p><b>Panel verdicts:</b> TOOK the escrow state machine, the pause, freeze-mechanisms/tune-values. REJECTED on-chain receipt salt (privacy regression) and off-chain cap enforcement (trust regression). <b>Named gap:</b> receipts prove delivery + metering, not result correctness — verifiable compute is future work, on the record.</p>
+    </div>
+    <div class="card">
+      <h3>OCTOBER RESEARCH BRIEF <span class="tag">FRESH, DATED, CORRECTED</span></h3>
+      <p><b>Corrections:</b> no Sui v1.83 exists yet (mainnet v1.81.1 · testnet v1.82.1); the Verifiable Agent Arbiter was announced <b>Oct 6</b>, not Oct 16.</p>
+      <p><b>Headlines:</b> ML-DSA-65 post-quantum signatures live on Devnet (Oct 13; mainnet-auth roadmap Q1 2027 — direction, not a claim) · Tunnels record (Oct 7) · Boon becomes Mysten CEO, Cheng leads a new AI unit (Oct 16) · DATA Network deal: Walrus becomes default storage under AI training data, $30M Sui Foundation investment (Oct 12) · DeepBook App live on mainnet (Sep 24) · Agent Pass introduced; protocol allowances live · SUI ~$1.02, DeFi TVL ~$490M, Sui stablecoins ~$528M. Daily tx counts conflict across sources (13M–37M) — quoted nowhere as fact.</p>
+      <p><b>Open decisions (David's):</b> production key custody (KMS-policy signer) · the Gate 2 purchase rail. The package is <b>local only</b> — nothing published to any network.</p>
+    </div>
+  </div>
+  <p class="rule">SHOW ME THE LAYER. EVERY RULE HAS A HOME — AND THE ONES THAT MATTER LIVE WHERE THEY CANNOT BE TALKED PAST.</p>
+
+
   <h2 class="sec" id="build-league">🏆 THE BUILD LEAGUE <span class="tag">ONE-SHOT PROMPTS · PEER REVIEWED · FORK &amp; BUILD</span></h2>
   <div class="panel">
     <p style="color:#b9b9d8;font-size:.85rem;line-height:1.7;margin-bottom:10px">Three build series, each distilled into <b style="color:#fff">one ultimate prompt</b>. Hand it to any agentic AI in one shot and it should build a system <b style="color:#fff">superior</b> to the one the podcast showed — the series' peer-reviewed facts are baked in as hard constraints. <b style="color:#fff">Fork a prompt, build it, share your build.</b> A specialist corners each entry and teaches what the build must prove. Vote your favorite up — the leaderboard re-sorts live. Judge's scores are from Peer Review Round 1; the crowd score is yours.</p>
