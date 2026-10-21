@@ -47,7 +47,7 @@ footer{padding:0 18px 22px;color:var(--muted);font-size:.82rem}
 .fcard{display:flex;gap:10px;background:#0a1830;border:1px solid var(--line);border-radius:12px;padding:9px;margin:0 0 8px;align-items:flex-start}
 .fcard img{width:52px;height:70px;object-fit:cover;border-radius:7px;background:#000}
 .fcard .t{font-weight:700}.lane{font-size:.7rem;background:#173058;color:#bcd6ff;border-radius:999px;padding:2px 8px;margin-right:5px}
-#carousel{display:flex;gap:10px;overflow-x:auto;padding:6px 2px 10px;scroll-snap-type:x mandatory}
+#carousel,.rail{display:flex;gap:10px;overflow-x:auto;padding:6px 2px 10px;scroll-snap-type:x mandatory}
 .ccard{min-width:190px;max-width:190px;scroll-snap-align:start;background:#0a1830;border:1px solid var(--line);border-radius:14px;padding:10px;cursor:pointer}
 .ccard:hover{border-color:var(--gold)}.ccard .big{font-size:1.6rem}
 .like{background:none;border:none;font-size:1.05rem;padding:2px 4px;cursor:pointer}
@@ -121,6 +121,23 @@ footer{padding:0 18px 22px;color:var(--muted);font-size:.82rem}
     <div id="demoLines"></div>
     <h3>📚 My Phrasebook <span class="small">(what the layer has taught you — saved on this device)</span></h3>
     <div id="phraseList"><span class="small">Nothing yet. Swap a word with the Lens and it lands here.</span></div>
+  </div>
+</div>
+
+<div style="padding:0 14px 14px">
+  <div class="card">
+    <h2>📺 Koda Kai Stations — television by category</h2>
+    <p class="small">Our own stations, each with its own dial — and the future home of our produced shows and TV commercials (pipeline: AD-PRODUCTION.md). Tap a station to tune its first channel.</p>
+    <div class="rail" style="padding-top:2px">
+      <div class="ccard" onclick="stationGroup('Kids','🧒 Koda Kai Kids Television')"><div class="big">🧒</div><strong>Koda Kai Kids Television</strong><br><span class="small">Kids + Animation channels, preview mode — a parent taps each one. The hand-approved safe shelf is Kids Mode itself; nothing here is called safe until a human approved it.</span></div>
+      <div class="ccard" onclick="stationGroup('News','📰 World News Television')"><div class="big">📰</div><strong>World News Television</strong><br><span class="small">580 news channels from every region — news from the source itself.</span></div>
+      <div class="ccard" onclick="stationGroup('Music','🎵 Koda Kai Music Television')"><div class="big">🎵</div><strong>Koda Kai Music Television</strong><br><span class="small">381 music channels — the visual sister of Koda Kai Radio.</span></div>
+      <div class="ccard" onclick="stationGroup('Movies','🎬 Cinema Television')"><div class="big">🎬</div><strong>Cinema Television</strong><br><span class="small">380 movie channels + our own Blob Cinema shelf.</span></div>
+      <div class="ccard" onclick="stationGroup('Sports','🏄 Adventure &amp; Sport Television')"><div class="big">🏄</div><strong>Adventure &amp; Sport Television</strong><br><span class="small">221 sports channels, Red Bull TV on the flagship row.</span></div>
+      <div class="ccard" onclick="stationGroup('Documentary','📚 Learn Television')"><div class="big">📚</div><strong>Learn Television</strong><br><span class="small">Documentary + Education — theDecoder/historian spirit, on TV.</span></div>
+      <div class="ccard" onclick="stationRegion('Latin America','🌎 Mundo Television')"><div class="big">🌎</div><strong>Mundo Television</strong><br><span class="small">Latin America + the Spanish-speaking world, Language Sublayer forward.</span></div>
+    </div>
+    <p class="small" id="stationOut"></p>
   </div>
 </div>
 
@@ -309,6 +326,17 @@ fetch("library/index.json").then(r=>r.json()).then(m=>Promise.all(m.countries.ma
   $("libStatus").innerHTML=`📚 Library file not reachable from here (opened as a bare file?) — the dial is running on the <strong>${FLAGSHIP.length} verified flagship channels</strong> until the page is served with library/ beside it.`;
   renderFilters();applyFilter();tune(0);
 });
+/* ---------- Category stations ---------- */
+window.stationGroup=function(g,label){
+  const hit=channels.find(c=>(c.group||"").toLowerCase().includes(g.toLowerCase()));
+  $("stationOut").innerHTML=`📺 <strong>${label}</strong> is on the air — tuned to its first ${g} channel. The full ${g} dial is in the guide (search “${g}”).`;
+  if(hit)tune(channels.indexOf(hit)); window.scrollTo({top:0,behavior:"smooth"});
+};
+window.stationRegion=function(r,label){
+  const hit=channels.find(c=>c.region===r);
+  $("stationOut").innerHTML=`📺 <strong>${label}</strong> is on the air — the ${r} dial is set on the globe panel.`;
+  setRegion(r); if(hit)tune(channels.indexOf(hit)); window.scrollTo({top:0,behavior:"smooth"});
+};
 /* ---------- KK-TASTE: likes + Surprise Carousel ---------- */
 function taste(){try{return JSON.parse(localStorage.getItem("kkTaste")||'{"urls":[],"groups":{},"ccs":{}}');}catch(e){return{urls:[],groups:{},ccs:{}};}}
 window.likeUrl=function(url,group,cc){const t=taste();if(!t.urls.includes(url)){t.urls.push(url);t.groups[group]=(t.groups[group]||0)+1;t.ccs[cc]=(t.ccs[cc]||0)+1;localStorage.setItem("kkTaste",JSON.stringify(t));}buildCarousel();};
