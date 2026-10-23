@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>DOOM — Sealed &amp; Playable · Arcades of Time</title>
+<link rel="stylesheet" href="https://arcade.highscores.live/arcade/shared/kk-cabinet.css">
 <style>
   :root { --neon:#22d3ee; --pink:#f0f; --bg:#0a0a18; --panel:#12122a; }
   * { box-sizing:border-box; margin:0; padding:0; }
@@ -17,8 +18,9 @@
          text-shadow:0 0 12px var(--pink); }
   .cabinet { background:#000; border:3px solid var(--neon); border-radius:16px;
              padding:18px; box-shadow:0 0 40px #0af5; margin-bottom:24px; text-align:center; }
-  #screen { width:100%; max-width:640px; image-rendering:pixelated; image-rendering:crisp-edges;
+  #screen { image-rendering:pixelated; image-rendering:crisp-edges;
             background:#000; border-radius:6px; }
+  .cabinet > canvas { width:100%; max-width:640px; }
   #status { margin-top:12px; color:var(--neon); min-height:1.4em; font-size:.95rem; }
   .controls { margin-top:10px; color:#8888aa; font-size:.8rem; line-height:1.9; }
   .controls b { color:#c9c9e8; }
@@ -56,6 +58,18 @@
   #payToken, #payAmt { font-family:inherit; background:#0d0d22; color:#e8e8f5;
           border:1px solid #33336a; border-radius:8px; padding:10px; font-size:.85rem; }
   #payAmt { width:110px; }
+  .srcpill { display:inline-block; margin-top:10px; padding:7px 14px; border-radius:999px; font-size:.72rem;
+             letter-spacing:.06em; border:1px solid #ffd76b; color:#ffd76b; max-width:100%; }
+  .srcpill.blob { border-color:var(--kk-green, #7CFF6B); color:#7CFF6B; }
+  .srcpill.repo { border-color:#8a8aa8; color:#b9b9d8; }
+  .srcpill.trying { border-color:var(--neon); color:var(--neon); }
+  .recpanel { background:var(--panel); border:1px solid #2a2a5a; border-radius:14px; padding:22px; margin-bottom:24px; }
+  .recpanel h2 { color:#ff5470; }
+  #recStatus { color:#c9c9e8; font-size:.88rem; line-height:1.7; min-height:1.4em; margin-top:10px; }
+  #iniInput { font-family:inherit; background:#0d0d22; color:#e8e8f5; border:1px solid #33336a; border-radius:8px;
+              padding:9px 10px; font-size:.85rem; width:76px; text-transform:uppercase; }
+  .searchwrap { margin:0 0 24px; text-align:center; }
+  .searchwrap h2 { margin-bottom:12px; }
   footer { text-align:center; color:#66668a; font-size:.8rem; margin-top:36px; line-height:2; }
 </style>
 </head>
@@ -75,9 +89,54 @@
     </div>
   </div>
 
-  <div class="cabinet" id="cabinet" style="display:none">
-    <canvas id="screen" width="320" height="200"></canvas>
+  <div class="cabinet kk-cab" id="cabinet" style="display:none;--acc:#ff3b3b;--mqbg:#1a0505;--arw:8;--arh:5;--arr:1.6">
+    <div class="kk-screenbox"><div class="kk-bezel"><div class="kk-screen">
+      <canvas id="screen" width="320" height="200"></canvas>
+    </div></div></div>
     <div id="status">Warming up the cabinet…</div>
+    <div><span class="srcpill" id="srcPill">source: —</span></div>
+    <div class="kk-bar"><button class="kk-btn" id="fsBtn" type="button">⛶ FULLSCREEN</button></div>
+    <div id="touchMount"></div>
+    <div class="controls">
+      <b>Arrows</b> move · <b>Ctrl</b> fire · <b>Space</b> use/open · <b>Shift</b> run ·
+      <b>, / .</b> strafe · <b>Tab</b> map · <b>Enter</b> select · <b>Esc</b> menu — or use the touch joystick + buttons above.
+    </div>
+  </div>
+
+  <div class="recpanel" id="recPanel">
+    <h2>🔴 REC · REPLAY · ROUTE MAP — the proven system</h2>
+    <p style="color:#b9b9d8;font-size:.88rem;line-height:1.7">
+      Every run can be <b style="color:#fff">witnessed</b>. REC cold-boots the cabinet and records your exact
+      input stream. REPLAY re-feeds that stream into a fresh engine — a ghost run anyone can watch.
+      The route map is drawn from the recording itself, and your score (run tics) goes on the board
+      next to the AI's — every entry carrying its replay as proof.
+    </p>
+    <div class="wrow" style="margin-top:12px">
+      <button id="recBtn" class="wbtn" style="border-color:#ff5470;color:#ff5470">⏺ REC NEW RUN</button>
+      <button id="stopRecBtn" class="wbtn" disabled>⏹ STOP &amp; MAP</button>
+      <button id="aiReplayBtn" class="wbtn">🤖 ▶ REPLAY THE AI RUN</button>
+      <button id="aiMapBtn" class="wbtn">🤖 🗺 AI ROUTE MAP</button>
+    </div>
+    <div class="wrow">
+      <input id="iniInput" maxlength="3" placeholder="AAA" aria-label="your initials">
+      <button id="saveScoreBtn" class="wbtn big" disabled>SAVE SCORE TO THE BOARD</button>
+    </div>
+    <div id="recStatus">Boot DOOM above, then REC a run. The AI's run (KKBOT) is a real scripted recording shipped with this page — replay it and compare maps.</div>
+    <div id="runList" style="margin-top:10px"></div>
+    <div class="kk-mapwrap">
+      <canvas id="mapCanvas" class="kk-map" width="520" height="340"></canvas>
+      <div class="kk-mapnote">🗺 ROUTE MAP — built from a run's recorded inputs: the path is integrated from the
+        key stream (the engine doesn't export player position, so this is a faithful approximation, not a tracker).
+        <span style="color:#7CFF6B">● start</span> · <span style="color:#ff5470">● end</span> ·
+        <span style="color:#ff9a3b">● fired</span> · <span style="color:#7CFF6B">■ used/opened</span></div>
+    </div>
+  </div>
+
+  <div id="scoresMount"></div>
+
+  <div class="searchwrap panel" style="text-align:center">
+    <h2>🕹 PLAY ANOTHER MACHINE</h2>
+    <div id="searchMount"></div>
   </div>
 
   <details style="margin-bottom:24px">
@@ -145,9 +204,12 @@
       <b>0x646610e26c7557ad53ab6a1560ba27a79a0c17cd0be694979aaaccab8808ec78</b>
       <a target="_blank" rel="noopener" href="https://sepolia.basescan.org/tx/0x646610e26c7557ad53ab6a1560ba27a79a0c17cd0be694979aaaccab8808ec78">view →</a><br>
       <span class="lbl">CHAIN</span> <b>Base Sepolia · block 47956932</b><br><br>
-      The bytes you are playing were recovered from the sealed shards and are
-      byte-identical to the manifest above. Anyone can re-fetch, re-encode, and
-      compare — that's the proof, not our word.
+      The bytes you play are byte-identical to the manifest above — that's the
+      proof, not our word. The cabinet loads them blob-first: sealed copies on
+      Walrus testnet are fetched, decrypted and hash-verified in your browser
+      (watch the source pill over the screen), and if the blob path is ever
+      unavailable the same verified bytes load from the repo mirror instead.
+      Anyone can re-fetch, re-encode, and compare.
     </div>
   </div>
 
@@ -162,13 +224,22 @@
 </div>
 <script src="wallet.js"></script>
 <script src="doom.js"></script>
+<script src="https://arcade.highscores.live/arcade/shared/nacl-fast.min.js"></script>
+<script src="blobload.js"></script>
+<script src="https://arcade.highscores.live/arcade/shared/kk-touch.js"></script>
+<script src="https://arcade.highscores.live/arcade/shared/kk-scores.js"></script>
+<script src="https://arcade.highscores.live/arcade/shared/kk-search.js"></script>
+<script src="rec.js"></script>
 <script>
-  /* kid-mode: one tap, no wallet, no fins — just plays */
+  /* kid-mode: one tap, no wallet, no fins — just plays.
+     Blob-first: KKBoot tries the verified Walrus blob copy, falls back to repo. */
   document.getElementById('freePlayBtn').addEventListener('click', function(){
     document.getElementById('cabinetTop').style.display = 'none';
     document.getElementById('cabinet').style.display = 'block';
-    window.startDoom();
+    if (window.KKBoot) window.KKBoot.start();
+    else window.startDoom();
   });
+  KKSearch.mount(document.getElementById('searchMount'), { current: 'doom' });
 </script>
 </body>
 </html>
