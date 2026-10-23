@@ -168,7 +168,7 @@
       <tr><td>3.2</td><td><a href="#aegis-g1">AEGIS-G1 — Are Garnet's Parallel Entropy Lanes Independent?</a></td>
           <td>GENESIS AEGIS (AEGIS-Q)</td><td><span class="status">KILL · lane bias (Garnet)</span></td></tr>
       <tr><td>3.3</td><td><a href="#chiral-mirror">The Chiral Mirror — Does Real Noise Have a Handedness?</a></td>
-          <td>Quantinuum qubit stability strategies chat</td><td><span class="status">Results pending</span></td></tr>
+          <td>Quantinuum qubit stability strategies chat</td><td><span class="status">ACHIRAL (null) · diamond holds</span></td></tr>
       <tr><td>3.4</td><td><a href="#conservation-check">The Conservation Check — Where Does Relocated Information Live, and For How Long?</a></td>
           <td>Echo — Quantum Memory</td><td><span class="status">Results pending</span></td></tr>
     </table>
@@ -428,11 +428,24 @@
       </div>
 
       <div class="results">
-        <h3>Results — <span class="status">Pending · Awaiting Run</span></h3>
-        <p style="margin-bottom:0">No run has been submitted; no credits have been spent on this case. When the run
-        lands, this section will carry the job IDs, UTC times, P<sub>R</sub> and P<sub>L</sub> with counts, the
-        calibration floor, Δ against §3.3.4, the recovered Bloch vector, the grade (CHIRAL SIGNAL / ACHIRAL /
-        INCONCLUSIVE), and the Resonance balance before / spent / after.</p>
+        <h3>Results — <span class="status">Run recorded · ACHIRAL (null) · Diamond mirror holds</span></h3>
+        <p style="margin-bottom:6px"><strong>[HARDWARE]</strong> Run on IQM Garnet, qubit 10 (the least-biased
+        lane in the AEGIS-G1 audit), 2026-10-23. Jobs <span class="mono">01a1666f-7ab4-7058-bc83-b2bd46ed5f33</span>
+        (C1/C2), <span class="mono">01a166a6-63b2-71da-893c-98944d0efc6d</span> (C3/C4),
+        <span class="mono">01a166a6-8316-725e-836e-9c4d8c798f72</span> (C5–C8); 18,432 shots in total. The first
+        job waited about an hour in the Garnet queue (position 4), and the server's calibration set changed
+        during the wait — recorded here, not hidden.</p>
+        <p style="margin-bottom:6px">Against the bands of §3.3.4: P<sub>R</sub> = 0.5251, P<sub>L</sub> = 0.5205,
+        so Δ = +0.0046 with σ<sub>Δ</sub> = 0.011 (z = 0.42). The readout calibration measured e<sub>0</sub> =
+        0.0039 and e<sub>1</sub> = 0.0322 — an asymmetry floor of 0.0283. <strong>Verdict: ACHIRAL (null)</strong> —
+        Δ is inside both 2σ and twice the floor. Garnet's noise does not split the handedness pair at roughly
+        three-percent resolution on this qubit; a null at this resolution, never "achiral, period." Both arms sit
+        above 0.5 together — the readout asymmetry lifts both hands equally, which is precisely what the
+        calibration circuits exist to catch. Diamond mirror: axis probabilities [0.780, 0.229, 0.765, 0.235]
+        against the locked [0.789, 0.211, 0.789, 0.211]; recovered Bloch vector (0.008, 0.937, 0.019), error
+        0.066 against the 0.15 line — <strong>the diamond readout holds on hardware</strong>. Balance: cost
+        pending dashboard verification at first publication (estimate ≈2.3 credits against a hard abort
+        line of 10).</p>
       </div>
 
       <p class="data-note"><strong>Data availability.</strong> The full submission is held in the program archive
