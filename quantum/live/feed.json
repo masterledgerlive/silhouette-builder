@@ -1,0 +1,186 @@
+{
+ "generated_from": "sealed run records in the Quantum Quarry archive",
+ "runs": [
+  {
+   "case": "T0",
+   "recorded": "reconstructed from the sealed run record",
+   "events": [
+    {
+     "utc": "2026-10-23T00:24:24Z",
+     "step": "verify",
+     "title": "Access token verified",
+     "detail": "An authenticated read returned IQM Garnet's live architecture: 20 qubits. The saved token works.",
+     "explain": "Every run starts by proving the key still opens the door \u2014 a read that costs nothing. If this fails, nothing else is attempted."
+    },
+    {
+     "utc": "2026-10-23T00:24:24Z",
+     "step": "submit",
+     "title": "Four frozen CHSH circuits submitted",
+     "detail": "Job ID 01a16625-2a81-7196-80fe-c16728f38b99 \u00b7 4 circuits \u00d7 1,024 shots \u00b7 IQM Garnet.",
+     "explain": "The circuits were frozen on 2026-10-20, before any account existed \u2014 a Bell test whose ideal answer is known exactly (S = 2.828). The machine cannot be graded against a prediction invented after the fact."
+    },
+    {
+     "utc": "2026-10-23T00:24:41Z",
+     "step": "result",
+     "title": "Counts returned from the real machine",
+     "detail": "All 4,096 shots returned. Three settings agree (E \u2248 +0.67); the fourth disagrees (E = \u22120.650) \u2014 the fingerprint of entanglement.",
+     "explain": "Classical physics caps this pattern at S = 2.0. The sign flip in the fourth setting is exactly what quantum entanglement predicts and no local classical story can reproduce."
+    },
+    {
+     "utc": "2026-10-23T00:24:41Z",
+     "step": "analyze",
+     "title": "Analyzer grade: HIT",
+     "detail": "CHSH S = 2.6640625, inside the locked HIT band [2.3, 2.90].",
+     "explain": "The frozen analyzer \u2014 not a human \u2014 grades the counts against bands locked before the run. S = 2.664 is a real machine answering a quantum question, with honest noise below the ideal 2.828."
+    },
+    {
+     "utc": "2026-10-23 (dashboard)",
+     "step": "billing",
+     "title": "Credit ledger closed",
+     "detail": "Cost: 1.00 credit for 2 seconds of QPU time. Balance 30.00 \u2192 29.00, verified on the IQM dashboard.",
+     "explain": "Every run reports before / spent / after. Proof should be cheap, and the price is part of the result."
+    }
+   ]
+  },
+  {
+   "case": "AEGIS-G1",
+   "recorded": "recorded live during the run",
+   "events": [
+    {
+     "utc": "2026-10-23T01:06:02.611731+00:00",
+     "step": "preflight",
+     "title": "Case opened: AEGIS-G1 Parallel Entropy Lanes",
+     "detail": "Question, novelty check, circuit, analyzer and grading bands were locked on 2026-10-22, before this run.",
+     "explain": "A real test starts before the machine: the question and the pass/fail bands are written down first, so the result cannot be graded with moving goalposts."
+    },
+    {
+     "utc": "2026-10-23T01:06:02.612969+00:00",
+     "step": "preflight",
+     "title": "Pre-flight credit gate",
+     "detail": "Balance before: 29.00 credits. Written estimate 2-6 credits, hard cap 6.0. Gate requires balance >= 12 after T0 \u2014 satisfied.",
+     "explain": "The credit law: no run starts unless its worst case fits with margin. A run must never die mid-flight for lack of credits."
+    },
+    {
+     "utc": "2026-10-23T01:06:32.643496+00:00",
+     "step": "verify",
+     "title": "Credential verified against IQM",
+     "detail": "Authenticated architecture read returned Garnet with 20 qubits.",
+     "explain": "This proves the saved access token works \u2014 the same check that preceded T0. No credits are spent on a read."
+    },
+    {
+     "utc": "2026-10-23T01:06:59.612488+00:00",
+     "step": "build",
+     "title": "Circuit built and compiled",
+     "detail": "One Hadamard on each of Garnet's 20 qubits, then measure all 20. Depth 1, no two-qubit gates. Compiled to native gates only.",
+     "explain": "The circuit is deliberately trivial: ideally each shot returns 20 independent fair coin flips. Any correlation the analyzer finds is the hardware talking, not the algorithm."
+    },
+    {
+     "utc": "2026-10-23T01:07:06.036677+00:00",
+     "step": "submit",
+     "title": "Job submitted to Garnet",
+     "detail": "Job ID 01a1664c-1d2f-7584-9acb-7204d1a29b21 \u00b7 8192 shots \u00b7 submitted 2026-10-23T01:06:59.613364+00:00 UTC.",
+     "explain": "The frozen circuit is now on a real 20-qubit superconducting machine in Espoo, Finland. The job ID is the receipt anchor \u2014 everything after this is checked against it.",
+     "data": {
+      "job_id": "01a1664c-1d2f-7584-9acb-7204d1a29b21"
+     }
+    },
+    {
+     "utc": "2026-10-23T01:07:14.926597+00:00",
+     "step": "result",
+     "title": "Counts returned from the machine",
+     "detail": "8192 shots returned, 8164 distinct 20-bit outcomes. Job status: JobStatus.DONE.",
+     "explain": "Each count is a 20-bit string: one simultaneous draw from all 20 qubits. From these strings alone the analyzer computes every lane's bias and all 190 pairwise correlations.",
+     "data": {
+      "distinct_outcomes": 8164,
+      "total_shots": 8192
+     }
+    },
+    {
+     "utc": "2026-10-23T01:07:14.985957+00:00",
+     "step": "record",
+     "title": "Run record sealed",
+     "detail": "Raw counts saved to g1-iqm-garnet-01a1664c-1d2f-7584-9acb-7204d1a29b21.json \u2014 all of them, nothing discarded.",
+     "explain": "The counts are the evidence. Anyone with the analyzer can re-grade this run and must land on the same verdict."
+    },
+    {
+     "utc": "2026-10-23T01:07:51.133754+00:00",
+     "step": "analyze",
+     "title": "Analyzer verdict: KILL",
+     "detail": "Worst lane (qubit 12) min-entropy 0.777 bits, below the 0.85 KILL line; lane bias up to 0.0836. Only 1 of 190 lane pairs crossed the correlation line, and Hamming-weight variance was 4.997 against an ideal 5.0.",
+     "explain": "The lanes fail on bias, not on talking to each other: qubit 12 answers 0 far too often to be a fair coin. Under the bands locked before the run, that is a KILL \u2014 Garnet's raw parallel lanes must never seed separate security receipts. The design consequence is single-lane sequential draws through a randomness extractor.",
+     "data": {
+      "verdict": "KILL",
+      "worst_lane": 12,
+      "worst_lane_min_entropy_bits": 0.7769,
+      "max_abs_bias": 0.0836,
+      "max_abs_pair_r": 0.0477,
+      "n_pairs_over": 1,
+      "hamming_weight_variance": 4.997
+     }
+    }
+   ]
+  }
+ ],
+ "g1_analysis": {
+  "shots": 8192,
+  "max_abs_bias": 0.0836,
+  "worst_lane": 12,
+  "worst_lane_min_entropy_bits": 0.7769,
+  "max_abs_pair_r": 0.0477,
+  "n_pairs_over": 1,
+  "pairs_over_bonferroni": {
+   "5-6": -0.0477
+  },
+  "hamming_weight_mean": 9.56,
+  "hamming_weight_variance": 4.997,
+  "verdict": "KILL",
+  "per_lane_p1": [
+   0.4974,
+   0.439,
+   0.4839,
+   0.4967,
+   0.4806,
+   0.493,
+   0.4822,
+   0.4882,
+   0.4791,
+   0.4717,
+   0.5022,
+   0.4888,
+   0.4164,
+   0.4661,
+   0.4709,
+   0.4742,
+   0.4561,
+   0.4951,
+   0.4855,
+   0.493
+  ]
+ },
+ "t0_counts": {
+  "chsh_00": {
+   "00": 455,
+   "11": 408,
+   "10": 93,
+   "01": 68
+  },
+  "chsh_01": {
+   "10": 81,
+   "00": 439,
+   "11": 415,
+   "01": 89
+  },
+  "chsh_10": {
+   "00": 422,
+   "10": 86,
+   "11": 428,
+   "01": 88
+  },
+  "chsh_11": {
+   "01": 420,
+   "10": 425,
+   "11": 79,
+   "00": 100
+  }
+ }
+}
