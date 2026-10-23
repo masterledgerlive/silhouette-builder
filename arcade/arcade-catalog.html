@@ -104,12 +104,13 @@
   <div style="text-align:center"><button id="exitPlay">✕ EXIT GAME — back to the floor</button></div>
   <div class="controls-note">
     <b>5</b> = coin &nbsp;·&nbsp; <b>1</b> = start &nbsp;·&nbsp; arrows move &nbsp;·&nbsp; <b>ALT</b> = button<br>
-    Xbox / gamepad controllers work through your browser's Gamepad API — just plug and play.
+    Xbox / gamepad controllers work through your browser's Gamepad API — just plug and play.<br>
+    🎠 <b>Drag or flick the cabinets to SPIN the floor</b> — the spin carries momentum and lands on a machine.
   </div>
 </div>
 <script>
 var GAMES = [
-  { id:'doom', name:'DOOM', year:'1993', colors:{mq:'#ff3b3b',bg:'#1a0505',stripe:'#ff3b3b'}, url:'https://arcade.highscores.live/arcade/doom/', badge:'SEALED IN BLANKS — OUR BUILD', blurb:'Our blob-sealed build. Booted from recovered bytes.', external:true },
+  { id:'doom', name:'DOOM', year:'1993', colors:{mq:'#ff3b3b',bg:'#1a0505',stripe:'#ff3b3b'}, url:'https://arcade.highscores.live/arcade/doom/', badge:'SEALED IN BLOBS — OUR BUILD', blurb:'Our blob-sealed build. Booted from recovered bytes.', external:true },
   { id:'arcade_defender', name:'DEFENDER', year:'1981 · Williams', colors:{mq:'#ff5a2a',bg:'#1c0d04',stripe:'#ff5a2a'}, blurb:'The hardest shooter of 1981. Save the humanoids.' },
   { id:'arcade_digdug', name:'DIG DUG', year:'1982 · Namco', colors:{mq:'#3b8bff',bg:'#041a2e',stripe:'#ffd76b'}, blurb:'Pump up the Pookas. Don\u2019t get crushed.' },
   { id:'arcade_joust', name:'JOUST', year:'1982 · Williams', colors:{mq:'#ff9a3b',bg:'#211104',stripe:'#ff9a3b'}, blurb:'Ostrich jousting. Flap to survive.' },
@@ -148,7 +149,7 @@ GAMES.forEach(function(g, i){
     '<div class="kick"><button class="playbtn">▶ PLAY</button></div>' +
     '</div>';
   el.querySelector('.playbtn').addEventListener('click', function(e){ e.stopPropagation(); playGame(i); });
-  el.addEventListener('click', function(){ if(i !== cur) goTo(i); });
+  el.addEventListener('click', function(){ if(justDragged) return; if(i !== cur) goTo(i); });
   car.appendChild(el);
   var d = document.createElement('button');
   d.setAttribute('aria-label', g.name);
@@ -159,16 +160,18 @@ GAMES.forEach(function(g, i){
 function layout(){
   var cabs = car.children, n = cabs.length;
   for(var i=0;i<n;i++){
-    var off = ((i - cur) % n + n) % n;
+    var center = (floatPos !== null) ? floatPos : cur;
+    var off = ((i - center) % n + n) % n;
     if(off > n/2) off -= n;
     var el = cabs[i], dot = dots.children[i];
-    dot.className = (off === 0) ? 'on' : '';
+    dot.className = (Math.round(off) === 0) ? 'on' : '';
     if(Math.abs(off) > 2){ el.style.opacity = '0'; el.style.pointerEvents = 'none'; continue; }
     el.style.opacity = '1'; el.style.pointerEvents = 'auto';
     var x = off * 240, z = -Math.abs(off) * 260, r = off * -28;
-    var s = off === 0 ? 1.06 : 0.82;
+    var ao = Math.min(1, Math.abs(off));
+    var s = 1.06 - 0.24 * ao;
     el.style.transform = 'translateX(' + x + 'px) translateZ(' + z + 'px) rotateY(' + r + 'deg) scale(' + s + ')';
-    el.style.filter = off === 0 ? 'none' : 'brightness(.55)';
+    el.style.filter = 'brightness(' + (1 - 0.45 * ao) + ')';
     el.style.zIndex = 20 - Math.abs(off);
   }
 }
@@ -180,14 +183,40 @@ document.addEventListener('keydown', function(e){
   if(e.key === 'ArrowLeft') goTo(cur - 1);
   if(e.key === 'ArrowRight') goTo(cur + 1);
 });
-var tx0 = null;
-car.addEventListener('touchstart', function(e){ tx0 = e.touches[0].clientX; }, {passive:true});
-car.addEventListener('touchend', function(e){
-  if(tx0 === null) return;
-  var dx = e.changedTouches[0].clientX - tx0;
-  if(Math.abs(dx) > 40) goTo(cur + (dx < 0 ? 1 : -1));
-  tx0 = null;
-}, {passive:true});
+/* ---- spin the floor: drag or flick with momentum, lands on a machine ---- */
+var floatPos = null, dragId = null, dragStartX = 0, dragStartPos = 0, dragMoved = 0, velSamples = [], justDragged = false;
+car.addEventListener('pointerdown', function(e){
+  if(playing) return;
+  dragId = e.pointerId; dragStartX = e.clientX; dragStartPos = cur; dragMoved = 0;
+  floatPos = cur; velSamples = [[Date.now(), e.clientX]];
+  try { car.setPointerCapture(e.pointerId); } catch(err) {}
+  for(var i=0;i<car.children.length;i++) car.children[i].style.transition = 'none';
+});
+car.addEventListener('pointermove', function(e){
+  if(dragId !== e.pointerId) return;
+  var dx = e.clientX - dragStartX;
+  dragMoved = Math.max(dragMoved, Math.abs(dx));
+  floatPos = dragStartPos - dx / 240;
+  velSamples.push([Date.now(), e.clientX]);
+  if(velSamples.length > 6) velSamples.shift();
+  layout();
+});
+function endDrag(e){
+  if(dragId === null || (e && e.pointerId !== dragId)) return;
+  dragId = null;
+  for(var i=0;i<car.children.length;i++) car.children[i].style.transition = '';
+  var v = 0;
+  if(velSamples.length > 1){
+    var a = velSamples[0], b = velSamples[velSamples.length - 1];
+    v = (b[1] - a[1]) / Math.max(1, b[0] - a[0]);
+  }
+  var target = Math.round(floatPos - v * 0.6);
+  floatPos = null;
+  if(dragMoved > 8){ justDragged = true; setTimeout(function(){ justDragged = false; }, 80); }
+  goTo(target);
+}
+car.addEventListener('pointerup', endDrag);
+car.addEventListener('pointercancel', endDrag);
 
 function playGame(i){
   var g = GAMES[i], el = car.children[i];
@@ -259,6 +288,7 @@ layout();
     <input id="catSearch" placeholder="search the floor…" autocomplete="off"
       style="font-family:inherit;font-size:1rem;padding:12px 18px;width:min(420px,90%);border-radius:10px;
              border:1px solid #2a2a5a;background:#0d0d22;color:#e8e8f5;outline:none">
+    <div style="color:#8a8aa8;font-size:.74rem;margin-top:8px">type to filter the floor — <b style="color:var(--gold)">⏎ ENTER</b> jumps straight to the first match's machine</div>
   </div>
   <div id="catGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px"></div>
 </section>
@@ -296,6 +326,11 @@ function renderCat(q){
   });
 }
 document.getElementById('catSearch').addEventListener('input', function(){ renderCat(this.value); });
+document.getElementById('catSearch').addEventListener('keydown', function(e){
+  if(e.key !== 'Enter') return;
+  var first = document.querySelector('#catGrid a');
+  if(first) window.location.href = first.href;
+});
 renderCat('');
 </script>
 
