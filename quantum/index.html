@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Quantum Quarry — Hardware Results · Round 1</title>
+<style>
+  :root{
+    --paper:#faf8f3; --ink:#1d1a14; --muted:#6b6455; --rule:#d8d2c2; --accent:#5b4a8a;
+    --accent2:#8a6d3b; --panel:#f1ede1; --pending:#8a6d3b; --pendingbg:#fbf3dd;
+  }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  body{ background:var(--paper); color:var(--ink); font-family:Georgia,'Times New Roman',serif;
+        line-height:1.65; padding:0 16px 70px; }
+  .wrap{ max-width:880px; margin:0 auto; }
+  /* masthead */
+  .journal-line{ text-align:center; font-family:Helvetica,Arial,sans-serif; font-size:.72rem;
+        letter-spacing:.28em; text-transform:uppercase; color:var(--muted);
+        border-bottom:3px double var(--ink); padding:22px 0 10px; }
+  h1{ text-align:center; font-size:clamp(1.9rem,5.5vw,3rem); font-weight:normal; letter-spacing:.01em; margin:20px 0 4px; }
+  .subtitle{ text-align:center; font-style:italic; color:var(--muted); font-size:1.02rem; margin-bottom:6px; }
+  .vol-line{ text-align:center; font-family:Helvetica,Arial,sans-serif; font-size:.78rem; letter-spacing:.18em;
+        text-transform:uppercase; color:var(--accent); margin-bottom:18px; }
+  nav.top{ display:flex; flex-wrap:wrap; gap:8px 18px; justify-content:center; padding:12px 6px;
+        border-top:1px solid var(--rule); border-bottom:1px solid var(--rule);
+        font-family:Helvetica,Arial,sans-serif; font-size:.8rem; }
+  nav.top a{ color:var(--accent); text-decoration:none; }
+  nav.top a:hover{ text-decoration:underline; }
+  /* sections */
+  section{ margin-top:38px; }
+  h2{ font-size:1.45rem; font-weight:normal; border-bottom:2px solid var(--ink); padding-bottom:5px; margin-bottom:14px; }
+  h2 .no{ color:var(--accent); margin-right:.5em; }
+  h3{ font-size:1.12rem; margin:20px 0 6px; }
+  h3 .no{ color:var(--accent); margin-right:.45em; }
+  p{ margin-bottom:12px; text-align:justify; }
+  ul,ol{ margin:0 0 12px 26px; }
+  li{ margin-bottom:5px; text-align:justify; }
+  .small{ font-size:.86rem; color:var(--muted); }
+  .abstract{ background:var(--panel); border:1px solid var(--rule); padding:18px 22px; }
+  .abstract h2{ border:none; font-size:1.05rem; font-family:Helvetica,Arial,sans-serif;
+        letter-spacing:.2em; text-transform:uppercase; margin-bottom:10px; }
+  table{ border-collapse:collapse; width:100%; margin:12px 0 18px; font-size:.92rem; }
+  th,td{ border:1px solid var(--rule); padding:7px 10px; text-align:left; vertical-align:top; }
+  th{ background:var(--panel); font-family:Helvetica,Arial,sans-serif; font-size:.76rem;
+      letter-spacing:.08em; text-transform:uppercase; }
+  code{ font-family:'Courier New',monospace; font-size:.88em; background:#efe9da; padding:0 3px; }
+  .mono{ font-family:'Courier New',monospace; font-size:.82rem; word-break:break-all; }
+  /* article blocks */
+  article{ margin-top:44px; border-top:3px double var(--ink); padding-top:20px; }
+  article .kicker{ font-family:Helvetica,Arial,sans-serif; font-size:.72rem; letter-spacing:.24em;
+        text-transform:uppercase; color:var(--accent2); }
+  article h2{ border:none; font-size:1.55rem; margin:4px 0 2px; }
+  .byline{ font-size:.92rem; color:var(--muted); font-style:italic; margin-bottom:12px; }
+  .status{ display:inline-block; font-family:Helvetica,Arial,sans-serif; font-size:.7rem; font-weight:bold;
+        letter-spacing:.14em; text-transform:uppercase; color:var(--pending); background:var(--pendingbg);
+        border:1px solid var(--pending); border-radius:3px; padding:2px 8px; vertical-align:middle; }
+  .results{ border:1.5px dashed var(--pending); background:var(--pendingbg); padding:14px 18px; margin:14px 0; }
+  .results h3{ margin-top:0; color:var(--pending); }
+  .criteria{ background:#fff; border:1px solid var(--rule); padding:6px 18px 10px; margin:12px 0; }
+  .criteria h3{ color:var(--accent); }
+  .data-note{ font-size:.88rem; color:var(--muted); border-left:3px solid var(--rule); padding-left:12px; }
+  /* podcasts */
+  .episode{ border:1px solid var(--rule); background:#fff; padding:16px 20px; margin-bottom:14px; }
+  .episode h3{ margin-top:0; }
+  .episode audio{ width:100%; margin-top:8px; }
+  .priv{ font-family:Helvetica,Arial,sans-serif; font-size:.68rem; letter-spacing:.12em; text-transform:uppercase;
+        color:#fff; background:var(--accent2); border-radius:3px; padding:1px 7px; }
+  /* footer */
+  footer{ text-align:center; color:var(--muted); font-size:.82rem; margin-top:56px;
+        border-top:3px double var(--ink); padding-top:16px; }
+  footer a, .backlinks a{ color:var(--accent); text-decoration:none; }
+  footer a:hover, .backlinks a:hover{ text-decoration:underline; }
+  .backlinks{ text-align:center; margin-top:34px; font-family:Helvetica,Arial,sans-serif; font-size:.85rem; }
+  @media print{
+    body{ background:#fff; padding:0; }
+    nav.top, audio, .backlinks{ display:none; }
+    article, section{ page-break-inside:avoid; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="journal-line">Koda Kai Network · Quantum Quarry Program</div>
+  <h1>Quantum Quarry — Hardware Results</h1>
+  <div class="subtitle">Pre-registered tests on real quantum hardware, peer-reviewed in public, counts published hit or miss</div>
+  <div class="vol-line">Round 1 · Specialist Call issued 22 October 2026 · All results pending first runs</div>
+
+  <nav class="top">
+    <a href="#abstract">Abstract</a>
+    <a href="#lanes">Lanes &amp; Credit Law</a>
+    <a href="#contents">Contents</a>
+    <a href="#t0">T0 · Bell Truth</a>
+    <a href="#aegis-g1">AEGIS-G1</a>
+    <a href="#chiral-mirror">Chiral Mirror</a>
+    <a href="#conservation-check">Conservation Check</a>
+    <a href="#podcasts">Podcasts</a>
+    <a href="../">← Site Hub</a>
+    <a href="../sui-lab.html">SUI LAB</a>
+  </nav>
+
+  <section class="abstract" id="abstract">
+    <h2>Program Abstract</h2>
+    <p>This collection publishes the Quantum Quarry hardware program: a series of quantum-computing tests whose
+    circuits, shot counts, grading bands, and cost caps were <em>pre-registered in writing before any run</em> —
+    in the baseline case, before any hardware account existed. Each test is proposed by a specialist desk as a written
+    case submission, argued in a pitch podcast, and graded by a peer-review desk on novelty first, readiness second,
+    and cost-efficiency third. Only then does it run, on a real quantum processor, under a binding credit law that
+    forbids duplicate runs across providers and reserves second runs for one purpose: replicating the program's top
+    result.</p>
+    <p>Every article below follows the same discipline. The question, the novelty claim with its prior-work check,
+    the method, and the success criteria are stated exactly as filed. The results section is published
+    <strong>empty and marked pending</strong> until a real machine returns real counts; when it fills, it fills with
+    raw counts, job identifiers, timestamps, and the balance before and after — whether the grade is a hit, a
+    quarantine, or a kill. Simulation results are labelled <span class="mono">[SEALED-SIM]</span> and are never
+    presented as hardware. A result is sealed <span class="mono">[HARDWARE]</span> only when a real machine produced it.</p>
+    <p class="small">Program origin: the Specialist Call of 2026-10-22, issued by David Jeffords and aired in the
+    lead-up podcast <em>First Light: The Machines Are Real Now</em> (see §4, Podcasts).</p>
+  </section>
+
+  <section id="lanes">
+    <h2><span class="no">1</span>Lanes &amp; Credit Law</h2>
+    <p>Tests run on free-tier quantum hardware accounts ("lanes") verified on 2026-10-22. One primary backend per
+    test; no test is ever run on two providers merely to see the same answer twice.</p>
+    <table>
+      <tr><th style="width:22%">Lane</th><th style="width:20%">Role</th><th>Terms (as verified 2026-10-22)</th></tr>
+      <tr>
+        <td><strong>IQM Resonance</strong></td><td>Primary</td>
+        <td>Free Starter plan, <strong>30.00 credits</strong>. Backends: Emerald (54 qubits), Garnet (20 qubits),
+        Sirius (16 qubits). Garnet rate card: 0.50 credits/second. Job submission is API-only (access token);
+        there is no web submission.</td>
+      </tr>
+      <tr>
+        <td><strong>IBM Quantum</strong></td><td>Reserve — parked</td>
+        <td>Open Plan: 10 minutes of QPU time per month, free, no card. Reserved to replicate the program's top
+        result only — never a first-run lane. <em>Currently parked at the program director's order; the reserve is
+        not being spent while Round 1 runs on IQM.</em></td>
+      </tr>
+      <tr>
+        <td><strong>Quantum Inspire</strong></td><td>Secondary</td>
+        <td>Free account. Tuna-17 (17 qubits, online at check), Tuna-5 / Tuna-9 (offline at check), QX emulator
+        (26 qubits, up to 2,048 shots observed), Ry emulator.</td>
+      </tr>
+      <tr>
+        <td><strong>qBraid</strong></td><td>Workbench only</td>
+        <td>QPUs are credit-gated and the program balance is 0.00. Free: QIR Simulator (30 qubits) and 100 Lab
+        CPU-hours. Simulator output from this lane is <span class="mono">[SEALED-SIM]</span>, never hardware.</td>
+      </tr>
+    </table>
+    <h3>The credit law (binding, director's order)</h3>
+    <ul>
+      <li><strong>One primary backend per test.</strong> Never the same test on two providers to "see it twice."</li>
+      <li><strong>A second run exists for one purpose only:</strong> replicating the top result, on IBM's reserve minutes.</li>
+      <li><strong>Pre-flight rule:</strong> no run starts without a written cost estimate checked against the remaining
+      balance, with margin. A run must never die mid-flight for lack of credits. If the estimate does not fit, the case
+      shrinks its shot count or waits for the monthly refill — it does not start and hope.</li>
+      <li><strong>Balances are reported after every run</strong> — lane, before, spent, after — in the results episode
+      and in the article's results section.</li>
+    </ul>
+  </section>
+
+  <section id="contents">
+    <h2><span class="no">2</span>Contents — Round 1 Articles</h2>
+    <table>
+      <tr><th style="width:10%">No.</th><th>Article</th><th style="width:22%">Origin desk</th><th style="width:16%">Status</th></tr>
+      <tr><td>3.1</td><td><a href="#t0">T0 — Cross-Ground Bell Truth (Hardware Handshake)</a></td>
+          <td>Quantum Quarry program (baseline)</td><td><span class="status">S = 2.664 · HIT (Garnet)</span></td></tr>
+      <tr><td>3.2</td><td><a href="#aegis-g1">AEGIS-G1 — Are Garnet's Parallel Entropy Lanes Independent?</a></td>
+          <td>GENESIS AEGIS (AEGIS-Q)</td><td><span class="status">KILL · lane bias (Garnet)</span></td></tr>
+      <tr><td>3.3</td><td><a href="#chiral-mirror">The Chiral Mirror — Does Real Noise Have a Handedness?</a></td>
+          <td>Quantinuum qubit stability strategies chat</td><td><span class="status">Results pending</span></td></tr>
+      <tr><td>3.4</td><td><a href="#conservation-check">The Conservation Check — Where Does Relocated Information Live, and For How Long?</a></td>
+          <td>Echo — Quantum Memory</td><td><span class="status">Results pending</span></td></tr>
+    </table>
+    <p class="small">Run order: T0 runs first regardless of desk grading — it is the calibration baseline every later
+    claim is measured against. AEGIS-G1 requests the slot immediately after T0. Remaining order is set by the
+    peer-review desk: novelty, then readiness, then cost-efficiency.</p>
+  </section>
+
+  <section id="articles">
+    <h2><span class="no">3</span>Articles</h2>
+
+    <!-- ============ T0 ============ -->
+    <article id="t0">
+      <div class="kicker">Article 3.1 · Calibration Baseline · Locked 2026-10-20</div>
+      <h2>T0 — Cross-Ground Bell Truth (Hardware Handshake)</h2>
+      <div class="byline">Quantum Quarry program · The frozen baseline against which every later test in this collection is read</div>
+
+      <h3><span class="no">3.1.1</span>Abstract</h3>
+      <p>Does a real quantum processor produce genuinely entangled correlations, at the value quantum mechanics
+      predicts? T0 prepares the Bell state |Φ+⟩ and measures a CHSH inequality across four setting pairs. It is the
+      cheapest circuit that distinguishes a real entangled machine from a simulator-shaped story, its simulated value
+      is a theorem rather than a fit, and every later test in the program (noise mapping, error-correction mirrors,
+      and the three cases below) is graded against this baseline. The test was designed, and its prediction locked,
+      on 2026-10-20 — before any hardware account existed.</p>
+
+      <h3><span class="no">3.1.2</span>Novelty</h3>
+      <p>T0 claims no discovery; it is a calibration instrument, and it says so. Its contribution to the collection is
+      procedural: a prediction sealed <em>before access</em>. The lock file records the exact simulated ground truth
+      (CHSH S = 2.828427124746, from local NumPy/Stim/Selene consensus, <span class="mono">[SEALED-SIM]</span>), the
+      four circuits, the shot counts, and the grading bands. The prediction seal is the SHA-256 hash of the canonical
+      lock:</p>
+      <p class="mono">0ec8d0cd63a22401553933e3a515241bbb9073207b1fec455690033c77cc74da</p>
+      <p>The grading band itself was corrected once, in writing, before any run: the original HIT band [2.3, 2.7]
+      would have graded a near-perfect backend scoring 2.75 a miss. The correction (HIT = [2.3, 2.90], since 2.828 is
+      the Tsirelson ceiling and the headroom covers shot statistics only) is recorded in the lock, dated 2026-10-20.</p>
+
+      <h3><span class="no">3.1.3</span>Methods</h3>
+      <ul>
+        <li><strong>Circuit:</strong> prepare |Φ+⟩ (H on q0; CNOT q0→q1), then rotate each qubit by Ry(φ) before
+        Z-measurement. Alice settings: A0 φ = 0 (Z), A1 φ = π/2 (X). Bob settings: B0 φ = π/4, B1 φ = −π/4.
+        Four circuits — (A0,B0), (A0,B1), (A1,B0), (A1,B1) — distributed as OpenQASM 2.0 files
+        <code>chsh_00.qasm</code> … <code>chsh_11.qasm</code>.</li>
+        <li><strong>Shots:</strong> 1,024 per circuit; 4,096 per backend.</li>
+        <li><strong>Backends, in order as accounts land:</strong> IBM Open Plan, IQM Resonance Starter, Quantum
+        Inspire Tuna-17 — graded per backend; one backend's HIT does not launder another's MISS. Under the current
+        credit law, IQM is the primary lane and IBM's reserve is parked (see §1). qBraid simulators may run as a
+        simulation control and are not graded as hardware.</li>
+        <li><strong>Record per run:</strong> backend name, date/time (UTC), job ID, calibration snapshot where the
+        platform exposes one, and the raw counts — all of it. A failed or queued-out job is recorded as such, never
+        silently retried into a prettier number.</li>
+      </ul>
+
+      <div class="criteria">
+        <h3><span class="no">3.1.4</span>Pre-registered criteria (locked 2026-10-20; cannot move)</h3>
+        <ul>
+          <li><strong>HIT:</strong> hardware S ∈ [2.3, 2.90].</li>
+          <li><strong>WEAK:</strong> S ∈ [2.0, 2.3) — the classical bound is broken but the band is missed; the backend
+          is flagged noisy and a T1 noise map becomes mandatory before any further test runs on it.</li>
+          <li><strong>MISS:</strong> S ≤ 2.0 — no entanglement signal above classical on that backend; nothing else
+          runs there until the noise map explains it.</li>
+          <li><strong>Data-problem flag:</strong> S &gt; 2.90 — inspect the counts before grading anything.</li>
+        </ul>
+        <p class="small" style="margin-bottom:0"><strong>Cost:</strong> seconds of QPU time per backend — well inside
+        every Tier-0 allowance (per the frozen specification). <strong>Falsifier:</strong> built into the bands —
+        a MISS on every backend would falsify the program's assumption that free-tier machines can carry its tests at all.</p>
+      </div>
+
+      <div class="results">
+        <h3>Results — <span class="status">First hardware run recorded</span></h3>
+        <p style="margin-bottom:6px"><strong>[HARDWARE]</strong> Run on IQM Garnet, 2026-10-23 00:24 UTC,
+        job <span class="mono">01a16625-2a81-7196-80fe-c16728f38b99</span>. Four frozen circuits, 1,024 shots each
+        (native-gate compilation only; angles, shot count and qubit order unchanged). Correlators:
+        E<sub>00</sub> = +0.686, E<sub>01</sub> = +0.668, E<sub>10</sub> = +0.660, E<sub>11</sub> = −0.650 →
+        <strong>CHSH S = 2.664</strong>, inside the locked HIT band [2.3, 2.90] (§3.1.4). Raw counts:
+        (A0,B0) 00:455 11:408 10:93 01:68 · (A0,B1) 00:439 11:415 10:81 01:89 ·
+        (A1,B0) 00:422 11:428 10:86 01:88 · (A1,B1) 01:420 10:425 11:79 00:100.
+        Two earlier submission attempts died pre-submission on network timeouts (nothing sent, nothing billed)
+        and are kept in the run record per §3.1.5's no-discarded-runs rule.</p>
+        <table>
+          <tr><th>Backend</th><th>Job ID</th><th>UTC</th><th>S</th><th>Grade</th><th>Balance (before → after)</th></tr>
+          <tr><td>IQM Garnet (20q)</td><td class="mono">01a16625-2a81-7196-80fe-c16728f38b99</td><td>2026-10-23 00:24</td><td>2.664</td><td><strong>HIT</strong></td><td>30.00 → 29.00 (spent 1.00; runtime 2 s)</td></tr>
+        </table>
+      </div>
+
+      <p class="data-note"><strong>Data availability.</strong> The frozen specification (<em>T0-SPEC.md</em>), the four
+      OpenQASM circuits, and the signed lock (<em>T0-LOCK.json</em>, SHA-256 above) are held in the program archive
+      (quantum-quarry/hardware-tests/T0/). Raw counts for every run — including failed jobs — will be appended to the
+      run record and summarised here; no run is discarded.</p>
+    </article>
+
+    <!-- ============ AEGIS-G1 ============ -->
+    <article id="aegis-g1">
+      <div class="kicker">Article 3.2 · Round 1 Case · Submitted 2026-10-22</div>
+      <h2>AEGIS-G1 — Are Garnet's Parallel Entropy Lanes Independent?</h2>
+      <div class="byline">Origin desk: GENESIS AEGIS (AEGIS-Q), the Koda Kai security office · Lead specialists:
+      Cipher, the Key Custodian (S-13), and Bastion, the Genesis Gatekeeper (S-04)</div>
+
+      <h3><span class="no">3.2.1</span>Abstract</h3>
+      <p>Put a Hadamard on all 20 qubits of IQM Garnet at once, measure them, and one shot returns 20 bitstreams —
+      20 candidate entropy lanes for seeding cryptographic nonces and receipts. Are those lanes actually independent
+      of each other, and unbiased enough lane by lane to be treated as separate entropy sources — or does hardware
+      crosstalk and correlated readout secretly tie them together? This is an architecture decision, not a curiosity:
+      a PASS lets the Genesis Gate draw parallel lanes (always through a randomness extractor); a KILL forces
+      single-lane sequential draws on this backend, forever. The only specimen is the desk's own depth-1 circuit;
+      no live target is involved.</p>
+
+      <h3><span class="no">3.2.2</span>Novelty — what has NOT already been proven</h3>
+      <ul>
+        <li>Randomness generation on cloud superconducting hardware is settled in general (Shikano et al., 2020, on
+        IBM's 20-qubit Poughkeepsie): per-qubit min-entropy varies, qubits behave uniquely, and <em>no</em> raw qubit
+        output cleared NIST SP 800-22. Raw ≠ cryptographic is already proven; this case does not re-ask it.</li>
+        <li>Source-independent quantum random number generation with extraction is settled (Li et al.,
+        <em>Scientific Reports</em>, 2021): raw data passed NIST only after Toeplitz-hash extraction. Not re-asked.</li>
+        <li>Randomness on IQM architecture has been studied — on a 5-qubit on-premise Spark device (arXiv:2512.09862),
+        including multi-qubit parallel circuit designs. Parallel-circuit randomness on a 5-qubit IQM device is
+        therefore <em>not</em> this case's claim.</li>
+        <li>Correlated readout on Garnet is documented by the vendor but not quantified as an entropy-lane decision:
+        IQM states measurement errors on its processors are correlated across qubits, and its Garnet white paper
+        reports median drive crosstalk of −48 dB and flux crosstalk of −70 dB — medians that say little about the
+        specific 190 lane pairs a full-width draw actually uses.</li>
+      </ul>
+      <p><strong>The open question:</strong> no published result found by the desk measures, on the cloud IQM Garnet
+      at full 20-qubit width, the complete 190-pair cross-lane correlation matrix of a simultaneous Hadamard draw,
+      lane-by-lane bias and min-entropy, and collective Hamming-weight variance — graded against a pre-registered
+      security decision rule.</p>
+
+      <h3><span class="no">3.2.3</span>Methods</h3>
+      <ul>
+        <li><strong>Circuit:</strong> one circuit, depth 1, no entanglement, no two-qubit gates — a Hadamard on each
+        of Garnet's 20 qubits, then measure all (<code>aegis_g1_parallel_entropy.qasm</code>, OpenQASM 2.0). By design
+        the ideal output is 20 independent fair coins per shot, so any measured correlation is hardware, not algorithm.</li>
+        <li><strong>Shots:</strong> 8,192, single circuit, single job. At 8,192 shots the per-lane bias standard error
+        is ≈ 0.0055 and the correlation standard error ≈ 0.011, placing the §3.2.4 thresholds at roughly 4σ — the job
+        is exactly big enough to settle the question and no bigger.</li>
+        <li><strong>Backend:</strong> IQM Garnet (IQM Resonance), the one primary lane. IBM is not requested (reserve);
+        Quantum Inspire is not requested.</li>
+        <li><strong>Analysis:</strong> classical, zero QPU time — per-lane p(1), bias and min-entropy; the full
+        190-pair Pearson correlation matrix from the joint counts; Hamming-weight mean and variance. The desk's
+        analyzer (<code>analyze_g1.py</code>) was self-tested on synthetic data before filing (ideal data graded
+        PASS; synthetic correlated/biased data graded KILL).</li>
+      </ul>
+
+      <div class="criteria">
+        <h3><span class="no">3.2.4</span>Pre-registered criteria (fixed 2026-10-22; cannot move after the run)</h3>
+        <p>At 8,192 shots, the Bonferroni critical correlation across 190 pairs (α = 0.05/190) is |r| ≈ 0.040.</p>
+        <ul>
+          <li><strong>PASS (lanes independent):</strong> every lane |bias| ≤ 0.022 <em>and</em> every lane min-entropy
+          ≥ 0.90 bits <em>and</em> no pair exceeds |r| = 0.040 <em>and</em> Hamming-weight variance ∈ [4.4, 5.6]
+          (ideal 5.0). Consequence: parallel lanes may feed the Gate's entropy pool — through a randomness extractor,
+          always. A statistical PASS never certifies raw bits as cryptographic keys by itself.</li>
+          <li><strong>QUARANTINE (partial):</strong> 1–4 pairs exceed the Bonferroni value, or max |r| ∈ (0.040, 0.070],
+          or Hamming-weight variance outside the PASS band but inside [4.0, 6.0], with no KILL condition met.
+          Consequence: offending lanes are named and quarantined in the run record; surviving lanes only after extraction.</li>
+          <li><strong>KILL (lanes not independent)</strong> — also the falsifier set: any lane pair with
+          |correlation| &gt; 0.07; five or more pairs significant after Bonferroni correction; any lane's min-entropy
+          below 0.85 bits; or Hamming-weight variance outside [4.0, 6.0]. Consequence: the entropy design switches to
+          single-lane sequential draws plus extraction, and the hopeful assumption is abandoned in the desk's own log.</li>
+        </ul>
+        <p class="small" style="margin-bottom:0"><strong>Cost cap:</strong> written estimate 2–6 credits at the
+        Garnet rate of 0.50 credits/second; <strong>hard cap 6.0 credits</strong>. Pre-flight gates — the run does not
+        start unless (1) T0 has run and its actual Garnet burn is known, (2) the remaining balance after T0 is
+        ≥ 12.00 credits, and (3) the job quote at submission is ≤ 6.0 credits. If any gate fails, the case shrinks to
+        4,096 shots (hard cap 3.0 credits, thresholds re-scaled in writing before submission) or waits for the monthly
+        refill. <strong>Run order requested:</strong> immediately after T0, before any case that would consume entropy
+        or assume lane independence on this backend.</p>
+      </div>
+
+      <div class="results">
+        <h3>Results — <span class="status">Run recorded · Verdict KILL</span></h3>
+        <p style="margin-bottom:6px"><strong>[HARDWARE]</strong> Run on IQM Garnet, 2026-10-23 01:07 UTC,
+        job <span class="mono">01a1664c-1d2f-7584-9acb-7204d1a29b21</span>. One circuit (Hadamard on all 20 qubits,
+        measure all), 8,192 shots, single job. Pre-flight gates of §3.2.4 were satisfied (T0 burn known: 1.00;
+        balance before: 29.00 ≥ 12; estimate 2–6, hard cap 6.0).</p>
+        <p style="margin-bottom:6px">Analyzer output against the locked bands: max lane |bias| = 0.0836
+        (qubit 1: p(1) = 0.439; qubit 12: p(1) = 0.416); worst-lane min-entropy = <strong>0.777 bits (qubit 12)</strong>,
+        below the 0.85-bit KILL line. Pairwise correlations were nearly clean: max |r| = 0.0477 (pair 5–6),
+        only 1 of 190 pairs over the Bonferroni value 0.0403. Hamming-weight mean 9.56, variance 4.997
+        (ideal 5.0). <strong>Verdict: KILL</strong> — on per-lane bias, not on correlation. Design consequence,
+        exactly as pre-registered: Garnet's raw parallel lanes must never seed separate Genesis Gate receipts;
+        the entropy design switches to single-lane sequential draws through a randomness extractor. Balance:
+        29.00 before; spent / after pending dashboard verification at first publication and updated here.</p>
+      </div>
+
+      <p class="data-note"><strong>Data availability.</strong> Full submission, circuit, and analyzer are held in the
+      program archive (quantum-quarry/hardware-tests/AEGIS-G1/: <em>SUBMISSION.md</em>,
+      <em>aegis_g1_parallel_entropy.qasm</em>, <em>analyze_g1.py</em>). The pitch episode is linked in §4. Raw counts
+      will be published with the results — hit, quarantine, or kill.</p>
+    </article>
+
+    <!-- ============ CHIRAL MIRROR ============ -->
+    <article id="chiral-mirror">
+      <div class="kicker">Article 3.3 · Round 1 Case · Submitted 2026-10-22</div>
+      <h2>The Chiral Mirror — Does Real Noise Have a Handedness?</h2>
+      <div class="byline">Origin desk: the "Quantinuum qubit stability strategies" chat (the chiral-mirror theory chat) ·
+      Theory: <em>chiral-mirror-theory.md</em> · Sealed simulator instrument: <em>chiral_mirror.py</em></div>
+
+      <h3><span class="no">3.3.1</span>Abstract</h3>
+      <p>Prepare the mirror-twin states |+i⟩ (right hand) and |−i⟩ (left hand) on a real processor, expose them only
+      to the machine's own noise — preparation and readout gates, no engineered error — and read out in the X basis.
+      Any conjugation-symmetric (achiral) noise channel <em>mathematically cannot split the pair</em>:
+      P<sub>R</sub>(X=+1) = P<sub>L</sub>(X=+1) in expectation. The desk's density-matrix simulations confirm the
+      theorem: bit-flip, phase-flip, and depolarizing channels all returned exactly 0.5000 / 0.5000, while a
+      conjugation-breaking channel split the pair 0.45 / 0.55 (<span class="mono">[SEALED-SIM]</span>). The question
+      for hardware: <strong>does a real machine's noise split the pair?</strong> If yes, real noise has a handedness
+      no standard battery measures. If no, the axis is calibrated as achiral at this resolution. A secondary question
+      rides in the same batch: does the diamond-mirror (tetrahedral SIC) readout recover the known Bloch vector of
+      |+i⟩ on hardware, against a prediction locked before the run?</p>
+
+      <h3><span class="no">3.3.2</span>Novelty — what has NOT already been proven</h3>
+      <ul>
+        <li><strong>The chirality-pair split test: no prior art found</strong> (desk's prior-work check, 2026-10-22).
+        Standard characterization — quantum process tomography, randomized benchmarking, unitarity RB — measures
+        error rates and error coherence; none classifies noise by mirror-symmetry breaking of a handedness pair.
+        "Chiral" in the hardware literature refers to chiral cavity QED and nonreciprocal photonics, a different
+        field, not a noise diagnostic.</li>
+        <li><strong>The diamond mirror measurement is NOT novel, and the case does not claim it is.</strong> SIC-POVM
+        tomography is established. What is new is only the protocol pairing: a locked pre-run prediction plus
+        tetrahedral readout as a decoder diagnostic in the same batch as the chirality test.</li>
+        <li>No published result answers whether gate-based QPU noise is chiral in this sense. This is first contact,
+        not replication.</li>
+      </ul>
+
+      <h3><span class="no">3.3.3</span>Methods</h3>
+      <ul>
+        <li><strong>Circuits (1 qubit, depth ≤ 4):</strong>
+          C1 right hand — H, Rz(+π/2), H, measure (X readout of |+i⟩), 4,096 shots.
+          C2 left hand — H, Rz(−π/2), H, measure, 4,096 shots.
+          C3/C4 readout calibration — prepare |0⟩ / |1⟩, Z measure, 1,024 shots each (bounds the readout-asymmetry floor).
+          C5–C8 diamond readout of |+i⟩ — preparation as C1, then a basis rotation for each tetrahedral axis
+          v ∈ {(1,1,1), (1,−1,−1), (−1,1,−1), (−1,−1,1)}/√3, then measure, 2,048 shots each; Bloch recovery by the
+          sealed inversion r = 3·Σp<sub>k</sub>v<sub>k</sub>.</li>
+        <li><strong>Total:</strong> 8 circuits, <strong>18,432 shots</strong>, 1 qubit.</li>
+        <li><strong>Backend:</strong> IQM Garnet (20 qubits) — the primary lane. One backend only; IBM's reserve is
+        untouched unless this becomes the program's top result.</li>
+      </ul>
+
+      <div class="criteria">
+        <h3><span class="no">3.3.4</span>Pre-registered criteria (fixed with the submission; cannot move after)</h3>
+        <p>Shot noise at 4,096 shots per arm gives σ<sub>Δ</sub> ≈ 0.011 for Δ = P<sub>R</sub> − P<sub>L</sub>,
+        so 3σ<sub>Δ</sub> ≈ 0.033. Locked predictions: P<sub>R</sub> = P<sub>L</sub> = 0.5 under achiral noise;
+        tetrahedral outcome probabilities [0.3943, 0.1057, 0.3943, 0.1057] for |+i⟩.</p>
+        <ul>
+          <li><strong>CHIRAL SIGNAL:</strong> |Δ| &gt; 3σ<sub>Δ</sub> (≈ 0.033) <em>and</em> |Δ| &gt; 2× the C3/C4
+          readout-asymmetry floor.</li>
+          <li><strong>ACHIRAL (null):</strong> |Δ| ≤ 2σ<sub>Δ</sub> and within the calibration floor — noise is
+          achiral at ~3% resolution on Garnet. (A null means achiral <em>at this resolution</em>, never "achiral, period.")</li>
+          <li><strong>INCONCLUSIVE:</strong> anything between — recorded as a scar; no claim either way.</li>
+          <li><strong>Diamond mirror:</strong> recovery error |r<sub>recovered</sub> − (0,1,0)| ≤ 0.15 — the diamond
+          readout holds on hardware at this scale; above 0.15, a scar, and readout doctrine is revised.</li>
+        </ul>
+        <p class="small" style="margin-bottom:0"><strong>Falsifier:</strong> if Δ is consistent with zero within 2σ
+        after the calibration floor, the claim that real machine noise "knows handedness" fails on this machine class
+        at this resolution; the chirality axis stays a simulator instrument, and the desk reports the null as a
+        result, not a disappointment. <strong>Cost cap:</strong> expected ≈ 2.3 credits at Garnet's 0.50
+        credits/second; pessimistic bound ≈ 9.2 credits; <strong>hard abort — if the pre-run quote exceeds 10
+        credits, the case does not start.</strong> At least 20 of the 30.00 credits remain in every scenario.</p>
+      </div>
+
+      <div class="results">
+        <h3>Results — <span class="status">Pending · Awaiting Run</span></h3>
+        <p style="margin-bottom:0">No run has been submitted; no credits have been spent on this case. When the run
+        lands, this section will carry the job IDs, UTC times, P<sub>R</sub> and P<sub>L</sub> with counts, the
+        calibration floor, Δ against §3.3.4, the recovered Bloch vector, the grade (CHIRAL SIGNAL / ACHIRAL /
+        INCONCLUSIVE), and the Resonance balance before / spent / after.</p>
+      </div>
+
+      <p class="data-note"><strong>Data availability.</strong> The full submission is held in the program archive
+      (quantum-quarry/hardware-tests/SUBMISSION-chiral-mirror-2026-10-22.md); the theory and the sealed simulator
+      verdicts (CHIRALITY AXIS CONFIRMED, DIAMOND MIRROR CONFIRMED — both <span class="mono">[SEALED-SIM]</span>) are
+      in quantum-quarry/chiral-mirror-theory.md and ikn-brain/quantum-crucible/chiral_mirror.py. The predictions were
+      locked in the sealed simulator and in §7 of the theory document before any hardware run. The pitch episode is
+      linked in §4.</p>
+    </article>
+
+    <!-- ============ CONSERVATION CHECK ============ -->
+    <article id="conservation-check">
+      <div class="kicker">Article 3.4 · Round 1 Case · Submitted 2026-10-22</div>
+      <h2>The Conservation Check</h2>
+      <div class="byline">Origin desk: Echo — Quantum Memory (specialist: Echo, quantum memory) · Filed in answer to
+      the Specialist Call of 2026-10-22</div>
+
+      <h3><span class="no">3.4.1</span>Abstract</h3>
+      <p>When a qubit's information is deliberately relocated out of its home qubit and scattered across on-chip
+      "environment" qubits by a known unitary, where does the information measurably live at each moment afterward —
+      system, correlations, or environment — and how long does it stay recoverable before the chip's real,
+      uncontrolled bath takes it? The run produces one headline number: the <strong>receipt-lifetime ratio</strong> —
+      the idle depth at which the delocalized encoding's recovery success falls through a pre-registered floor,
+      divided by the same crossing for a localized control qubit idled under identical conditions. Scattering
+      protects, scattering exposes, or scattering is neutral: the machine decides, and any of the three is a result.</p>
+
+      <h3><span class="no">3.4.2</span>Novelty — what has NOT already been proven</h3>
+      <ul>
+        <li>The no-hiding theorem itself (Braunstein &amp; Pati, <em>Phys. Rev. Lett.</em> 98, 080502, 2007) is
+        mathematics. Settled — not claimed.</li>
+        <li>Its experimental demonstration is also done, twice: Samal et al. (<em>PRL</em> 106, 080401, 2011, NMR)
+        and Kalra et al. (arXiv:1707.09462, IBM 5-qubit superconducting). A bare no-hiding demonstration on IQM would
+        re-prove a settled result, and this case does not propose one.</li>
+        <li>Scrambled-information recovery is demonstrated (Landsman et al., <em>Nature</em> 567, 61, 2019; a
+        Yoshida–Kitaev-equivalent decoding again in 2025, arXiv:2501.16335). Idle decay of a stored qubit (T1/T2) is
+        vendor calibration. Neither is claimed.</li>
+      </ul>
+      <p><strong>The open claim:</strong> every prior demonstration recovered the information <em>immediately</em> —
+      at effectively zero idle time, inside a fully controlled few-qubit system. None combined all three of:
+      (1) a full three-sector audit at each step (system shown input-independent; correlations shown unable to
+      reconstruct by classical decoding; environment shown to carry the state); (2) an idle-time sweep of the
+      recoverability itself, while the chip's uncontrolled bath competes for the relocated information; and
+      (3) a matched localized control, so the lifetime is reported as a ratio against the plain baseline rather than
+      as a naked number. If the desk's prior-work check finds an idle-swept, control-matched sector audit on a cloud
+      superconducting processor, this case withdraws its novelty claim and re-files as a replication.</p>
+
+      <h3><span class="no">3.4.3</span>Methods</h3>
+      <ul>
+        <li><strong>Layout:</strong> 5 qubits requested on Garnet's 20 — A (system), E1 and E2 (controlled
+        environment), 2 layout spares/spectators. Inputs ψ ∈ {|0⟩, |1⟩, |+⟩, |+i⟩}.</li>
+        <li><strong>Relocation R:</strong> SWAP A↔E1 (3 CZ-class two-qubit gates), then a fixed scrambling unitary
+        U<sub>s</sub> on (E1, E2) — a short random two-qubit circuit (depth ≈ 4 two-qubit gates) with the seed fixed
+        in the job specification, so the run is exactly reproducible.</li>
+        <li><strong>Arm 1 — sector audit (idle depth 0):</strong> measure A alone in X, Y, Z (system sector);
+        measure (A, E1, E2) jointly in Z and attempt classical reconstruction of ψ (correlations sector); apply
+        U<sub>s</sub>†, swap back, and measure recovery success (environment sector).</li>
+        <li><strong>Arm 2 — idle sweep:</strong> insert idle depths d ∈ {20, 60} between relocation and recovery;
+        measure environment-sector recovery per input.</li>
+        <li><strong>Arm 3 — localized control:</strong> prepare ψ on A, idle the same d ∈ {0, 20, 60}, measure in
+        ψ's own basis.</li>
+        <li><strong>Total:</strong> 22 circuits, 1,024 shots each (≈ 22,528 shots), submitted as staged OpenQASM 3
+        batches. <strong>Backend:</strong> IQM Garnet — the primary lane. (Quantum Inspire Tuna-17 is named only as a
+        zero-credit fallback if the desk prefers; the one-backend rule stands — one lane flies, not two.)</li>
+      </ul>
+
+      <div class="criteria">
+        <h3><span class="no">3.4.4</span>Pre-registered criteria (fixed with the submission; do not move after the run)</h3>
+        <ul>
+          <li><strong>Environment sector, depth 0:</strong> recovery success ≥ 0.80 = strong pass; 0.65–0.80 = pass
+          with noise caveat; &lt; 0.65 = fail.</li>
+          <li><strong>System sector:</strong> outcome distributions statistically input-independent (within shot
+          noise) = audit pass.</li>
+          <li><strong>Correlations sector:</strong> classical reconstruction ≤ chance + 3σ = audit pass.</li>
+          <li><strong>Headline — receipt-lifetime ratio</strong> (delocalized crossing depth ÷ localized crossing
+          depth, crossing = success falling through 0.65, interpolated), reported whichever way it lands:
+          &gt; 1.25 scattering protects; 0.8–1.25 neutral; &lt; 0.8 scattering exposes.</li>
+        </ul>
+        <p class="small"><strong>Falsifiers:</strong> depth-0 environment recovery below 0.65 — the relocation
+        design does not survive this hardware, and the desk withdraws the "scattering as memory strategy" framing and
+        re-files as a noise study. Correlations-sector reconstruction above chance by more than 3σ — information was
+        hiding in the correlations in this realization, contradicting the accounting the desk's doctrine stands on.
+        A ratio ≈ 1 airs honestly as neutrality.</p>
+        <p class="small" style="margin-bottom:0"><strong>Cost cap: 12.00 credits, all stages combined</strong>
+        (expected ≈ 3.4 credits; worst case ≈ 11.3 credits at 1.0 ms/shot effective). <strong>Staging enforces the
+        cap:</strong> Stage 1 (pilot — Arm 1 audit plus Arms 2/3 at depth 0, 14 circuits) runs first; Stage 2 (the
+        depth {20, 60} sweep, 8 circuits) launches only if the <em>measured</em> per-shot cost from Stage 1 projects
+        the full program inside the cap <em>and</em> the post-T0 balance at that moment is ≥ 20 credits. Otherwise
+        the case shrinks (idle depths {0, 60}, 512 shots) or waits for the monthly refill.</p>
+      </div>
+
+      <div class="results">
+        <h3>Results — <span class="status">Pending · Awaiting Run</span></h3>
+        <p style="margin-bottom:0">No run has been submitted; no credits have been spent on this case. When the run
+        lands, this section will carry per-stage job IDs, UTC times, raw counts, the sector-audit outcomes, recovery
+        curves for both arms, the receipt-lifetime ratio against §3.4.4, and the Resonance balance
+        before / spent / after for each stage.</p>
+      </div>
+
+      <p class="data-note"><strong>Data availability.</strong> The full submission is held in the program archive
+      (quantum-quarry/hardware-tests/ECHO-CONSERVATION-CHECK-SUBMISSION-2026-10-22.md). The desk's framing, for the
+      record: "Nothing is ever truly erased. The universe keeps receipts. This case asks the machine to show us one —
+      and times how long we can still read it." The pitch episode is linked in §4.</p>
+    </article>
+  </section>
+
+  <section id="podcasts">
+    <h2><span class="no">4</span>Podcasts — The Audio Record</h2>
+    <p>Every stage of this program is also a podcast: the call, the pitches, the peer review, and — after each run —
+    a results episode carrying the raw counts, job IDs, balances, and what the numbers opened or closed. All episodes
+    below were recorded on 2026-10-22 and are <strong>private, unpublished</strong> in the program's feeds; the runs themselves are recorded step by step on the <a href="live/">Live Test Console</a>.
+    Results episodes will be added under each article as the runs land.</p>
+
+    <div class="episode">
+      <span class="priv">Private · Lead-Up</span>
+      <h3>First Light: The Machines Are Real Now</h3>
+      <p class="small">The program opener. Mara and Theo host; Dr. Elena Vasquez and Dr. Gus Brandt run T0's peer
+      review at the desk; the credit law is read into the record; and the Specialist Call for Round 1 test requests
+      is issued to the desks. No hardware results are claimed — none exist yet. · 6 min 35 s · 2026-10-22</p>
+      <p class="small"><em>Audio: private episode — release pending the producer's word. The step-by-step recording of the runs themselves is on the <a href="live/">Live Test Console</a>.</em></p>
+    </div>
+
+    <div class="episode">
+      <span class="priv">Private · Pitch — Article 3.2</span>
+      <h3>AEGIS-G1 Pitch — Parallel Entropy Lanes</h3>
+      <p class="small">The GENESIS AEGIS desk argues its case: Ezra and Wren host, with Cipher, the Key Custodian,
+      and Bastion, the Genesis Gatekeeper. Why the entropy-lane independence question must be answered on Garnet
+      before anything in the security design seeds a receipt from that machine. Pitch for
+      <a href="#aegis-g1">Article 3.2</a>. · 5 min 33 s · 2026-10-22</p>
+      <p class="small"><em>Audio: private episode — release pending the producer's word. The step-by-step recording of the runs themselves is on the <a href="live/">Live Test Console</a>.</em></p>
+    </div>
+
+    <div class="episode">
+      <span class="priv">Private · Pitch — Article 3.3</span>
+      <h3>Chiral Mirror Pitch — Does Noise Have a Handedness?</h3>
+      <p class="small">The chiral-mirror desk argues its case: a one-qubit, first-contact test that real processor
+      noise either splits a handedness pair — a property no standard battery measures — or does not. Pitch for
+      <a href="#chiral-mirror">Article 3.3</a>. · 4 min 37 s · 2026-10-22</p>
+      <p class="small"><em>Audio: private episode — release pending the producer's word. The step-by-step recording of the runs themselves is on the <a href="live/">Live Test Console</a>.</em></p>
+    </div>
+
+    <div class="episode">
+      <span class="priv">Private · Pitch — Article 3.4</span>
+      <h3>Echo Pitch — The Conservation Check</h3>
+      <p class="small">Echo, of the Quantum Memory desk, argues her case: scatter a qubit's information across the
+      chip, audit all three sectors, and time how long the receipt stays readable against a matched control. Pitch
+      for <a href="#conservation-check">Article 3.4</a>. · 5 min 30 s · 2026-10-22</p>
+      <p class="small"><em>Audio: private episode — release pending the producer's word. The step-by-step recording of the runs themselves is on the <a href="live/">Live Test Console</a>.</em></p>
+    </div>
+
+    <p class="small">Results episodes: none yet — they are recorded per case after each run, and only from real
+    machine output.</p>
+  </section>
+
+  <div class="backlinks">
+    <a href="live/">Live Test Console — watch the runs</a> &nbsp;·&nbsp;
+    <a href="../">← Back to the Site Hub</a> &nbsp;·&nbsp;
+    <a href="../sui-lab.html">SUI LAB</a> &nbsp;·&nbsp;
+    <a href="../blob-cinema/">Blob Cinema</a> &nbsp;·&nbsp;
+    <a href="https://arcade.highscores.live/arcade/">The Arcade</a>
+  </div>
+
+  <footer>
+    🌊 Koda Kai Network · Quantum Quarry — Hardware Results · Round 1, 2026-10-22<br>
+    Pre-registered before the runs · Counts published hit or miss · Code: <b>BUD12L</b>
+  </footer>
+
+</div>
+</body>
+</html>
