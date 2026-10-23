@@ -119,6 +119,68 @@
      }
     }
    ]
+  },
+  {
+   "case": "CHIRAL-MIRROR",
+   "recorded": "recorded live during the run",
+   "events": [
+    {
+     "utc": "2026-10-23T01:45:12Z",
+     "step": "verify",
+     "title": "Access token verified",
+     "detail": "Authenticated read returned Garnet's live architecture: 20 qubits. Nothing submitted yet.",
+     "explain": "Same opening gate as every run: prove the key works with a free read, or nothing else happens."
+    },
+    {
+     "utc": "2026-10-23T01:45:12Z",
+     "step": "build",
+     "title": "Eight frozen circuits built",
+     "detail": "C1/C2 the handedness pair (4,096 shots each), C3/C4 readout calibration (1,024 each), C5\u2013C8 the diamond-mirror axes (2,048 each) \u2014 18,432 shots on qubit 10.",
+     "explain": "Qubit 10 was chosen because the AEGIS-G1 run measured it as Garnet's least biased lane (p(1) = 0.5022). Yesterday's scar picks today's lane. The bands were locked in the submission before this run existed."
+    },
+    {
+     "utc": "2026-10-23T01:45:40Z",
+     "step": "submit",
+     "title": "Submitting to IQM Garnet",
+     "detail": "8 circuits in 3 shot-groups \u00b7 18,432 shots total \u00b7 estimate \u22482.3 credits, hard abort line 10 (the frozen circuit set is the quote control).",
+     "explain": "The estimate comes from Garnet's rate card (0.50 credits per second of QPU time) and the frozen shot count. If the machine time blows past the model, the cost \u2014 not the science \u2014 gets the scar."
+    },
+    {
+     "utc": "2026-10-23T01:45:44Z",
+     "step": "submitted",
+     "title": "Shot-group accepted (4096 shots \u00d7 2 circuits)",
+     "detail": "Job ID 01a1666f-7ab4-7058-bc83-b2bd46ed5f33.",
+     "explain": "From here the run is out of our hands: real noise, real readout, no engineered error anywhere in the batch."
+    },
+    {
+     "utc": "2026-10-23T02:45:43Z",
+     "step": "submitted",
+     "title": "Shot-group accepted (1024 shots \u00d7 2 circuits)",
+     "detail": "Job ID 01a166a6-63b2-71da-893c-98944d0efc6d.",
+     "explain": "From here the run is out of our hands: real noise, real readout, no engineered error anywhere in the batch."
+    },
+    {
+     "utc": "2026-10-23T02:45:50Z",
+     "step": "submitted",
+     "title": "Shot-group accepted (2048 shots \u00d7 4 circuits)",
+     "detail": "Job ID 01a166a6-8316-725e-836e-9c4d8c798f72.",
+     "explain": "From here the run is out of our hands: real noise, real readout, no engineered error anywhere in the batch."
+    },
+    {
+     "utc": "2026-10-23T02:45:58Z",
+     "step": "counts",
+     "title": "Counts returned \u2014 18432 real shots",
+     "detail": "Every circuit's counts are archived verbatim in the run record.",
+     "explain": "Raw counts are the evidence. Everything after this step is arithmetic anyone can redo."
+    },
+    {
+     "utc": "2026-10-23T02:45:58Z",
+     "step": "analyze",
+     "title": "Analyzer verdict: ACHIRAL (null)",
+     "detail": "P_R = 0.5251, P_L = 0.5205, \u0394 = 0.0046 (\u03c3 = 0.011, z = 0.42); readout floor = 0.0283. Diamond mirror: recovered Bloch vector [0.0076, 0.9371, 0.0186], error 0.0661 vs the 0.15 line \u2014 holds.",
+     "explain": "The frozen analyzer compares \u0394 against bands locked on 2026-10-22: a signal must beat both 3\u03c3 of shot noise and twice the machine's own readout asymmetry. The diamond mirror checks the tetrahedral readout against the Bloch vector locked before the run."
+    }
+   ]
   }
  ],
  "g1_analysis": {
@@ -182,5 +244,35 @@
    "11": 79,
    "00": 100
   }
+ },
+ "chiral_analysis": {
+  "P_R": 0.5251,
+  "P_L": 0.5205,
+  "delta": 0.0046,
+  "sigma_delta": 0.011,
+  "z": 0.42,
+  "readout_e0": 0.0039,
+  "readout_e1": 0.0322,
+  "readout_floor": 0.0283,
+  "verdict": "ACHIRAL (null)",
+  "diamond_axis_probs": [
+   0.7803,
+   0.2285,
+   0.7651,
+   0.2349
+  ],
+  "diamond_predicted_probs": [
+   0.7887,
+   0.2113,
+   0.7887,
+   0.2113
+  ],
+  "bloch_recovered": [
+   0.0076,
+   0.9371,
+   0.0186
+  ],
+  "bloch_error_vs_010": 0.0661,
+  "diamond_holds": true
  }
 }
