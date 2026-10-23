@@ -47,12 +47,26 @@ a{color:var(--teal)}
 <h2>The recordings</h2>
 <p class="note">Press play and watch a run the way the desk saw it: each step appears with what happened and what it means. T0 is reconstructed from its sealed run record; AEGIS-G1 was recorded live during the run.</p>
 <div class="controls">
-<button class="primary" id="playBtn">▶ Play recording</button>
+<button class="primary" id="fullBtn">▶▶ FULL PLAY — both runs, start to finish</button>
+<button id="playBtn">▶ Play recording</button>
 <button id="t0Btn" class="active">T0 — Bell truth</button>
 <button id="g1Btn">AEGIS-G1 — Entropy lanes</button>
 <button id="resetBtn">Restart</button>
 </div>
 <div id="stage"></div>
+</section>
+<section class="panel">
+<h2>Behind the scenes — the quantum system, live</h2>
+<p class="note">This visual is driven by the recording: press play and watch the machine state change as each real step lands. During T0 it shows the two-qubit entanglement test and the CHSH needle climbing past the classical limit. During AEGIS-G1 it shows all 20 Garnet lanes drawing at once — and the two biased lanes turning red when the analyzer speaks.</p>
+<canvas id="viz" width="1060" height="300" style="width:100%;background:#101820;border-radius:8px"></canvas>
+<div class="chips" style="margin-top:10px"><span class="chip" style="background:#eef4f3;border-color:var(--line);color:var(--ink)" id="vizCaption">Idle — press play.</span></div>
+<h3>The road from here — every step on the record</h3>
+<p class="note">✓ Step 1 — Prove the lane: T0 HIT and AEGIS-G1 KILL on real hardware, recorded above.<br>
+✓ Step 2 — Build the case system: templates, credit law, peer review, receipts (this console).<br>
+→ Step 3 — Income cases: specialists take on prize and grant problems (IQM research challenge, Strangeworks, BlueQubit, ORNL QCUP, DOE Genesis Q) and run real tests.<br>
+→ Step 4 — Every income case gets a 4-part podcast series (theory → build → run → verdict) with full peer review before anything ships.<br>
+→ Step 5 — Positive results are registered in the correct submission venues for credit; failures get their own episode and a new direction.<br>
+→ Step 6 — Results go out as breaking-news posts across the social outlets, tagged to the venue and provider, pointing back to this record.</p>
 </section>
 <aside>
 <section class="panel">
@@ -120,9 +134,62 @@ function select(events, btn){
   stop(); current=events; idx=0; stage.innerHTML='';
   document.querySelectorAll('#t0Btn,#g1Btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active');
 }
+let fullMode=false;
+fullBtn.addEventListener('click', ()=>{
+  fullMode=true; select(T0, t0Btn); idx=0; stage.innerHTML='';
+  vizMode='t0'; vizS=0; vizLanes=null; caption('FULL PLAY — Run 1 of 2: T0, the Bell truth test.');
+  play();
+});
+const _origCard = card;
+card = function(e){
+  _origCard(e);
+  if(vizMode==='t0'){
+    if(e.step==='submit'){ vizS=1.2; caption('Two qubits entangled on Garnet — the needle will settle where the counts say.'); }
+    if(e.step==='analyze'){ vizS=2.664; caption('CHSH S = 2.664 — past the classical limit of 2.0, inside the locked HIT band.'); }
+    if(e.step==='result'){ vizS=2.0; caption('Counts are back: three settings agree, one disagrees — the entanglement fingerprint.'); }
+  } else {
+    if(e.step==='submit'){ vizLanes=Array(20).fill(0.5); caption('8,192 simultaneous draws across all 20 lanes…'); }
+    if(e.step==='analyze'){ vizLanes=[0.4974, 0.439, 0.4839, 0.4967, 0.4806, 0.493, 0.4822, 0.4882, 0.4791, 0.4717, 0.5022, 0.4888, 0.4164, 0.4661, 0.4709, 0.4742, 0.4561, 0.4951, 0.4855, 0.493]; caption('Verdict KILL: lanes 12 and 1 (red) are biased coins — min-entropy 0.777 bits on qubit 12.'); }
+  }
+  if(fullMode && current===T0 && idx>=current.length){
+    fullMode='switch';
+    setTimeout(()=>{ select(G1, g1Btn); vizMode='g1'; vizLanes=null; caption('FULL PLAY — Run 2 of 2: AEGIS-G1, the entropy lanes.'); play(); fullMode=true; }, 1600);
+  }
+};
 playBtn.addEventListener('click', play);
 resetBtn.addEventListener('click', ()=>{stop(); idx=0; stage.innerHTML='';});
-t0Btn.addEventListener('click', ()=>select(T0, t0Btn));
-g1Btn.addEventListener('click', ()=>select(G1, g1Btn));
+t0Btn.addEventListener('click', ()=>{fullMode=false; vizMode='t0'; select(T0, t0Btn);});
+g1Btn.addEventListener('click', ()=>{fullMode=false; vizMode='g1'; select(G1, g1Btn);});
+let vizMode='t0', vizS=0, vizLanes=null;
+const viz=document.getElementById('viz'), vx=viz.getContext('2d');
+function caption(t){ document.getElementById('vizCaption').textContent=t; }
+function draw(){
+  const W=viz.width,H=viz.height; vx.clearRect(0,0,W,H);
+  vx.fillStyle='#8fa3b8'; vx.font='13px sans-serif';
+  if(vizMode==='t0'){
+    vx.fillText('CHSH S — classical limit 2.0 · Tsirelson ceiling 2.828 · locked HIT band 2.3–2.90', 20, 26);
+    const x0=60,x1=W-60,y=120;
+    vx.strokeStyle='#35506b'; vx.lineWidth=10; vx.beginPath(); vx.moveTo(x0,y); vx.lineTo(x1,y); vx.stroke();
+    const px=v=>x0+(v/3)*(x1-x0);
+    vx.fillStyle='#e8b13c'; vx.fillRect(px(2.0)-2,y-26,4,52); vx.fillText('2.0 classical', px(2.0)-30, y+48);
+    vx.fillStyle='#2e7d4f'; vx.fillRect(px(2.3),y-14,(px(2.9)-px(2.3)),28);
+    vx.fillStyle='#fff'; vx.beginPath(); vx.arc(px(vizS),y,13,0,7); vx.fill();
+    vx.fillStyle='#69c7c1'; vx.font='bold 22px Georgia'; vx.fillText('S = '+vizS.toFixed(3), px(vizS)-38, y-34);
+    vx.fillStyle='#8fa3b8'; vx.font='13px sans-serif';
+    vx.fillText('Q0 ●——— entangled ———● Q1   |Φ+⟩ prepared on Garnet, rotated, measured 4 × 1,024 times', 60, 210);
+  } else {
+    vx.fillText('AEGIS-G1 — 20 entropy lanes, P(1) per lane · fair coin = 0.500 · KILL line: min-entropy < 0.85 bits', 20, 26);
+    const lanes = vizLanes || Array(20).fill(0.5);
+    lanes.forEach((p,i)=>{
+      const x=50+i*50, h=(p-0.38)/0.24*150, y=210;
+      vx.fillStyle=(i===12||i===1)&&vizLanes?'#e05252':'#3fa7a0';
+      vx.fillRect(x, y-h, 26, h);
+      vx.fillStyle='#8fa3b8'; vx.fillText('Q'+i, x, y+18);
+    });
+    vx.strokeStyle='#e8b13c'; vx.setLineDash([5,4]); vx.beginPath(); vx.moveTo(40,210-(0.5-0.38)/0.24*150); vx.lineTo(W-30,210-(0.5-0.38)/0.24*150); vx.stroke(); vx.setLineDash([]);
+  }
+  requestAnimationFrame(draw);
+}
+draw();
 </script>
 </body></html>
