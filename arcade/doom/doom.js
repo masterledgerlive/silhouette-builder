@@ -31,14 +31,19 @@
     'KEY_STRAFE_L','KEY_STRAFE_R','KEY_FIRE','KEY_USE','KEY_SHIFT',
     'KEY_TAB','KEY_ESCAPE','KEY_ENTER','KEY_BACKSPACE','KEY_ALT'];
 
+  function sendKey(name, down) {
+    if (!booted) return false;
+    var code = keys[name];
+    if (code === undefined) return false;
+    if (down) inst.exports.reportKeyDown(code); else inst.exports.reportKeyUp(code);
+    inputLog.push([Date.now() - t0, down ? 'd' : 'u', name]);
+    return true;
+  }
   function onKey(e, down) {
     var name = KEYMAP[e.key];
     if (!name || !booted) return;
     e.preventDefault();
-    var code = keys[name];
-    if (code === undefined) return;
-    if (down) inst.exports.reportKeyDown(code); else inst.exports.reportKeyUp(code);
-    inputLog.push([Date.now() - t0, down ? 'd' : 'u', name]);
+    sendKey(name, down);
   }
   window.addEventListener('keydown', function (e) { if (!e.repeat) onKey(e, true); });
   window.addEventListener('keyup', function (e) { onKey(e, false); });
@@ -53,13 +58,22 @@
     frameCount++;
   }
 
-  async function boot() {
+  var tickTimer = null, bootWaiters = [];
+  async function boot(pre) {
     setStatus('Loading sealed bytes…');
-    var wr = await fetch('doom.wasm'), ar = await fetch('doom1.wad');
-    if (!wr.ok || !ar.ok) throw new Error('game bytes failed to load (' + wr.status + '/' + ar.status + ')');
-    var wasmBuf = await wr.arrayBuffer();
-    var wad = new Uint8Array(await ar.arrayBuffer());
+    var wasmBuf, wad;
+    if (pre && pre.wasm && pre.wad) {
+      wasmBuf = pre.wasm; wad = pre.wad;
+    } else {
+      var wr = await fetch('doom.wasm'), ar = await fetch('doom1.wad');
+      if (!wr.ok || !ar.ok) throw new Error('game bytes failed to load (' + wr.status + '/' + ar.status + ')');
+      wasmBuf = await wr.arrayBuffer();
+      wad = new Uint8Array(await ar.arrayBuffer());
+    }
     setStatus('Sealed bytes loaded — booting DOOM…');
+    if (tickTimer) { clearInterval(tickTimer); tickTimer = null; }
+    booted = false; inst = null; memory = null;
+    inputLog = []; frameCount = 0; tics = 0;
     t0 = Date.now();
     var imports = {
       loading: {
@@ -94,7 +108,8 @@
     inst.exports.initGame();
     booted = true;
     setStatus('DOOM is live — press ENTER (4× through the menus to reach E1M1)');
-    setInterval(function () {
+    bootWaiters.splice(0).forEach(function (fn) { try { fn(); } catch (e) {} });
+    tickTimer = setInterval(function () {
       try { inst.exports.tickGame(); tics++; }
       catch (err) { console.error('[doom] tick trap:', err); }
     }, 1000 / 35);
@@ -159,9 +174,27 @@
   sealBtn.addEventListener('click', sealRun);
 
   var started = false;
-  window.startDoom = function () {
+  window.startDoom = function (pre) {
     if (started) return;
     started = true;
-    boot().catch(function (err) { setStatus('Boot failed: ' + err.message); });
+    boot(pre).catch(function (err) { setStatus('Boot failed: ' + err.message); });
+  };
+
+  /* KKDoom — hooks for the touch overlay, the recorder and replay.
+     Every input (keyboard, touch buttons, replay) flows through sendKey,
+     so inputLog is the one true record of a run. reboot() cold-boots a
+     fresh engine instance — that is what makes a replay a real ghost run
+     instead of inputs dripped into a half-finished game. */
+  window.KKDoom = {
+    sendKey: sendKey,
+    getLog: function () { return inputLog.slice(); },
+    clearLog: function () { inputLog = []; },
+    stats: function () { return { tics: tics, frames: frameCount, inputs: inputLog.length, booted: booted }; },
+    isBooted: function () { return booted; },
+    reboot: function (pre) {
+      started = true;
+      return boot(pre).catch(function (err) { setStatus('Boot failed: ' + err.message); });
+    },
+    onBoot: function (fn) { if (booted) fn(); else bootWaiters.push(fn); }
   };
 })();
