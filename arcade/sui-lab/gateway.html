@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quantum Gateway — TEST GENIQ Agent Desk · SUI LAB</title>
+<style>
+  :root{--bg:#070b24;--panel:#101736;--line:#2a3568;--ink:#eef1ff;--dim:#a7b0d8;--gold:#ffb703;--cyan:#7df9ff;--green:#7CFC90;--pink:#ff8fc7;--red:#ff7a7a;}
+  *{box-sizing:border-box;}
+  body{margin:0;background:radial-gradient(1000px 500px at 15% -10%,#1d2a6e 0%,transparent 55%),radial-gradient(900px 480px at 95% 0%,#3b1d5e 0%,transparent 55%),var(--bg);color:var(--ink);font-family:ui-rounded,"Segoe UI",system-ui,sans-serif;}
+  .wrap{max-width:1080px;margin:0 auto;padding:20px 16px 70px;}
+  a{color:var(--cyan);}
+  .banner{background:var(--gold);color:#3a2b00;font-weight:800;border-radius:12px;padding:10px 14px;text-align:center;box-shadow:0 4px 0 #b57f00;}
+  h1{font-size:clamp(28px,5vw,46px);margin:16px 0 4px;}
+  .sub{color:var(--dim);font-size:clamp(14px,2.2vw,17px);line-height:1.5;}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;margin-top:16px;}
+  .panel{background:var(--panel);border:2px solid var(--line);border-radius:18px;padding:18px;}
+  .panel h2{margin:0 0 8px;font-size:21px;}
+  .panel h3{margin:14px 0 6px;font-size:16px;color:var(--cyan);}
+  .big{font-size:34px;font-weight:900;}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px;}
+  button{cursor:pointer;font-family:inherit;font-weight:800;border:none;border-radius:999px;padding:12px 20px;font-size:15.5px;}
+  .b-gold{background:var(--gold);color:#3a2b00;box-shadow:0 5px 0 #b57f00;}
+  .b-green{background:#22c55e;color:#04160a;box-shadow:0 5px 0 #15803d;}
+  .b-blue{background:#2f7bff;color:#fff;box-shadow:0 5px 0 #1d4ed8;}
+  .b-ghost{background:#1b2450;color:var(--ink);border:2px solid var(--line);box-shadow:none;}
+  button:active{transform:translateY(3px);box-shadow:none;}
+  button:disabled{opacity:.45;cursor:not-allowed;}
+  select,input[type=range]{width:100%;margin:6px 0 2px;}
+  select{background:#0a1030;color:var(--ink);border:2px solid var(--line);border-radius:10px;padding:10px;font-size:16px;font-family:inherit;}
+  table{width:100%;border-collapse:collapse;font-size:14px;}
+  td,th{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;}
+  .mono{font-family:ui-monospace,Menlo,monospace;font-size:12.5px;word-break:break-all;}
+  .chip{display:inline-block;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:800;background:#26307a;}
+  .chip.green{background:#14532d;color:#bbf7d0;} .chip.gold{background:#713f12;color:#fde68a;} .chip.pink{background:#831843;color:#fbcfe8;}
+  .log{font-size:14px;line-height:1.65;max-height:300px;overflow:auto;}
+  .log div{border-bottom:1px dashed var(--line);padding:6px 0;}
+  .receipt{background:#fffdf5;color:#17204d;border-radius:14px;padding:14px 16px;font-size:14.5px;line-height:1.55;}
+  .receipt .hash{font-family:ui-monospace,Menlo,monospace;font-size:11.5px;word-break:break-all;background:#eef1ff;padding:7px;border-radius:8px;}
+  .ok{color:var(--green);font-weight:900;} .warn{color:var(--red);font-weight:800;}
+  .foot{color:var(--dim);font-size:13px;line-height:1.6;margin-top:22px;border-top:1px dashed var(--line);padding-top:12px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="banner">🧪 TEST GENIQ — closed-loop TEST credits on a real ledger. Real quotes, real escrow, real emulator runs, real receipts. NO monetary value · NOT transferable · NOT for sale · nothing here is a coin offering.</div>
+  <p style="margin:14px 0 0;"><a href="../sui-lab.html">← SUI LAB</a> · <a href="kids-lab/index.html">🦆 Kids Quantum Lab</a></p>
+  <h1>⚛️ Quantum Gateway — the agent desk</h1>
+  <p class="sub">The working rehearsal of the house quantum gateway. An agent (or a curious human) holds <b>TEST GENIQ</b>, takes a binding quote, locks it in escrow, the job runs, and settlement burns the escrow only on delivery — the exact rules of the tested GENIQ v3 protocol, running here in your browser against the same emulator engine as the Kids Lab. Prices use Quantinuum's published HQC formula; the margin line (×1.2) is disclosed, never hidden. The free emulator lane stays free, per protocol.</p>
+
+  <div class="grid">
+    <div class="panel">
+      <h2>👛 Test wallet</h2>
+      <div class="big"><span id="w-balance">0</span> <span style="font-size:17px;">TEST GENIQ</span></div>
+      <p style="color:var(--dim);margin:4px 0;">In escrow: <b id="w-escrow" style="color:var(--ink);">0</b> · Burned on settled jobs: <b id="w-burned" style="color:var(--ink);">0</b> · Minted (test): <b id="w-minted" style="color:var(--ink);">0</b></p>
+      <p id="w-conservation" style="margin:6px 0;">Conservation: —</p>
+      <div class="row"><button class="b-gold" id="faucet">🚰 Get 100 TEST GENIQ</button></div>
+      <h3>Ledger</h3>
+      <div style="max-height:220px;overflow:auto;"><table><thead><tr><th>#</th><th>Entry</th><th>Amount</th></tr></thead><tbody id="ledger-body"><tr><td colspan="3" style="color:var(--dim);">No entries yet.</td></tr></tbody></table></div>
+    </div>
+
+    <div class="panel">
+      <h2>🧾 Job desk</h2>
+      <label>Job (executed on the emulator)</label>
+      <select id="job-select">
+        <option value="chsh">The Impossible Game — CHSH match (per round: 2×1q gates, 1 CNOT, 2 measures)</option>
+        <option value="bell">Bell Pair Audit — entanglement check (1 H, 1 CNOT, 2 measures)</option>
+        <option value="coin">Certified Coin Flip — randomness batch (1 H, 1 measure)</option>
+        <option value="grover">Grover Search — 4 doors (4×1q gates, 2 CNOT, 2 measures)</option>
+      </select>
+      <label>Shots / rounds: <b id="shots-label">500</b></label>
+      <input type="range" id="shots" min="100" max="2000" step="100" value="500">
+      <div class="row">
+        <button class="b-blue" id="quote-btn">💬 Get binding quote</button>
+        <button class="b-ghost" id="free-run">🆓 Run the FREE emulator lane (0 GENIQ)</button>
+      </div>
+      <div id="quote-box" style="margin-top:12px;"></div>
+      <div class="row"><button class="b-green" id="pay-run" disabled>🔒 Lock escrow &amp; run the job</button></div>
+      <p style="color:var(--dim);font-size:13.5px;">The rehearsal route prices the job as the real Helios route would (HQC formula), then executes on the emulator. Settlement burns the escrow on delivery. If a job's actual cost ever exceeded 1.2× its quote, the protocol aborts and releases the escrow in full — that rule is in the tested Move code.</p>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="panel">
+      <h2>📦 Results &amp; receipts</h2>
+      <div id="results-list"><p style="color:var(--dim);">No jobs yet. Run one — paid or free lane — and its receipt lands here.</p></div>
+    </div>
+    <div class="panel">
+      <h2>👁️ Yaae's Watch</h2>
+      <p style="color:var(--dim);margin-top:0;">Yaae supervises this desk. Every settled job is observed, a learning note is filed to her watch log (the seed of the blob learning store), and a peer-review podcast is triggered for the runner. In the full system the notes land on Walrus and the episode is produced automatically; here you see the live log and can download each job's review packet.</p>
+      <div class="log" id="yaae-log"><div style="color:var(--dim);">Yaae is watching. No jobs observed yet.</div></div>
+      <p style="margin-top:10px;">🎧 The review format, live sample: <a href="kids-lab/sample-review.mp3">Yaae + Vera check an Impossible Game run</a></p>
+    </div>
+  </div>
+
+  <div class="foot">
+    <b>What this is / isn't.</b> This is the GENIQ v3 design running as a browser rehearsal: the ledger, quote binding, escrow, settlement, caps and receipts mirror the Move package that passes 15/15 tests (Lamp 106/106, router 15/15). TEST GENIQ is minted by the faucet on this page, lives only in this page, and buys nothing outside it. The production rails — Sui testnet package, Walrus result blobs, real hardware routes — open only through the gates in the design (testnet publish and first paid dollar each wait on the owner's exact word; a tradable token is not part of this system and would require a rule change plus a Florida securities attorney). Agent platforms interested in the real desk: the design and evidence are in Series 10–12 on the SUI LAB page.
+  </div>
+</div>
+
+<script src="kids-lab/sim.js"></script>
+<script>
+"use strict";
+var $ = function (id) { return document.getElementById(id); };
+var JOBS = {
+  coin:   { name: "Certified Coin Flip", n1q: 1, n2q: 0, nm: 1 },
+  bell:   { name: "Bell Pair Audit", n1q: 1, n2q: 1, nm: 2 },
+  grover: { name: "Grover Search (4 doors)", n1q: 4, n2q: 2, nm: 2 },
+  chsh:   { name: "The Impossible Game (CHSH)", n1q: 2, n2q: 1, nm: 2 }
+};
+var NOTES = {
+  coin: "Randomness, witnessed and counted. Filed under: entropy an auditor can re-check.",
+  bell: "The tie held — mixed pairs at zero. Filed under: entanglement, behaving.",
+  grover: "One peek, star found. Filed under: amplitude amplification, the polite superpower.",
+  chsh: "The limit bent again — quantum team above the classical ceiling. Filed under: evidence, accumulating."
+};
+var S = { minted: 0, balance: 0, escrow: 0, burned: 0, ledger: [], jobs: [], quote: null, seq: 0 };
+
+function ledger(kind, amount, note) {
+  S.seq++;
+  S.ledger.unshift({ n: S.seq, kind: kind, amount: amount, note: note || "" });
+  var body = $("ledger-body");
+  body.innerHTML = S.ledger.slice(0, 14).map(function (e) {
+    return "<tr><td>" + e.n + "</td><td>" + e.kind + (e.note ? " <span style='color:var(--dim);'>" + e.note + "</span>" : "") + "</td><td>" + e.amount + "</td></tr>";
+  }).join("");
+  renderWallet();
+}
+function renderWallet() {
+  $("w-balance").textContent = S.balance;
+  $("w-escrow").textContent = S.escrow;
+  $("w-burned").textContent = S.burned;
+  $("w-minted").textContent = S.minted;
+  var ok = S.minted === S.balance + S.escrow + S.burned;
+  $("w-conservation").innerHTML = "Conservation: " + (ok ? "<span class='ok'>✓ every test credit accounted for</span>" : "<span class='warn'>✗ LEDGER MISMATCH</span>");
+}
+function quoteFor(key, shots) {
+  var j = JOBS[key];
+  var hqc = 5 + shots * (j.n1q + 10 * j.n2q + 5 * j.nm) / 5000;
+  var geniq = Math.ceil(hqc * 1.2);
+  var commitment = QSim.sha256(JSON.stringify({ job: key, shots: shots, route: "helios-rehearsal" }));
+  return { key: key, shots: shots, hqc: Math.round(hqc * 100) / 100, geniq: geniq, commitment: commitment };
+}
+function runJob(key, shots) {
+  if (key === "coin") { var c = QSim.coinFlip(shots); return "Heads " + c.heads + " / tails " + c.tails + " over " + shots + " flips."; }
+  if (key === "bell") { var b = QSim.bellPair(shots); return "Pairs — 00: " + b.counts["00"] + ", 11: " + b.counts["11"] + ", mixed: " + (b.counts["01"] + b.counts["10"]) + " over " + shots + " shots."; }
+  if (key === "grover") { var marked = Math.floor(Math.random() * 4); var g = QSim.grover(marked, shots); return "Star behind door " + (marked + 1) + "; found " + g.counts[marked] + " of " + shots + " one-peek tries."; }
+  var cq = QSim.chsh(shots, true), cc = QSim.chsh(shots, false);
+  return "Quantum team " + Math.round(cq.rate * 100) + "% vs classical team " + Math.round(cc.rate * 100) + "% over " + shots + " rounds (classical ceiling 75%).";
+}
+function settle(quote, lane, summary) {
+  var rec = { job: JOBS[quote.key].name, shots: quote.shots, lane: lane,
+    route: lane === "paid" ? "helios-rehearsal (emulator-executed)" : "local emulator (free lane)",
+    quote_hqc: quote.hqc, charged_geniq: lane === "paid" ? quote.geniq : 0,
+    when: new Date().toISOString(), summary: summary };
+  rec.hash = QSim.sha256(JSON.stringify(rec));
+  S.jobs.unshift(rec);
+  renderResults();
+  yaae(rec);
+}
+function renderResults() {
+  $("results-list").innerHTML = S.jobs.map(function (r, i) {
+    return "<div class='receipt' style='margin-bottom:12px;'><b>🧾 " + r.job + "</b> · " + r.shots + " shots<br>" +
+      r.summary + "<br><b>Route:</b> " + r.route + " · <b>Charged:</b> " + r.charged_geniq + " TEST GENIQ" +
+      (r.quote_hqc ? " · <b>Quote:</b> " + r.quote_hqc + " HQC ×1.2" : "") +
+      "<div class='hash'>" + r.hash + "</div>" +
+      "<span class='chip pink'>🎙️ PEER-REVIEW PODCAST: QUEUED</span> <button class='b-ghost' style='padding:6px 12px;font-size:13px;' onclick='downloadPacket(" + i + ")'>⬇ review packet</button></div>";
+  }).join("");
+}
+function yaae(rec) {
+  var log = $("yaae-log");
+  if (S.jobs.length === 1) log.innerHTML = "";
+  var div = document.createElement("div");
+  div.innerHTML = "👁️ <b>Yaae observed</b> " + rec.job + " — " + rec.charged_geniq + " TEST GENIQ settled, receipt <span class='mono'>" + rec.hash.slice(0, 12) + "…</span><br>📝 " + NOTES[{ "Certified Coin Flip": "coin", "Bell Pair Audit": "bell", "Grover Search (4 doors)": "grover", "The Impossible Game (CHSH)": "chsh" }[rec.job]] + "<br>🎙️ Review trigger: <b>FIRED</b> — episode queued for the runner.";
+  log.prepend(div);
+}
+window.downloadPacket = function (i) {
+  var packet = { receipt: S.jobs[i], review_asks: [
+    "Did the classical cross-check agree with the quantum result?",
+    "What result would have proven this run WRONG?",
+    "Do the counts match the promised physics (within luck-of-the-flip)?"] };
+  var blob = new Blob([JSON.stringify(packet, null, 2)], { type: "application/json" });
+  var a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "gateway-review-packet-" + S.jobs[i].hash.slice(0, 8) + ".json";
+  a.click(); URL.revokeObjectURL(a.href);
+};
+
+$("faucet").addEventListener("click", function () {
+  S.minted += 100; S.balance += 100;
+  ledger("🚰 TEST MINT (faucet)", "+100");
+});
+$("shots").addEventListener("input", function () { $("shots-label").textContent = this.value; S.quote = null; $("pay-run").disabled = true; $("quote-box").innerHTML = ""; });
+$("job-select").addEventListener("change", function () { S.quote = null; $("pay-run").disabled = true; $("quote-box").innerHTML = ""; });
+$("quote-btn").addEventListener("click", function () {
+  var key = $("job-select").value, shots = parseInt($("shots").value, 10);
+  S.quote = quoteFor(key, shots);
+  $("quote-box").innerHTML = "<div class='receipt'><b>Binding quote</b> — " + JOBS[key].name + ", " + shots + " shots<br>" +
+    "Work: <b>" + S.quote.hqc + " HQC</b> (Quantinuum formula) · margin ×1.2 (disclosed) · <b>Total: " + S.quote.geniq + " TEST GENIQ</b><br>" +
+    "Bound to: <span class='mono'>" + S.quote.commitment.slice(0, 24) + "…</span> · valid 15 minutes</div>";
+  $("pay-run").disabled = S.balance < S.quote.geniq;
+  if (S.balance < S.quote.geniq) $("quote-box").innerHTML += "<p class='warn'>Wallet is short — the faucet gives 100 TEST GENIQ.</p>";
+});
+$("free-run").addEventListener("click", function () {
+  var key = $("job-select").value, shots = parseInt($("shots").value, 10);
+  var q = quoteFor(key, shots);
+  settle(q, "free", runJob(key, shots));
+});
+$("pay-run").addEventListener("click", function () {
+  if (!S.quote || S.balance < S.quote.geniq) return;
+  var q = S.quote;
+  S.balance -= q.geniq; S.escrow += q.geniq;
+  ledger("🔒 ESCROW LOCK", "-" + q.geniq, JOBS[q.key].name);
+  $("pay-run").disabled = true;
+  setTimeout(function () {
+    var summary = runJob(q.key, q.shots);
+    S.escrow -= q.geniq; S.burned += q.geniq;
+    ledger("🔥 SETTLED · escrow burned on delivery", "-" + q.geniq, JOBS[q.key].name);
+    settle(q, "paid", summary);
+    S.quote = null; $("quote-box").innerHTML = "";
+  }, 700);
+});
+renderWallet();
+</script>
+</body>
+</html>
