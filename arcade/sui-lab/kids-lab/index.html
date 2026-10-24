@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Koda Kai Kids Quantum Lab</title>
+<style>
+  :root{
+    --ink:#0d1440; --paper:#fffdf5; --blue:#2f7bff; --purple:#9b5bff; --orange:#ff8a3d;
+    --green:#22c55e; --gold:#ffb703; --pink:#ff5d8f; --teal:#12c2b0; --red:#ff5252;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  body{margin:0; font-family:"Chalkboard SE","Comic Sans MS","Segoe UI Rounded",system-ui,sans-serif;
+    background:radial-gradient(1200px 600px at 20% -10%, #2b3a8f 0%, transparent 60%),
+               radial-gradient(1000px 500px at 90% 0%, #5b2a86 0%, transparent 55%),
+               var(--ink); color:var(--paper); min-height:100vh;}
+  .wrap{max-width:1060px; margin:0 auto; padding:18px 16px 60px;}
+  .proto-banner{background:var(--gold); color:#3a2b00; font-weight:800; text-align:center;
+    padding:8px 12px; border-radius:12px; letter-spacing:.4px; box-shadow:0 4px 0 #b57f00;}
+  h1{font-size:clamp(30px,5.4vw,52px); margin:18px 0 2px; text-align:center; line-height:1.05;
+    text-shadow:0 3px 0 rgba(0,0,0,.35);}
+  h1 .q{background:linear-gradient(90deg,#6ee7ff,#c39bff,#ffb3d9); -webkit-background-clip:text;
+    background-clip:text; color:transparent;}
+  .tagline{text-align:center; opacity:.92; font-size:clamp(15px,2.4vw,19px); margin:4px 0 10px;}
+
+  /* duck stage */
+  .stage{display:flex; gap:18px; align-items:flex-end; margin:14px 0 6px; flex-wrap:wrap; justify-content:center;}
+  .duckbox{width:190px; text-align:center;}
+  .duck{animation:bob 2.6s ease-in-out infinite; transform-origin:50% 90%;}
+  @keyframes bob{0%,100%{transform:translateY(0) rotate(-1.2deg)}50%{transform:translateY(-7px) rotate(1.2deg)}}
+  .duckname{font-weight:900; margin-top:2px; font-size:17px;}
+  .duckrole{opacity:.85; font-size:13.5px;}
+  .bubble{flex:1 1 320px; max-width:640px; background:var(--paper); color:#17204d; border-radius:20px;
+    padding:16px 18px; font-size:clamp(16px,2.5vw,20px); line-height:1.45; position:relative;
+    box-shadow:0 8px 0 rgba(0,0,0,.25); min-height:96px;}
+  .bubble:before{content:""; position:absolute; left:-14px; bottom:26px; border:8px solid transparent;
+    border-right:14px solid var(--paper);}
+  .bubble b{color:#7c2ae8;}
+
+  /* step rail */
+  .steps{display:grid; grid-template-columns:repeat(5,1fr); gap:10px; margin:20px 0 6px;}
+  .stepbtn{border:none; cursor:pointer; border-radius:18px; padding:14px 6px 10px; color:#fff;
+    font-family:inherit; box-shadow:0 6px 0 rgba(0,0,0,.35); transition:transform .12s, box-shadow .12s, filter .2s;}
+  .stepbtn:active{transform:translateY(4px); box-shadow:0 2px 0 rgba(0,0,0,.35);}
+  .stepbtn .num{display:block; font-size:13px; opacity:.9; font-weight:700; letter-spacing:1px;}
+  .stepbtn .word{display:block; font-size:clamp(17px,2.6vw,23px); font-weight:900; letter-spacing:.5px;}
+  .stepbtn .sub{display:block; font-size:12px; opacity:.92; margin-top:2px;}
+  .stepbtn[data-step="ask"]{background:var(--blue);} .stepbtn[data-step="recipe"]{background:var(--purple);}
+  .stepbtn[data-step="split"]{background:var(--orange);} .stepbtn[data-step="run"]{background:var(--green);}
+  .stepbtn[data-step="prove"]{background:var(--gold); color:#4a3200;}
+  .stepbtn.dim{filter:saturate(.35) brightness(.75);}
+  .stepbtn.now{outline:4px solid #fff; outline-offset:2px;}
+
+  .panel{background:rgba(255,255,255,.06); border:2px solid rgba(255,255,255,.14); border-radius:22px;
+    padding:20px; margin-top:16px;}
+  .panel h2{margin:0 0 6px; font-size:clamp(22px,3.6vw,30px);}
+  .panel p{font-size:clamp(15px,2.3vw,18px); line-height:1.5; margin:6px 0;}
+  .hidden{display:none !important;}
+
+  /* puzzle cards */
+  .cards{display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px; margin-top:12px;}
+  .card{border:none; text-align:left; cursor:pointer; border-radius:20px; padding:16px; color:#17204d;
+    font-family:inherit; box-shadow:0 6px 0 rgba(0,0,0,.3); transition:transform .12s;}
+  .card:hover{transform:translateY(-3px);} .card:active{transform:translateY(2px);}
+  .card .emoji{font-size:38px;} .card h3{margin:6px 0 4px; font-size:20px;}
+  .card p{margin:0; font-size:14.5px; line-height:1.4;}
+  .card.c1{background:#bfe3ff;} .card.c2{background:#ffd7ef;} .card.c3{background:#d9f7c4;} .card.c4{background:#ffe9b8;}
+
+  .bigbtn{border:none; cursor:pointer; font-family:inherit; font-weight:900; border-radius:999px;
+    padding:16px 34px; font-size:clamp(19px,3vw,24px); color:#fff; background:var(--green);
+    box-shadow:0 7px 0 #15803d; transition:transform .1s, box-shadow .1s;}
+  .bigbtn:active{transform:translateY(5px); box-shadow:0 2px 0 #15803d;}
+  .bigbtn.purple{background:var(--purple); box-shadow:0 7px 0 #6d28d9;}
+  .bigbtn.blue{background:var(--blue); box-shadow:0 7px 0 #1d4ed8;}
+  .bigbtn.gold{background:var(--gold); color:#4a3200; box-shadow:0 7px 0 #b57f00;}
+  .rowbtns{display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-top:14px;}
+
+  /* play areas */
+  .playarea{display:flex; gap:22px; align-items:center; flex-wrap:wrap; margin-top:10px;}
+  .coin{width:110px; height:110px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    font-size:44px; font-weight:900; color:#7a5200; background:radial-gradient(circle at 32% 30%, #ffe98a, #ffb703 70%);
+    box-shadow:0 8px 0 #b57f00, inset 0 -8px 14px rgba(0,0,0,.18); user-select:none;}
+  .coin.spinning{animation:coinflip .18s linear infinite;}
+  @keyframes coinflip{0%{transform:rotateX(0) scale(1)}50%{transform:rotateX(90deg) scale(1.08)}100%{transform:rotateX(180deg) scale(1)}}
+  .coin.small{width:82px; height:82px; font-size:32px;}
+  .doors{display:grid; grid-template-columns:repeat(4,1fr); gap:12px; width:100%; max-width:560px;}
+  .door{border-radius:16px; padding:18px 6px; text-align:center; font-size:34px; background:#33408f;
+    border:3px solid rgba(255,255,255,.25); transition:all .3s;}
+  .door .lbl{display:block; font-size:13px; margin-top:4px; opacity:.9;}
+  .door.winner{background:var(--gold); color:#4a3200; transform:scale(1.07); border-color:#fff;}
+  .door.picked{outline:4px solid var(--pink);}
+  .bars{flex:1 1 260px; min-width:240px;}
+  .barrow{display:flex; align-items:center; gap:10px; margin:7px 0; font-size:15.5px;}
+  .barrow .blabel{width:118px; text-align:right; font-weight:700;}
+  .bartrack{flex:1; height:24px; background:rgba(255,255,255,.12); border-radius:999px; overflow:hidden; position:relative;}
+  .barfill{height:100%; width:0%; border-radius:999px; transition:width .8s cubic-bezier(.2,.9,.25,1);}
+  .barrow .bval{width:86px; font-weight:800;}
+  .limitline{position:absolute; top:-2px; bottom:-2px; width:3px; background:var(--red); opacity:.9;}
+  .scorebig{font-size:clamp(26px,4.4vw,38px); font-weight:900;}
+  .vs{display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:8px;}
+  @media (max-width:640px){.vs{grid-template-columns:1fr;}}
+  .team{border-radius:18px; padding:14px; background:rgba(255,255,255,.07); border:2px solid rgba(255,255,255,.15);}
+  .team h3{margin:0 0 4px; font-size:19px;}
+
+  /* receipt + queue */
+  .receipt{background:var(--paper); color:#17204d; border-radius:16px; padding:18px; max-width:640px;
+    box-shadow:0 8px 0 rgba(0,0,0,.3); font-size:16px; line-height:1.55;}
+  .receipt h3{margin:0 0 8px; font-size:21px;}
+  .receipt .hash{font-family:ui-monospace,Menlo,monospace; font-size:12.5px; word-break:break-all;
+    background:#eef1ff; padding:8px; border-radius:8px;}
+  .receipt .free{color:#15803d; font-weight:900;}
+  .qitem{background:rgba(255,255,255,.08); border:2px solid rgba(255,255,255,.16); border-radius:16px;
+    padding:12px 14px; margin:10px 0; display:flex; gap:12px; align-items:center; flex-wrap:wrap;}
+  .qitem .grow{flex:1 1 220px;}
+  .chip{display:inline-block; padding:3px 10px; border-radius:999px; font-size:12.5px; font-weight:800;}
+  .chip.wait{background:#5b21b6;} .chip.done{background:#15803d;}
+  .smallbtn{border:none; cursor:pointer; font-family:inherit; font-weight:800; border-radius:999px;
+    padding:9px 16px; font-size:14.5px; background:#eef1ff; color:#26307a;}
+  .grownups{font-size:13.5px; opacity:.85; line-height:1.55; margin-top:22px; border-top:1px dashed rgba(255,255,255,.3); padding-top:12px;}
+  audio{width:100%; max-width:560px; margin-top:8px;}
+  .confetti{position:fixed; inset:0; pointer-events:none; overflow:hidden; z-index:50;}
+  .confetti i{position:absolute; top:-14px; width:10px; height:16px; border-radius:2px; animation:fall linear forwards;}
+  @keyframes fall{to{transform:translateY(105vh) rotate(720deg);}}
+</style>
+</head>
+<body>
+<div class="confetti" id="confetti"></div>
+<div class="wrap">
+  <div class="proto-banner">🧪 Runs 100% in your browser. Emulator only. No money, no real quantum machine, nothing is sent anywhere.</div>
+
+  <h1>Koda Kai <span class="q">Kids Quantum Lab</span></h1>
+  <p class="tagline">A real quantum computer playground — with training wheels, a duck, and receipts.</p>
+
+  <div class="stage">
+    <div class="duckbox">
+      <svg class="duck" width="170" height="170" viewBox="0 0 200 200" aria-label="Dr. Quackers, duck scientist">
+        <ellipse cx="100" cy="150" rx="58" ry="42" fill="#fff"/>
+        <path d="M52 128 Q100 108 148 128 L148 168 Q100 186 52 168 Z" fill="#fff"/>
+        <path d="M52 128 Q100 108 148 128 L144 140 Q100 122 56 140 Z" fill="#dbe4ff"/>
+        <rect x="92" y="128" width="16" height="30" rx="4" fill="#ff5d8f"/>
+        <circle cx="100" cy="78" r="46" fill="#ffd93b"/>
+        <ellipse cx="62" cy="140" rx="20" ry="12" fill="#f4f7ff" transform="rotate(-24 62 140)"/>
+        <path d="M100 96 Q128 96 138 106 Q128 118 100 116 Q72 118 62 106 Q72 96 100 96Z" fill="#ff8a3d"/>
+        <circle cx="82" cy="70" r="17" fill="none" stroke="#2f7bff" stroke-width="6"/>
+        <circle cx="118" cy="70" r="17" fill="none" stroke="#2f7bff" stroke-width="6"/>
+        <path d="M99 70 h2 M65 66 Q40 58 34 44 M135 66 Q160 58 166 44" stroke="#2f7bff" stroke-width="6" fill="none"/>
+        <circle cx="82" cy="72" r="5.5" fill="#17204d"/>
+        <circle cx="118" cy="72" r="5.5" fill="#17204d"/>
+        <circle cx="84" cy="69" r="2" fill="#fff"/><circle cx="120" cy="69" r="2" fill="#fff"/>
+        <path d="M88 40 Q100 26 114 38" stroke="#eab308" stroke-width="7" fill="none" stroke-linecap="round"/>
+      </svg>
+      <div class="duckname">Dr. Quackers</div>
+      <div class="duckrole">duck scientist, at your service</div>
+    </div>
+    <div class="bubble" id="bubble">Quack! Welcome to the lab. Pick a puzzle below, and I'll show you <b>every step</b> the machine takes — no magic, just science you can check.</div>
+  </div>
+
+  <div class="steps" id="steprow">
+    <button class="stepbtn now" data-step="ask"><span class="num">STEP 1</span><span class="word">ASK</span><span class="sub">a question</span></button>
+    <button class="stepbtn dim" data-step="recipe"><span class="num">STEP 2</span><span class="word">RECIPE</span><span class="sub">build the circuit</span></button>
+    <button class="stepbtn dim" data-step="split"><span class="num">STEP 3</span><span class="word">SPLIT</span><span class="sub">normal vs quantum</span></button>
+    <button class="stepbtn dim" data-step="run"><span class="num">STEP 4</span><span class="word">RUN</span><span class="sub">on the emulator</span></button>
+    <button class="stepbtn dim" data-step="prove"><span class="num">STEP 5</span><span class="word">PROVE</span><span class="sub">get the receipt</span></button>
+  </div>
+
+  <!-- STEP 1: ASK -->
+  <section class="panel" id="panel-ask">
+    <h2>🎯 Step 1 — Ask a question</h2>
+    <p>Every quantum job starts as a question. Pick one of Dr. Quackers' four puzzles:</p>
+    <div class="cards">
+      <button class="card c1" data-puzzle="coin"><span class="emoji">🪙</span><h3>Quantum Coin Flip</h3><p>Flip a coin 100 times. Where does the randomness <i>really</i> come from?</p></button>
+      <button class="card c2" data-puzzle="bell"><span class="emoji">🔔</span><h3>Build-a-Bell</h3><p>Make two quantum coins that <b>always land the same</b> — twins, linked before they flip.</p></button>
+      <button class="card c3" data-puzzle="grover"><span class="emoji">🚪</span><h3>Guess-My-Number</h3><p>A star hides behind 1 of 4 doors. A quantum trick finds it in <b>one</b> peek.</p></button>
+      <button class="card c4" data-puzzle="chsh"><span class="emoji">🏆</span><h3>The Impossible Game</h3><p>A game no normal plan can win more than 75% of the time. Can the quantum team beat the limit?</p></button>
+    </div>
+  </section>
+
+  <!-- STEPS 2+3: RECIPE & SPLIT -->
+  <section class="panel hidden" id="panel-explain">
+    <h2 id="explain-title">🍳 Step 2 — The recipe</h2>
+    <p id="explain-recipe"></p>
+    <h2 style="margin-top:16px;">✂️ Step 3 — The split</h2>
+    <p id="explain-split"></p>
+    <div class="rowbtns">
+      <button class="bigbtn" id="goto-run">Take it to the machine →</button>
+    </div>
+  </section>
+
+  <!-- STEP 4: RUN -->
+  <section class="panel hidden" id="panel-run">
+    <h2>🖥️ Step 4 — Run it on the emulator</h2>
+    <p id="run-intro"></p>
+
+    <div id="play-coin" class="hidden">
+      <div class="playarea">
+        <div class="coin" id="coinface">?</div>
+        <div class="bars" id="coin-bars"></div>
+      </div>
+      <div class="rowbtns"><button class="bigbtn" id="run-coin">🪙 FLIP IT 100 TIMES</button></div>
+    </div>
+
+    <div id="play-bell" class="hidden">
+      <div class="playarea">
+        <div style="display:flex; gap:14px;"><div class="coin small" id="bell-a">?</div><div class="coin small" id="bell-b">?</div></div>
+        <div class="bars" id="bell-bars"></div>
+      </div>
+      <div class="rowbtns"><button class="bigbtn purple" id="run-bell">🔔 FLIP THE TWINS 100 TIMES</button></div>
+    </div>
+
+    <div id="play-grover" class="hidden">
+      <p>Tap a door to hide the ⭐ — or let the lab hide it. Then watch the quantum trick peek <b>once</b>.</p>
+      <div class="doors" id="doors"></div>
+      <div class="bars" id="grover-bars" style="margin-top:14px;"></div>
+      <div class="rowbtns">
+        <button class="bigbtn blue" id="run-grover">🚪 DO THE QUANTUM PEEK</button>
+        <button class="smallbtn" id="hide-random">🎲 Hide it for me</button>
+      </div>
+    </div>
+
+    <div id="play-chsh" class="hidden">
+      <div class="vs">
+        <div class="team"><h3>🤖 Normal Team</h3><p>The best normal plan anyone has: always answer 0. Science says no normal plan beats <b>75%</b>.</p><div class="scorebig" id="chsh-classical">—</div></div>
+        <div class="team"><h3>🦆 Quantum Team</h3><p>Shares a pair of Build-a-Bell twin coins and measures them at tilted angles.</p><div class="scorebig" id="chsh-quantum">—</div></div>
+      </div>
+      <div class="rowbtns"><button class="bigbtn gold" id="run-chsh">🏆 PLAY 100 ROUNDS</button></div>
+      <p id="chsh-verdict" style="font-weight:800;"></p>
+    </div>
+  </section>
+
+  <!-- STEP 5: PROVE -->
+  <section class="panel hidden" id="panel-prove">
+    <h2>🧾 Step 5 — Prove it: your receipt</h2>
+    <p>Scientists don't just get answers — they get <b>receipts</b>. This one proves what ran, what it cost, and what came out. Its secret code (a hash) changes completely if even one number is faked.</p>
+    <div class="receipt" id="receipt-box"><h3>No receipt yet</h3><p>Run a puzzle first — your receipt will appear here.</p></div>
+    <div class="rowbtns">
+      <button class="bigbtn gold hidden" id="to-queue">📮 Send it to the Review Queue</button>
+      <button class="smallbtn hidden" id="again">↺ Run another puzzle</button>
+    </div>
+  </section>
+
+  <!-- REVIEW QUEUE -->
+  <section class="panel" id="panel-queue">
+    <h2>📮 The Review Queue</h2>
+    <p>Receipts sent here get <b>peer reviewed</b> — other scientists check the work, out loud, in a podcast made for whoever ran the job. In the full lab, a result landing in the queue wakes up Yaae and the specialists automatically. In this first version, the queue lives on this page.</p>
+    <div id="queue-list"><p style="opacity:.8;">The queue is empty. Run a puzzle and send its receipt!</p></div>
+    <h3 style="margin:18px 0 4px;">🎧 Hear a sample review</h3>
+    <p style="margin-top:0;">A real review episode our podcast desk made for a demo run of the Impossible Game — Yaae and Vera check the numbers like referees:</p>
+    <audio controls preload="none" id="sample-audio"></audio>
+    <p id="sample-note" style="font-size:14px; opacity:.85;"></p>
+  </section>
+
+  <div class="grownups">
+    <b>For grown-ups:</b> this prototype is the Kids Quantum Lab designed 2026-10-23 — a teaching front-end on the house quantum system. Everything runs on a local emulator (a program that imitates a quantum computer) at zero cost: the cost line on every receipt reads <b>0 GENIQ</b>, the house token's free-route rule. No accounts, no payments, no data collected or sent anywhere, no real quantum hardware — those doors exist in the design and stay shut until a parent and David open them, in that order. A child's result is shared publicly only with a parent's explicit approval. Puzzle physics is real and unit-tested: coin-flip statistics, Bell-pair correlations, one-round Grover search (exact for 4 doors), and the CHSH game (classical limit 75%, quantum team ≈ 85%).
+  </div>
+</div>
+
+<script src="sim.js"></script>
+<script>
+"use strict";
+var $ = function (id) { return document.getElementById(id); };
+var bubble = $("bubble");
+var state = { puzzle: null, lastReceipt: null, queue: [] };
+
+var DUCK = {
+  start: "Quack! Welcome to the lab. Pick a puzzle below, and I'll show you <b>every step</b> the machine takes — no magic, just science you can check.",
+  coin: "A coin flip! But here's the secret question: when a <b>phone</b> flips a coin, it's following a recipe that only <i>looks</i> random. A quantum coin is random because <b>nature</b> hasn't decided yet. Let's flip!",
+  bell: "My favorite trick. We tie two coins together <b>before</b> flipping — scientists call the tie <i>entanglement</i>. Whatever one lands, the other matches. Every. Single. Time.",
+  grover: "Four doors, one star. Peeking at doors one by one could take 4 tries. The quantum trick makes the star's door <b>glow brighter</b> — then one peek finds it. Watch the bars!",
+  chsh: "The Impossible Game! Two players, two questions, no talking during the game. The best normal plan <b>in the universe</b> wins 75%. My quantum team uses twin coins from the Build-a-Bell puzzle. Let's see if we beat the limit!",
+  running: "The emulator is crunching… each flip is a tiny quantum measurement. Hold on to your lab coat!",
+  done: "DONE! And look — the machine didn't just give an answer, it gave <b>numbers you can check</b>. That's the difference between a trick and science. Scroll to Step 5 for your receipt!",
+  queued: "Posted to the Review Queue! In the full lab, this is the moment Yaae and the specialists get woken up to <b>check your work out loud</b> in a podcast. Quack — good science!"
+};
+function say(html) { bubble.innerHTML = html; }
+
+var EXPLAIN = {
+  coin: { title: "🍳 Step 2 — The recipe: one quantum coin",
+    recipe: "The recipe has just two steps: (1) spin the quantum coin so it's <b>both heads and tails at once</b> — scientists call that <i>superposition</i>; (2) look at it. Looking forces nature to pick one. That's the whole circuit: one spin, one look.",
+    split: "The normal computer does the boring parts: counting flips and drawing the chart. Only the <b>picking</b> is quantum — because only nature can pick in a way no recipe predicted." },
+  bell: { title: "🍳 Step 2 — The recipe: tie two coins together",
+    recipe: "Step 1: spin coin A. Step 2: run it through a <b>tying machine</b> with coin B (scientists call the tying step a CNOT gate). Now the coins share one fate. Step 3: look at both.",
+    split: "The normal computer counts the pairs. The quantum part is the <b>tie</b> — no normal machine can tie two separate coins so they always match without deciding the answer first. Ours never decides: check the chart, both mixed pairs (heads-tails) score ZERO." },
+  grover: { title: "🍳 Step 2 — The recipe: make the right door glow",
+    recipe: "Step 1: spin all the doors' coins at once, so every door is equally likely. Step 2: secretly mark the star's door (the machine whispers 'this one'). Step 3: run the <b>glow amplifier</b> — it makes the marked door's bar grow and the others shrink. One peek then finds the star.",
+    split: "The normal computer draws doors and bars. The quantum part is the amplifier: with 4 doors it works <b>perfectly in one round</b>. With a million doors, a normal search peeks ~500,000 times on average; the quantum trick needs only ~1,000. That's the famous Grover speedup." },
+  chsh: { title: "🍳 Step 2 — The recipe: twin coins + tilted looks",
+    recipe: "The Quantum Team shares a Build-a-Bell tie. Each round, each player gets a question (0 or 1) and looks at their coin through a <b>tilted viewer</b> — the tilt depends on the question. Their answers either match or don't, and the referee checks the game's rule.",
+    split: "The normal computer deals questions and keeps score. The quantum part is the <b>shared tie</b> — it lets the team's answers agree <i>more often than any pre-made plan allows</i>, without the players communicating. Physicists have tested this for 60 years; the limit is real, and so is beating it." }
+};
+
+function setStep(step) {
+  var btns = document.querySelectorAll(".stepbtn");
+  btns.forEach(function (b) {
+    var s = b.getAttribute("data-step");
+    b.classList.toggle("now", s === step);
+    b.classList.toggle("dim", s !== step);
+  });
+}
+function showPanel(id) {
+  ["panel-ask","panel-explain","panel-run","panel-prove"].forEach(function (p) {
+    $(p).classList.toggle("hidden", p !== id);
+  });
+  if (id) $(id).scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+document.querySelectorAll(".card").forEach(function (card) {
+  card.addEventListener("click", function () {
+    state.puzzle = card.getAttribute("data-puzzle");
+    say(DUCK[state.puzzle]);
+    var ex = EXPLAIN[state.puzzle];
+    $("explain-title").textContent = ex.title;
+    $("explain-recipe").innerHTML = ex.recipe;
+    $("explain-split").innerHTML = ex.split;
+    setStep("recipe");
+    showPanel("panel-explain");
+  });
+});
+$("goto-run").addEventListener("click", function () {
+  setStep("run");
+  ["coin","bell","grover","chsh"].forEach(function (p) {
+    $("play-" + p).classList.toggle("hidden", p !== state.puzzle);
+  });
+  showPanel("panel-run");
+});
+document.querySelectorAll(".stepbtn").forEach(function (b) {
+  b.addEventListener("click", function () {
+    var s = b.getAttribute("data-step");
+    if (s === "ask") { setStep("ask"); showPanel("panel-ask"); }
+    if (s === "prove") { setStep("prove"); showPanel("panel-prove"); }
+    if ((s === "recipe" || s === "split") && state.puzzle) { setStep(s); showPanel("panel-explain"); }
+    if (s === "run" && state.puzzle) $("goto-run").click();
+  });
+});
+
+// ---------- bar charts ----------
+function bars(el, rows) { // rows: [{label, pct (0..1), color, val, limit}]
+  el.innerHTML = "";
+  rows.forEach(function (r) {
+    var row = document.createElement("div"); row.className = "barrow";
+    var track = '<div class="bartrack"><div class="barfill" style="background:' + r.color + '" data-w="' + Math.round(r.pct * 100) + '"></div>' +
+      (r.limit !== undefined ? '<div class="limitline" style="left:' + Math.round(r.limit * 100) + '%"></div>' : "") + "</div>";
+    row.innerHTML = '<span class="blabel">' + r.label + "</span>" + track + '<span class="bval">' + r.val + "</span>";
+    el.appendChild(row);
+  });
+  requestAnimationFrame(function () {
+    setTimeout(function () {
+      el.querySelectorAll(".barfill").forEach(function (f) { f.style.width = f.getAttribute("data-w") + "%"; });
+    }, 30);
+  });
+}
+function confetti() {
+  var box = $("confetti"), colors = ["#2f7bff","#9b5bff","#ff8a3d","#22c55e","#ffb703","#ff5d8f"];
+  for (var i = 0; i < 40; i++) {
+    var c = document.createElement("i");
+    c.style.left = Math.random() * 100 + "vw";
+    c.style.background = colors[i % colors.length];
+    c.style.animationDuration = (1.6 + Math.random() * 1.6) + "s";
+    c.style.animationDelay = (Math.random() * 0.5) + "s";
+    box.appendChild(c);
+    setTimeout(function (el) { el.remove(); }, 3600, c);
+  }
+}
+
+// ---------- receipts ----------
+function makeReceipt(puzzle, summary, detail) {
+  var rec = {
+    lab: "koda-kai-kids-quantum-lab", version: "prototype-1",
+    puzzle: puzzle, route: "local-emulator", cost_geniq: 0,
+    when: new Date().toISOString(), summary: summary, detail: detail
+  };
+  rec.hash = QSim.sha256(JSON.stringify(rec));
+  return rec;
+}
+function showReceipt(rec) {
+  state.lastReceipt = rec;
+  var box = $("receipt-box");
+  box.innerHTML = "<h3>🧾 Lab Receipt — " + rec.puzzle + "</h3>" +
+    "<p><b>What ran:</b> " + rec.summary + "<br>" +
+    "<b>Where:</b> the emulator on this computer (a quantum imitator — free to run)<br>" +
+    "<b>Cost:</b> <span class='free'>0 lab tickets (0 GENIQ)</span> — free routes never charge<br>" +
+    "<b>When:</b> " + rec.when.replace("T", " ").replace(/\..*/, "") + "</p>" +
+    "<p><b>Proof code (hash):</b></p><div class='hash'>" + rec.hash + "</div>" +
+    "<p style='font-size:13.5px;'>Change any number above and this code becomes totally different. That's how the reviewers know the receipt is real.</p>";
+  $("to-queue").classList.remove("hidden");
+  $("again").classList.remove("hidden");
+  setStep("prove");
+  showPanel("panel-prove");
+  say(DUCK.done);
+  confetti();
+}
+$("to-queue").addEventListener("click", function () {
+  if (!state.lastReceipt) return;
+  state.queue.push(state.lastReceipt);
+  renderQueue();
+  say(DUCK.queued);
+  $("panel-queue").scrollIntoView({ behavior: "smooth" });
+});
+$("again").addEventListener("click", function () { setStep("ask"); showPanel("panel-ask"); say(DUCK.start); });
+function renderQueue() {
+  var list = $("queue-list");
+  if (!state.queue.length) { list.innerHTML = "<p style='opacity:.8;'>The queue is empty. Run a puzzle and send its receipt!</p>"; return; }
+  list.innerHTML = "";
+  state.queue.forEach(function (rec, idx) {
+    var div = document.createElement("div"); div.className = "qitem";
+    div.innerHTML = '<div class="grow"><b>#' + (idx + 1) + " — " + rec.puzzle + "</b><br><span style='font-size:14px; opacity:.9;'>" +
+      rec.summary + " · proof " + rec.hash.slice(0, 12) + "…</span></div>" +
+      '<span class="chip wait">WAITING FOR REVIEW</span>';
+    var btn = document.createElement("button");
+    btn.className = "smallbtn"; btn.textContent = "⬇ Review packet";
+    btn.addEventListener("click", function () {
+      var packet = { receipt: rec, review_asks: [
+        "Did the classical cross-check agree with the quantum result?",
+        "What result would have proven this run WRONG?",
+        "Do the counts match the physics the lab promised (within luck-of-the-flip)?" ] };
+      var blob = new Blob([JSON.stringify(packet, null, 2)], { type: "application/json" });
+      var a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "review-packet-" + rec.puzzle + "-" + rec.hash.slice(0, 8) + ".json";
+      a.click(); URL.revokeObjectURL(a.href);
+    });
+    div.appendChild(btn);
+    list.appendChild(div);
+  });
+}
+</script>
+<script>
+"use strict";
+// ---------- puzzle runners ----------
+function busy(btn, fn) { btn.disabled = true; say(DUCK.running); setTimeout(function () { fn(); btn.disabled = false; }, 950); }
+
+$("run-coin").addEventListener("click", function () {
+  var face = $("coinface"); face.classList.add("spinning"); face.textContent = "?";
+  var flip = setInterval(function () { face.textContent = Math.random() < 0.5 ? "H" : "T"; }, 120);
+  busy(this, function () {
+    clearInterval(flip); face.classList.remove("spinning");
+    var r = QSim.coinFlip(100);
+    face.textContent = r.heads >= r.tails ? "H" : "T";
+    bars($("coin-bars"), [
+      { label: "Heads", pct: r.heads / 100, color: "#ffb703", val: r.heads + " / 100" },
+      { label: "Tails", pct: r.tails / 100, color: "#2f7bff", val: r.tails + " / 100" }
+    ]);
+    showReceipt(makeReceipt("Quantum Coin Flip",
+      "Flipped a quantum coin 100 times: " + r.heads + " heads, " + r.tails + " tails — close to 50/50, never exactly, because nature deals the flips one at a time.",
+      { heads: r.heads, tails: r.tails, shots: 100 }));
+  });
+});
+
+$("run-bell").addEventListener("click", function () {
+  var a = $("bell-a"), b = $("bell-b");
+  a.classList.add("spinning"); b.classList.add("spinning");
+  busy(this, function () {
+    a.classList.remove("spinning"); b.classList.remove("spinning");
+    var r = QSim.bellPair(100), c = r.counts;
+    var pair = Math.random() < c["11"] / 100 ? "1" : "0";
+    a.textContent = pair; b.textContent = pair;
+    bars($("bell-bars"), [
+      { label: "Both 0", pct: c["00"] / 100, color: "#22c55e", val: c["00"] + " / 100" },
+      { label: "Both 1", pct: c["11"] / 100, color: "#9b5bff", val: c["11"] + " / 100" },
+      { label: "0 then 1", pct: c["01"] / 100, color: "#ff5252", val: c["01"] + " / 100" },
+      { label: "1 then 0", pct: c["10"] / 100, color: "#ff5252", val: c["10"] + " / 100" }
+    ]);
+    showReceipt(makeReceipt("Build-a-Bell",
+      "Flipped the tied twin coins 100 times: matched " + (c["00"] + c["11"]) + " times, mixed " + (c["01"] + c["10"]) + " times. Mixed = 0 is the fingerprint of the tie — no ordinary pair of coins can do that without deciding first.",
+      { counts: c, shots: 100 }));
+  });
+});
+
+// Grover doors
+var markedDoor = Math.floor(Math.random() * 4);
+function buildDoors() {
+  var box = $("doors"); box.innerHTML = "";
+  for (var i = 0; i < 4; i++) {
+    var d = document.createElement("div");
+    d.className = "door" + (i === markedDoor ? " picked" : "");
+    d.innerHTML = "🚪<span class='lbl'>Door " + (i + 1) + "</span>";
+    (function (idx, el) { el.addEventListener("click", function () { markedDoor = idx; buildDoors(); }); })(i, d);
+    box.appendChild(d);
+  }
+}
+buildDoors();
+$("hide-random").addEventListener("click", function () { markedDoor = Math.floor(Math.random() * 4); buildDoors(); });
+$("run-grover").addEventListener("click", function () {
+  busy(this, function () {
+    var p = QSim.groverAmps(markedDoor);
+    var rows = [];
+    for (var i = 0; i < 4; i++) rows.push({ label: "Door " + (i + 1), pct: p[i], color: i === markedDoor ? "#ffb703" : "#64748b", val: Math.round(p[i] * 100) + "% glow" });
+    bars($("grover-bars"), rows);
+    var doors = $("doors").children;
+    for (var j = 0; j < 4; j++) doors[j].classList.toggle("winner", j === markedDoor);
+    doors[markedDoor].innerHTML = "⭐<span class='lbl'>Door " + (markedDoor + 1) + " — FOUND!</span>";
+    showReceipt(makeReceipt("Guess-My-Number",
+      "The star hid behind Door " + (markedDoor + 1) + ". Before the trick every door glowed 25%. After ONE quantum peek the star's door glowed " + Math.round(p[markedDoor] * 100) + "% — found in a single try, where peeking one-by-one can take up to 4.",
+      { marked: markedDoor, probs: p.map(function (x) { return Math.round(x * 1000) / 1000; }) }));
+    setTimeout(buildDoors, 4000);
+  });
+});
+
+$("run-chsh").addEventListener("click", function () {
+  busy(this, function () {
+    var c = QSim.chsh(100, false), q = QSim.chsh(100, true);
+    $("chsh-classical").textContent = c.wins + " / 100 wins (" + Math.round(c.rate * 100) + "%)";
+    $("chsh-quantum").textContent = q.wins + " / 100 wins (" + Math.round(q.rate * 100) + "%)";
+    var v = $("chsh-verdict");
+    if (q.rate > c.rate) {
+      v.textContent = "🏆 THE QUANTUM TEAM BEAT THE LIMIT! " + Math.round(q.rate * 100) + "% beats the best normal plan's ~75%. (Every run is a little different — that's real randomness. Over 100 rounds the quantum team wins almost every match.)";
+    } else {
+      v.textContent = "So close! This time luck went the normal team's way (" + Math.round(q.rate * 100) + "% vs " + Math.round(c.rate * 100) + "%). Real science note: with only 100 rounds, luck can hide the effect — run it again! Over thousands of rounds the quantum team pulls ahead to about 85%.";
+    }
+    showReceipt(makeReceipt("The Impossible Game",
+      "Played 100 rounds: Normal Team won " + c.wins + " (" + Math.round(c.rate * 100) + "%), Quantum Team won " + q.wins + " (" + Math.round(q.rate * 100) + "%). The classical ceiling is 75%; the quantum record over long runs is about 85%.",
+      { classical: c, quantum: q, rounds: 100 }));
+  });
+});
+
+// sample review episode (recorded by the podcast desk for a demo run)
+(function () {
+  var audio = $("sample-audio"), note = $("sample-note");
+  audio.src = "sample-review.mp3";
+  audio.addEventListener("error", function () {
+    note.textContent = "The sample episode is still being recorded by the podcast desk — the player will work as soon as the file lands next to this page.";
+  }, true);
+  audio.addEventListener("canplay", function () {
+    note.textContent = "Sample episode loaded: a demo Impossible Game run, peer-reviewed out loud by Yaae and Vera.";
+  });
+})();
+</script>
+</body>
+</html>
