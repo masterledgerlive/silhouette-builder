@@ -50,6 +50,8 @@
       <button onclick="playEp(8)">🎓 Dave's True Test · Biscuit (inherited-shape cut, 169 wpm)</button>
       <button onclick="playEp(9)">🎲 Game Night · Guess the Rhythm (the Wait, the Stillness, the Spark)</button>
       <button onclick="playEp(10)">🏠 Biscuit · LAUGH-HOUSE MIX (a full room in the windows)</button>
+      <button onclick="playEp(11)">🎙️ Dave Voice Audition A · Deeper</button>
+      <button onclick="playEp(12)">🎙️ Dave Voice Audition B · Gruff</button>
     </div>
   </div>
 
@@ -158,7 +160,9 @@
     7:{t:'Reference Skeleton — the Chappelle shape as sound',src:'audio/reference-shape-chappelle-skeleton.mp3'},
     8:{t:'Dave True Test — Biscuit (inherited-shape cut, 169 wpm)',src:'audio/dave-true-test-producers-cut.mp3'},
     9:{t:'Dave — Guess the Rhythm (game night: the Wait, the Stillness, the Spark)',src:'audio/dave-guess-the-rhythm.mp3'},
-    10:{t:'Dave True Test — Biscuit LAUGH-HOUSE MIX (our own crowd in the windows)',src:'audio/dave-true-test-laughhouse.mp3'}};
+    10:{t:'Dave True Test — Biscuit LAUGH-HOUSE MIX (our own crowd in the windows)',src:'audio/dave-true-test-laughhouse.mp3'},
+    11:{t:'Dave VOICE AUDITION A — Deeper (same Dave, new sound: pitch and warmth down)',src:'audio/dave-audition-deeper.mp3'},
+    12:{t:'Dave VOICE AUDITION B — Gruff (deeper still, gravel on top)',src:'audio/dave-audition-gruff.mp3'}};
   function playEp(n){const p=document.getElementById('player');p.src=eps[n].src;p.load();document.getElementById('now').textContent=eps[n].t;const pr=p.play();if(pr&&pr.catch)pr.catch(function(e){document.getElementById('now').textContent='Tap the player\'s ▶ to start: '+eps[n].t;});addNote('Theo','Now playing: '+eps[n].t);}
   addNote('Theo','House is open. Front row is the specialist audience — their notes fine-tune the next set.');
 
