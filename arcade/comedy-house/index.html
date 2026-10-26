@@ -52,6 +52,9 @@
       <button onclick="playEp(10)">🏠 Biscuit · LAUGH-HOUSE MIX (a full room in the windows)</button>
       <button onclick="playEp(11)">🎙️ Dave Voice Audition A · Deeper</button>
       <button onclick="playEp(12)">🎙️ Dave Voice Audition B · Gruff</button>
+      <button onclick="playEp(13)">🗡️ Casting Week 1 · Sharp Dave — The Group Chat</button>
+      <button onclick="playEp(14)">🌤️ Casting Week 2 · Bright Dave — Customer Service</button>
+      <button onclick="playEp(15)">🌙 Casting Week 3 · Midnight Dave — The Night Bus</button>
     </div>
   </div>
 
@@ -162,7 +165,10 @@
     9:{t:'Dave — Guess the Rhythm (game night: the Wait, the Stillness, the Spark)',src:'audio/dave-guess-the-rhythm.mp3'},
     10:{t:'Dave True Test — Biscuit LAUGH-HOUSE MIX (our own crowd in the windows)',src:'audio/dave-true-test-laughhouse.mp3'},
     11:{t:'Dave VOICE AUDITION A — Deeper (same Dave, new sound: pitch and warmth down)',src:'audio/dave-audition-deeper.mp3'},
-    12:{t:'Dave VOICE AUDITION B — Gruff (deeper still, gravel on top)',src:'audio/dave-audition-gruff.mp3'}};
+    12:{t:'Dave VOICE AUDITION B — Gruff (deeper still, gravel on top)',src:'audio/dave-audition-gruff.mp3'},
+    13:{t:'CASTING WEEK Show 1 — Sharp Dave: The Group Chat (109 wpm, diction first)',src:'audio/dave-show-sharp.mp3'},
+    14:{t:'CASTING WEEK Show 2 — Bright Dave: Customer Service (+2 pitch, act-outs)',src:'audio/dave-show-bright.mp3'},
+    15:{t:'CASTING WEEK Show 3 — Midnight Dave: The Night Bus (164 wpm, one notch down)',src:'audio/dave-show-midnight.mp3'}};
   function playEp(n){const p=document.getElementById('player');p.src=eps[n].src;p.load();document.getElementById('now').textContent=eps[n].t;const pr=p.play();if(pr&&pr.catch)pr.catch(function(e){document.getElementById('now').textContent='Tap the player\'s ▶ to start: '+eps[n].t;});addNote('Theo','Now playing: '+eps[n].t);}
   addNote('Theo','House is open. Front row is the specialist audience — their notes fine-tune the next set.');
 
