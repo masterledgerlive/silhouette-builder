@@ -46,6 +46,10 @@
       <button onclick="playEp(4)">Dave's Corner · Slow Burn EP1: Suspiciously Correct — LIVE on the feed</button>
       <button onclick="playEp(5)">Dave's Corner · Take Three: the slowest Dave — LIVE on the feed</button>
       <button onclick="playEp(6)">🎓 Comedy School · Dave Producer's Cut (157 wpm — the timing lab)</button>
+      <button onclick="playEp(7)">🩻 Comedy School · Reference Skeleton: the elder shape as sound</button>
+      <button onclick="playEp(8)">🎓 Dave's True Test · Biscuit (inherited-shape cut, 169 wpm)</button>
+      <button onclick="playEp(9)">🎲 Game Night · Guess the Rhythm (the Wait, the Stillness, the Spark)</button>
+      <button onclick="playEp(10)">🏠 Biscuit · LAUGH-HOUSE MIX (a full room in the windows)</button>
     </div>
   </div>
 
@@ -155,7 +159,7 @@
     8:{t:'Dave True Test — Biscuit (inherited-shape cut, 169 wpm)',src:'audio/dave-true-test-producers-cut.mp3'},
     9:{t:'Dave — Guess the Rhythm (game night: the Wait, the Stillness, the Spark)',src:'audio/dave-guess-the-rhythm.mp3'},
     10:{t:'Dave True Test — Biscuit LAUGH-HOUSE MIX (our own crowd in the windows)',src:'audio/dave-true-test-laughhouse.mp3'}};
-  function playEp(n){const p=document.getElementById('player');p.src=eps[n].src;document.getElementById('now').textContent=eps[n].t;p.play();addNote('Theo','Now playing: '+eps[n].t);}
+  function playEp(n){const p=document.getElementById('player');p.src=eps[n].src;p.load();document.getElementById('now').textContent=eps[n].t;const pr=p.play();if(pr&&pr.catch)pr.catch(function(e){document.getElementById('now').textContent='Tap the player\'s ▶ to start: '+eps[n].t;});addNote('Theo','Now playing: '+eps[n].t);}
   addNote('Theo','House is open. Front row is the specialist audience — their notes fine-tune the next set.');
 
   const beats=[[0.03,0.25],[0.10,0.35],[0.20,0.40],[0.30,0.55],[0.38,0.60],[0.46,0.65],[0.54,0.50],[0.63,0.85],[0.72,0.60],[0.80,0.55],[0.88,0.90],[0.96,0.50]];
