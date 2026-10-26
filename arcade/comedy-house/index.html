@@ -58,6 +58,9 @@
       <button onclick="playEp(16)">🎤 Casting Call 1 · Dave in a Nigerian voice — The Family Dinner</button>
       <button onclick="playEp(17)">🎤 Casting Call 2 · Dave in a Jamaican voice — The Domino Table</button>
       <button onclick="playEp(18)">🎤 Casting Call 3 · Dave in a New York voice — The Bodega Cat</button>
+      <button onclick="playEp(19)">🏆 Dave At Home 1 · The Radiator</button>
+      <button onclick="playEp(20)">🏆 Dave At Home 2 · The Conductor</button>
+      <button onclick="playEp(21)">🏆 Dave At Home 3 · The Pickup Game</button>
     </div>
   </div>
 
@@ -174,7 +177,10 @@
     15:{t:'CASTING WEEK Show 3 — Midnight Dave: The Night Bus (164 wpm, one notch down)',src:'audio/dave-show-midnight.mp3'},
     16:{t:'CASTING CALL 1 — New Dave voice (Nigerian): The Family Dinner, with house laughter',src:'audio/dave-cast-ng.mp3'},
     17:{t:'CASTING CALL 2 — New Dave voice (Jamaican): The Domino Table, with house laughter',src:'audio/dave-cast-jm.mp3'},
-    18:{t:'CASTING CALL 3 — New Dave voice (New York): The Bodega Cat, with house laughter',src:'audio/dave-cast-ny.mp3'}};
+    18:{t:'CASTING CALL 3 — New Dave voice (New York): The Bodega Cat, with house laughter',src:'audio/dave-cast-ny.mp3'},
+    19:{t:'DAVE AT HOME 1 — The Radiator (cast voice, corpsing cut, no fake audience)',src:'audio/dave-ny-radiator.mp3'},
+    20:{t:'DAVE AT HOME 2 — The Conductor (cast voice, corpsing cut, no fake audience)',src:'audio/dave-ny-conductor.mp3'},
+    21:{t:'DAVE AT HOME 3 — The Pickup Game (cast voice, corpsing cut, no fake audience)',src:'audio/dave-ny-pickup.mp3'}};
   function playEp(n){const p=document.getElementById('player');p.src=eps[n].src;p.load();document.getElementById('now').textContent=eps[n].t;const pr=p.play();if(pr&&pr.catch)pr.catch(function(e){document.getElementById('now').textContent='Tap the player\'s ▶ to start: '+eps[n].t;});addNote('Theo','Now playing: '+eps[n].t);}
   addNote('Theo','House is open. Front row is the specialist audience — their notes fine-tune the next set.');
 
