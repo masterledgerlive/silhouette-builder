@@ -55,6 +55,9 @@
       <button onclick="playEp(13)">🗡️ Casting Week 1 · Sharp Dave — The Group Chat</button>
       <button onclick="playEp(14)">🌤️ Casting Week 2 · Bright Dave — Customer Service</button>
       <button onclick="playEp(15)">🌙 Casting Week 3 · Midnight Dave — The Night Bus</button>
+      <button onclick="playEp(16)">🎤 Casting Call 1 · Dave in a Nigerian voice — The Family Dinner</button>
+      <button onclick="playEp(17)">🎤 Casting Call 2 · Dave in a Jamaican voice — The Domino Table</button>
+      <button onclick="playEp(18)">🎤 Casting Call 3 · Dave in a New York voice — The Bodega Cat</button>
     </div>
   </div>
 
@@ -168,7 +171,10 @@
     12:{t:'Dave VOICE AUDITION B — Gruff (deeper still, gravel on top)',src:'audio/dave-audition-gruff.mp3'},
     13:{t:'CASTING WEEK Show 1 — Sharp Dave: The Group Chat (109 wpm, diction first)',src:'audio/dave-show-sharp.mp3'},
     14:{t:'CASTING WEEK Show 2 — Bright Dave: Customer Service (+2 pitch, act-outs)',src:'audio/dave-show-bright.mp3'},
-    15:{t:'CASTING WEEK Show 3 — Midnight Dave: The Night Bus (164 wpm, one notch down)',src:'audio/dave-show-midnight.mp3'}};
+    15:{t:'CASTING WEEK Show 3 — Midnight Dave: The Night Bus (164 wpm, one notch down)',src:'audio/dave-show-midnight.mp3'},
+    16:{t:'CASTING CALL 1 — New Dave voice (Nigerian): The Family Dinner, with house laughter',src:'audio/dave-cast-ng.mp3'},
+    17:{t:'CASTING CALL 2 — New Dave voice (Jamaican): The Domino Table, with house laughter',src:'audio/dave-cast-jm.mp3'},
+    18:{t:'CASTING CALL 3 — New Dave voice (New York): The Bodega Cat, with house laughter',src:'audio/dave-cast-ny.mp3'}};
   function playEp(n){const p=document.getElementById('player');p.src=eps[n].src;p.load();document.getElementById('now').textContent=eps[n].t;const pr=p.play();if(pr&&pr.catch)pr.catch(function(e){document.getElementById('now').textContent='Tap the player\'s ▶ to start: '+eps[n].t;});addNote('Theo','Now playing: '+eps[n].t);}
   addNote('Theo','House is open. Front row is the specialist audience — their notes fine-tune the next set.');
 
