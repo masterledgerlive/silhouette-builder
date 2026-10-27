@@ -2602,7 +2602,7 @@ window.addEventListener("message", function(e){
 });
 function kkDirectState(st){
   if(st===1){ /* playing */
-    if(!kkPlaying){ kkPlaying=true; kkErrStreak=0; document.dispatchEvent(new CustomEvent("kk-playing",{detail:{index:kkIndex}})); }
+    if(!kkPlaying){ kkPlaying=true; kkErrStreak=0; document.dispatchEvent(new CustomEvent("kk-playing",{detail:{index:kkIndex}})); if(kkDirect&&playing&&!liveMode){ kkDirectCmd("unMute"); kkDirectCmd("setVolume",[Math.round(kkVol()*100)]); } }
   }
   else if(st===2){ kkPlaying=false; }
   else if(st===0){ /* ended — same song-break contract as the API path */
@@ -2673,7 +2673,7 @@ function kkLoad(i){
   kkIndex=i;
   var startAt=Number(KK_TRACKS[i][3])||0; /* the featured knowledge video starts at t=75s, as queued */
   if(kkReady&&kkPlayer){ try{ kkPlayer.loadVideoById(startAt? {videoId:KK_TRACKS[i][0], startSeconds:startAt} : KK_TRACKS[i][0]); }catch(e){} }
-  else if(kkDirect){ var f=kkFrame(); if(f){ kkCurTime=startAt; kkDur=0; f.src=kkEmbedURL(KK_TRACKS[i][0], true)+(startAt? "&start="+startAt : ""); kkPlaying=true;
+  else if(kkDirect){ var f=kkFrame(); if(f){ kkCurTime=startAt; kkDur=0; f.src=kkEmbedURL(KK_TRACKS[i][0], true)+"&mute=1"+(startAt? "&start="+startAt : ""); kkPlaying=false; /* honest state (2026-10-27 fix #2): the embed confirms PLAYING via its state posts; claiming it early disabled every play retry, and a muted load is the only load a phone webview autoplays reliably — sound is restored by unMute on the PLAYING post (kkDirectState). */
     /* A fresh embed boots on its own schedule: subscribe for its state
        posts, nudge play (the load itself was the tap's doing, so the
        nudge lands), and pull the volume back to the master constant —
@@ -2864,7 +2864,7 @@ window.kkBridge={
   track:function(){ return kkIndex>=0? KK_TRACKS[kkIndex] : null; },
   trackIndex:function(){ return kkIndex; },
   pause:function(){ if(kkReady&&kkPlayer){ try{ kkPlayer.pauseVideo(); }catch(e){} } else if(kkDirect){ kkDirectCmd("pauseVideo"); } },
-  play:function(){ if(kkReady&&kkPlayer){ try{ kkPlayer.unMute(); kkPlayer.playVideo(); }catch(e){} } else if(kkDirect){ kkDirectCmd("playVideo"); } },
+  play:function(){ if(kkReady&&kkPlayer){ try{ kkPlayer.unMute(); kkPlayer.playVideo(); }catch(e){} } else if(kkDirect){ kkDirectCmd("unMute"); kkDirectCmd("playVideo"); } },
   setVol:function(f){ f=Math.max(0,Math.min(KK_MASTER_VOL,f)); /* hard cap: no caller — duck, restore, engine — ever exceeds the master constant */ if(kkReady&&kkPlayer){ try{ kkPlayer.setVolume(Math.round(f*100)); }catch(e){} } else if(kkDirect){ kkDirectCmd("setVolume",[Math.round(f*100)]); } },
   sliderVol:function(){ return kkVol(); },
   next:function(){ if(!liveMode){ if(window.kkShuffleAdvance&&window.kkShuffleAdvance()) return; kkAdvance(); } }
