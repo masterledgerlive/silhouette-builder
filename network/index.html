@@ -2679,7 +2679,11 @@ function kkLoad(i){
        nudge lands), and pull the volume back to the master constant —
        each retried, because a phone embed can take a moment to listen. */
     [700,1800,3200].forEach(function(ms){ setTimeout(function(){ kkSubscribePlayer(); kkDirectCmd("setVolume",[Math.round(kkVol()*100)]); },ms); });
-    setTimeout(function(){ kkDirectCmd("playVideo"); },1100);
+    /* The play nudge retries too (2026-10-27): on phones the embed's
+       listener is often not up at 1100ms, the single command was dropped,
+       and the new track sat paused on its poster. Retry until it answers,
+       but never against the listener's own pause. */
+    [1100,2400,4200,6500,9500].forEach(function(ms){ setTimeout(function(){ if(playing&&!liveMode&&!kkPlaying) kkDirectCmd("playVideo"); },ms); });
   } }
   kkUpdateNow();
   document.dispatchEvent(new CustomEvent("kk-trackstart",{detail:{index:i}}));
@@ -6481,6 +6485,48 @@ setTimeout(function(){ post("ray", "parked the rig, kept the radio on. this is t
   }
   rescue($("playBtn"), true);
   rescue($("playBtn2"), false);
+})();
+</script>
+
+<script>
+/* ---------- TRACK-CHANGE AUTOPLAY WATCHDOG (2026-10-27) ----------
+   Companion to the kkLoad retry fix: after every track start, re-send
+   play through the player's bridge (plus the embed listening handshake)
+   until the player confirms it is actually playing. Works only inside a
+   short window after a track starts or a Play press, and stands down
+   the moment the listener pauses or the live broadcast takes over. */
+(function(){
+  var $=function(id){return document.getElementById(id)};
+  var windowUntil=0, timer=null, nudges=0;
+  function bridge(){ return window.kkBridge||null; }
+  function handshake(){
+    var f=$("ytMainPlayer"); if(!f||!f.contentWindow) return;
+    try{
+      f.contentWindow.postMessage(JSON.stringify({event:"listening",id:1,channel:"widget"}),"*");
+      f.contentWindow.postMessage(JSON.stringify({event:"command",func:"addEventListener",args:["onStateChange"]}),"https://www.youtube-nocookie.com");
+    }catch(e){}
+  }
+  function stop(){ if(timer){ clearInterval(timer); timer=null; } }
+  function arm(ms){ windowUntil=Date.now()+ms; nudges=0; if(!timer) timer=setInterval(step,800); }
+  function step(){
+    var b=bridge();
+    if(!b||Date.now()>windowUntil||nudges>=16){ stop(); return; }
+    if(b.isLive()) return;
+    if(!b.intent()){ stop(); return; }
+    if(b.isPlaying()){ stop(); return; }
+    nudges++;
+    handshake();
+    b.play();
+    try{ b.setVol(b.sliderVol()); }catch(e){}
+  }
+  document.addEventListener("kk-trackstart", function(){ arm(20000); });
+  document.addEventListener("kk-playing", function(){
+    var b=bridge(); if(b){ try{ b.setVol(b.sliderVol()); }catch(e){} }
+  });
+  ["playBtn","playBtn2"].forEach(function(id){
+    var el=$(id); if(!el) return;
+    el.addEventListener("click", function(){ setTimeout(function(){ var b=bridge(); if(b&&b.intent()&&!b.isPlaying()) arm(15000); },350); });
+  });
 })();
 </script>
 </body>
