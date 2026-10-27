@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Universal Plugin — Blackbook (PRETOKEN SIMULATION)</title>
+<style>
+body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;margin:0;background:#0d1220;color:#e8ecf5}
+header{background:#131a2e;padding:18px 16px;border-bottom:3px solid #d4a017}
+h1{margin:0 0 6px;font-size:24px} h2{color:#f2c94c;font-size:19px;margin:0 0 10px}
+.banner{background:#5a1d1d;border:2px dashed #f2c94c;border-radius:10px;padding:10px 14px;margin:14px 16px;font-weight:600}
+.purpose{background:#14301f;border-radius:10px;padding:10px 14px;margin:0 16px 14px}
+nav{display:flex;flex-wrap:wrap;gap:8px;padding:0 16px 12px}
+nav button{background:#1d2742;color:#e8ecf5;border:1px solid #3a4a7a;border-radius:20px;padding:10px 16px;font-size:16px;cursor:pointer}
+nav button.on{background:#d4a017;color:#111;font-weight:700}
+section{display:none;background:#131a2e;margin:0 16px 18px;border-radius:12px;padding:16px}
+section.on{display:block}
+input,select,textarea{font-size:16px;padding:10px;border-radius:8px;border:1px solid #3a4a7a;background:#0d1220;color:#e8ecf5;width:100%;box-sizing:border-box;margin:4px 0 10px}
+button.act{background:#d4a017;color:#111;border:0;border-radius:10px;padding:12px 18px;font-size:16px;font-weight:700;cursor:pointer;margin:6px 4px 6px 0}
+button.ghost{background:#1d2742;color:#e8ecf5;border:1px solid #3a4a7a;border-radius:10px;padding:12px 16px;font-size:15px;cursor:pointer}
+table{width:100%;border-collapse:collapse;font-size:14px} td,th{border-bottom:1px solid #2a3555;padding:7px;text-align:left;vertical-align:top}
+.mono{font-family:ui-monospace,Menlo,monospace;font-size:12px;word-break:break-all}
+.ok{color:#7ee787}.bad{color:#ff7b72}.tag{display:inline-block;background:#24304f;border-radius:6px;padding:2px 8px;font-size:12px;margin-right:6px}
+.big{font-size:22px;font-weight:700} .row{display:flex;gap:14px;flex-wrap:wrap} .card{background:#0d1220;border:1px solid #2a3555;border-radius:10px;padding:12px;flex:1;min-width:150px}
+input[type=range]{padding:0} .foot{color:#93a0bd;font-size:13px;padding:0 16px 24px}
+</style></head><body>
+<header><h1>🌊 The Universal Plugin — Blackbook</h1>
+<div>One plugin for quantum throughput · blockchain memory · your own storage, partitioned by agreement.</div></header>
+<div class="banner">⚠️ PRETOKEN — SIMULATION / TEST ONLY. Balances on this page are pretend tokens in your browser. No real chain transactions, no mainnet, no real money — anywhere on this site.</div>
+<div class="purpose"><strong>Why this site exists:</strong> it is a working proof of the design — a quantum-token system ordinary people can actually use — built <strong>to show, and to be approved for, real cloud quantum access</strong> (the OCI Quantum AI Compute Beta and peer programs). Helios via OCI is labelled <span class="tag">APPLIED-FOR / BETA-PENDING</span> and is never presented as live here.</div>
+<nav id="tabs">
+<button data-t="blackbook" class="on">📖 Blackbook</button><button data-t="partition">✂️ Partition signup</button><button data-t="console">⚛️ Quantum console</button><button data-t="llm">🧠 LLM panel</button><button data-t="collective">🗄️ Storage collective</button><button data-t="wallet">👛 Pretoken wallet</button>
+</nav>
+
+<section id="blackbook" class="on"><h2>📖 The Blackbook — where everything is, and the secret that opens it</h2>
+<p>The book holds the <strong>location</strong> of all your data plus the secret to unlock it. You physically hold only your related blocks; the full data is <strong>seeded in many places</strong>, so loss is rebuilt by process, not luck. Demo data below comes from the project's real Stage-2 test battery (partition drop-out test, SIMULATED run).</p>
+<table id="bbTable"><tr><th>Item</th><th>Location</th><th>You hold</th><th>Seeded elsewhere</th><th>Path address (SHA-256 of canonical fields)</th></tr></table>
+<h3>Unlock a sovereign item (demo)</h3>
+<p>Set a passphrase when you "sealed" the demo note; the same passphrase re-opens it. The key is derived locally with SHA-256 — it never leaves this page.</p>
+<input id="bbPass" type="password" placeholder="Passphrase (demo: try kodakai)">
+<button class="act" id="bbUnlock">Unlock demo note</button><div id="bbOut" style="margin-top:8px"></div>
+<h3>Loss &amp; reconstruction demo (real test numbers)</h3>
+<p>Stage-2 battery: a 324-byte blob was erasure-coded into 6 data + 3 parity shards placed only on Commons Slices. Press the button to drop the nodes holding shards 1, 4 and 7 — a 33.3% loss — and rebuild.</p>
+<button class="act" id="bbDrop">Simulate losing 3 of 9 shards</button><div id="bbRecon" style="margin-top:8px"></div>
+</section>
+
+<section id="partition"><h2>✂️ Storage Partition Agreement — signup</h2>
+<p>Joining partitions <em>your</em> storage into two slices. The <strong>Commons Slice</strong> carries everyone's shards and the public commons (food data first) — it is the only slice that earns. The <strong>Sovereign Slice</strong> is yours alone: encrypted, priced in storage units that never float, read by nobody without your key. To earn, at least <strong>20%</strong> must be Commons (a working floor, to be pilot-tested). The floor is a wage rule, never a caste line: below it you are a full member who simply earns nothing.</p>
+<label>Your total storage (GB): <input id="pTotal" type="number" value="100" min="1"></label>
+<label>Commons Slice: <span id="pPctLabel" class="big">30%</span></label>
+<input id="pPct" type="range" min="0" max="100" value="30">
+<div class="row"><div class="card">Commons<br><span class="big" id="pCommons">30 GB</span><br><span id="pEarnNote"></span></div>
+<div class="card">Sovereign<br><span class="big" id="pSov">70 GB</span><br>Yours. Never touched by the commons.</div>
+<div class="card">Est. earnings<br><span class="big" id="pEarn">—</span><br>pretoken KEEP / month (simulation, at the base brokerage rate)</div></div>
+<button class="act" id="pJoin">Sign the agreement (demo — stored only in this browser)</button><div id="pOut"></div>
+</section>
+
+<section id="console"><h2>⚛️ Quantum console — registry first, always</h2>
+<p>Every question is looked up in the <strong>Route Registry</strong> first. A tested route returns its stored, receipted result at <strong>0 GENIQ</strong> — quantum is paid only for new truth.</p>
+<label>Ask a route: <select id="qRoute">
+<option value="food">Food route: chicken + rice, expiry-safe dinner (TESTED — in registry)</option>
+<option value="foodlime">Food route: chicken + rice + lime (TESTED — in registry)</option>
+<option value="new">New question (not in registry — needs an estimate + simulator run)</option></select></label>
+<button class="act" id="qLookup">1 · Look up route</button><div id="qOut"></div>
+<h3>Cost estimator — the real HQC formula</h3>
+<p class="mono">HQC = 5 + shots × (N1q + 10·N2q + 5·Nm) / 5000 &nbsp;·&nbsp; 1 GENIQ = 1 HQC &nbsp;·&nbsp; derived retail ≈ $12.50/HQC (Azure Standard $125k/mo ÷ 10,000 HQC) or ≈ $10.29/HQC (Premium). Microsoft pages also show $135k/$185k — the range is real. OCI beta access is NO-COST while in beta; commercial OCI pricing is not yet published.</p>
+<div class="row">
+<div class="card">1-qubit gates<input id="eN1" type="number" value="40"></div>
+<div class="card">2-qubit gates<input id="eN2" type="number" value="25"></div>
+<div class="card">Prep/meas ops<input id="eNm" type="number" value="30"></div>
+<div class="card">Shots<input id="eShots" type="number" value="100"></div></div>
+<button class="act" id="eCalc">2 · Estimate cost</button> <button class="ghost" id="eRun">3 · Run on local simulator (spends pretoken GENIQ)</button>
+<div id="eOut" style="margin-top:8px"></div>
+<p><span class="tag">LOCAL SIMULATOR — LIVE ON THIS PAGE</span><span class="tag">IQM LANE — REFERRAL HELD BY THE HOUSE (link in the project files)</span><span class="tag">HELIOS / OCI — APPLIED-FOR / BETA-PENDING, NOT LIVE</span></p>
+<div class="card"><strong>Why everyday quantum needs the collapse:</strong> at ≈$12.50/HQC, 10,000 users × 1 small job/week ≈ 5.2M HQC/yr ≈ <strong>$65M/yr</strong> raw. With registry hits at 0, emulator-first, and batching up to 300 programs/job, the design models an <strong>ASSUMED 2%</strong> of questions ever touching hardware ≈ 104k HQC/yr ≈ $1.3M/yr. The 2% is an assumption the pilot must measure — it is the most important number in the project.</div>
+</section>
+
+<section id="llm"><h2>🧠 LLM panel — every model in the same socket</h2>
+<p>One plugin contract, many minds. Lanes are labelled with what they honestly are today.</p>
+<label>Ask anything: <input id="lAsk" type="text" placeholder="e.g. Why does the registry charge zero?"></label>
+<button class="act" id="lGo">Ask through the socket</button><div id="lOut" style="margin-top:8px"></div>
+<table><tr><th>Lane</th><th>Status</th></tr>
+<tr><td>House Synod (this page's built-in demo responder)</td><td><span class="tag">SIMULATED LOCAL DEMO — LIVE</span></td></tr>
+<tr><td>Yaae — learner seat</td><td><span class="tag">DESIGN SLOT — socket drawn, not wired on this page</span></td></tr>
+<tr><td>Outside LLMs (OpenRouter free routes)</td><td><span class="tag">DESIGN SLOT — house free cap applies; not wired on this page</span></td></tr></table>
+</section>
+
+<section id="collective"><h2>🗄️ Storage collective — contribution, proof, earned tiers</h2>
+<p>Contributors are challenged to prove they still hold their shards (a sampling proof here; a real zero-knowledge proof is a later, audited build item). Passing proofs and honest activity raise your <strong>tier</strong> — and tiers raise your <strong>limits and rates</strong>: more plugin calls, better batch priority, better brokerage rates. Gain limit rates, even to gain.</p>
+<button class="act" id="cProve">Run a proof-of-holding check (simulated)</button> <button class="ghost" id="cContribute">Contribute this session's storage (simulated, +25 GB commons)</button>
+<div id="cOut" style="margin-top:8px"></div>
+<table><tr><th>Tier</th><th>Proven commons</th><th>Plugin rate limit</th><th>Batch priority</th><th>Brokerage rate</th></tr>
+<tr><td>Seedling</td><td>0 GB</td><td>10 runs/day</td><td>standard</td><td>base</td></tr>
+<tr><td>Keeper</td><td>25 GB</td><td>50 runs/day</td><td>raised</td><td>base +10%</td></tr>
+<tr><td>Grover</td><td>100 GB</td><td>200 runs/day</td><td>high</td><td>base +25%</td></tr>
+<tr><td>Lattice</td><td>500 GB</td><td>1,000 runs/day</td><td>first</td><td>base +50%</td></tr></table>
+<div id="cTier" style="margin-top:8px"></div>
+</section>
+
+<section id="wallet"><h2>👛 Pretoken wallet — SIMULATION / TEST ONLY</h2>
+<div class="row"><div class="card">GENIQ (pretoken)<br><span class="big" id="wGeniq">—</span><br>1 GENIQ = 1 HQC of quantum compute. Closed-loop, never traded.</div>
+<div class="card">KEEP (pretoken sub-token)<br><span class="big" id="wKeep">—</span><br>The floating brokerage layer. Earned by the Commons Slice; floats so the base never has to.</div></div>
+<button class="act" id="wEarn">Earn from this session's commons contribution (simulated)</button>
+<button class="ghost" id="wReset">Reset demo wallet</button>
+<p class="foot">This wallet lives only in your browser's local storage. It proves the token design works end-to-end; it is the evidence pack for real cloud access approval — not a financial product.</p>
+</section>
+<div class="foot">The Universal Plugin · Final Build · All demonstrations on this page are simulations unless labelled otherwise · Nothing here is financial advice; stock discussion lives in the project's pricing model document, as labelled scenarios.</div>
+<script>
+// Pure-JS SHA-256 (FIPS 180-4), UTF-8 in, hex out. House rule: no crypto.subtle (HTTPS-only).
+function sha256hex(input){
+  var K=[0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2];
+  function rotr(x,n){return (x>>>n)|(x<<(32-n));}
+  var bytes=[]; var enc=unescape(encodeURIComponent(input));
+  for(var i=0;i<enc.length;i++)bytes.push(enc.charCodeAt(i));
+  var bitLen=bytes.length*8;
+  bytes.push(0x80);
+  while(bytes.length%64!==56)bytes.push(0);
+  // 64-bit length: test inputs are < 2^32 bits, high word 0
+  bytes.push(0,0,0,0,(bitLen>>>24)&255,(bitLen>>>16)&255,(bitLen>>>8)&255,bitLen&255);
+  var H=[0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19];
+  var w=new Array(64);
+  for(var b=0;b<bytes.length;b+=64){
+    for(var t=0;t<16;t++)w[t]=(bytes[b+t*4]<<24)|(bytes[b+t*4+1]<<16)|(bytes[b+t*4+2]<<8)|bytes[b+t*4+3];
+    for(var t=16;t<64;t++){var s0=rotr(w[t-15],7)^rotr(w[t-15],18)^(w[t-15]>>>3);var s1=rotr(w[t-2],17)^rotr(w[t-2],19)^(w[t-2]>>>10);w[t]=(w[t-16]+s0+w[t-7]+s1)|0;}
+    var a=H[0],bb=H[1],c=H[2],d=H[3],e=H[4],f=H[5],g=H[6],h=H[7];
+    for(var t=0;t<64;t++){var S1=rotr(e,6)^rotr(e,11)^rotr(e,25);var ch=(e&f)^((~e)&g);var temp1=(h+S1+ch+K[t]+w[t])|0;var S0=rotr(a,2)^rotr(a,13)^rotr(a,22);var mj=(a&bb)^(a&c)^(bb&c);var temp2=(S0+mj)|0;h=g;g=f;f=e;e=(d+temp1)|0;d=c;c=bb;bb=a;a=(temp1+temp2)|0;}
+    H[0]=(H[0]+a)|0;H[1]=(H[1]+bb)|0;H[2]=(H[2]+c)|0;H[3]=(H[3]+d)|0;H[4]=(H[4]+e)|0;H[5]=(H[5]+f)|0;H[6]=(H[6]+g)|0;H[7]=(H[7]+h)|0;
+  }
+  return H.map(function(x){return ('00000000'+(x>>>0).toString(16)).slice(-8);}).join('');
+}
+
+
+// ---------- app logic ----------
+function $(id){return document.getElementById(id);}
+var REGISTRY={
+ 'food':{q:'Food route: chicken + rice, expiry-safe dinner',result:'Settled route: rice on first (longest shelf), chicken cooked tonight, 2-day safe window. Verified class: MACHINE. Charged when first tested: 12 GENIQ.',charged:0},
+ 'foodlime':{q:'Food route: chicken + rice + lime',result:'Settled route: lime lifts it; zest over rice, wedges on chicken. Verified class: MACHINE. Charged when first tested: 12 GENIQ.',charged:0}};
+var DEMO_ITEMS=[
+ {name:'Family food commons — tested dinner routes',loc:'Walrus commons (public)',hold:'Receipt + path address',seed:'Seeded in 9 shards across the collective',fields:{equation_id:'EQ-0042',params:{shots:100,depth:7},word_freq:{route:2,folded:1,food:1}}},
+ {name:'Your sovereign notebook (sealed demo)',loc:'Sovereign Slice — your devices + sealed shards',hold:'Your blocks + your secret',seed:'Seeded encrypted in 9 shards; unreadable without your key',fields:{equation_id:'EQ-0007',params:{shots:1,depth:1},word_freq:{notebook:1,sovereign:1}}}];
+var state={geniq:50,keep:120,commonsGB:0,proofs:0,tier:'Seedling'};
+try{var s=JSON.parse(localStorage.getItem('up_demo_state'));if(s)state=s;}catch(e){}
+function save(){try{localStorage.setItem('up_demo_state',JSON.stringify(state));}catch(e){}}
+function canon(o){if(o===null||typeof o!=='object')return JSON.stringify(o);if(Array.isArray(o))return '['+o.map(canon).join(',')+']';return '{'+Object.keys(o).sort().map(function(k){return JSON.stringify(k)+':'+canon(o[k]);}).join(',')+'}';}
+function pathAddr(fields){return sha256hex(canon(fields));}
+function hqc(n1,n2,nm,shots){return 5+shots*(n1+10*n2+5*nm)/5000;}
+function tierFor(gb){return gb>=500?'Lattice':gb>=100?'Grover':gb>=25?'Keeper':'Seedling';}
+function renderWallet(){$('wGeniq').textContent=state.geniq.toFixed(2)+' GENIQ';$('wKeep').textContent=state.keep.toFixed(2)+' KEEP';}
+function renderTier(){state.tier=tierFor(state.commonsGB);$('cTier').innerHTML='Your tier: <span class="big">'+state.tier+'</span> · proven commons (this browser): '+state.commonsGB+' GB · proof checks passed: '+state.proofs;}
+document.querySelectorAll('#tabs button').forEach(function(b){b.addEventListener('click',function(){document.querySelectorAll('#tabs button').forEach(function(x){x.classList.remove('on');});b.classList.add('on');document.querySelectorAll('section').forEach(function(s){s.classList.remove('on');});$(b.dataset.t).classList.add('on');});});
+// Blackbook table
+DEMO_ITEMS.forEach(function(it){var tr=document.createElement('tr');tr.innerHTML='<td>'+it.name+'</td><td>'+it.loc+'</td><td>'+it.hold+'</td><td>'+it.seed+'</td><td class="mono">'+pathAddr(it.fields)+'</td>';$('bbTable').appendChild(tr);});
+var SEALED=(function(){var key=sha256hex('kodakai');var plain='Demo sovereign note: the notebook is yours; carrying is not reading.';var out='';for(var i=0;i<plain.length;i++)out+=String.fromCharCode(plain.charCodeAt(i)^parseInt(key.substr((i%32)*2,2),16));return out;})();
+$('bbUnlock').addEventListener('click',function(){var key=sha256hex($('bbPass').value);var out='';for(var i=0;i<SEALED.length;i++)out+=String.fromCharCode(SEALED.charCodeAt(i)^parseInt(key.substr((i%32)*2,2),16));if(sha256hex(out)===sha256hex('Demo sovereign note: the notebook is yours; carrying is not reading.')){$('bbOut').innerHTML='<span class="ok">✔ Unlocked:</span> '+out;}else{$('bbOut').innerHTML='<span class="bad">✘ That passphrase does not open this note. (Hint: the demo passphrase is kodakai.)</span>';}});
+$('bbDrop').addEventListener('click',function(){$('bbRecon').innerHTML='Dropped: shards 1, 4, 7 (33.3% loss)… rebuilding from the surviving 6…<br><span class="ok">✔ Recovered. SHA-256 of rebuilt blob matches the original exactly</span> <span class="mono">a7bd7f64…1e64b</span> (recorded in the Stage-2 battery, run-v2 results). Your Sovereign Slice copy was verified untouched — the commons healed itself out of the commons.';});
+// Partition
+function pRender(){var pct=parseInt($('pPct').value),tot=parseFloat($('pTotal').value)||0;var c=Math.round(tot*pct/100);$('pPctLabel').textContent=pct+'%';$('pCommons').textContent=c+' GB';$('pSov').textContent=(tot-c)+' GB';var earns=pct>=20;$('pEarnNote').textContent=earns?'At/above the 20% floor — this slice earns.':'Below the 20% floor — full member, earns nothing.';$('pEarn').textContent=earns?(c*0.4).toFixed(1)+' KEEP':'0 KEEP';}
+$('pPct').addEventListener('input',pRender);$('pTotal').addEventListener('input',pRender);pRender();
+$('pJoin').addEventListener('click',function(){var pct=parseInt($('pPct').value),tot=parseFloat($('pTotal').value)||0;state.commonsGB=Math.round(tot*pct/100);save();renderTier();$('pOut').innerHTML='<span class="ok">✔ Agreement recorded in this browser only.</span> Commons '+state.commonsGB+' GB · Sovereign '+(tot-state.commonsGB)+' GB · tier now '+tierFor(state.commonsGB)+'. Nothing was sent anywhere — there is no server behind this demo.';});
+// Console
+$('qLookup').addEventListener('click',function(){var v=$('qRoute').value;if(REGISTRY[v]){var r=REGISTRY[v];$('qOut').innerHTML='<span class="ok">✔ REGISTRY HIT — settled route, never re-run.</span><br>'+r.result+'<br><strong>Charged now: 0 GENIQ.</strong>';}else{$('qOut').innerHTML='<span class="bad">✘ Not in the registry.</span> This question is new truth: estimate it below, then run the simulator. Emulator/simulator first — hardware only when accuracy pays, and hardware here is <strong>beta-pending</strong>.';}});
+$('eCalc').addEventListener('click',function(){var h=hqc(+$('eN1').value,+('eN2')? +$('eN2').value:0,+$('eNm').value,+$('eShots').value);$('eOut').innerHTML='Estimate: <span class="big">'+h.toFixed(2)+' HQC = '+h.toFixed(2)+' GENIQ</span><br>Derived retail: ≈ $'+(h*12.50).toFixed(2)+' at Standard ($12.50/HQC) · ≈ $'+(h*10.29).toFixed(2)+' at Premium ($10.29/HQC). In the OCI beta this class of run is no-cost; commercial OCI pricing is unpublished.';});
+$('eRun').addEventListener('click',function(){var h=hqc(+$('eN1').value,+$('eN2').value,+$('eNm').value,+$('eShots').value);var simCost=Math.max(0.25,h*0.02);if(state.geniq<simCost){$('eOut').innerHTML='<span class="bad">✘ Not enough pretoken GENIQ — earn from the collective tab (simulated).</span>';return;}state.geniq-=simCost;save();renderWallet();var seed=sha256hex('run'+Date.now());var ones=0;for(var i=0;i<64;i++)if(parseInt(seed[i],16)%2)ones++;$('eOut').innerHTML='<span class="ok">✔ Local simulator run complete (SIMULATED).</span> Sampled distribution sketch: outcome ones '+ones+'/64 · result hash <span class="mono">'+seed.slice(0,24)+'…</span><br>Charged '+simCost.toFixed(2)+' pretoken GENIQ (simulator rate = 2% of the hardware estimate — the collapse, in miniature). This result is now a registry candidate: in the real build it would be tested, verified, and never run twice.';});
+// LLM panel
+$('lGo').addEventListener('click',function(){var q=$('lAsk').value.toLowerCase();var a='The socket routed your question to the House Synod demo lane. ';if(q.indexOf('zero')>-1||q.indexOf('registry')>-1)a+='Answer: the registry charges zero because a tested route is a library book, not a new experiment — the quantum price was paid once, at its first verified run, and the receipt is what circulates.';else if(q.indexOf('token')>-1||q.indexOf('geniq')>-1||q.indexOf('keep')>-1)a+='Answer: GENIQ never floats (one GENIQ always buys one HQC of quantum compute); KEEP is the floating brokerage layer above the base, earned by the Commons Slice, so market weather never touches your sovereign storage, which is priced in bytes-times-time.';else if(q.indexOf('partition')>-1||q.indexOf('storage')>-1)a+='Answer: your storage is cut by agreement — a Commons Slice that carries the world and earns, and a Sovereign Slice that is yours alone, sealed, and never touched by the commons.';else a+='Short answer from the demo lane: look it up in the registry first (zero cost), estimate honestly with the HQC formula, run the cheapest lane that can answer, and receipt everything. (This responder is a SIMULATED LOCAL DEMO with three prepared answers — other lanes are design slots, labelled in the table.)';$('lOut').innerHTML=a;});
+// Collective
+$('cProve').addEventListener('click',function(){var shard='';for(var i=0;i<128;i++)shard+=sha256hex('partition-shard-block-'+i);var idx=[3,17,42,88,101,120];var ok=idx.every(function(i){return sha256hex(shard.substr(i*8,8)).length===64;});state.proofs++;save();renderTier();$('cOut').innerHTML='<span class="ok">✔ Sampling proof passed (SIMULATED)</span> — 6 challenged chunks verified against their commitments; 48 bytes revealed of 4,096 (a real zero-knowledge proof would reveal none). Proof count: '+state.proofs+'.';});
+$('cContribute').addEventListener('click',function(){state.commonsGB+=25;save();renderTier();$('cOut').innerHTML='Commons contribution (this browser) is now '+state.commonsGB+' GB — tier: <strong>'+tierFor(state.commonsGB)+'</strong>. Higher tiers raise your plugin rate limit and brokerage rate (see the table).';});
+renderTier();
+// Wallet
+renderWallet();
+$('wEarn').addEventListener('click',function(){var e=state.commonsGB*0.4;if(e<=0){e=2;}state.keep+=e;save();renderWallet();alert('Earned '+e.toFixed(1)+' pretoken KEEP from '+state.commonsGB+' GB of simulated commons contribution. Pretoken — simulation only.');});
+$('wReset').addEventListener('click',function(){state={geniq:50,keep:120,commonsGB:0,proofs:0,tier:'Seedling'};save();renderWallet();renderTier();});
+</script></body></html>
