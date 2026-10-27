@@ -498,6 +498,214 @@ footer{border-top:1px solid var(--line);margin-top:44px;padding-top:18px;color:v
 </div></div>
 
 <div class="wrap">
+  <!-- ============ THE SHOW AS HERO — player + comments + playlist first (David's order, 2026-10-27) ============ -->
+  <section id="showTop" aria-label="Koda Kai Radio — the show, first">
+    <div class="showtop-head">
+      <div class="kicker">📻 Koda Kai Radio — live from the wave</div>
+      <h2 class="showtop-title">▶ The Show — Watch, Listen, Jump In</h2>
+      <p class="showtop-sub">The player starts rolling the moment this page opens. Browsers only allow it to start muted — <strong>one tap on Play and the sound comes on</strong>. The comments are right beside the video, and the full playlist is right under it.</p>
+    </div>
+<div class="grid g2" style="margin-top:16px">
+      <div class="card">
+        <button class="btn red" id="shuffleToggleBtn" type="button" aria-pressed="true" style="display:block;width:100%;min-height:64px;font-size:1.55rem;padding:16px 20px;margin:0 0 14px">SHUFFLE: ON</button>
+        <div class="vidwrap" id="mainVidWrap">
+          <iframe id="ytMainPlayer" title="Koda Kai main player — the YouTube rotation" src="https://www.youtube-nocookie.com/embed/aCfmEJOh5t0?enablejsapi=1&amp;playsinline=1&amp;rel=0&amp;modestbranding=1&amp;autoplay=1&amp;mute=1" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
+          <div class="lower3rd"><div class="l1" id="kkL3Title">Koda Kai — warming up the player…</div><div class="l2" id="kkL3Sub">KODA KAI · LIVE FROM THE WAVE</div></div>
+          <button id="ccBtnIn" type="button" aria-pressed="false" title="Sing-along captions — on/off">CC</button>
+          <button class="btn small alt" id="tvExitBtn" type="button">✕ Exit TV Mode</button>
+        </div>
+        <div class="singzone" id="singZone">
+          <div class="singbox" id="singBox">
+            <div class="sing-line" id="singLine"><span class="sing-wait">Press play — the words will pop up here, one by one, so everyone can sing together. 🎤</span></div>
+            <div class="sing-next" id="singNext"></div>
+            <div class="sing-src">Words auto-transcribed from this song's own audio — a machine's listen, so a word can land wrong now and then.</div>
+          </div>
+          <div class="singbox-tv" id="singBoxTv">
+            <div class="sing-line" id="singLineTv"><span class="sing-wait">🎤 Sing along — the words pop up here in big letters.</span></div>
+            <div class="sing-next" id="singNextTv"></div>
+            <div class="sing-src">Words auto-transcribed from this song's own audio — a machine's listen, so a word can land wrong now and then.</div>
+          </div>
+        </div>
+        <div class="wirebanner" id="wireBanner" hidden>
+          <span class="badge live">⚡ BREAKING — THE LIVE WIRE, ON AIR NOW</span>
+          <div class="wb-t" id="wbTitle"></div>
+          <div class="wb-m" id="wbMeta"></div>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;margin:0 0 14px">
+          <span class="badge" id="srcBadge">SOURCE · YOUTUBE ROTATION</span>
+          <span class="mono" style="font-size:.78rem;color:var(--muted)">Live stream input: coming — this player runs the YouTube rotation until the real signal answers, then switches on its own.</span>
+        </div>
+        <div class="nowrow">
+          <div class="vinyl" id="vinyl"><span>KODA<br>KAI</span></div>
+          <div style="flex:1;min-width:220px">
+            <div class="kicker" id="nowKind">NOW PLAYING · YOUTUBE ROTATION</div>
+            <div class="tracktitle" id="nowTitle">— press Play —</div>
+            <div style="color:var(--muted)" id="nowMeta">The YouTube rotation is queued — real songs, real sound, right here.</div>
+            <div class="progress"><i id="prog"></i></div>
+            <div class="mono" style="font-size:.78rem;color:var(--muted)"><span id="tCur">0:00</span> / <span id="tDur">0:00</span> · DJ: <b id="djName">Koda Kai (Original)</b></div>
+            <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:12px">
+              <button class="btn small red" id="playBtn2" type="button">▶ Play</button>
+              <button class="btn small alt" id="mainPrevBtn" type="button">⏮ Prev</button>
+              <button class="btn small alt" id="mainNextBtn" type="button">Next ⏭</button>
+              <button class="btn small alt" id="rndBtn" type="button" aria-pressed="false" title="Shuffle the whole playlist into a random order — press again to restore the true order">🎲 Random</button>
+              <span class="mono" id="rndStatus" style="font-size:.78rem;color:var(--muted)" aria-live="polite"></span>
+              <button class="btn small teal" id="tvBtn" type="button" aria-pressed="false">📺 TV Mode</button>
+              <button class="btn small alt" id="ccBtn" type="button" aria-pressed="false">💬 CC · Sing-Along</button>
+              <button class="btn small alt" id="sendBtn" type="button">📤 Send</button>
+              <a class="btn small alt" id="ytOpenBtn" href="https://www.youtube.com/watch?v=aCfmEJOh5t0&amp;t=75s" target="_blank" rel="noopener" style="text-decoration:none">▶ Watch on YouTube</a>
+              <label style="font-size:.85rem;font-weight:700" for="volSlider">Volume</label>
+              <input type="range" id="volSlider" min="0" max="1" step="0.05" value="0.42" style="flex:1;min-width:110px" aria-label="Stream volume">
+            </div>
+            <p class="mono" id="audioStatus" style="font-size:.8rem;color:var(--muted);margin:8px 0 0">📡 Live stream input: coming — this player is on the YouTube rotation until the real signal answers. It checks every 45 seconds and switches on its own.</p>
+            <button class="btn small alt" id="retryBtn" type="button" hidden style="margin-top:8px">↻ Check for the Live Signal</button>
+          </div>
+        </div>
+        <!-- ============ LIVE CHAT ROOM — DEMO MODE ============ -->
+        <style>
+          .lc-wrap{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:18px;margin-top:14px}
+          #liveChatCard .lc-wrap{grid-template-columns:1fr}
+          #liveChatCard .lc-feed{height:360px}
+          @media (max-width:860px){.lc-wrap{grid-template-columns:1fr}}
+          .lc-feedwrap{position:relative}
+          .lc-feed{height:460px;overflow-y:auto;border:1px solid var(--line);border-radius:12px;background:var(--panel2);padding:12px;display:flex;flex-direction:column;gap:10px;scroll-behavior:smooth}
+          @media (max-width:860px){.lc-feed{height:380px}}
+          .lc-msg{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 12px;font-size:.92rem;line-height:1.45}
+          .lc-msg .lc-head{display:flex;flex-wrap:wrap;gap:4px 8px;align-items:baseline;margin-bottom:2px}
+          .lc-name{font-weight:800}
+          .lc-tag{font-family:"IBM Plex Mono",monospace;font-size:.62rem;font-weight:700;letter-spacing:.07em;padding:2px 7px;border-radius:999px;background:var(--panel2);border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+          .lc-time{margin-left:auto;font-family:"IBM Plex Mono",monospace;font-size:.68rem;color:var(--muted);white-space:nowrap}
+          .lc-proof{font-family:"IBM Plex Mono",monospace;font-size:.7rem;color:var(--amber);margin-top:4px}
+          .lc-msg.k-dj{border-left:5px solid var(--amber2)}
+          .lc-msg.k-gift{border:2px solid var(--amber2);background:var(--agentbg)}
+          .lc-msg.k-onair{border:2px solid var(--red);background:var(--panel)}
+          .lc-msg.k-onair .lc-text{font-weight:700}
+          .lc-msg.k-booth{border:1.5px dashed var(--amber);font-family:"IBM Plex Mono",monospace;font-size:.84rem}
+          .lc-msg.k-reject{border:1.5px dashed var(--red);font-size:.88rem}
+          .lc-msg.k-sys{background:transparent;border:1px dashed var(--line);color:var(--muted);font-size:.85rem;text-align:center}
+          .lc-jump{position:absolute;left:50%;transform:translateX(-50%);bottom:10px;z-index:5;background:var(--ink);color:var(--bg);border:2px solid var(--ink);border-radius:999px;padding:6px 16px;font-weight:800;font-size:.82rem;cursor:pointer;box-shadow:var(--shadow)}
+          .lc-fx{position:absolute;bottom:14px;font-size:1.7rem;pointer-events:none;z-index:6;animation:lcFloat 2.4s ease-out forwards}
+          .lc-fx.big{font-size:3rem;animation-duration:3.2s}
+          @keyframes lcFloat{0%{transform:translateY(0) scale(.6);opacity:0}12%{opacity:1}100%{transform:translateY(-330px) scale(1.15) rotate(10deg);opacity:0}}
+          @media (prefers-reduced-motion: reduce){.lc-fx{animation:none;opacity:0}.lc-feed{scroll-behavior:auto}}
+          .lc-rail{display:flex;flex-direction:column;gap:14px;min-width:0}
+          .lc-box{border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--panel)}
+          .lc-box h4{margin:0 0 8px;font-size:1rem}
+          .lc-gifts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+          .lc-giftbtn{border:2px solid var(--line);background:var(--panel2);color:var(--ink);border-radius:12px;padding:9px 6px;font-weight:800;font-size:.9rem;cursor:pointer;line-height:1.3}
+          .lc-giftbtn:hover{border-color:var(--amber2)}
+          .lc-giftbtn small{display:block;font-weight:600;color:var(--muted);font-size:.72rem}
+          .lc-bar{height:14px;background:var(--panel2);border:1px solid var(--line);border-radius:99px;overflow:hidden}
+          .lc-bar i{display:block;height:100%;width:0;background:var(--amber2);transition:width .8s ease}
+          .lc-top{margin:0;padding-left:20px;font-size:.9rem}
+          .lc-top li{padding:2px 0}
+          .lc-top .lc-tot{font-family:"IBM Plex Mono",monospace;font-size:.78rem;color:var(--amber);font-weight:700}
+          .lc-rules{border:1.5px dashed var(--amber);border-radius:10px;padding:10px 12px;font-size:.86rem;background:var(--panel2);line-height:1.5}
+          .lc-input{width:100%;box-sizing:border-box;border:1.5px solid var(--line);border-radius:10px;background:var(--panel);color:var(--ink);padding:9px 12px;font:inherit;font-size:.92rem;margin-top:8px}
+          .lc-note{font-size:.8rem;color:var(--muted);margin:6px 0 0;line-height:1.45}
+          .lc-demobtns{display:flex;flex-direction:column;gap:8px}
+          .lc-demobtns .btn{width:100%}
+        </style>
+        <div id="liveChatCard" style="margin-top:16px;border-top:2px dashed var(--line);padding-top:16px">
+          <div style="display:flex;flex-wrap:wrap;gap:8px 14px;align-items:baseline;justify-content:space-between">
+            <h3 style="margin:0;font-size:1.35rem">💬 LIVE CHAT — DEMO MODE</h3>
+            <span class="badge">PROGRAMMED ROOM · REAL LISTENER CHAT ACTIVATES LATER</span>
+          </div>
+          <p style="color:var(--muted);font-size:.95rem">The room is already alive: the <strong>agentic AI DJ</strong> talks about every song and every break right here as it airs, and the station's chat regulars — <strong>BOB</strong>, <strong>Mabel</strong>, <strong>Uncle Ray</strong>, <strong>Tammy</strong> and <strong>Lil K</strong> — talk back, corny and human. The DJ reads names, answers questions, and carries chat topics into the next song and the news. <strong>Token tipping is simulated</strong> — the real Koda Kai token comes later; every gift still earns a booth-verified proof, and a gift is what unlocks a <strong>🎤 Say It Live</strong> request.</p>
+          <div class="lc-wrap">
+            <div class="lc-feedwrap" id="lcFeedWrap">
+              <div class="lc-feed" id="lcFeed" aria-live="polite" aria-label="Live chat feed — demo mode"></div>
+              <button class="lc-jump" id="lcJump" type="button" hidden>▼ New messages</button>
+            </div>
+            <div class="lc-rail">
+              <div class="lc-box">
+                <h4>🎁 Tip the DJ — simulated tokens</h4>
+                <div class="lc-gifts">
+                  <button class="lc-giftbtn" type="button" data-gift="0">🌊 Wave<small>1 token</small></button>
+                  <button class="lc-giftbtn" type="button" data-gift="1">🎂 Birthday Cake<small>25 tokens</small></button>
+                  <button class="lc-giftbtn" type="button" data-gift="2">🐳 Whale<small>100 tokens</small></button>
+                  <button class="lc-giftbtn" type="button" data-gift="3">🚀 Rocket<small>500 tokens</small></button>
+                </div>
+                <p class="lc-note">Demo tokens only — the real token arrives later. Every gift posts in chat with its own <span class="mono">proof #code — verified by the booth</span>, and the DJ thanks you by name.</p>
+                <div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:12px">
+                  <span style="font-weight:800;font-size:.9rem">🎯 Community goal</span>
+                  <b class="mono" id="lcGoalTxt" style="font-size:.8rem;color:var(--amber)">…</b>
+                </div>
+                <div class="lc-bar" style="margin-top:6px"><i id="lcGoalBar"></i></div>
+                <p class="lc-note">2,500 tokens unlocks the Saturday Sing-Along Special for the whole room.</p>
+                <h4 style="margin-top:14px">🏆 Top gifters</h4>
+                <ol class="lc-top" id="lcTop"></ol>
+              </div>
+              <div class="lc-box">
+                <h4>🎤 Say It Live — the dedication lane</h4>
+                <div class="lc-rules">🎙️ <strong>House rules:</strong> every message is screened by the AI booth before it airs. Keep it kind — birthdays, shoutouts and good news welcome; nothing rude, gross, or in bad taste ever makes air. <strong>3 rejected tries and your gift is forfeited and you move to listen-only mode — watch and listen, no posting. Keep it kind and it will air.</strong></div>
+                <input class="lc-input" id="lcName" type="text" maxlength="30" placeholder="Your name — the DJ reads it on air" autocomplete="off">
+                <input class="lc-input" id="lcMsg" type="text" maxlength="180" placeholder="Your shoutout — a birthday, an event, a dedication…" autocomplete="off">
+                <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:10px">
+                  <button class="btn small red" id="lcSend" type="button">🎤 Send to the Booth</button>
+                  <span class="mono" id="lcStrikes" style="font-size:.8rem;color:var(--muted)" aria-live="polite">Strikes: 0 of 3</span>
+                </div>
+                <p class="mono" id="lcSayStatus" style="font-size:.8rem;color:var(--muted);margin:8px 0 0" aria-live="polite">A gift unlocks the lane — even a 🌊 Wave (1 token). Then the booth screens it, and the DJ reads the good ones live.</p>
+              </div>
+              <div class="lc-box">
+                <h4>🎬 See it happen — live-action demos</h4>
+                <div class="lc-demobtns">
+                  <button class="btn small alt" id="lcDemoRush" type="button">🎁 GIFT RUSH — the hype train</button>
+                  <button class="btn small alt" id="lcDemoBday" type="button">🎂 BIRTHDAY DEDICATION — Mabel's request</button>
+                  <button class="btn small alt" id="lcDemoStrikes" type="button">🚫 THREE STRIKES — the warning flow</button>
+                </div>
+                <p class="lc-note">Scripted live moments, run by the booth — watch the feed.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <canvas id="wave" width="640" height="56" aria-hidden="true"></canvas>
+        <h3 style="margin-top:16px">Choose your DJ — layered in live</h3>
+        <div class="chips" id="djChips">
+          <button class="chipbtn" type="button" aria-pressed="true" data-dj="Koda Kai (Original)">Koda Kai · Full-Range Mimic</button>
+          <button class="chipbtn" type="button" aria-pressed="false" data-dj="Nova Reyes">Nova Reyes · Synthwave</button>
+          <button class="chipbtn" type="button" aria-pressed="false" data-dj="Howlin' Rex">Howlin' Rex · Blues &amp; Soul</button>
+          <button class="chipbtn" type="button" aria-pressed="false" data-dj="Casey True">Casey True · Storyteller</button>
+          <button class="chipbtn" type="button" aria-pressed="false" data-dj="Professor Bloom">Professor Bloom · Jazz Scholar</button>
+        </div>
+        <p style="font-size:.9rem;color:var(--muted);margin-bottom:0">Any agent can be layered over any station on the map. The DJ reads what's next from the queue API preview, announces where in the world it's landing, and never holds the world feed hostage to one location.</p>
+      </div>
+      <div class="card flat">
+        <h3 style="margin-top:0">Live Queue — The Real Rotation</h3>
+        <p style="font-size:.88rem;color:var(--muted);margin:0 0 8px">The actual rundown the player is playing — the featured knowledge video, then the new Yaae-remixed default order — Revolution, Unity, Friday Party, Change-the-World, Classics and World interleaved song-to-song, with the Second Wave closing the list — in true order, cut with Live Wire news, a podcast episode, an agent outro and a sponsor slot after every 3 songs. It follows the player live; skip, prev and next stay yours, slots included.</p>
+        <ol class="queue" id="queueList"></ol>
+        <h3>The Rotation</h3>
+        <div class="rotation">
+          <span class="slot">🎙 YAAE · SHOW OPEN — INTRO “The child at the table takes the mic” · 38.5s · her voice</span><span class="arr">→</span>
+          <span class="slot">🎵 Song</span><span class="arr">→</span>
+          <span class="slot">📰 News Break</span><span class="arr">→</span>
+          <span class="slot">🎵 Song</span><span class="arr">→</span>
+          <span class="slot">📰 News Break</span><span class="arr">→</span>
+          <span class="slot">🎵 Song</span><span class="arr">→</span>
+          <span class="slot">📰 News Break</span><span class="arr">→</span>
+          <span class="slot">🎙 YAAE MIC BREAK — DJ Links 1–10 rotating · a Favorite or a Thought in the talk slot</span><span class="arr">→</span>
+          <span class="slot">🎙 Podcast</span><span class="arr">→</span>
+          <span class="slot">🤖 Agent Outro</span><span class="arr">→</span>
+          <span class="slot">📣 Sponsor Ad</span><span class="arr">→</span>
+          <span class="slot guaranteed">🙋 Human Pick — guaranteed, closes the rotation</span><span class="arr">↺</span>
+          <span class="arr">→</span><span class="slot">🎙 YAAE · SHOW CLOSE — OUTRO · 24.2s · her voice, closing the block</span>
+        </div>
+        <p style="font-size:.9rem;color:var(--muted)">News now runs after <strong>every</strong> song — the News Engine below files fresh stories all day, agentic AI first — while the podcast, outro and ad still land on the three-song block. Every rotation ends on a guaranteed human-requested song. See the Watch Floor for how that slot is protected.</p>
+      </div>
+    </div>
+<div class="card" style="margin-top:18px" id="stationDeck">
+      <div style="display:flex;flex-wrap:wrap;gap:8px 14px;align-items:baseline;justify-content:space-between">
+        <h3 style="margin:0;font-size:1.35rem">🎵 Koda Kai Station — Track List &amp; Selector</h3>
+        <span class="badge">DRIVES THE MAIN PLAYER ABOVE</span>
+      </div>
+      <p style="color:var(--muted);font-size:.95rem">The old deck, merged upward: this list is now the selector for the main player at the top of this section — tap any title and that song plays <strong>up there</strong>, with the same video and the same real YouTube sound the deck always had. One player, one sound: picking a song here hushes whatever the main player was carrying, including the live broadcast if it's on. The order is the Oct 23 Yaae remix: <strong>featured knowledge video first, then Revolution · Unity · Friday Party · Change-the-World · Classics · World · Christian Rap interleaved song-to-song in one fixed mix, with the 12 Second Wave songs of Playlist 2 and the 20 ✝️ Christian Rap — Best of 2026 songs closing the list</strong>, each row showing its intro / outro package and the DJ voice the rotation assigned it.</p>
+      <div class="decksrc">🎧 <b>Source playlist:</b> <a href="https://www.youtube.com/playlist?list=PLXrA3RtSEqpE" target="_blank" rel="noopener">Koda Kai Radio — YouTube Playlist ↗</a><br>Add a song to that YouTube list and it joins this rotation — an hourly sync keeps the list below matched to the playlist. <b>Every song below can be heard right now in two places:</b> (1) in the main player at the top of this section — real YouTube video and sound; (2) on YouTube itself, via the track's own link.</div>
+      <p class="mono" id="kkStatus" style="font-size:.8rem;color:var(--muted);margin:10px 0 0">🎧 Track list ready — the main player up top is warming up…</p>
+      <div class="decklist" id="kkTrackList" aria-label="Station track list — tap a track to play it in the main player"></div>
+      <p style="font-size:.88rem;color:var(--muted);margin:10px 0 0">Tap a track title to play it in the main player. If YouTube ever blocks a video from playing inside pages, its status flips to <b>YouTube only</b>, the player rolls on to the next song — and its YouTube ↗ link always works.</p>
+    </div>
+  </section>
+
 
   <!-- SUPPORT STRIP — David's codes & token wallet, right up top -->
   <section class="supportstrip" aria-label="Support the network">
@@ -690,194 +898,7 @@ footer{border-top:1px solid var(--line);margin-top:44px;padding-top:18px;color:v
     })();
     </script>
     </div>
-    <div class="grid g2" style="margin-top:16px">
-      <div class="card">
-        <button class="btn red" id="shuffleToggleBtn" type="button" aria-pressed="true" style="display:block;width:100%;min-height:64px;font-size:1.55rem;padding:16px 20px;margin:0 0 14px">SHUFFLE: ON</button>
-        <div class="vidwrap" id="mainVidWrap">
-          <iframe id="ytMainPlayer" title="Koda Kai main player — the YouTube rotation" src="https://www.youtube-nocookie.com/embed/aCfmEJOh5t0?enablejsapi=1&amp;playsinline=1&amp;rel=0&amp;modestbranding=1" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
-          <div class="lower3rd"><div class="l1" id="kkL3Title">Koda Kai — warming up the player…</div><div class="l2" id="kkL3Sub">KODA KAI · LIVE FROM THE WAVE</div></div>
-          <button id="ccBtnIn" type="button" aria-pressed="false" title="Sing-along captions — on/off">CC</button>
-          <button class="btn small alt" id="tvExitBtn" type="button">✕ Exit TV Mode</button>
-        </div>
-        <div class="singzone" id="singZone">
-          <div class="singbox" id="singBox">
-            <div class="sing-line" id="singLine"><span class="sing-wait">Press play — the words will pop up here, one by one, so everyone can sing together. 🎤</span></div>
-            <div class="sing-next" id="singNext"></div>
-            <div class="sing-src">Words auto-transcribed from this song's own audio — a machine's listen, so a word can land wrong now and then.</div>
-          </div>
-          <div class="singbox-tv" id="singBoxTv">
-            <div class="sing-line" id="singLineTv"><span class="sing-wait">🎤 Sing along — the words pop up here in big letters.</span></div>
-            <div class="sing-next" id="singNextTv"></div>
-            <div class="sing-src">Words auto-transcribed from this song's own audio — a machine's listen, so a word can land wrong now and then.</div>
-          </div>
-        </div>
-        <div class="wirebanner" id="wireBanner" hidden>
-          <span class="badge live">⚡ BREAKING — THE LIVE WIRE, ON AIR NOW</span>
-          <div class="wb-t" id="wbTitle"></div>
-          <div class="wb-m" id="wbMeta"></div>
-        </div>
-        <div style="display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;margin:0 0 14px">
-          <span class="badge" id="srcBadge">SOURCE · YOUTUBE ROTATION</span>
-          <span class="mono" style="font-size:.78rem;color:var(--muted)">Live stream input: coming — this player runs the YouTube rotation until the real signal answers, then switches on its own.</span>
-        </div>
-        <div class="nowrow">
-          <div class="vinyl" id="vinyl"><span>KODA<br>KAI</span></div>
-          <div style="flex:1;min-width:220px">
-            <div class="kicker" id="nowKind">NOW PLAYING · YOUTUBE ROTATION</div>
-            <div class="tracktitle" id="nowTitle">— press Play —</div>
-            <div style="color:var(--muted)" id="nowMeta">The YouTube rotation is queued — real songs, real sound, right here.</div>
-            <div class="progress"><i id="prog"></i></div>
-            <div class="mono" style="font-size:.78rem;color:var(--muted)"><span id="tCur">0:00</span> / <span id="tDur">0:00</span> · DJ: <b id="djName">Koda Kai (Original)</b></div>
-            <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:12px">
-              <button class="btn small red" id="playBtn2" type="button">▶ Play</button>
-              <button class="btn small alt" id="mainPrevBtn" type="button">⏮ Prev</button>
-              <button class="btn small alt" id="mainNextBtn" type="button">Next ⏭</button>
-              <button class="btn small alt" id="rndBtn" type="button" aria-pressed="false" title="Shuffle the whole playlist into a random order — press again to restore the true order">🎲 Random</button>
-              <span class="mono" id="rndStatus" style="font-size:.78rem;color:var(--muted)" aria-live="polite"></span>
-              <button class="btn small teal" id="tvBtn" type="button" aria-pressed="false">📺 TV Mode</button>
-              <button class="btn small alt" id="ccBtn" type="button" aria-pressed="false">💬 CC · Sing-Along</button>
-              <button class="btn small alt" id="sendBtn" type="button">📤 Send</button>
-              <a class="btn small alt" id="ytOpenBtn" href="https://www.youtube.com/watch?v=aCfmEJOh5t0&amp;t=75s" target="_blank" rel="noopener" style="text-decoration:none">▶ Watch on YouTube</a>
-              <label style="font-size:.85rem;font-weight:700" for="volSlider">Volume</label>
-              <input type="range" id="volSlider" min="0" max="1" step="0.05" value="0.42" style="flex:1;min-width:110px" aria-label="Stream volume">
-            </div>
-            <p class="mono" id="audioStatus" style="font-size:.8rem;color:var(--muted);margin:8px 0 0">📡 Live stream input: coming — this player is on the YouTube rotation until the real signal answers. It checks every 45 seconds and switches on its own.</p>
-            <button class="btn small alt" id="retryBtn" type="button" hidden style="margin-top:8px">↻ Check for the Live Signal</button>
-          </div>
-        </div>
-        <!-- ============ LIVE CHAT ROOM — DEMO MODE ============ -->
-        <style>
-          .lc-wrap{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:18px;margin-top:14px}
-          #liveChatCard .lc-wrap{grid-template-columns:1fr}
-          #liveChatCard .lc-feed{height:360px}
-          @media (max-width:860px){.lc-wrap{grid-template-columns:1fr}}
-          .lc-feedwrap{position:relative}
-          .lc-feed{height:460px;overflow-y:auto;border:1px solid var(--line);border-radius:12px;background:var(--panel2);padding:12px;display:flex;flex-direction:column;gap:10px;scroll-behavior:smooth}
-          @media (max-width:860px){.lc-feed{height:380px}}
-          .lc-msg{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 12px;font-size:.92rem;line-height:1.45}
-          .lc-msg .lc-head{display:flex;flex-wrap:wrap;gap:4px 8px;align-items:baseline;margin-bottom:2px}
-          .lc-name{font-weight:800}
-          .lc-tag{font-family:"IBM Plex Mono",monospace;font-size:.62rem;font-weight:700;letter-spacing:.07em;padding:2px 7px;border-radius:999px;background:var(--panel2);border:1px solid var(--line);color:var(--muted);white-space:nowrap}
-          .lc-time{margin-left:auto;font-family:"IBM Plex Mono",monospace;font-size:.68rem;color:var(--muted);white-space:nowrap}
-          .lc-proof{font-family:"IBM Plex Mono",monospace;font-size:.7rem;color:var(--amber);margin-top:4px}
-          .lc-msg.k-dj{border-left:5px solid var(--amber2)}
-          .lc-msg.k-gift{border:2px solid var(--amber2);background:var(--agentbg)}
-          .lc-msg.k-onair{border:2px solid var(--red);background:var(--panel)}
-          .lc-msg.k-onair .lc-text{font-weight:700}
-          .lc-msg.k-booth{border:1.5px dashed var(--amber);font-family:"IBM Plex Mono",monospace;font-size:.84rem}
-          .lc-msg.k-reject{border:1.5px dashed var(--red);font-size:.88rem}
-          .lc-msg.k-sys{background:transparent;border:1px dashed var(--line);color:var(--muted);font-size:.85rem;text-align:center}
-          .lc-jump{position:absolute;left:50%;transform:translateX(-50%);bottom:10px;z-index:5;background:var(--ink);color:var(--bg);border:2px solid var(--ink);border-radius:999px;padding:6px 16px;font-weight:800;font-size:.82rem;cursor:pointer;box-shadow:var(--shadow)}
-          .lc-fx{position:absolute;bottom:14px;font-size:1.7rem;pointer-events:none;z-index:6;animation:lcFloat 2.4s ease-out forwards}
-          .lc-fx.big{font-size:3rem;animation-duration:3.2s}
-          @keyframes lcFloat{0%{transform:translateY(0) scale(.6);opacity:0}12%{opacity:1}100%{transform:translateY(-330px) scale(1.15) rotate(10deg);opacity:0}}
-          @media (prefers-reduced-motion: reduce){.lc-fx{animation:none;opacity:0}.lc-feed{scroll-behavior:auto}}
-          .lc-rail{display:flex;flex-direction:column;gap:14px;min-width:0}
-          .lc-box{border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--panel)}
-          .lc-box h4{margin:0 0 8px;font-size:1rem}
-          .lc-gifts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-          .lc-giftbtn{border:2px solid var(--line);background:var(--panel2);color:var(--ink);border-radius:12px;padding:9px 6px;font-weight:800;font-size:.9rem;cursor:pointer;line-height:1.3}
-          .lc-giftbtn:hover{border-color:var(--amber2)}
-          .lc-giftbtn small{display:block;font-weight:600;color:var(--muted);font-size:.72rem}
-          .lc-bar{height:14px;background:var(--panel2);border:1px solid var(--line);border-radius:99px;overflow:hidden}
-          .lc-bar i{display:block;height:100%;width:0;background:var(--amber2);transition:width .8s ease}
-          .lc-top{margin:0;padding-left:20px;font-size:.9rem}
-          .lc-top li{padding:2px 0}
-          .lc-top .lc-tot{font-family:"IBM Plex Mono",monospace;font-size:.78rem;color:var(--amber);font-weight:700}
-          .lc-rules{border:1.5px dashed var(--amber);border-radius:10px;padding:10px 12px;font-size:.86rem;background:var(--panel2);line-height:1.5}
-          .lc-input{width:100%;box-sizing:border-box;border:1.5px solid var(--line);border-radius:10px;background:var(--panel);color:var(--ink);padding:9px 12px;font:inherit;font-size:.92rem;margin-top:8px}
-          .lc-note{font-size:.8rem;color:var(--muted);margin:6px 0 0;line-height:1.45}
-          .lc-demobtns{display:flex;flex-direction:column;gap:8px}
-          .lc-demobtns .btn{width:100%}
-        </style>
-        <div id="liveChatCard" style="margin-top:16px;border-top:2px dashed var(--line);padding-top:16px">
-          <div style="display:flex;flex-wrap:wrap;gap:8px 14px;align-items:baseline;justify-content:space-between">
-            <h3 style="margin:0;font-size:1.35rem">💬 LIVE CHAT — DEMO MODE</h3>
-            <span class="badge">PROGRAMMED ROOM · REAL LISTENER CHAT ACTIVATES LATER</span>
-          </div>
-          <p style="color:var(--muted);font-size:.95rem">The room is already alive: the <strong>agentic AI DJ</strong> talks about every song and every break right here as it airs, and the station's chat regulars — <strong>BOB</strong>, <strong>Mabel</strong>, <strong>Uncle Ray</strong>, <strong>Tammy</strong> and <strong>Lil K</strong> — talk back, corny and human. The DJ reads names, answers questions, and carries chat topics into the next song and the news. <strong>Token tipping is simulated</strong> — the real Koda Kai token comes later; every gift still earns a booth-verified proof, and a gift is what unlocks a <strong>🎤 Say It Live</strong> request.</p>
-          <div class="lc-wrap">
-            <div class="lc-feedwrap" id="lcFeedWrap">
-              <div class="lc-feed" id="lcFeed" aria-live="polite" aria-label="Live chat feed — demo mode"></div>
-              <button class="lc-jump" id="lcJump" type="button" hidden>▼ New messages</button>
-            </div>
-            <div class="lc-rail">
-              <div class="lc-box">
-                <h4>🎁 Tip the DJ — simulated tokens</h4>
-                <div class="lc-gifts">
-                  <button class="lc-giftbtn" type="button" data-gift="0">🌊 Wave<small>1 token</small></button>
-                  <button class="lc-giftbtn" type="button" data-gift="1">🎂 Birthday Cake<small>25 tokens</small></button>
-                  <button class="lc-giftbtn" type="button" data-gift="2">🐳 Whale<small>100 tokens</small></button>
-                  <button class="lc-giftbtn" type="button" data-gift="3">🚀 Rocket<small>500 tokens</small></button>
-                </div>
-                <p class="lc-note">Demo tokens only — the real token arrives later. Every gift posts in chat with its own <span class="mono">proof #code — verified by the booth</span>, and the DJ thanks you by name.</p>
-                <div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:12px">
-                  <span style="font-weight:800;font-size:.9rem">🎯 Community goal</span>
-                  <b class="mono" id="lcGoalTxt" style="font-size:.8rem;color:var(--amber)">…</b>
-                </div>
-                <div class="lc-bar" style="margin-top:6px"><i id="lcGoalBar"></i></div>
-                <p class="lc-note">2,500 tokens unlocks the Saturday Sing-Along Special for the whole room.</p>
-                <h4 style="margin-top:14px">🏆 Top gifters</h4>
-                <ol class="lc-top" id="lcTop"></ol>
-              </div>
-              <div class="lc-box">
-                <h4>🎤 Say It Live — the dedication lane</h4>
-                <div class="lc-rules">🎙️ <strong>House rules:</strong> every message is screened by the AI booth before it airs. Keep it kind — birthdays, shoutouts and good news welcome; nothing rude, gross, or in bad taste ever makes air. <strong>3 rejected tries and your gift is forfeited and you move to listen-only mode — watch and listen, no posting. Keep it kind and it will air.</strong></div>
-                <input class="lc-input" id="lcName" type="text" maxlength="30" placeholder="Your name — the DJ reads it on air" autocomplete="off">
-                <input class="lc-input" id="lcMsg" type="text" maxlength="180" placeholder="Your shoutout — a birthday, an event, a dedication…" autocomplete="off">
-                <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:10px">
-                  <button class="btn small red" id="lcSend" type="button">🎤 Send to the Booth</button>
-                  <span class="mono" id="lcStrikes" style="font-size:.8rem;color:var(--muted)" aria-live="polite">Strikes: 0 of 3</span>
-                </div>
-                <p class="mono" id="lcSayStatus" style="font-size:.8rem;color:var(--muted);margin:8px 0 0" aria-live="polite">A gift unlocks the lane — even a 🌊 Wave (1 token). Then the booth screens it, and the DJ reads the good ones live.</p>
-              </div>
-              <div class="lc-box">
-                <h4>🎬 See it happen — live-action demos</h4>
-                <div class="lc-demobtns">
-                  <button class="btn small alt" id="lcDemoRush" type="button">🎁 GIFT RUSH — the hype train</button>
-                  <button class="btn small alt" id="lcDemoBday" type="button">🎂 BIRTHDAY DEDICATION — Mabel's request</button>
-                  <button class="btn small alt" id="lcDemoStrikes" type="button">🚫 THREE STRIKES — the warning flow</button>
-                </div>
-                <p class="lc-note">Scripted live moments, run by the booth — watch the feed.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <canvas id="wave" width="640" height="56" aria-hidden="true"></canvas>
-        <h3 style="margin-top:16px">Choose your DJ — layered in live</h3>
-        <div class="chips" id="djChips">
-          <button class="chipbtn" type="button" aria-pressed="true" data-dj="Koda Kai (Original)">Koda Kai · Full-Range Mimic</button>
-          <button class="chipbtn" type="button" aria-pressed="false" data-dj="Nova Reyes">Nova Reyes · Synthwave</button>
-          <button class="chipbtn" type="button" aria-pressed="false" data-dj="Howlin' Rex">Howlin' Rex · Blues &amp; Soul</button>
-          <button class="chipbtn" type="button" aria-pressed="false" data-dj="Casey True">Casey True · Storyteller</button>
-          <button class="chipbtn" type="button" aria-pressed="false" data-dj="Professor Bloom">Professor Bloom · Jazz Scholar</button>
-        </div>
-        <p style="font-size:.9rem;color:var(--muted);margin-bottom:0">Any agent can be layered over any station on the map. The DJ reads what's next from the queue API preview, announces where in the world it's landing, and never holds the world feed hostage to one location.</p>
-      </div>
-      <div class="card flat">
-        <h3 style="margin-top:0">Live Queue — The Real Rotation</h3>
-        <p style="font-size:.88rem;color:var(--muted);margin:0 0 8px">The actual rundown the player is playing — the featured knowledge video, then the new Yaae-remixed default order — Revolution, Unity, Friday Party, Change-the-World, Classics and World interleaved song-to-song, with the Second Wave closing the list — in true order, cut with Live Wire news, a podcast episode, an agent outro and a sponsor slot after every 3 songs. It follows the player live; skip, prev and next stay yours, slots included.</p>
-        <ol class="queue" id="queueList"></ol>
-        <h3>The Rotation</h3>
-        <div class="rotation">
-          <span class="slot">🎙 YAAE · SHOW OPEN — INTRO “The child at the table takes the mic” · 38.5s · her voice</span><span class="arr">→</span>
-          <span class="slot">🎵 Song</span><span class="arr">→</span>
-          <span class="slot">📰 News Break</span><span class="arr">→</span>
-          <span class="slot">🎵 Song</span><span class="arr">→</span>
-          <span class="slot">📰 News Break</span><span class="arr">→</span>
-          <span class="slot">🎵 Song</span><span class="arr">→</span>
-          <span class="slot">📰 News Break</span><span class="arr">→</span>
-          <span class="slot">🎙 YAAE MIC BREAK — DJ Links 1–10 rotating · a Favorite or a Thought in the talk slot</span><span class="arr">→</span>
-          <span class="slot">🎙 Podcast</span><span class="arr">→</span>
-          <span class="slot">🤖 Agent Outro</span><span class="arr">→</span>
-          <span class="slot">📣 Sponsor Ad</span><span class="arr">→</span>
-          <span class="slot guaranteed">🙋 Human Pick — guaranteed, closes the rotation</span><span class="arr">↺</span>
-          <span class="arr">→</span><span class="slot">🎙 YAAE · SHOW CLOSE — OUTRO · 24.2s · her voice, closing the block</span>
-        </div>
-        <p style="font-size:.9rem;color:var(--muted)">News now runs after <strong>every</strong> song — the News Engine below files fresh stories all day, agentic AI first — while the podcast, outro and ad still land on the three-song block. Every rotation ends on a guaranteed human-requested song. See the Watch Floor for how that slot is protected.</p>
-      </div>
-    </div>
+    
 
     <!-- ============ REMIX ENGINE — 3 SONGS, A PODCAST, REPEAT ============ -->
     <div class="card" style="margin-top:18px" id="remixCard">
@@ -1033,17 +1054,7 @@ footer{border-top:1px solid var(--line);margin-top:44px;padding-top:18px;color:v
     </div>
 
     <!-- ============ KODA KAI STATION — TRACK LIST & SELECTOR FOR THE MAIN PLAYER ============ -->
-    <div class="card" style="margin-top:18px" id="stationDeck">
-      <div style="display:flex;flex-wrap:wrap;gap:8px 14px;align-items:baseline;justify-content:space-between">
-        <h3 style="margin:0;font-size:1.35rem">🎵 Koda Kai Station — Track List &amp; Selector</h3>
-        <span class="badge">DRIVES THE MAIN PLAYER ABOVE</span>
-      </div>
-      <p style="color:var(--muted);font-size:.95rem">The old deck, merged upward: this list is now the selector for the main player at the top of this section — tap any title and that song plays <strong>up there</strong>, with the same video and the same real YouTube sound the deck always had. One player, one sound: picking a song here hushes whatever the main player was carrying, including the live broadcast if it's on. The order is the Oct 23 Yaae remix: <strong>featured knowledge video first, then Revolution · Unity · Friday Party · Change-the-World · Classics · World · Christian Rap interleaved song-to-song in one fixed mix, with the 12 Second Wave songs of Playlist 2 and the 20 ✝️ Christian Rap — Best of 2026 songs closing the list</strong>, each row showing its intro / outro package and the DJ voice the rotation assigned it.</p>
-      <div class="decksrc">🎧 <b>Source playlist:</b> <a href="https://www.youtube.com/playlist?list=PLXrA3RtSEqpE" target="_blank" rel="noopener">Koda Kai Radio — YouTube Playlist ↗</a><br>Add a song to that YouTube list and it joins this rotation — an hourly sync keeps the list below matched to the playlist. <b>Every song below can be heard right now in two places:</b> (1) in the main player at the top of this section — real YouTube video and sound; (2) on YouTube itself, via the track's own link.</div>
-      <p class="mono" id="kkStatus" style="font-size:.8rem;color:var(--muted);margin:10px 0 0">🎧 Track list ready — the main player up top is warming up…</p>
-      <div class="decklist" id="kkTrackList" aria-label="Station track list — tap a track to play it in the main player"></div>
-      <p style="font-size:.88rem;color:var(--muted);margin:10px 0 0">Tap a track title to play it in the main player. If YouTube ever blocks a video from playing inside pages, its status flips to <b>YouTube only</b>, the player rolls on to the next song — and its YouTube ↗ link always works.</p>
-    </div>
+    
 
     <!-- ============ CC CAPTIONS — EVERY SONG, ON THE RECORD ============ -->
     <div class="card" style="margin-top:18px" id="ccRecord">
@@ -6396,5 +6407,81 @@ setTimeout(function(){ post("ray", "parked the rig, kept the radio on. this is t
 })();
 </script>
 
+
+<style>
+#showTop{padding:16px 0 2px}
+#showTop .showtop-title{font-size:clamp(1.7rem,4.5vw,2.6rem);margin:.12em 0 .2em;line-height:1.05}
+#showTop .showtop-sub{color:var(--muted);max-width:72ch;margin:.2em 0 4px}
+#showTop #stationDeck{margin-top:16px}
+</style>
+<script>
+/* ---------- SHOW-FIRST: autoplay on open + Play-button rescue (2026-10-27) ----------
+   Independent of the main player script: it only uses the player's public
+   bridge (window.kkBridge) and the two Play buttons, and falls back to
+   driving the iframe directly if the bridge never appears. */
+(function(){
+  var $=function(id){return document.getElementById(id)};
+  var userPaused=false, unlocked=false, directTried=false;
+  function bridge(){ return window.kkBridge||null; }
+  function frame(){ return $("ytMainPlayer"); }
+  function status(msg){ var el=$("audioStatus"); if(el) el.textContent=msg; }
+  function directStart(withSound){
+    var f=frame(); if(!f) return false;
+    var m=/embed\/([\w-]{6,})/.exec(f.src||"");
+    var id=m? m[1] : "aCfmEJOh5t0";
+    f.src="https://www.youtube-nocookie.com/embed/"+id+"?enablejsapi=1&playsinline=1&rel=0&modestbranding=1&autoplay=1"+(withSound? "" : "&mute=1");
+    return true;
+  }
+  /* Autoplay on open: if the player script is alive but hasn't loaded a
+     track yet (the phone direct-mode case), press its own Play for it.
+     Sound still waits for the first real tap — that's the browser's rule,
+     and the unlock below handles that moment. */
+  function tryAuto(){
+    if(userPaused||unlocked) return;
+    var b=bridge();
+    if(b){ if(b.trackIndex()<0 && !b.intent()){ var pb=$("playBtn2"); if(pb) pb.click(); } }
+    else if(!directTried){ directTried=true; directStart(false); }
+  }
+  window.addEventListener("load", function(){ setTimeout(tryAuto,1200); setTimeout(tryAuto,3200); setTimeout(tryAuto,7000); });
+  /* First real tap/key anywhere brings the sound in (unless the tap IS a
+     play/pause button, the video itself, or a form field — those speak
+     for themselves). Runs until it succeeds once. */
+  function unlock(e){
+    if(unlocked||userPaused) return;
+    var t=e.target;
+    if(!t) return;
+    var id=t.id||"";
+    if(id==="playBtn"||id==="playBtn2"||id==="sbPlay"||id==="ytMainPlayer") return;
+    if(t.tagName==="INPUT"||t.tagName==="TEXTAREA"||t.tagName==="SELECT") return;
+    var wrap=$("mainVidWrap"); if(wrap&&wrap.contains(t)) return;
+    var b=bridge(); if(!b) return;
+    if(!b.intent()){ var pb=$("playBtn2"); if(pb){ pb.click(); unlocked=true; } }
+    else if(!b.isPlaying()){ b.play(); unlocked=true; }
+    else unlocked=true;
+  }
+  ["pointerdown","keydown"].forEach(function(ev){ document.addEventListener(ev, unlock, true); });
+  /* Play-button rescue, riding alongside the buttons' own handlers:
+     - the hero button also scrolls the player into view, so pressing it
+       visibly does something;
+     - a start that got blocked is retried once through the bridge;
+     - if the bridge is dead entirely, the button drives the iframe
+       itself (inside the tap, so sound is allowed). */
+  function rescue(btn, isHero){
+    if(!btn) return;
+    btn.addEventListener("click", function(){
+      var b=bridge();
+      if(!b){ if(directStart(true)) status("▶ Playing — started straight from the button."); unlocked=true; return; }
+      if(b.intent()){ unlocked=true; } else { userPaused=true; unlocked=true; }
+      if(isHero){ var w=$("showTop"); if(w) setTimeout(function(){ w.scrollIntoView({behavior:"smooth", block:"start"}); },60); }
+      setTimeout(function(){
+        var bb=bridge(); if(!bb||userPaused) return;
+        if(bb.intent()&&!bb.isPlaying()) bb.play();
+      }, 900);
+    });
+  }
+  rescue($("playBtn"), true);
+  rescue($("playBtn2"), false);
+})();
+</script>
 </body>
 </html>
