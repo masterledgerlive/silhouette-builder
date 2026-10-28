@@ -7,7 +7,10 @@ var KKReplay = (function () {
   'use strict';
 
   // ---------- pure-JS SHA-256 (FIPS 180-4), ASCII/UTF-8 input ----------
-  function sha256(ascii) {
+  function sha256(input) {
+    // Encode to UTF-8 bytes first (identity for ASCII, so engine chains are
+    // unchanged) — blob texts carry em dashes/arrows and must hash as bytes.
+    var ascii = unescape(encodeURIComponent(String(input)));
     function rr(v, a) { return (v >>> a) | (v << (32 - a)); }
     var maxWord = Math.pow(2, 32), result = '';
     var words = [], asciiBitLength = ascii.length * 8;
