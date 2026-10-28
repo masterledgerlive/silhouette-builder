@@ -70,10 +70,13 @@ input{background:#0b0b1a;border:1px solid #33336a;color:#e8e8ff;border-radius:6p
 <div class="panel" id="playPanel" style="display:none">
   <h2 style="margin:0 0 6px">🎮 PLAY</h2>
   <input id="wallet" placeholder="your wallet (0x…) — wallet is the who">
-  <button class="btn go" id="startBtn" onclick="startRun()">✋ START RUN</button>
+  <button class="btn go" id="dealBtn" onclick="dealStage()">🎲 DEAL A RUN</button>
+  <button class="btn" id="practiceBtn" onclick="practice()" disabled>🎓 PRACTICE THE BUTTONS</button>
+  <button class="btn go" id="startBtn" onclick="startRun()" disabled>✋ START SCORED RUN</button>
   <span class="lbl" id="runInfo"></span>
   <div id="remapCard" class="lbl" style="margin:8px 0"></div>
   <div id="arena">✋</div>
+  <div id="pressEcho" class="lbl" style="text-align:center;min-height:1.2em;margin-top:4px">your presses will echo here — if a press lands, you see it</div>
   <div class="pads">
     <div class="pad" data-press="U"><span id="meanU">⬆ UP</span><small>physical ⬆ key</small></div>
     <div class="pad" data-press="L"><span id="meanL">⬅ LEFT</span><small>physical ⬅ key</small></div>
@@ -137,19 +140,52 @@ function finishLesson(){
 
 // ---- play ----
 let run=null; // {seed, wallet, nonce, dealt, tape[], start, raf, done}
-function startRun(){
+let staged=null; // dealt but not started: {seed, nonce, dealt}
+let practiceState=null;
+const PHYS={U:'⬆',D:'⬇',L:'⬅',R:'➡'};
+function dealStage(){
   const wallet=$('wallet').value.trim();
   if(!wallet){ alert('wallet is the who — enter your wallet first.'); return; }
   const seed=(Math.floor(Math.random()*900000)+100000);
   const nonce=Date.now()%100000;
   const dealt=KKSlap.dealRun(seed);
-  run={seed,wallet,nonce,dealt,tape:new Array(KKSlap.HANDS).fill(null),start:performance.now(),done:false,shown:-1};
+  staged={seed,nonce,dealt};
   $('runInfo').innerHTML='seed <span class="mono">'+seed+'</span> · key <span class="mono">'+KKSlap.runKey(wallet,seed,nonce).slice(0,12)+'…</span>';
-  $('remapCard').innerHTML='🃏 <b>This run\'s buttons:</b> '+['U','D','L','R'].map(k=>k+' key → means '+ARROWS[dealt.remap[k]]).join(' · ');
+  $('remapCard').innerHTML='🃏 <b>This run\'s buttons:</b> '+['U','D','L','R'].map(k=>PHYS[k]+' key → means '+ARROWS[dealt.remap[k]]).join(' · ');
   ['U','D','L','R'].forEach(k=>{ $('mean'+k).textContent=ARROWS[dealt.remap[k]]; });
+  $('practiceBtn').disabled=false;
+  $('startBtn').disabled=false;
+  $('pressEcho').textContent='buttons dealt. Practice them, or start the scored run — same buttons either way.';
+}
+function practice(){
+  if(!staged||practiceState) return;
+  const dealt=staged.dealt;
+  const inv={}; for(const k in dealt.remap) inv[dealt.remap[k]]=k;
+  practiceState={dealt,inv,count:0,correct:0,target:null,waiting:false};
+  $('practiceBtn').disabled=true;
+  nextPractice();
+}
+function nextPractice(){
+  const ps=practiceState; if(!ps) return;
+  if(ps.count>=8){ $('arena').textContent='🎓'; $('arena').classList.remove('flash'); $('pressEcho').innerHTML='practice done: <b>'+ps.correct+'/8</b> correct buttons. The scored run uses these same buttons.'; practiceState=null; $('practiceBtn').disabled=false; return; }
+  const dirs=['U','D','L','R'];
+  ps.target=dirs[Math.floor(Math.random()*4)];
+  ps.waiting=true;
+  $('arena').innerHTML=ARROWS[ps.target].split(' ')[0]+'<div style="font-size:1.1rem;letter-spacing:.2em">'+ARROWS[ps.target].split(' ')[1]+'</div>';
+  $('arena').classList.add('flash');
+  $('pressEcho').textContent='practice '+(ps.count+1)+'/8 — slap the pad labeled '+ARROWS[ps.target];
+}
+function startRun(){
+  const wallet=$('wallet').value.trim();
+  if(!wallet){ alert('wallet is the who — enter your wallet first.'); return; }
+  if(!staged) dealStage();
+  practiceState=null;
+  const seed=staged.seed, nonce=staged.nonce, dealt=staged.dealt;
+  run={seed,wallet,nonce,dealt,tape:new Array(KKSlap.HANDS).fill(null),start:performance.now(),done:false,shown:-1};
   $('runResult').innerHTML='';
-  $('startBtn').disabled=true;
-  $('arena').textContent='…';
+  $('startBtn').disabled=true; $('dealBtn').disabled=true; $('practiceBtn').disabled=true;
+  $('arena').textContent='✋'; $('arena').classList.remove('flash');
+  $('pressEcho').textContent='run live — first press in each hand is your slap. Watch this line: every press echoes.';
   tickLoop();
 }
 function handWindow(h){
@@ -174,12 +210,33 @@ function tickLoop(){
   run.raf=requestAnimationFrame(tickLoop);
 }
 function press(p){
+  if(practiceState&&practiceState.waiting){
+    const ps=practiceState;
+    const meaning=ps.dealt.remap[p];
+    const ok=meaning===ps.target;
+    if(ok) ps.correct++;
+    ps.count++; ps.waiting=false;
+    $('pressEcho').innerHTML='you pressed '+PHYS[p]+' key = means '+ARROWS[meaning]+' → '+(ok?'✓ CORRECT':'✗ the target was '+ARROWS[ps.target]+' — its button is '+PHYS[ps.inv[ps.target]]+' key');
+    flashPad(p);
+    setTimeout(nextPractice,650);
+    return;
+  }
   if(!run||run.done) return;
   const now=Math.round(performance.now()-run.start);
   const hands=run.dealt.hands;
   for(let h=0;h<hands.length;h++){
     const [from,to]=handWindow(h);
-    if(now>=from&&now<to&&!run.tape[h]){ run.tape[h]={tick:now,press:p}; flashPad(p); break; }
+    if(now>=from&&now<to&&!run.tape[h]){
+      run.tape[h]={tick:now,press:p}; flashPad(p);
+      const meaning=run.dealt.remap[p];
+      const beforeStim=now<hands[h].stimulusTick;
+      $('pressEcho').innerHTML='hand '+(h+1)+': you pressed '+PHYS[p]+' key = means '+ARROWS[meaning]+' @ tick '+now+' ms'+(beforeStim?' — ⚠ BEFORE the flash = foul-early. Wait for the flash!':' — recorded.');
+      break;
+    }
+    if(now>=from&&now<to&&run.tape[h]){
+      $('pressEcho').innerHTML='hand '+(h+1)+' already has its slap — one press per hand. (your extra press was ignored)';
+      break;
+    }
   }
 }
 function flashPad(p){ const el=document.querySelector('.pad[data-press="'+p+'"]'); if(el){ el.style.background='#3a2a0f'; setTimeout(()=>el.style.background='',120); } }
@@ -189,14 +246,19 @@ document.addEventListener('keydown',e=>{
   if(map[e.key]){ press(map[e.key]); e.preventDefault(); }
 });
 function finishRun(){
-  run.done=true; $('startBtn').disabled=false;
+  run.done=true; $('startBtn').disabled=false; $('dealBtn').disabled=false; staged=null; $('startBtn').disabled=true; $('practiceBtn').disabled=true;
   $('arena').textContent='🏁'; $('arena').classList.remove('flash');
   const tape=run.tape.map(t=>t||null);
   const sim2=KKSlap.simulate(run.seed, tape);
   const key=KKSlap.runKey(run.wallet,run.seed,run.nonce);
-  const rows=sim2.results.map(r=>'<tr><td>hand '+(r.hand+1)+'</td><td>'+r.outcome+'</td><td>'+(r.reaction===null?'—':r.reaction+' ms')+'</td><td>'+r.pts+'</td></tr>').join('');
+  const inv={}; for(const k in run.dealt.remap) inv[run.dealt.remap[k]]=k;
+  const rows=sim2.results.map(r=>{
+    const hd=run.dealt.hands[r.hand], tp=tape[r.hand];
+    const youPressed=tp?PHYS[tp.press]+' key (= '+ARROWS[run.dealt.remap[tp.press]]+')':'—';
+    return '<tr><td>hand '+(r.hand+1)+'</td><td>'+ARROWS[hd.target]+'</td><td>'+youPressed+'</td><td>'+PHYS[inv[hd.target]]+' key</td><td>'+r.outcome+'</td><td>'+(r.reaction===null?'—':r.reaction+' ms')+'</td><td>'+r.pts+'</td></tr>';
+  }).join('');
   $('runResult').innerHTML='<h3 style="margin:6px 0">SCORE '+sim2.score+' <span class="lbl">(derived by replay · chain <span class="mono">'+sim2.chain.slice(0,16)+'…</span>)</span></h3>'+
-    '<table><tr><th>hand</th><th>outcome</th><th>reaction</th><th>points</th></tr>'+rows+'</table>'+
+    '<table><tr><th>hand</th><th>target</th><th>you pressed</th><th>button needed</th><th>outcome</th><th>reaction</th><th>points</th></tr>'+rows+'</table>'+
     '<button class="btn go" onclick="submitRun()">🏆 PUT IT ON THE HALL OF SCORES</button> <span class="lbl">as wallet <span class="mono">'+run.wallet+'</span></span>';
   run.final={score:sim2.score,chain:sim2.chain,key,tape};
 }
