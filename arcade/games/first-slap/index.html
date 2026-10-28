@@ -196,10 +196,35 @@ function finishRun(){
 function saveScore(e){
   try{ const s=JSON.parse(localStorage.getItem('blobscores')||'[]'); s.unshift(e); localStorage.setItem('blobscores',JSON.stringify(s)); }catch(err){}
 }
-function submitRun(){
+// ---- the blob score chain: scores live in Walrus blobs, not just this browser ----
+// Genesis (machine FIRST-SLAP-001, first node): ehJq01aAB6wAGh-f_37INVun0eV3Xboi8LtOa66K3eU
+const CHAIN_GENESIS='ehJq01aAB6wAGh-f_37INVun0eV3Xboi8LtOa66K3eU';
+const PUBLISHER='https://publisher.walrus-testnet.walrus.space/v1/blobs?epochs=5';
+function chainHead(){ try{ return localStorage.getItem('slapchain-head')||CHAIN_GENESIS; }catch(e){ return CHAIN_GENESIS; } }
+async function chainScore(rec){
+  const prev=chainHead();
+  let top=[];
+  try{ top=JSON.parse(localStorage.getItem('blobscores')||'[]').filter(s=>s.game==='FIRST SLAP').sort((a,b)=>b.score-a.score).slice(0,10).map(s=>({player:s.player,score:s.score,seed:s.seed||null,chain:s.chain||null})); }catch(e){}
+  const body={kind:'score-chain',game:'first-slap',machine:'FIRST-SLAP-001',prev:prev,at:new Date().toISOString(),run:rec,top:top};
+  const res=await fetch(PUBLISHER,{method:'PUT',body:JSON.stringify(body)});
+  if(!res.ok) throw new Error('publisher HTTP '+res.status);
+  const j=await res.json();
+  const id=(j.newlyCreated&&j.newlyCreated.blobObject&&j.newlyCreated.blobObject.blobId)||(j.alreadyCertified&&j.alreadyCertified.blobId);
+  if(!id) throw new Error('no blobId in publisher response');
+  try{ localStorage.setItem('slapchain-head',id); }catch(e){}
+  return id;
+}
+async function submitRun(){
   if(!run||!run.final) return;
+  const rec={wallet:run.wallet,seed:run.seed,nonce:run.nonce,key:run.final.key,tape:run.final.tape,claimedScore:run.final.score,claimedChain:run.final.chain};
   saveScore({player:run.wallet.length>14?run.wallet.slice(0,8)+'…'+run.wallet.slice(-4):run.wallet,game:'FIRST SLAP',score:run.final.score,streamId:null,verified:false,replay:true,isAI:false,seed:run.seed,chain:run.final.chain,at:Date.now(),note:'wallet '+run.wallet});
-  $('runResult').innerHTML+='<div style="margin-top:8px"><span class="pill ok">🎞 ON THE BOARD — replay-verified, remembered under your wallet</span> <a href="../../blob-cinema/scores.html" style="color:var(--blue)">see the Hall →</a></div>';
+  $('runResult').innerHTML+='<div style="margin-top:8px"><span class="pill ok">🎞 ON THE BOARD — replay-verified, remembered under your wallet</span> · <span class="lbl" id="chainMsg">⛓ chaining into the blob score chain…</span></div>';
+  try{
+    const id=await chainScore(rec);
+    $('chainMsg').innerHTML='⛓ <b>SCORED INTO BLOB</b> <span class="mono">'+id.slice(0,14)+'…</span> — this score now survives in the chain, on every machine spun from it. <a href="../../blob-cinema/scores.html" style="color:var(--blue)">verify at the Hall root →</a>';
+  }catch(e){
+    $('chainMsg').innerHTML='⚠ blob chain write failed ('+e.message+') — score is on this device only for now, NOT yet in the chain. Retry by submitting again.';
+  }
 }
 function aiAttempt(kind){
   const seed=(Math.floor(Math.random()*900000)+100000);
@@ -209,7 +234,11 @@ function aiAttempt(kind){
   const name=kind==='pred'?'AI-PREDICTOR 🤖':'AI-REACTOR 🤖';
   saveScore({player:name,game:'FIRST SLAP',score:sim.score,streamId:null,verified:false,replay:true,isAI:true,seed:seed,chain:sim.chain,at:Date.now()});
   $('aiOut').innerHTML='<b>'+name+'</b> seed '+seed+' → <b>SCORE '+sim.score+'</b> · '+sim.results.map(r=>r.outcome).join(' · ')+
-    '<br><span class="pill ok">🎞 recorded on the Hall — replay-derived, same law as humans</span>';
+    '<br><span class="pill ok">🎞 recorded on the Hall — replay-derived, same law as humans</span> · <span id="aiChainMsg">⛓ chaining…</span>';
+  const nonce=Date.now()%100000;
+  chainScore({wallet:wallet,seed:seed,nonce:nonce,key:KKSlap.runKey(wallet,seed,nonce),tape:tape,claimedScore:sim.score,claimedChain:sim.chain})
+    .then(id=>{ const m=$('aiChainMsg'); if(m) m.innerHTML='⛓ in blob <span class="mono">'+id.slice(0,14)+'…</span>'; })
+    .catch(e=>{ const m=$('aiChainMsg'); if(m) m.innerHTML='⚠ blob write failed ('+e.message+') — local only for now'; });
 }
 </script>
 </body>
