@@ -26,6 +26,7 @@ input,select{background:#0b0b1a;border:1px solid #33336a;color:#e8e8ff;border-ra
 <body>
 <script src="./errcatch.js"></script>
 <script src="../arcade-shared/kk-replay.js"></script>
+<script src="../arcade-shared/kk-slap.js"></script>
 <h1>🏆 HALL OF SCORES <span class="lbl">verified human gameplay — camera + screen, sealed in blobs</span></h1>
 <p class="lbl"><a href="./reblob.html">📚 library</a> · <a href="./live.html">🔴 go live</a> · <a href="../">🕹 arcade</a></p>
 
@@ -37,6 +38,15 @@ input,select{background:#0b0b1a;border:1px solid #33336a;color:#e8e8ff;border-ra
 <div class="panel">
   <h2 style="margin:0 0 8px">📋 ALL SCORES <span class="lbl">humans vs AI benchmarks — side by side. Unverified human scores flagged.</span></h2>
   <table id="all"><tr><th>PLAYER</th><th>GAME</th><th>SCORE</th><th>STATUS</th><th></th></tr></table>
+</div>
+
+<div class="panel">
+  <h2 style="margin:0 0 8px">⛓ BLOB SCORE CHAIN — FIRST SLAP <span class="lbl">the highscores root · scores that survive in blobs, not in a browser</span></h2>
+  <p class="lbl">Machine <b>FIRST-SLAP-001</b> (first node, born Oct 27 2026) keeps its Top 10 in a Walrus blob chain: every verified score reblobs a new head linked to the previous one, back to genesis. This panel walks the chain to genesis and <b>replays every run</b> — the side verifier / score keeper. If a link is missing or a replay fails, the chain does not pass.</p>
+  <div class="lbl">head blob: <span class="mono" id="chainHead">—</span></div>
+  <input id="chainHeadInput" placeholder="head blob id (defaults to this browser's known head / genesis)" style="width:340px">
+  <button class="btn go" onclick="verifyChain()">⛓ verify the chain</button>
+  <div id="chainOut" style="margin-top:8px"></div>
 </div>
 
 <div class="panel">
@@ -116,6 +126,40 @@ function submitScore(){
   saveScores(scores); render();
   alert(verified?'✓ VERIFIED score recorded — camera + screen proof linked.':'⚠ Score recorded as UNVERIFIED. For top-10, record with "✅ VERIFIED GAME" mode.');
   $('pname').value=''; $('sval').value=''; $('sid').value='';
+}
+const CHAIN_GENESIS='ehJq01aAB6wAGh-f_37INVun0eV3Xboi8LtOa66K3eU';
+const AGG='https://aggregator.walrus-testnet.walrus.space/v1/blobs/';
+function knownHead(){
+  const inp=$('chainHeadInput').value.trim();
+  if(inp) return inp;
+  try{ return localStorage.getItem('slapchain-head')||CHAIN_GENESIS; }catch(e){ return CHAIN_GENESIS; }
+}
+$('chainHead').textContent=knownHead();
+async function verifyChain(){
+  const out=$('chainOut');
+  out.innerHTML='<span class="lbl">walking the chain…</span>';
+  let id=knownHead(), rows=[], guard=0, allOK=true;
+  try{
+    while(id&&guard<50){
+      guard++;
+      const res=await fetch(AGG+id);
+      if(!res.ok){ allOK=false; rows.push('<tr><td colspan="4">🔴 blob '+id.slice(0,14)+'… UNREACHABLE (HTTP '+res.status+') — chain broken here</td></tr>'); break; }
+      const j=await res.json();
+      if(j.kind==='score-chain-genesis'){
+        rows.push('<tr><td>⛓ GENESIS</td><td colspan="2">machine '+j.machine.id+' · born '+j.machine.born+' · first node</td><td><span class="badge v">ROOT ✓</span></td></tr>');
+        id=null; break;
+      }
+      const v=KKSlap.verifyRun(j.run||{});
+      if(!v.valid) allOK=false;
+      rows.push('<tr><td>'+(j.at||'')+'</td><td>'+(j.run?j.run.wallet:'?')+'</td><td>'+(j.run?j.run.claimedScore:'?')+'</td><td>'+(v.valid?'<span class="badge v">🎞 REPLAY ✓</span>':'<span class="badge u">✗ REPLAY FAILS</span>')+'</td></tr>');
+      id=j.prev;
+    }
+    if(id&&guard>=50){ allOK=false; rows.push('<tr><td colspan="4">🔴 chain longer than 50 links — stopped</td></tr>'); }
+    out.innerHTML='<table><tr><th>WHEN</th><th>WALLET</th><th>SCORE</th><th>PROOF</th></tr>'+rows.join('')+'</table>'+
+      '<div style="margin-top:6px">'+(allOK?'<span class="badge v">⛓ CHAIN VERIFIED TO GENESIS — every score replayed, every link present</span>':'<span class="badge u">⛓ CHAIN DOES NOT FULLY VERIFY — see above</span>')+'</div>';
+  }catch(e){
+    out.innerHTML='<span class="badge u">⛓ chain check failed: '+e.message+'</span>';
+  }
 }
 function submitReplay(){
   const msg=$('rmsg');
