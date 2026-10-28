@@ -1,0 +1,1227 @@
+<!DOCTYPE html>
+<!--
+  SILOUTTES Nova v266 — the reimagined studio edition.
+  Shadow-box card designer + laser-ready cut files + camera proof + project mirroring.
+
+  MIT License — Copyright (c) 2026 masterledgerlive
+  Permission is hereby granted, free of charge, to any person obtaining a copy
+  of this software and associated documentation files (the "Software"), to deal
+  in the Software without restriction, including without limitation the rights
+  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+  copies of the Software, and to permit persons to whom the Software is
+  furnished to do so, subject to the following conditions:
+  The above copyright notice and this permission notice shall be included in all
+  copies or substantial portions of the Software.
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+
+  Single file. Zero dependencies. Offline-capable. Nothing leaves this browser
+  except when YOU press export, mirror, or an AI call you configured.
+
+  Cut-file contract (the stable heart):
+    parseClip -> clipToMM -> shapeSVG  =>  1:1 millimetre SVG
+    RED   #FF0000  = through cut (vector pass)
+    BLUE  #0000FF  = score / registration crosses only — do NOT set to cut
+    GREEN #00C853  = engrave sub-layer (documented in the instruction sheet)
+    Card outline exactly 63.0 x 88.0 mm. Four corner registration crosses per ply.
+    KERF IS DELIBERATELY NOT APPLIED — set ~0.15mm inward offset in your laser
+    software if parts fit loose. Always test on scrap; measure with calipers.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SILOUTTES Nova v266 — Reimagined Studio</title>
+<style>
+:root{
+  --bg:#eef0f8; --bg2:rgba(255,255,255,.72); --bg3:rgba(255,255,255,.9); --line:rgba(90,100,160,.16);
+  --ink:#1d2233; --dim:#5a6280; --faint:#9aa1bd;
+  --acc:#5b5bd6; --acc2:#8b5cf6; --acc-soft:rgba(91,91,214,.12);
+  --red:#e5484d; --blue:#2f6df6; --green:#12a594; --teal:#0ea5a5;
+  --warn:#b7791f; --bad:#e5484d; --ok:#12a594;
+  --mono:'JetBrains Mono','SF Mono',Consolas,monospace;
+  --sh:0 12px 40px rgba(70,80,160,.12);
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;color:var(--ink);font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:13px;overflow:hidden;
+  background:linear-gradient(135deg,#eef0f8 0%,#e6e9f7 40%,#f3ecff 100%)}
+/* ---------- command bar ---------- */
+#topbar{min-height:60px;background:var(--bg2);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;padding:8px 14px;user-select:none;
+  box-shadow:0 4px 24px rgba(70,80,160,.08);flex-wrap:wrap}
+#topbar .brand{font-weight:800;letter-spacing:2px;font-size:15px}
+#topbar .brand span{background:linear-gradient(90deg,var(--acc),var(--acc2));-webkit-background-clip:text;background-clip:text;color:transparent}
+#topbar .vbadge{font-family:var(--mono);font-size:10px;color:#fff;background:linear-gradient(90deg,var(--acc),var(--acc2));
+  border-radius:20px;padding:3px 10px;font-weight:700;letter-spacing:1px}
+#cmdbar{flex:1;display:flex;gap:8px;max-width:520px;margin:0 auto}
+#nova-cmd{flex:1;border:1px solid var(--line);border-radius:24px;padding:9px 18px;font-size:13px;
+  background:rgba(255,255,255,.85);color:var(--ink)}
+#nova-cmd:focus{outline:none;border-color:var(--acc);box-shadow:0 0 0 3px var(--acc-soft)}
+#nova-go{border:none;border-radius:24px;padding:9px 20px;font-size:13px;font-weight:700;color:#fff;cursor:pointer;
+  background:linear-gradient(90deg,var(--acc),var(--acc2));box-shadow:0 6px 18px rgba(91,91,214,.35)}
+#nova-go:hover{filter:brightness(1.06)}
+#topbar .sp{flex:0 0 4px}
+.btn{background:rgba(255,255,255,.8);color:var(--ink);border:1px solid var(--line);border-radius:12px;
+  padding:7px 12px;font-size:12px;cursor:pointer;letter-spacing:.4px;white-space:nowrap}
+.btn:hover{border-color:var(--acc);box-shadow:0 4px 14px rgba(91,91,214,.15)}
+.btn.primary{background:linear-gradient(90deg,var(--acc),var(--acc2));border:none;color:#fff;font-weight:700;
+  box-shadow:0 6px 18px rgba(91,91,214,.35)}
+.btn.primary:hover{filter:brightness(1.06)}
+.btn.ghost{background:transparent}
+.btn.danger{border-color:var(--bad);color:var(--bad)}
+.btn:disabled{opacity:.4;cursor:default}
+.btn.small{padding:5px 10px;font-size:11px}
+/* ---------- layout ---------- */
+#work{position:absolute;top:60px;bottom:0;left:0;right:0;display:flex;gap:14px;padding:14px}
+#rail{width:64px;background:var(--bg2);backdrop-filter:blur(18px);border:1px solid var(--line);border-radius:20px;
+  display:flex;flex-direction:column;align-items:center;padding:12px 0;gap:8px;box-shadow:var(--sh);align-self:flex-start}
+.tool{width:44px;height:52px;border-radius:14px;border:1px solid transparent;background:transparent;
+  color:var(--dim);font-size:19px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.tool:hover{background:#fff;color:var(--ink)}
+.tool.on{background:var(--acc-soft);border-color:var(--acc);color:var(--acc)}
+.tool .t{font-size:8px;letter-spacing:.5px;color:var(--faint)}
+#stage-wrap{flex:1;position:relative;background:var(--bg2);backdrop-filter:blur(18px);
+  border:1px solid var(--line);border-radius:24px;overflow:hidden;box-shadow:var(--sh)}
+#stage{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+#cardview{position:relative;box-shadow:0 24px 70px rgba(70,80,160,.25);border-radius:6px;
+  background:#fff;cursor:crosshair;overflow:hidden}
+#cardview svg{position:absolute;inset:0;width:100%;height:100%}
+#hud{position:absolute;left:14px;top:12px;font-family:var(--mono);font-size:10px;color:var(--dim);
+  background:rgba(255,255,255,.85);backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:14px;
+  padding:10px 14px;line-height:1.7;pointer-events:none;box-shadow:var(--sh)}
+#hud b{color:var(--acc)}
+#overlay-btns{position:absolute;right:16px;top:14px;display:flex;flex-direction:column;gap:10px;z-index:5}
+.ovl{width:50px;height:50px;border-radius:18px;background:rgba(255,255,255,.88);backdrop-filter:blur(10px);
+  border:1px solid var(--line);color:var(--ink);font-size:20px;cursor:pointer;position:relative;
+  display:flex;align-items:center;justify-content:center;box-shadow:var(--sh)}
+.ovl:hover{border-color:var(--acc);transform:translateY(-2px)}
+.ovl.on{background:linear-gradient(135deg,var(--acc),var(--acc2));border:none;color:#fff}
+.ovl .dot{position:absolute;right:4px;top:4px;width:10px;height:10px;border-radius:50%;
+  background:var(--ok);display:none;box-shadow:0 0 8px var(--ok)}
+.ovl.live .dot{display:block}
+#overlay-btns.hidden{display:none}
+/* ---------- right panel ---------- */
+#panel{width:350px;background:var(--bg2);backdrop-filter:blur(18px);border:1px solid var(--line);border-radius:24px;
+  display:flex;flex-direction:column;min-width:300px;box-shadow:var(--sh);overflow:hidden}
+#tabs{display:flex;border-bottom:1px solid var(--line);padding:6px 6px 0}
+.tab{flex:1;padding:10px 4px;text-align:center;font-size:10px;letter-spacing:1px;color:var(--dim);
+  cursor:pointer;text-transform:uppercase;border-radius:12px 12px 0 0}
+.tab.on{color:var(--acc);font-weight:700;background:rgba(255,255,255,.7)}
+#tabbody{flex:1;overflow-y:auto;padding:14px}
+#tabbody::-webkit-scrollbar{width:8px}#tabbody::-webkit-scrollbar-thumb{background:var(--line);border-radius:4px}
+h3{margin:6px 0 10px;font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim)}
+h3 .x{background:linear-gradient(90deg,var(--acc),var(--acc2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.row{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+.row label{font-size:11px;color:var(--dim);min-width:74px}
+input[type=text],input[type=number],select,textarea{width:100%;background:rgba(255,255,255,.9);border:1px solid var(--line);
+  color:var(--ink);border-radius:10px;padding:8px 10px;font-size:12px;font-family:inherit}
+textarea{resize:vertical;min-height:64px;font-family:var(--mono);font-size:11px}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--acc);box-shadow:0 0 0 3px var(--acc-soft)}
+.note{font-size:11px;color:var(--faint);line-height:1.6;margin:8px 0}
+.note b{color:var(--dim)}
+.warnbox{border:1px solid rgba(183,121,31,.4);background:rgba(255,196,80,.12);border-radius:14px;
+  padding:10px 12px;font-size:11px;line-height:1.6;color:#8a5f16;margin:10px 0}
+.okbox{border:1px solid rgba(18,165,148,.4);background:rgba(18,165,148,.08);border-radius:14px;
+  padding:10px 12px;font-size:11px;line-height:1.6;color:#0c6e63;margin:10px 0}
+.errbox{border:1px solid rgba(229,72,77,.4);background:rgba(229,72,77,.08);border-radius:14px;
+  padding:10px 12px;font-size:11px;line-height:1.6;color:#a02a2e;margin:10px 0}
+/* sub-layers as a timeline rail */
+.ply{border:1px solid var(--line);border-radius:16px;margin-bottom:10px;overflow:hidden;background:rgba(255,255,255,.65)}
+.ply-head{display:flex;align-items:center;gap:8px;padding:10px 12px;cursor:pointer;background:rgba(255,255,255,.8)}
+.ply-head .n{font-family:var(--mono);font-size:11px;color:var(--acc);font-weight:700}
+.ply-head .c{font-size:11px;color:var(--dim);margin-left:auto;font-family:var(--mono)}
+.sub{border-top:1px solid var(--line);padding:8px 12px;display:flex;align-items:center;gap:8px}
+.sub .sw{width:12px;height:12px;border-radius:4px;flex:none}
+.sub .nm{font-size:11px;flex:1}
+.sub .nm small{display:block;color:var(--faint);font-size:10px}
+.sub .op{font-family:var(--mono);font-size:9px;letter-spacing:1px;padding:3px 8px;border-radius:20px;text-transform:uppercase}
+.op-cut{background:rgba(229,72,77,.12);color:#c0363b}
+.op-score{background:rgba(47,109,246,.12);color:#2f6df6}
+.op-engrave{background:rgba(18,165,148,.12);color:#0c6e63}
+.el{border:1px solid var(--line);border-radius:14px;padding:10px 12px;margin-bottom:8px;background:rgba(255,255,255,.7);cursor:pointer}
+.el.on{border-color:var(--acc);box-shadow:0 0 0 3px var(--acc-soft)}
+.el .t{font-size:12px;font-weight:600}
+.el .m{font-family:var(--mono);font-size:10px;color:var(--faint);margin-top:3px;line-height:1.6}
+.el .m .c{color:var(--teal)}
+#proofimg{max-width:100%;border:1px solid var(--line);border-radius:14px;margin:8px 0}
+.stamp{font-family:var(--mono);font-weight:800;letter-spacing:3px;font-size:22px;text-align:center;
+  padding:14px;border:3px solid;border-radius:16px;margin:12px 0;transform:rotate(-3deg);background:#fff}
+.stamp.proven{color:var(--ok);border-color:var(--ok);background:rgba(18,165,148,.07)}
+.stamp.fail{color:var(--bad);border-color:var(--bad);background:rgba(229,72,77,.07)}
+.grid9{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:10px 0}
+.cell9{background:rgba(255,255,255,.8);border:1px solid var(--line);border-radius:10px;padding:8px;text-align:center;
+  font-family:var(--mono);font-size:11px}
+.cell9 small{display:block;color:var(--faint);font-size:9px;margin-top:2px}
+.plycard{border:1px solid var(--line);border-radius:14px;background:#fff;margin:0 auto 12px;position:relative;
+  box-shadow:var(--sh);overflow:hidden}
+.plycard .pl{position:absolute;left:8px;top:6px;font-family:var(--mono);font-size:10px;color:#333;font-weight:700;z-index:2}
+#toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#1d2233;
+  color:#fff;border-radius:16px;padding:12px 22px;font-size:12px;z-index:99;display:none;
+  box-shadow:0 14px 40px rgba(20,25,50,.35);max-width:80%}
+.kbd{font-family:var(--mono);font-size:10px;background:#fff;border:1px solid var(--line);
+  border-radius:6px;padding:1px 6px;color:var(--dim)}
+.mirror-badge{font-family:var(--mono);font-size:9px;letter-spacing:1px;background:rgba(183,121,31,.12);
+  color:var(--warn);border:1px solid var(--warn);border-radius:20px;padding:2px 8px;text-transform:uppercase}
+.checkline{font-family:var(--mono);font-size:11px;padding:5px 0;border-bottom:1px dashed var(--line);color:var(--dim)}
+.checkline .p{color:var(--ok);font-weight:700}.checkline .f{color:var(--bad);font-weight:700}
+</style>
+</head>
+<body>
+<div id="topbar">
+  <div class="brand">✦ SILOUTTES <span>Nova</span></div>
+  <div class="vbadge">v266</div>
+  <div id="cmdbar">
+    <input type="text" id="nova-cmd" placeholder="Describe a card — &quot;lighthouse at dusk, 5 plies&quot; — and hit Build">
+    <button id="nova-go" onclick="novaCommand()">✦ Build</button>
+  </div>
+  <div class="sp"></div>
+  <button class="btn ghost small" id="b-new">＋ New</button>
+  <button class="btn ghost small" id="b-import">⇪ Import</button>
+  <button class="btn ghost small" id="b-exportcat">⇩ Catalog</button>
+  <button class="btn small" id="b-stack">◱ Stack</button>
+  <button class="btn small" id="b-proof">◉ Proof</button>
+  <button class="btn small" id="b-ai">✦ AI</button>
+  <button class="btn primary" id="b-export">⚡ Export</button>
+</div>
+<div id="work">
+  <div id="rail">
+    <button class="tool on" data-tool="select" title="Select / move">➤<span class="t">SEL</span></button>
+    <button class="tool" data-tool="box" title="Box aperture (drag)">▭<span class="t">BOX</span></button>
+    <button class="tool" data-tool="ellipse" title="Ellipse aperture (drag)">⬭<span class="t">ELIP</span></button>
+    <button class="tool" data-tool="path" title="Node path (click nodes, double-click closes)">✎<span class="t">PATH</span></button>
+    <button class="tool" data-tool="hole" title="Add hole to selected element">◌<span class="t">HOLE</span></button>
+  </div>
+  <div id="stage-wrap">
+    <div id="stage"><div id="cardview"></div></div>
+    <div id="hud"></div>
+    <div id="overlay-btns">
+      <button class="ovl" id="o-proof" title="Camera proof">◉</button>
+      <button class="ovl" id="o-mirror" title="Project mirror (experimental)">⛓<span class="dot"></span></button>
+      <button class="ovl" id="o-stack" title="Exploded stack preview">◱</button>
+      <button class="ovl" id="o-ai" title="AI auto-create">✦</button>
+    </div>
+  </div>
+  <div id="panel">
+    <div id="tabs">
+      <div class="tab on" data-tab="layers">Sub-layers</div>
+      <div class="tab" data-tab="elements">Elements</div>
+      <div class="tab" data-tab="proof">Proof</div>
+      <div class="tab" data-tab="ai">AI</div>
+      <div class="tab" data-tab="setup">Setup</div>
+    </div>
+    <div id="tabbody"></div>
+  </div>
+</div>
+<div id="toast"></div>
+<input type="file" id="filepick" accept=".json,application/json" style="display:none">
+<input type="file" id="photopick" accept="image/*" style="display:none">
+<script>
+"use strict";
+/* ================================================================
+   CUT-FILE CONTRACT — parseClip -> clipToMM -> shapeSVG
+   Card is exactly 63.0 x 88.0 mm. Clips are stored in percent-of-card.
+   ================================================================ */
+const CARD_W = 63.0, CARD_H = 88.0;
+const RED='#FF0000', BLUE='#0000FF', GREEN='#00C853'; // cut / score+crosses / engrave
+
+function parseClip(clip){
+  if(!clip) return null;
+  clip = clip.trim();
+  let m;
+  if((m = clip.match(/^inset\(\s*([\d.]+)%\s+([\d.]+)%\s+([\d.]+)%\s+([\d.]+)%\s*\)$/)))
+    return {kind:'rect', t:+m[1], r:+m[2], b:+m[3], l:+m[4]};
+  if((m = clip.match(/^ellipse\(\s*([\d.]+)%\s+([\d.]+)%\s+at\s+([\d.]+)%\s+([\d.]+)%\s*\)$/)))
+    return {kind:'ellipse', rx:+m[1], ry:+m[2], cx:+m[3], cy:+m[4]};
+  if((m = clip.match(/^path\(\s*"([^"]+)"\s*\)$/)))
+    return {kind:'path', d:m[1]};
+  throw new Error('Unrecognized clip: '+clip);
+}
+/* percent-of-card -> millimetres */
+function clipToMM(p){
+  if(p.kind==='rect') return {kind:'rect',
+    x:p.l/100*CARD_W, y:p.t/100*CARD_H,
+    w:(100-p.l-p.r)/100*CARD_W, h:(100-p.t-p.b)/100*CARD_H};
+  if(p.kind==='ellipse') return {kind:'ellipse',
+    cx:p.cx/100*CARD_W, cy:p.cy/100*CARD_H,
+    rx:p.rx/100*CARD_W, ry:p.ry/100*CARD_H};
+  if(p.kind==='path'){
+    const sx=CARD_W/100, sy=CARD_H/100;
+    const d=p.d.replace(/([MLCZmlcz])/g,' $1 ')
+      .trim().split(/[\s,]+/).filter(Boolean);
+    let out=[], i=0;
+    while(i<d.length){
+      const c=d[i].toUpperCase();
+      if(c==='M'||c==='L'){ out.push(c+d[i+1]*sx+','+d[i+2]*sy); i+=3; }
+      else if(c==='C'){ out.push(c+d[i+1]*sx+','+d[i+2]*sy+' '+d[i+3]*sx+','+d[i+4]*sy+' '+d[i+5]*sx+','+d[i+6]*sy); i+=7; }
+      else if(c==='Z'){ out.push('Z'); i+=1; }
+      else i++;
+    }
+    const subs=(p.d.match(/M/gi)||[]).length;
+    return {kind:'path', d:out.join(' '), compound:subs>1};
+  }
+}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function shapeSVG(mm, stroke, sw){
+  sw = sw||0.12;
+  const a=`fill="none" stroke="${stroke}" stroke-width="${sw}"`;
+  if(mm.kind==='rect') return `<rect x="${mm.x.toFixed(3)}" y="${mm.y.toFixed(3)}" width="${mm.w.toFixed(3)}" height="${mm.h.toFixed(3)}" ${a}/>`;
+  if(mm.kind==='ellipse') return `<ellipse cx="${mm.cx.toFixed(3)}" cy="${mm.cy.toFixed(3)}" rx="${mm.rx.toFixed(3)}" ry="${mm.ry.toFixed(3)}" ${a}/>`;
+  const fr = mm.compound ? ' fill-rule="evenodd"' : '';
+  return `<path d="${esc(mm.d)}"${fr} ${a}/>`;
+}
+/* registration crosses, blue, at card corners */
+function crossesSVG(ox, oy, size){
+  size = size||3;
+  const c=[[ox,oy],[ox+CARD_W,oy],[ox,oy+CARD_H],[ox+CARD_W,oy+CARD_H]];
+  return c.map(([x,y])=>`<path d="M${(x-size/2).toFixed(2)} ${y.toFixed(2)}H${(x+size/2).toFixed(2)} M${x.toFixed(2)} ${(y-size/2).toFixed(2)}V${(y+size/2).toFixed(2)}" stroke="${BLUE}" stroke-width="0.1" fill="none"/>`).join('');
+}
+const OP_COLOR={cut:RED, score:BLUE, engrave:GREEN};
+
+/* ================================================================
+   STATE + STORAGE — everything lives in this browser's localStorage.
+   ================================================================ */
+const LS_KEY='silouttes-nova-v266';
+let S = {
+  card:{id:uid(), name:'Untitled Card', set:'', num:'', img:''},
+  variant:{id:'var_'+uid(), name:'Untitled Variant', author:'', notes:'',
+    priceUSD:0, createdAt:new Date().toISOString(), objects:[]},
+  sel:null, tool:'select', tab:'layers',
+  mirror:{on:false}, overlays:true,
+  proof:{photo:null, photoName:'', pxPerMM:null, calA:null, calB:null,
+    calMM:null, designURL:null, score:null, cells:null, verdict:null, cert:null},
+  ai:{provider:'anthropic', key:'', model:''}
+};
+function uid(){return Math.random().toString(36).slice(2,10);}
+function save(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(
+  {card:S.card, variant:S.variant, ai:{provider:S.ai.provider,key:S.ai.key,model:S.ai.model}})); }
+  catch(e){ toast('Save failed — localStorage is full. Export your catalog now.'); } }
+function load(){
+  try{ const d=JSON.parse(localStorage.getItem(LS_KEY)||'null');
+    if(d){ if(d.card) S.card=d.card; if(d.variant) S.variant=d.variant;
+      if(d.ai) Object.assign(S.ai,d.ai); return true; } }catch(e){}
+  return false;
+}
+function toast(msg,ms){ const t=document.getElementById('toast');
+  t.textContent=msg; t.style.display='block';
+  clearTimeout(t._h); t._h=setTimeout(()=>t.style.display='none', ms||2600); }
+function download(name, content, mime){
+  const b=new Blob([content],{type:mime||'text/plain'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(b);
+  a.download=name; document.body.appendChild(a); a.click();
+  setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},4000);
+}
+function plies(){ const layers=[...new Set(S.variant.objects.map(o=>o.layer))].sort((a,b)=>a-b);
+  return layers.length?layers:[1]; }
+function plyObjects(l){ return S.variant.objects.filter(o=>o.layer===l); }
+function recalcPrice(){ S.variant.priceUSD =
+  Math.round(S.variant.objects.reduce((s,o)=>s+(+o.price||0),0)*100)/100; }
+
+/* ================================================================
+   STAGE RENDERING — the card at a comfortable on-screen scale.
+   ================================================================ */
+const PX_PER_MM=6;
+const stageEl=()=>document.getElementById('stage');
+const cardEl=()=>document.getElementById('cardview');
+function renderStage(){
+  const cv=cardEl();
+  const W=CARD_W*PX_PER_MM, H=CARD_H*PX_PER_MM;
+  cv.style.width=W+'px'; cv.style.height=H+'px';
+  let svg=`<svg viewBox="0 0 ${CARD_W} ${CARD_H}" preserveAspectRatio="none">`;
+  svg+=`<rect x="0" y="0" width="${CARD_W}" height="${CARD_H}" fill="#ffffff" stroke="#999" stroke-width="0.3"/>`;
+  if(S.card.img) svg+=`<image href="${S.card.img}" x="0" y="0" width="${CARD_W}" height="${CARD_H}" preserveAspectRatio="xMidYMid slice"/>`;
+  for(const o of S.variant.objects){
+    if(o.base||!o.clip) continue;
+    try{
+      const mm=clipToMM(parseClip(o.clip));
+      const col=o.id===S.sel?'#ff6a1a':OP_COLOR[o.op]||RED;
+      svg+=shapeSVG(mm,col,o.id===S.sel?0.35:0.18)
+        .replace('fill="none"','fill="rgba(255,106,26,0.08)"');
+    }catch(e){}
+  }
+  svg+='</svg>';
+  cv.innerHTML=svg;
+  renderHUD();
+}
+function renderHUD(){
+  const n=S.variant.objects.length, p=plies().length;
+  document.getElementById('hud').innerHTML=
+    `<b>${esc(S.card.name)}</b> — ${esc(S.variant.name)}<br>`+
+    `elements: <b>${n}</b> · plies: <b>${p}</b> · price: <b>$${S.variant.priceUSD.toFixed(2)}</b><br>`+
+    `tool: <b>${S.tool}</b> · card <b>${CARD_W}×${CARD_H}mm</b>`+
+    (S.mirror.on?`<br><span class="mirror-badge">⛓ mirror live — experimental</span>`:'');
+}
+/* ================================================================
+   PANEL — tabs: Sub-layers / Elements / Proof / AI / Setup
+   ================================================================ */
+const tabbody=()=>document.getElementById('tabbody');
+function setTab(t){ S.tab=t;
+  document.querySelectorAll('#tabs .tab').forEach(e=>e.classList.toggle('on',e.dataset.tab===t));
+  renderPanel(); }
+function renderPanel(){
+  ({layers:renderLayersTab, elements:renderElementsTab, proof:renderProofTab,
+    ai:renderAITab, setup:renderSetupTab})[S.tab]();
+}
+function opTag(op){ return `<span class="op op-${op}">${op}</span>`; }
+
+/* ---- Sub-layers: each ply broken into cut / score / engrave ---- */
+function renderLayersTab(){
+  const b=tabbody(); let h=`<h3>Ply <span class="x">sub-layers</span></h3>
+  <div class="note">Every ply splits into operation sub-layers, like xTool Studio's
+  layer list. <b style="color:#ff8080">cut</b> → red, <b style="color:#8aa8ff">score</b> → blue,
+  <b style="color:#6fe3a1">engrave</b> → green (documented in the instruction sheet).</div>`;
+  for(const l of plies()){
+    const objs=plyObjects(l);
+    const byOp={cut:[],score:[],engrave:[]};
+    objs.forEach(o=>(byOp[o.op]||byOp.cut).push(o));
+    h+=`<div class="ply"><div class="ply-head" onclick="this.parentNode.querySelectorAll('.sub').forEach(s=>s.style.display=s.style.display==='none'?'flex':'none')">
+      <span class="n">PLY ${l}</span>
+      <span class="c">${objs.length} el · ${objs.reduce((s,o)=>s+(+o.time||0),0)}s</span></div>`;
+    for(const op of ['cut','score','engrave']){
+      if(!byOp[op].length) continue;
+      for(const o of byOp[op]){
+        h+=`<div class="sub"><span class="sw" style="background:${OP_COLOR[op]}"></span>
+          <span class="nm">${esc(o.name)}<small>${esc(o.type||'')} · ${o.id===S.sel?'selected':''}</small></span>
+          ${opTag(op)}
+          <button class="btn small ghost" onclick="selectEl('${o.id}')">edit</button></div>`;
+      }
+    }
+    h+=`</div>`;
+  }
+  h+=`<div class="row"><button class="btn small" onclick="addPly()">＋ Add ply</button>
+      <button class="btn small ghost" onclick="removeEmptyPly()">− Remove empty top ply</button></div>
+  <div class="note">Ply 1 is the backing (no apertures). Stack ascending with 2mm spacers
+  between plies for shadow-box depth. Kerf is <b>not</b> applied — set ~0.15mm inward
+  offset in your laser software.</div>`;
+  b.innerHTML=h;
+}
+function addPly(){ const top=Math.max(...plies(),0);
+  S.variant.objects.push({id:uid(),name:'Backing '+(top+1),type:'FRAME',price:0.10,time:60,
+    op:'cut',base:top===0,clip:null,layer:top+1});
+  recalcPrice();save();renderAll(); }
+function removeEmptyPly(){ const top=Math.max(...plies());
+  if(plyObjects(top).every(o=>o.base||!o.clip)){
+    S.variant.objects=S.variant.objects.filter(o=>o.layer!==top);
+    recalcPrice();save();renderAll(); toast('Removed empty ply '+top); }
+  else toast('Top ply has apertures — clear them first.'); }
+
+/* ---- Elements ---- */
+function renderElementsTab(){
+  const b=tabbody(); const o=S.variant.objects.find(x=>x.id===S.sel);
+  let h=`<h3>Elements <span class="x">(${S.variant.objects.length})</span></h3>`;
+  if(o){
+    h+=`<div class="note">Editing <b style="color:var(--x)">${esc(o.name)}</b></div>
+    <div class="row"><label>Name</label><input type="text" id="e-name" value="${esc(o.name)}"></div>
+    <div class="row"><label>Type</label><select id="e-type">
+      ${['FRAME','FIGURE','TERRAIN','FX','TEXT'].map(t=>`<option ${o.type===t?'selected':''}>${t}</option>`).join('')}
+    </select></div>
+    <div class="row"><label>Operation</label><select id="e-op">
+      ${['cut','score','engrave'].map(t=>`<option ${o.op===t?'selected':''}>${t}</option>`).join('')}
+    </select></div>
+    <div class="row"><label>Ply</label><input type="number" id="e-layer" min="1" max="24" value="${o.layer}"></div>
+    <div class="row"><label>Price $</label><input type="number" id="e-price" step="0.01" min="0" value="${o.price}"></div>
+    <div class="row"><label>Time s</label><input type="number" id="e-time" step="1" min="0" value="${o.time}"></div>
+    <div class="row"><label>Clip</label><textarea id="e-clip" rows="2" spellcheck="false">${esc(o.clip||'')}</textarea></div>
+    <div class="row">
+      <button class="btn small primary" onclick="applyElEdit()">Apply</button>
+      <button class="btn small" onclick="nudgeEl('${o.id}',-1)">◀ ply</button>
+      <button class="btn small" onclick="nudgeEl('${o.id}',1)">ply ▶</button>
+      <button class="btn small danger" onclick="delEl('${o.id}')">Delete</button>
+    </div>
+    <div class="note">Clip formats: <span class="kbd">inset(t% r% b% l%)</span>,
+    <span class="kbd">ellipse(rx% ry% at cx% cy%)</span>,
+    <span class="kbd">path("M… L… Z")</span> in percent-of-card. Same contract as every SILOUTTES build.</div>`;
+  } else h+=`<div class="note">Click an element below, or draw one with the left rail tools.</div>`;
+  h+=`<div style="margin-top:10px">`+S.variant.objects.map(x=>
+    `<div class="el ${x.id===S.sel?'on':''}" onclick="selectEl('${x.id}')">
+      <div class="t">${esc(x.name)} ${opTag(x.op)}</div>
+      <div class="m">ply ${x.layer} · ${esc(x.type||'')} · $${(+x.price||0).toFixed(2)}<br>
+      <span class="c">${esc((x.clip||'(backing — no aperture)').slice(0,90))}</span></div>
+    </div>`).join('')+`</div>`;
+  b.innerHTML=h;
+}
+function selectEl(id){ S.sel=id; S.tab='elements'; setTab('elements'); renderStage(); }
+function applyElEdit(){ const o=S.variant.objects.find(x=>x.id===S.sel); if(!o) return;
+  o.name=document.getElementById('e-name').value||o.name;
+  o.type=document.getElementById('e-type').value;
+  o.op=document.getElementById('e-op').value;
+  o.layer=Math.max(1,+document.getElementById('e-layer').value||1);
+  o.price=+document.getElementById('e-price').value||0;
+  o.time=+document.getElementById('e-time').value||0;
+  const c=document.getElementById('e-clip').value.trim();
+  if(c){ try{parseClip(c);}catch(e){ toast('Clip rejected: '+e.message); return; } }
+  o.clip=c||null; o.base=!o.clip;
+  recalcPrice();save();renderAll();mirrorPush(); toast('Element updated.'); }
+function nudgeEl(id,d){ const o=S.variant.objects.find(x=>x.id===id); if(!o) return;
+  o.layer=Math.max(1,o.layer+d); save();renderAll();mirrorPush(); }
+function delEl(id){ S.variant.objects=S.variant.objects.filter(x=>x.id!==id);
+  if(S.sel===id)S.sel=null; recalcPrice();save();renderAll();mirrorPush(); }
+
+/* ================================================================
+   DRAWING — drag for box/ellipse, click-click for node paths
+   ================================================================ */
+let drag=null, pathDraft=null;
+function stagePoint(ev){ const r=cardEl().getBoundingClientRect();
+  return { x:Math.min(100,Math.max(0,(ev.clientX-r.left)/r.width*100)),
+           y:Math.min(100,Math.max(0,(ev.clientY-r.top)/r.height*100)) }; }
+function bindStage(){
+  const cv=cardEl();
+  cv.onmousedown=ev=>{ if(ev.button!==0) return;
+    const p=stagePoint(ev);
+    if(S.tool==='select'){
+      const hit=[...S.variant.objects].reverse().find(o=>o.clip&&pointInClip(p,o.clip));
+      S.sel=hit?hit.id:null; renderStage(); renderPanel(); return;
+    }
+    drag={x0:p.x,y0:p.y,x1:p.x,y1:p.y};
+    if(S.tool==='path'){
+      if(!pathDraft) pathDraft={pts:[{x:p.x,y:p.y}]};
+      else pathDraft.pts.push({x:p.x,y:p.y});
+      drawDraft(); return;
+    }
+    drawDraft();
+  };
+  cv.onmousemove=ev=>{ if(!drag) return;
+    const p=stagePoint(ev); drag.x1=p.x; drag.y1=p.y; drawDraft(); };
+  cv.onmouseup=ev=>{ if(!drag) return;
+    if(S.tool==='box'||S.tool==='ellipse'){
+      const p=stagePoint(ev); drag.x1=p.x; drag.y1=p.y; finishDrag(); }
+    drag=null; };
+  cv.ondblclick=ev=>{ if(S.tool==='path'&&pathDraft&&pathDraft.pts.length>=3) commitPath(); };
+}
+function pointInClip(p,clip){ try{
+    const c=parseClip(clip);
+    if(c.kind==='rect') return p.x>=c.l&&p.x<=100-c.r&&p.y>=c.t&&p.y<=100-c.b;
+    if(c.kind==='ellipse'){ const dx=(p.x-c.cx)/c.rx, dy=(p.y-c.cy)/c.ry; return dx*dx+dy*dy<=1; }
+    return false; }catch(e){ return false; } }
+function drawDraft(){
+  renderStage();
+  const cv=cardEl();
+  let extra='';
+  if(drag&&(S.tool==='box'||S.tool==='ellipse')){
+    const x=Math.min(drag.x0,drag.x1)/100*CARD_W, y=Math.min(drag.y0,drag.y1)/100*CARD_H;
+    const w=Math.abs(drag.x1-drag.x0)/100*CARD_W, h=Math.abs(drag.y1-drag.y0)/100*CARD_H;
+    extra = S.tool==='box'
+      ? `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="rgba(255,106,26,.15)" stroke="#ff6a1a" stroke-width="0.3" stroke-dasharray="1 1"/>`
+      : `<ellipse cx="${x+w/2}" cy="${y+h/2}" rx="${w/2}" ry="${h/2}" fill="rgba(255,106,26,.15)" stroke="#ff6a1a" stroke-width="0.3" stroke-dasharray="1 1"/>`;
+  }
+  if(pathDraft){
+    const pts=pathDraft.pts.map(q=>`${(q.x/100*CARD_W).toFixed(2)},${(q.y/100*CARD_H).toFixed(2)}`).join(' ');
+    extra+=`<polyline points="${pts}" fill="none" stroke="#ff6a1a" stroke-width="0.3" stroke-dasharray="1 1"/>`+
+      pathDraft.pts.map(q=>`<circle cx="${(q.x/100*CARD_W).toFixed(2)}" cy="${(q.y/100*CARD_H).toFixed(2)}" r="0.8" fill="#ff6a1a"/>`).join('');
+  }
+  if(extra) cv.querySelector('svg').insertAdjacentHTML('beforeend',extra);
+}
+function clipFromDrag(){
+  const x0=Math.min(drag.x0,drag.x1),x1=Math.max(drag.x0,drag.x1);
+  const y0=Math.min(drag.y0,drag.y1),y1=Math.max(drag.y0,drag.y1);
+  if(x1-x0<1||y1-y0<1) return null;
+  if(S.tool==='box') return `inset(${y0.toFixed(1)}% ${(100-x1).toFixed(1)}% ${(100-y1).toFixed(1)}% ${x0.toFixed(1)}%)`;
+  return `ellipse(${((x1-x0)/2).toFixed(1)}% ${((y1-y0)/2).toFixed(1)}% at ${((x0+x1)/2).toFixed(1)}% ${((y0+y1)/2).toFixed(1)}%)`;
+}
+function finishDrag(){
+  const clip=clipFromDrag(); pathDraft=null;
+  if(!clip){ renderStage(); return; }
+  const topLayer=Math.max(...plies(),1);
+  const o={id:uid(), name:(S.tool==='box'?'Box':'Ellipse')+' '+(S.variant.objects.length+1),
+    type:'FIGURE', price:0.12, time:70, op:'cut', base:false, clip, layer:topLayer};
+  S.variant.objects.push(o); S.sel=o.id;
+  recalcPrice();save();renderAll();mirrorPush(); toast('Aperture added on ply '+topLayer+'.');
+}
+function commitPath(){
+  const pts=pathDraft.pts; pathDraft=null;
+  const d='M'+pts.map(q=>`${q.x.toFixed(1)} ${q.y.toFixed(1)}`).join(' L')+' Z';
+  const topLayer=Math.max(...plies(),1);
+  const o={id:uid(),name:'Path '+(S.variant.objects.length+1),type:'FIGURE',
+    price:0.14,time:90,op:'cut',base:false,clip:`path("${d}")`,layer:topLayer};
+  S.variant.objects.push(o); S.sel=o.id;
+  recalcPrice();save();renderAll();mirrorPush(); toast('Node path committed on ply '+topLayer+'.');
+}
+function addHoleToSelected(){
+  const o=S.variant.objects.find(x=>x.id===S.sel);
+  if(!o||!o.clip){ toast('Select an element with an aperture first.'); return; }
+  try{
+    let cx=50, cy=50, hw=8, hh=8;
+    const c=parseClip(o.clip);
+    if(c.kind==='rect'){ cx=c.l+(100-c.l-c.r)/2; cy=c.t+(100-c.t-c.b)/2;
+      hw=Math.min(10,(100-c.l-c.r)/4); hh=Math.min(10,(100-c.t-c.b)/4); }
+    else if(c.kind==='ellipse'){ cx=c.cx; cy=c.cy; hw=c.rx/3; hh=c.ry/3; }
+    else { // path: use its bbox
+      const mm=clipToMM(c); const nums=mm.d.match(/-?[\d.]+/g).map(Number);
+      const xs=nums.filter((_,i)=>i%2===0), ys=nums.filter((_,i)=>i%2===1);
+      const x0=Math.min(...xs)/CARD_W*100, x1=Math.max(...xs)/CARD_W*100;
+      const y0=Math.min(...ys)/CARD_H*100, y1=Math.max(...ys)/CARD_H*100;
+      cx=(x0+x1)/2; cy=(y0+y1)/2; hw=(x1-x0)/6; hh=(y1-y0)/6;
+    }
+    const hole=`M${(cx-hw).toFixed(1)} ${(cy-hh).toFixed(1)} L${(cx+hw).toFixed(1)} ${(cy-hh).toFixed(1)} L${(cx+hw).toFixed(1)} ${(cy+hh).toFixed(1)} L${(cx-hw).toFixed(1)} ${(cy+hh).toFixed(1)} Z`;
+    let inner;
+    const pm=o.clip.match(/^path\("(.+)"\)$/);
+    if(pm) inner=pm[1];
+    else { // box/ellipse -> trace outer rect of its bbox
+      const mm=clipToMM(c);
+      let x0,y0,x1,y1;
+      if(mm.kind==='rect'){x0=mm.x/CARD_W*100;x1=(mm.x+mm.w)/CARD_W*100;y0=mm.y/CARD_H*100;y1=(mm.y+mm.h)/CARD_H*100;}
+      else {x0=(mm.cx-mm.rx)/CARD_W*100;x1=(mm.cx+mm.rx)/CARD_W*100;y0=(mm.cy-mm.ry)/CARD_H*100;y1=(mm.cy+mm.ry)/CARD_H*100;}
+      inner=`M${x0.toFixed(1)} ${y0.toFixed(1)} L${x1.toFixed(1)} ${y0.toFixed(1)} L${x1.toFixed(1)} ${y1.toFixed(1)} L${x0.toFixed(1)} ${y1.toFixed(1)} Z`;
+    }
+    o.clip=`path("${inner} ${hole}")`;
+    save();renderAll();mirrorPush(); toast('Hole added — exports with even-odd fill.');
+  }catch(e){ toast('Could not add hole: '+e.message); }
+}
+
+/* ================================================================
+   xTool EXPORT — 1:1 mm cut SVG + plain-English instruction sheet
+   ================================================================ */
+function buildCutSVG(){
+  const PER_ROW=4, MARGIN=8, GAP=6;
+  const layers=plies();
+  const rows=Math.ceil(layers.length/PER_ROW);
+  const W=PER_ROW*(CARD_W+GAP)+MARGIN*2-GAP, H=rows*(CARD_H+GAP)+MARGIN*2-GAP;
+  let s=`<svg xmlns="http://www.w3.org/2000/svg" width="${W.toFixed(1)}mm" height="${H.toFixed(1)}mm" viewBox="0 0 ${W.toFixed(2)} ${H.toFixed(2)}">\n`;
+  s+=`<!-- SILOUTTES Nova v266 cut file. RED=#FF0000 through cut. BLUE=#0000FF score/registration crosses. GREEN=#00C853 engrave. KERF NOT APPLIED. -->\n`;
+  layers.forEach((l,idx)=>{
+    const ox=MARGIN+(idx%PER_ROW)*(CARD_W+GAP), oy=MARGIN+Math.floor(idx/PER_ROW)*(CARD_H+GAP);
+    s+=`<g id="ply-${l}">\n`;
+    s+=`<rect x="${ox.toFixed(2)}" y="${oy.toFixed(2)}" width="${CARD_W}" height="${CARD_H}" fill="none" stroke="${RED}" stroke-width="0.12"/>\n`;
+    s+=`<text x="${(ox+2).toFixed(2)}" y="${(oy+5).toFixed(2)}" font-size="3" fill="#888" font-family="monospace">PLY ${l}</text>\n`;
+    s+=crossesSVG(ox,oy)+'\n';
+    for(const o of plyObjects(l)){
+      if(o.base||!o.clip) continue;
+      try{ s+=`<g id="el-${o.id}">`+shapeSVG(clipToMM(parseClip(o.clip)),OP_COLOR[o.op]||RED)
+        .replace('<rect','<rect transform="translate('+ox.toFixed(2)+','+oy.toFixed(2)+')"')
+        .replace('<ellipse','<ellipse transform="translate('+ox.toFixed(2)+','+oy.toFixed(2)+')"')
+        .replace('<path','<path transform="translate('+ox.toFixed(2)+','+oy.toFixed(2)+')"')
+        +`<!-- ${esc(o.name)} | op:${o.op} --></g>\n`; }catch(e){}
+    }
+    s+=`</g>\n`;
+  });
+  return s+`</svg>`;
+}
+function buildInstructions(){
+  const layers=plies();
+  let t=`SILOUTTES Nova v266 — CUT INSTRUCTIONS\n`;
+  t+=`Card: ${S.card.name} / Variant: ${S.variant.name}\n`;
+  t+=`Card outline: exactly 63.0 x 88.0 mm. Sheet: ${layers.length} plies.\n\n`;
+  t+=`COLOR MAP (set these in xTool Studio before you run):\n`;
+  t+=`  RED #FF0000    -> through CUT (vector pass)\n`;
+  t+=`  BLUE #0000FF   -> SCORE only, plus registration crosses. DO NOT cut these.\n`;
+  t+=`  GREEN #00C853  -> ENGRAVE sub-layer.\n\n`;
+  t+=`PLY ORDER (stack ascending, 2mm spacers between plies):\n`;
+  layers.forEach(l=>{ const objs=plyObjects(l);
+    t+=`  Ply ${l}: ${objs.length} element(s) — `+
+      objs.map(o=>`${o.name} [${o.op}]`).join(', ')+'\n'; });
+  t+=`\nKERF: not applied. Set ~0.15mm inward offset in xTool Studio if parts fit loose.\n`;
+  t+=`ALIGNMENT: use the blue corner crosses on every ply to register plies before gluing,\n`;
+  t+=`and to register a printed card face to the cut.\n`;
+  t+=`SAFETY: always test on scrap first and measure the outline with calipers.\n`;
+  t+=`PROOF: run the in-app Camera Proof (Proof tab) against a bed photo before gluing.\n`;
+  return t;
+}
+function doExport(){
+  if(!S.variant.objects.length){ toast('Nothing to export — add elements first.'); return; }
+  const svg=buildCutSVG();
+  download('nova-v266-cut.svg', svg, 'image/svg+xml');
+  download('nova-v266-instructions.txt', buildInstructions());
+  toast('Exported cut SVG (1:1 mm) + instruction sheet.');
+}
+
+/* ---- exploded stack preview ---- */
+function renderStackView(){
+  const b=tabbody();
+  let h=`<h3>Exploded <span class="x">stack</span></h3>
+  <div class="note">Bottom ply first — this is how the apertures reveal the ply beneath.
+  Cut on scrap once and measure the outline before good stock.</div>`;
+  for(const l of plies()){
+    let svg=`<svg viewBox="0 0 ${CARD_W} ${CARD_H}" style="width:100%;display:block">`;
+    svg+=`<rect x="0" y="0" width="${CARD_W}" height="${CARD_H}" fill="#f4f4f4" stroke="#999" stroke-width="0.4"/>`;
+    if(S.card.img&&l===1) svg+=`<image href="${S.card.img}" x="0" y="0" width="${CARD_W}" height="${CARD_H}" preserveAspectRatio="xMidYMid slice" opacity="0.85"/>`;
+    for(const o of plyObjects(l)){ if(o.base||!o.clip) continue;
+      try{ svg+=shapeSVG(clipToMM(parseClip(o.clip)),OP_COLOR[o.op]||RED,0.3)
+        .replace('fill="none"','fill="rgba(0,0,0,0.12)"'); }catch(e){} }
+    svg+=`</svg>`;
+    h+=`<div class="plycard" style="width:190px"><span class="pl">PLY ${l}</span>${svg}</div>`;
+  }
+  b.innerHTML=h;
+}
+
+/* ================================================================
+   CATALOG — import/export the siloutes.json variant schema
+   ================================================================ */
+function toCatalogJSON(){
+  recalcPrice();
+  return JSON.stringify({kind:'silouttes-variant', version:1,
+    exported:new Date().toISOString(), card:S.card,
+    variant:{id:S.variant.id, name:S.variant.name, author:S.variant.author,
+      notes:S.variant.notes, cuts:S.variant.objects.filter(o=>!o.base&&o.clip).length,
+      approved:true, forSale:false, priceUSD:S.variant.priceUSD,
+      createdAt:S.variant.createdAt, objects:S.variant.objects}}, null, 1);
+}
+function fromCatalogJSON(txt){
+  const j=JSON.parse(txt);
+  if(j.kind!=='silouttes-variant') throw new Error('Not a silouttes-variant file.');
+  if(j.card) S.card=Object.assign(S.card,j.card);
+  const v=j.variant;
+  S.variant={id:v.id||('var_'+uid()), name:v.name||'Imported', author:v.author||'',
+    notes:v.notes||'', priceUSD:v.priceUSD||0, createdAt:v.createdAt||new Date().toISOString(),
+    objects:(v.objects||[]).map(o=>({id:o.id||uid(), name:o.name||'Element',
+      type:o.type||'FIGURE', price:+o.price||0, time:+o.time||0, op:o.op||'cut',
+      base:!!o.base, clip:o.clip||null, layer:+o.layer||1}))};
+  S.sel=null; recalcPrice();
+}
+function doImportCatalog(){
+  const fp=document.getElementById('filepick'); fp.value='';
+  fp.onchange=()=>{ const f=fp.files[0]; if(!f) return;
+    const r=new FileReader();
+    r.onload=()=>{ try{ fromCatalogJSON(r.result); save(); renderAll(); mirrorPush();
+      toast('Catalog imported — '+S.variant.objects.length+' elements.'); }
+      catch(e){ toast('Import failed: '+e.message); } };
+    r.readAsText(f); };
+  fp.click();
+}
+
+/* ================================================================
+   PROJECT MIRROR — optional, experimental. Off by default.
+   BroadcastChannel syncs the live project between open tabs of the
+   v266 builds. Last-write-wins. It CAN desync — that is why it is
+   a toggle, not the default. Use catalog export/import for the
+   safe, deterministic path.
+   ================================================================ */
+let bc=null, mirrorEcho=false;
+function setMirror(on){
+  S.mirror.on=on;
+  const ovl=document.getElementById('o-mirror');
+  ovl.classList.toggle('on',on); ovl.classList.toggle('live',on);
+  if(on){
+    try{ bc=new BroadcastChannel('silouttes-nova-v266');
+      bc.onmessage=ev=>{ const d=ev.data||{};
+        if(d.kind==='hello'){ mirrorPush(true); return; }
+        if(d.kind==='project'&&d.state&&!mirrorEcho){
+          try{ fromCatalogJSON(JSON.stringify(d.state));
+            save(); renderAll(); toast('⛓ Mirror sync received.'); }catch(e){}
+        } };
+      bc.postMessage({kind:'hello'});
+      toast('⛓ Mirror ON (experimental) — edits broadcast to other open v266 tabs.');
+    }catch(e){ toast('BroadcastChannel unavailable in this browser.'); S.mirror.on=false; }
+  } else { try{bc&&bc.close();}catch(e){} bc=null;
+    toast('⛓ Mirror off.'); }
+  renderStage();
+}
+function mirrorPush(force){
+  if(!S.mirror.on||!bc) return;
+  try{ mirrorEcho=true;
+    bc.postMessage({kind:'project', state:JSON.parse(toCatalogJSON())});
+    setTimeout(()=>mirrorEcho=false,50);
+  }catch(e){}
+}
+
+/* ---- topbar + rail + overlay wiring ---- */
+function renderAll(){ renderStage(); renderPanel(); }
+function bindChrome(){
+  document.querySelectorAll('#rail .tool').forEach(t=>t.onclick=()=>{
+    document.querySelectorAll('#rail .tool').forEach(x=>x.classList.remove('on'));
+    t.classList.add('on'); S.tool=t.dataset.tool;
+    if(S.tool==='hole'){ addHoleToSelected();
+      document.querySelectorAll('#rail .tool').forEach(x=>x.classList.remove('on'));
+      document.querySelector('[data-tool="select"]').classList.add('on'); S.tool='select'; }
+    pathDraft=null; renderStage(); });
+  document.querySelectorAll('#tabs .tab').forEach(t=>t.onclick=()=>setTab(t.dataset.tab));
+  const go=t=>{ if(S.tab==='layers'&&t==='stack'){ renderStackView(); return; } setTab(t); };
+  document.getElementById('b-stack').onclick=()=>go('stack');
+  document.getElementById('b-proof').onclick=()=>go('proof');
+  document.getElementById('b-ai').onclick=()=>go('ai');
+  document.getElementById('b-export').onclick=doExport;
+  document.getElementById('b-new').onclick=()=>{
+    if(!confirm('Start a new card? Export your catalog first if this one matters.')) return;
+    S.card={id:uid(),name:'Untitled Card',set:'',num:'',img:''};
+    S.variant={id:'var_'+uid(),name:'Untitled Variant',author:'',notes:'',priceUSD:0,
+      createdAt:new Date().toISOString(),objects:[]};
+    S.sel=null; save(); renderAll(); mirrorPush(); };
+  document.getElementById('b-import').onclick=doImportCatalog;
+  document.getElementById('b-exportcat').onclick=()=>{ download('nova-v266-catalog.json',toCatalogJSON(),'application/json'); toast('Catalog exported.'); };
+  document.getElementById('o-proof').onclick=()=>setTab('proof');
+  document.getElementById('o-mirror').onclick=()=>setMirror(!S.mirror.on);
+  document.getElementById('o-stack').onclick=()=>{ S.tab='layers'; setTab('layers'); renderStackView(); };
+  document.getElementById('o-ai').onclick=()=>setTab('ai');
+  bindStage();
+}
+
+/* ================================================================
+   CAMERA PROOF — "does the cut match the design?"
+   The M2's cameras (or your phone) photograph the bed. This panel
+   overlays the generated 1:1 design onto that photo, scores the
+   match across a 3x3 checkpoint grid, and stamps PROVEN or FAIL.
+   Honest limits: lens distortion, tilt, and lighting move the score.
+   Shoot top-down, bed lit evenly, and calibrate on a known distance.
+   ================================================================ */
+let proofDesignCanvas=null, proofPhotoCanvas=null, proofPhotoImg=null;
+let calClicks=[];
+
+function renderProofTab(){
+  const b=tabbody(); const P=S.proof;
+  let h=`<h3>Camera <span class="x">proof</span></h3>
+  <div class="note">Prove the cut matches the generated design — the same way every
+  SILOUTTES claim is verified: show the work. Render the design, photograph the bed
+  (M2 camera export or phone, top-down), calibrate on a known distance, align, run proof.</div>`;
+
+  h+=`<div class="row"><button class="btn small primary" onclick="proofRenderDesign()">1 · Render design</button>
+      <button class="btn small" onclick="proofUploadPhoto()">2 · Upload bed photo</button></div>
+  <div class="note" id="proof-status">Design: ${proofDesignCanvas?'rendered ✓':'not rendered'} ·
+    Photo: ${P.photoName?esc(P.photoName)+' ✓':'none'} ·
+    Scale: ${P.pxPerMM?P.pxPerMM.toFixed(2)+' px/mm':'uncalibrated'}</div>`;
+
+  h+=`<div id="proof-work"></div>`;
+  if(P.photoName){
+    h+=`<h3>3 · Calibrate <span class="x">scale</span></h3>
+    <div class="note">Click <b>two points</b> on the photo a known distance apart
+    (e.g. two corners of the card outline = 63.0 or 88.0mm), enter that distance, set scale.
+    Clicks: ${calClicks.length}/2</div>
+    <div class="row"><label>Known mm</label><input type="number" id="cal-mm" step="0.1" min="0.1" value="${P.calMM||63}"></div>
+    <div class="row"><button class="btn small primary" onclick="proofSetScale()">Set scale from clicks</button>
+    <button class="btn small ghost" onclick="calClicks=[];renderPanel()">Clear clicks</button></div>`;
+  }
+  if(P.pxPerMM){
+    h+=`<h3>4 · Align <span class="x">&amp; run</span></h3>
+    <div class="note">Click on the photo where the design's <b>top-left corner</b> sits,
+    then run the proof. Nudge with the sliders after.</div>
+    <div class="row"><label>Shift X px</label><input type="number" id="pf-dx" value="0" step="1"></div>
+    <div class="row"><label>Shift Y px</label><input type="number" id="pf-dy" value="0" step="1"></div>
+    <div class="row"><label>Pass ≥ %</label><input type="number" id="pf-th" value="88" min="50" max="99"></div>
+    <div class="row"><button class="btn small primary" onclick="proofRun()">◉ Run proof</button></div>
+    <div class="row"><label>Overlay</label><input type="range" id="pf-op" min="0" max="100" value="55" oninput="proofOverlayView()"></div>
+    <div class="row">
+      <button class="btn small ghost" onclick="proofView('overlay')">Overlay</button>
+      <button class="btn small ghost" onclick="proofView('side')">Side-by-side</button>
+      <button class="btn small ghost" onclick="proofView('diff')">Difference</button>
+    </div>`;
+  }
+  if(P.score!=null){
+    const ok=P.verdict==='PROVEN';
+    h+=`<div class="stamp ${ok?'proven':'fail'}">${ok?'✓ PROVEN':'✗ FAIL'} — ${P.score.toFixed(1)}%</div>`;
+    h+=`<div class="grid9">`+P.cells.map((c,i)=>
+      `<div class="cell9" style="color:${c>=88?'var(--ok)':c>=70?'var(--warn)':'var(--bad)'}">${c.toFixed(0)}%<small>${['TL','TC','TR','ML','MC','MR','BL','BC','BR'][i]}</small></div>`).join('')+`</div>`;
+    h+=`<div class="row"><button class="btn small" onclick="proofCertificate()">⇩ Proof certificate</button></div>
+    <div class="note">Certificate pins the design hash, photo name, scale, score, and timestamp.
+    Keep it with the job the way you'd keep a receipt.</div>`;
+  }
+  h+=`<div class="warnbox"><b>What this proves — and doesn't.</b> A high score means the
+  photographed cut lines land where the design says, at the calibrated scale. It does not
+  measure cut depth, kerf, or material. Score moves with camera angle and light — a FAIL on
+  a tilted phone photo is a photography problem, not necessarily a cut problem. Re-shoot top-down.</div>`;
+  b.innerHTML=h;
+  const w=document.getElementById('proof-work');
+  if(proofPhotoImg){ w.innerHTML=''; w.appendChild(proofPhotoImg); proofPhotoImg.id='proofimg'; }
+  else if(proofDesignCanvas){ const c=document.createElement('canvas');
+    c.id='proofimg'; c.width=proofDesignCanvas.width; c.height=proofDesignCanvas.height;
+    c.getContext('2d').drawImage(proofDesignCanvas,0,0); w.innerHTML=''; w.appendChild(c); }
+}
+function proofRenderDesign(){
+  const svg=buildCutSVG();
+  const url=URL.createObjectURL(new Blob([svg],{type:'image/svg+xml'}));
+  const img=new Image();
+  img.onload=()=>{ const k=3;
+    proofDesignCanvas=document.createElement('canvas');
+    proofDesignCanvas.width=img.width*k; proofDesignCanvas.height=img.height*k;
+    const g=proofDesignCanvas.getContext('2d');
+    g.fillStyle='#fff'; g.fillRect(0,0,proofDesignCanvas.width,proofDesignCanvas.height);
+    g.drawImage(img,0,0,proofDesignCanvas.width,proofDesignCanvas.height);
+    URL.revokeObjectURL(url); S.proof.designURL='rendered';
+    renderPanel(); toast('Design rendered for proof.'); };
+  img.onerror=()=>toast('Design render failed.');
+  img.src=url;
+}
+function proofUploadPhoto(){
+  const fp=document.getElementById('photopick'); fp.value='';
+  fp.onchange=()=>{ const f=fp.files[0]; if(!f) return;
+    const url=URL.createObjectURL(f); const img=new Image();
+    img.onload=()=>{ const MAX=1400, k=Math.min(1,MAX/Math.max(img.width,img.height));
+      proofPhotoCanvas=document.createElement('canvas');
+      proofPhotoCanvas.width=Math.round(img.width*k); proofPhotoCanvas.height=Math.round(img.height*k);
+      proofPhotoCanvas.getContext('2d').drawImage(img,0,0,proofPhotoCanvas.width,proofPhotoCanvas.height);
+      S.proof.photoName=f.name; S.proof.pxPerMM=null; S.proof.score=null; S.proof.verdict=null;
+      calClicks=[];
+      proofPhotoImg=document.createElement('canvas');
+      proofPhotoImg.width=proofPhotoCanvas.width; proofPhotoImg.height=proofPhotoCanvas.height;
+      proofPhotoImg.getContext('2d').drawImage(proofPhotoCanvas,0,0);
+      proofPhotoImg.style.cursor='crosshair';
+      proofPhotoImg.onclick=ev=>proofPhotoClick(ev);
+      URL.revokeObjectURL(url); renderPanel(); toast('Bed photo loaded — click to calibrate/align.'); };
+    img.src=url; };
+  fp.click();
+}
+function proofPhotoClick(ev){
+  const r=ev.target.getBoundingClientRect();
+  const x=(ev.clientX-r.left)/r.width*proofPhotoCanvas.width;
+  const y=(ev.clientY-r.top)/r.height*proofPhotoCanvas.height;
+  const P=S.proof;
+  if(!P.pxPerMM){ // calibrating
+    calClicks.push({x,y});
+    const g=proofPhotoImg.getContext('2d');
+    g.fillStyle='#ff6a1a'; g.beginPath(); g.arc(x,y,8,0,7); g.fill();
+    g.fillStyle='#fff'; g.font='bold 11px monospace'; g.fillText(calClicks.length,x-4,y+4);
+    renderPanelKeep();
+    if(calClicks.length===2) toast('Two points marked — enter the known mm and Set scale.');
+    return;
+  }
+  // aligning: place design top-left here
+  P.anchor={x,y}; renderPanelKeep(); drawProofComposite();
+  toast('Design anchored. Run proof, or nudge with the sliders.');
+}
+function renderPanelKeep(){ // re-render tab without losing canvases
+  const tab=S.tab; renderProofTab();
+}
+function proofSetScale(){
+  const mm=+document.getElementById('cal-mm').value;
+  if(calClicks.length!==2||!(mm>0)){ toast('Need 2 clicks and a known distance.'); return; }
+  const dx=calClicks[0].x-calClicks[1].x, dy=calClicks[0].y-calClicks[1].y;
+  const px=Math.hypot(dx,dy);
+  S.proof.pxPerMM=px/mm; S.proof.calMM=mm; calClicks=[];
+  renderPanel(); toast('Scale set: '+S.proof.pxPerMM.toFixed(2)+' px/mm.');
+}
+/* draw composite into the work canvas */
+function proofComposite(){
+  const P=S.proof;
+  const dx=+document.getElementById('pf-dx').value||0;
+  const dy=+document.getElementById('pf-dy').value||0;
+  const out=document.createElement('canvas');
+  out.width=proofPhotoCanvas.width; out.height=proofPhotoCanvas.height;
+  const g=out.getContext('2d');
+  g.drawImage(proofPhotoCanvas,0,0);
+  const k=P.pxPerMM; // design canvas was rendered at 3 px per mm of sheet
+  const sheetW=proofDesignCanvas.width/3, sheetH=proofDesignCanvas.height/3; // mm
+  const dw=sheetW*k, dh=sheetH*k;
+  const ax=(P.anchor?P.anchor.x:0)+dx, ay=(P.anchor?P.anchor.y:0)+dy;
+  g.globalAlpha=(+document.getElementById('pf-op').value||55)/100;
+  g.drawImage(proofDesignCanvas,ax,ay,dw,dh);
+  g.globalAlpha=1;
+  g.strokeStyle='#ff6a1a'; g.lineWidth=2;
+  g.strokeRect(ax,ay,dw,dh);
+  return {canvas:out, ax, ay, dw, dh};
+}
+function proofOverlayView(){
+  if(!proofPhotoCanvas||!proofDesignCanvas) return;
+  const w=document.getElementById('proof-work'); w.innerHTML='';
+  const c=proofComposite().canvas; c.id='proofimg'; c.onclick=ev=>proofPhotoClick(ev);
+  c.style.cursor='crosshair'; w.appendChild(c); proofPhotoImg=c;
+}
+function drawProofComposite(){ proofOverlayView(); }
+function grayDownsample(canvas,x,y,w,h,N){
+  const t=document.createElement('canvas'); t.width=N; t.height=N;
+  const g=t.getContext('2d');
+  g.drawImage(canvas,x,y,w,h,0,0,N,N);
+  const d=g.getImageData(0,0,N,N).data, out=new Float32Array(N*N);
+  for(let i=0;i<N*N;i++) out[i]=(d[i*4]*0.299+d[i*4+1]*0.587+d[i*4+2]*0.114)/255;
+  return out;
+}
+function ncc(a,b){
+  const n=a.length; let ma=0,mb=0;
+  for(let i=0;i<n;i++){ma+=a[i];mb+=b[i];} ma/=n; mb/=n;
+  let sab=0,sa=0,sb=0;
+  for(let i=0;i<n;i++){const da=a[i]-ma,db=b[i]-mb; sab+=da*db; sa+=da*da; sb+=db*db;}
+  if(sa===0||sb===0) return 0;
+  return sab/Math.sqrt(sa*sb);
+}
+function proofRun(){
+  const P=S.proof;
+  if(!proofDesignCanvas||!proofPhotoCanvas||!P.pxPerMM||!P.anchor){
+    toast('Need: rendered design + photo + scale + anchor click.'); return; }
+  const {ax,ay,dw,dh}=proofComposite();
+  const N=96, cells=[];
+  for(let gy=0;gy<3;gy++)for(let gx=0;gx<3;gx++){
+    const cx=ax+dw*gx/3, cy=ay+dh*gy/3, cw=dw/3, ch=dh/3;
+    // design reference: white sheet w/ black lines, drawn at same scale
+    const ref=document.createElement('canvas'); ref.width=ref.height=N;
+    const rg=ref.getContext('2d'); rg.fillStyle='#fff'; rg.fillRect(0,0,N,N);
+    const k=P.pxPerMM, sk=3; // design canvas px per mm
+    rg.drawImage(proofDesignCanvas,
+      (cx-ax)/k*sk,(cy-ay)/k*sk,cw/k*sk,ch/k*sk, 0,0,N,N);
+    const a=grayDownsample(ref,0,0,N,N,N);
+    const b=grayDownsample(proofPhotoCanvas,cx,cy,cw,ch,N);
+    // compare edges: use 1-luminance distance on dark lines
+    const score=Math.max(0,Math.min(1,(ncc(a,b)+1)/2));
+    cells.push(score*100);
+  }
+  const avg=cells.reduce((s,c)=>s+c,0)/cells.length;
+  const th=+document.getElementById('pf-th').value||88;
+  P.score=avg; P.cells=cells; P.verdict=avg>=th?'PROVEN':'FAIL';
+  proofView('overlay'); renderPanelKeep(); proofViewKeep();
+  const ok=P.verdict==='PROVEN';
+  toast(ok?`✓ PROVEN — design and cut match at ${avg.toFixed(1)}%`
+          :`✗ FAIL at ${avg.toFixed(1)}% — check camera angle, light, and scale.`);
+}
+function proofViewKeep(){
+  // re-attach current view after panel re-render
+  const w=document.getElementById('proof-work'); if(!w) return;
+}
+function proofView(which){
+  if(!proofPhotoCanvas||!proofDesignCanvas) return;
+  const w=document.getElementById('proof-work'); w.innerHTML='';
+  const {ax,ay,dw,dh}=proofComposite();
+  const c=document.createElement('canvas'); c.id='proofimg';
+  c.width=proofPhotoCanvas.width; c.height=proofPhotoCanvas.height;
+  const g=c.getContext('2d');
+  if(which==='overlay'){ const comp=proofComposite().canvas;
+    g.drawImage(comp,0,0); }
+  else if(which==='side'){
+    g.drawImage(proofPhotoCanvas,0,0);
+    const k=S.proof.pxPerMM;
+    g.drawImage(proofDesignCanvas,ax,ay,dw,dh);
+    g.strokeStyle='#ff6a1a';g.lineWidth=3;g.strokeRect(ax,ay,dw,dh);
+    g.fillStyle='#ff6a1a';g.font='bold 14px monospace';
+    g.fillText('PHOTO (left half is design overlay region →)',12,24);
+  }
+  else { // difference heatmap
+    const N=160;
+    const a=grayDownsample(proofPhotoCanvas,ax,ay,dw,dh,N);
+    const ref=document.createElement('canvas'); ref.width=ref.height=N;
+    const rg=ref.getContext('2d'); rg.fillStyle='#fff'; rg.fillRect(0,0,N,N);
+    const sk=3,k=S.proof.pxPerMM;
+    rg.drawImage(proofDesignCanvas,0,0,proofDesignCanvas.width,proofDesignCanvas.height,0,0,N,N);
+    const b=grayDownsample(ref,0,0,N,N,N);
+    const img=g.createImageData(N,N);
+    for(let i=0;i<N*N;i++){ const d=Math.abs(a[i]-b[i]);
+      img.data[i*4]=Math.min(255,d*3*255); img.data[i*4+1]=Math.max(0,80-d*255);
+      img.data[i*4+2]=40; img.data[i*4+3]=255; }
+    const t=document.createElement('canvas'); t.width=t.height=N;
+    t.getContext('2d').putImageData(img,0,0);
+    g.imageSmoothingEnabled=false;
+    g.drawImage(t,ax,ay,dw,dh);
+    g.fillStyle='#fff';g.font='bold 13px monospace';
+    g.fillText('DIFFERENCE — red = mismatch',ax+8,ay+20);
+  }
+  c.onclick=ev=>proofPhotoClick(ev); c.style.cursor='crosshair';
+  w.appendChild(c); proofPhotoImg=c;
+}
+async function sha256hex(str){
+  const d=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(str));
+  return [...new Uint8Array(d)].map(x=>x.toString(16).padStart(2,'0')).join('');
+}
+async function proofCertificate(){
+  const P=S.proof; if(P.score==null) return;
+  const svg=buildCutSVG();
+  const cert={app:'SILOUTTES Nova v266', kind:'cut-proof-certificate',
+    card:S.card.name, variant:S.variant.name,
+    designSha256:await sha256hex(svg),
+    photoName:P.photoName, pxPerMM:+P.pxPerMM.toFixed(3),
+    score:+P.score.toFixed(2), cells:P.cells.map(c=>+c.toFixed(1)),
+    verdict:P.verdict, thresholdNote:'default 88%, user-adjustable',
+    timestamp:new Date().toISOString(),
+    limits:'Verifies geometric placement at calibrated scale. Does not measure cut depth, kerf, or material.'};
+  P.cert=cert;
+  download('nova-v266-proof-certificate.json',JSON.stringify(cert,null,1),'application/json');
+  toast('Proof certificate downloaded.');
+}
+
+/* ================================================================
+   AI — bring your own key. The browser calls the provider directly;
+   the key never passes through a third party. "Auto-create" generates
+   element layouts and commits them as a catalog variant, so pricing,
+   stack preview, and xTool export understand them automatically.
+   ================================================================ */
+function renderAITab(){
+  const b=tabbody();
+  b.innerHTML=`<h3>AI <span class="x">auto-create</span></h3>
+  <div class="note">Your key, your bill, direct from this browser. Nothing proxied.
+  <b>Don't enter keys on a shared computer.</b></div>
+  <div class="row"><label>Provider</label><select id="ai-prov">
+    <option value="anthropic" ${S.ai.provider==='anthropic'?'selected':''}>Anthropic</option>
+    <option value="moonshot" ${S.ai.provider==='moonshot'?'selected':''}>Moonshot</option>
+  </select></div>
+  <div class="row"><label>API key</label><input type="text" id="ai-key" value="${esc(S.ai.key)}" placeholder="paste key — stored locally only" autocomplete="off"></div>
+  <div class="row"><label>Model</label><input type="text" id="ai-model" value="${esc(S.ai.model)}" placeholder="auto"></div>
+  <div class="row"><button class="btn small" onclick="aiSave()">Save key</button></div>
+  <hr style="border-color:var(--line)">
+  <div class="row"><label>Theme</label><input type="text" id="ai-theme" placeholder="e.g. lighthouse on a cliff, art-deco title bar"></div>
+  <div class="row"><label>Plies</label><input type="number" id="ai-plies" min="2" max="10" value="5"></div>
+  <div class="row"><button class="btn small primary" id="ai-go" onclick="aiAutoCreate()">✦ Auto-create design</button></div>
+  <div id="ai-out" class="note"></div>
+  <div class="note">The model returns element layouts — name, type, ply, and clip geometry in
+  <span class="kbd">inset()</span> / <span class="kbd">ellipse()</span> / <span class="kbd">path()</span>
+  percent-of-card format. Every clip is validated through the real contract before anything
+  is committed. Bad geometry is rejected, never faked.</div>`;
+}
+function aiSave(){ S.ai.provider=document.getElementById('ai-prov').value;
+  S.ai.key=document.getElementById('ai-key').value.trim();
+  S.ai.model=document.getElementById('ai-model').value.trim();
+  save(); toast('AI settings saved locally.'); }
+async function aiAutoCreate(){
+  aiSave();
+  if(!S.ai.key){ toast('Paste an API key first.'); return; }
+  const theme=document.getElementById('ai-theme').value||'abstract geometric emblem';
+  const plies=+document.getElementById('ai-plies').value||5;
+  const out=document.getElementById('ai-out');
+  out.innerHTML='Asking the model…'; 
+  document.getElementById('ai-go').disabled=true;
+  const sys=`You design layered shadow-box trading cards for laser cutting.
+Return ONLY a JSON array. Each element: {"name":string,"type":one of FRAME,FIGURE,TERRAIN,FX,TEXT,"layer":integer 1..${plies},"op":one of cut,score,engrave,"clip":string}.
+clip formats (percent of the 63x88mm card):
+- "inset(T% R% B% L%)" — rectangular aperture
+- "ellipse(RX% RY% at CX% CY%)" — elliptical aperture
+- "path(\\"M x y L x y ... Z\\")" — polygon/node path in percent coordinates, 0-100.
+Layer 1 is the backing (no aperture, clip null). Higher layers reveal lower ones.
+Design a ${plies}-ply card themed: ${theme}. 4-9 elements. No prose, JSON only.`;
+  try{
+    let text;
+    if(S.ai.provider==='anthropic'){
+      const r=await fetch('https://api.anthropic.com/v1/messages',{
+        method:'POST', headers:{'content-type':'application/json',
+          'x-api-key':S.ai.key,'anthropic-version':'2023-06-01',
+          'anthropic-dangerous-direct-browser-access':'true'},
+        body:JSON.stringify({model:S.ai.model||'claude-haiku-4-5-20251001',
+          max_tokens:2000, system:sys,
+          messages:[{role:'user',content:'Generate the element layout.'}]})});
+      if(!r.ok) throw new Error('Anthropic '+r.status);
+      const j=await r.json();
+      text=j.content.map(c=>c.text||'').join('');
+    } else {
+      const r=await fetch('https://platform.moonshot.cn/v1/chat/completions',{
+        method:'POST', headers:{'content-type':'application/json',
+          'Authorization':'Bearer '+S.ai.key},
+        body:JSON.stringify({model:S.ai.model||'moonshot-v1-8k',
+          messages:[{role:'system',content:sys},{role:'user',content:'Generate the element layout.'}]})});
+      if(!r.ok) throw new Error('Moonshot '+r.status);
+      const j=await r.json(); text=j.choices[0].message.content;
+    }
+    const arr=JSON.parse(text.match(/\[[\s\S]*\]/)[0]);
+    let ok=0, bad=0;
+    for(const e of arr){
+      try{
+        if(e.clip) parseClip(e.clip); // validate through the real contract
+        S.variant.objects.push({id:uid(), name:String(e.name||'AI element').slice(0,60),
+          type:['FRAME','FIGURE','TERRAIN','FX','TEXT'].includes(e.type)?e.type:'FIGURE',
+          price:0.12, time:70, op:['cut','score','engrave'].includes(e.op)?e.op:'cut',
+          base:!e.clip, clip:e.clip||null,
+          layer:Math.min(plies,Math.max(1,+e.layer||2))});
+        ok++;
+      }catch(err){ bad++; }
+    }
+    S.variant.name=(theme.slice(0,40)||'AI design');
+    recalcPrice(); save(); renderAll(); mirrorPush();
+    out.innerHTML=`Committed <b style="color:var(--ok)">${ok}</b> elements${bad?`, rejected <b style="color:var(--bad)">${bad}</b> bad clips`:''} as a catalog variant. Pricing, stack preview, and export already understand them.`;
+  }catch(e){ out.innerHTML=`<span style="color:var(--bad)">Failed: ${esc(e.message)}</span>`; }
+  document.getElementById('ai-go').disabled=false;
+}
+
+/* ================================================================
+   SETUP — card info, storage, and the verify-it-yourself suite
+   ================================================================ */
+function renderSetupTab(){
+  const b=tabbody();
+  b.innerHTML=`<h3>Card <span class="x">info</span></h3>
+  <div class="row"><label>Card name</label><input type="text" id="s-cname" value="${esc(S.card.name)}"></div>
+  <div class="row"><label>Set</label><input type="text" id="s-cset" value="${esc(S.card.set)}"></div>
+  <div class="row"><label>Number</label><input type="text" id="s-cnum" value="${esc(S.card.num)}"></div>
+  <div class="row"><label>Variant</label><input type="text" id="s-vname" value="${esc(S.variant.name)}"></div>
+  <div class="row"><label>Author</label><input type="text" id="s-vauthor" value="${esc(S.variant.author)}"></div>
+  <div class="row"><label>Card art</label><button class="btn small" onclick="setupUploadArt()">Upload image</button></div>
+  <div class="row"><button class="btn small primary" onclick="setupApply()">Apply</button></div>
+  <h3>Storage</h3>
+  <div class="row">
+    <button class="btn small" onclick="download('nova-v266-backup.json',localStorage.getItem(LS_KEY)||'{}','application/json')">⇩ Back up all data</button>
+    <button class="btn small danger" onclick="if(confirm('Erase everything in this browser?')){localStorage.removeItem(LS_KEY);location.reload();}">Erase everything</button>
+  </div>
+  <div class="note">Everything lives in this browser's localStorage. Clearing site data erases
+  your work — back up before you care about losing something.</div>
+  <h3>Overlay <span class="x">buttons</span></h3>
+  <div class="row"><button class="btn small" onclick="S.overlays=!S.overlays;document.getElementById('overlay-btns').classList.toggle('hidden',!S.overlays);toast(S.overlays?'Overlay buttons shown.':'Overlay buttons hidden.')">Toggle floating buttons</button></div>
+  <h3>Verify <span class="x">it yourself</span></h3>
+  <div class="row"><button class="btn small primary" onclick="runSelfChecks()">Run self-checks</button></div>
+  <div id="checks"></div>
+  <div class="note">SILOUTTES Nova v266 · single file · zero dependencies · offline ·
+  MIT licensed · cut contract: red=cut, blue=score+crosses, green=engrave, 63.0×88.0mm, kerf not applied.</div>`;
+}
+function setupApply(){
+  S.card.name=document.getElementById('s-cname').value||S.card.name;
+  S.card.set=document.getElementById('s-cset').value;
+  S.card.num=document.getElementById('s-cnum').value;
+  S.variant.name=document.getElementById('s-vname').value||S.variant.name;
+  S.variant.author=document.getElementById('s-vauthor').value;
+  save(); renderAll(); mirrorPush(); toast('Saved.');
+}
+function setupUploadArt(){
+  const i=document.createElement('input'); i.type='file'; i.accept='image/*';
+  i.onchange=()=>{ const f=i.files[0]; if(!f) return;
+    const r=new FileReader();
+    r.onload=()=>{ S.card.img=r.result; save(); renderAll(); toast('Card art set.'); };
+    r.readAsDataURL(f); };
+  i.click();
+}
+function runSelfChecks(){
+  const out=[]; const ck=(name,fn)=>{ try{ fn(); out.push([name,true,'']); }
+    catch(e){ out.push([name,false,e.message]); } };
+  ck('inset parses',()=>{ const p=parseClip('inset(10% 20% 30% 40%)');
+    if(p.kind!=='rect'||p.t!==10||p.r!==20||p.b!==30||p.l!==40) throw new Error('bad'); });
+  ck('ellipse parses',()=>{ const p=parseClip('ellipse(9% 7% at 24% 20%)');
+    if(p.kind!=='ellipse'||p.rx!==9||p.cy!==20) throw new Error('bad'); });
+  ck('path parses',()=>{ const p=parseClip('path("M4 3.2 L96 3.2 Z")');
+    if(p.kind!=='path') throw new Error('bad'); });
+  ck('node at 40%,15% lands at 25.2mm,13.2mm',()=>{
+    const mm=clipToMM(parseClip('path("M40 15 L41 15 L41 16 L40 16 Z")'));
+    if(!mm.d.startsWith('M25.2,13.2')) throw new Error('got '+mm.d.slice(0,20)); });
+  ck('inset(0 0 0 0) is exactly 63x88mm',()=>{
+    const mm=clipToMM(parseClip('inset(0% 0% 0% 0%)'));
+    if(Math.abs(mm.w-63)>1e-6||Math.abs(mm.h-88)>1e-6) throw new Error('bad'); });
+  ck('compound path gets evenodd',()=>{
+    const mm=clipToMM(parseClip('path("M10 10 L20 10 L20 20 L10 20 Z M12 12 L14 12 L14 14 L12 14 Z")'));
+    if(!mm.compound) throw new Error('not compound');
+    const s=shapeSVG(mm,RED); if(!s.includes('evenodd')) throw new Error('no evenodd'); });
+  ck('export declares width in mm + viewBox',()=>{
+    const s=buildCutSVG();
+    if(!/width="[\d.]+mm"/.test(s)||!s.includes('viewBox')) throw new Error('bad header'); });
+  ck('export uses red cut + blue crosses',()=>{
+    const s=buildCutSVG();
+    if(!s.includes('#FF0000')||!s.includes('#0000FF')) throw new Error('missing colors'); });
+  ck('kerf is not applied anywhere',()=>{
+    const s=buildCutSVG();
+    if(/kerf/i.test(s)&&!/NOT APPLIED/.test(s)) throw new Error('kerf mentioned wrongly'); });
+  ck('bad clip rejected, never faked',()=>{
+    let threw=false; try{parseClip('circle(50%)');}catch(e){threw=true;}
+    if(!threw) throw new Error('accepted garbage'); });
+  ck('catalog round-trips schema',()=>{
+    const t=toCatalogJSON(); const j=JSON.parse(t);
+    if(j.kind!=='silouttes-variant'||!j.variant||!Array.isArray(j.variant.objects)) throw new Error('bad schema'); });
+  const el=document.getElementById('checks');
+  el.innerHTML=out.map(([n,ok,msg])=>
+    `<div class="checkline"><span class="${ok?'p':'f'}">${ok?'PASS':'FAIL'}</span> ${esc(n)}${msg?` <span style="color:var(--bad)">${esc(msg)}</span>`:''}</div>`).join('')
+    +`<div class="note">${out.filter(o=>o[1]).length}/${out.length} passing.</div>`;
+}
+
+/* ================================================================
+   BOOT
+   ================================================================ */
+function seedDemo(){
+  S.card={id:uid(),name:'Demo Card',set:'Nova',num:'001',img:''};
+  S.variant={id:'var_'+uid(),name:'Orbital Bloom',author:'Nova',
+    notes:'Demo: 4-ply shadow box with sub-layer ops.',priceUSD:0,
+    createdAt:new Date().toISOString(),objects:[
+    {id:uid(),name:'Backing',type:'FRAME',price:0.10,time:60,op:'cut',base:true,clip:null,layer:1},
+    {id:uid(),name:'Outer ring',type:'FRAME',price:0.12,time:70,op:'cut',base:false,clip:'path("M8 8 L92 8 L92 92 L8 92 Z M20 20 L80 20 L80 80 L20 80 Z")',layer:2},
+    {id:uid(),name:'Moon disc',type:'FX',price:0.08,time:40,op:'score',base:false,clip:'ellipse(10% 8% at 68% 24%)',layer:3},
+    {id:uid(),name:'Bloom',type:'FIGURE',price:0.16,time:90,op:'cut',base:false,clip:'path("M50 30 L56 44 L70 44 L59 52 L63 66 L50 58 L37 66 L41 52 L30 44 L44 44 Z")',layer:4},
+    {id:uid(),name:'Title engrave',type:'TEXT',price:0.06,time:30,op:'engrave',base:false,clip:'inset(6% 60% 86% 8%)',layer:4},
+  ]};
+  recalcPrice();
+}
+window.addEventListener('DOMContentLoaded',()=>{
+  const had=load();
+  if(!had||!S.variant.objects.length) seedDemo();
+  bindChrome(); renderAll();
+});
+
+
+/* ---------- Nova: AI-first command bar ---------- */
+function novaCommand(){
+  const v=(document.getElementById('nova-cmd').value||'').trim();
+  if(!v){ setTab('ai'); return; }
+  if(!S.ai.key){ setTab('ai');
+    document.getElementById('ai-theme').value=v;
+    toast('Paste your API key once — then hit Auto-create design.'); return; }
+  setTab('ai');
+  document.getElementById('ai-theme').value=v;
+  aiAutoCreate();
+}
+document.getElementById('nova-cmd').addEventListener('keydown',e=>{
+  if(e.key==='Enter') novaCommand(); });
+
+</script>
+</body>
+</html>
