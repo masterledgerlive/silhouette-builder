@@ -286,7 +286,7 @@ async function chainScore(rec){
 async function submitRun(){
   if(!run||!run.final) return;
   const rec={wallet:run.wallet,seed:run.seed,nonce:run.nonce,key:run.final.key,tape:run.final.tape,claimedScore:run.final.score,claimedChain:run.final.chain};
-  saveScore({player:run.wallet.length>14?run.wallet.slice(0,8)+'…'+run.wallet.slice(-4):run.wallet,game:'FIRST SLAP',score:run.final.score,streamId:null,verified:false,replay:true,isAI:false,seed:run.seed,chain:run.final.chain,at:Date.now(),note:'wallet '+run.wallet});
+  saveScore({player:run.wallet.length>14?run.wallet.slice(0,8)+'…'+run.wallet.slice(-4):run.wallet,game:'FIRST SLAP',score:run.final.score,streamId:null,verified:false,replay:true,isAI:false,seed:run.seed,chain:run.final.chain,wallet:run.wallet,nonce:run.nonce,key:run.final.key,tape:run.final.tape,at:Date.now(),note:'wallet '+run.wallet});
   $('runResult').innerHTML+='<div style="margin-top:8px"><span class="pill ok">🎞 ON THE BOARD — replay-verified, remembered under your wallet</span> · <span class="lbl" id="chainMsg">⛓ chaining into the blob score chain…</span></div>';
   try{
     const id=await chainScore(rec);
@@ -318,7 +318,8 @@ function aiAttempt(kind){
   const wallet=kind==='pred'?'0xAI-PREDICTOR':'0xAI-REACTOR';
   const sim=KKSlap.simulate(seed,tape);
   const name=kind==='pred'?'AI-PREDICTOR 🤖':'AI-REACTOR 🤖';
-  saveScore({player:name,game:'FIRST SLAP',score:sim.score,streamId:null,verified:false,replay:true,isAI:true,seed:seed,chain:sim.chain,at:Date.now()});
+  const aiNonce0=Date.now()%100000;
+  saveScore({player:name,game:'FIRST SLAP',score:sim.score,streamId:null,verified:false,replay:true,isAI:true,seed:seed,chain:sim.chain,wallet:wallet,nonce:aiNonce0,key:KKSlap.runKey(wallet,seed,aiNonce0),tape:tape,at:Date.now()});
   $('aiOut').innerHTML='<b>'+name+'</b> seed '+seed+' → <b>SCORE '+sim.score+'</b> · '+sim.results.map(r=>r.outcome).join(' · ')+
     '<br><span class="pill ok">🎞 recorded on the Hall — replay-derived, same law as humans</span> · <span id="aiChainMsg">⛓ chaining…</span>';
   const nonce=Date.now()%100000;
