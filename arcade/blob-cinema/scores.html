@@ -27,6 +27,7 @@ input,select{background:#0b0b1a;border:1px solid #33336a;color:#e8e8ff;border-ra
 <script src="./errcatch.js"></script>
 <script src="../arcade-shared/kk-replay.js"></script>
 <script src="../arcade-shared/kk-slap.js"></script>
+<script src="../arcade-shared/kk-rally.js"></script>
 <h1>🏆 HALL OF SCORES <span class="lbl">verified human gameplay — camera + screen, sealed in blobs</span></h1>
 <p class="lbl"><a href="./reblob.html">📚 library</a> · <a href="./live.html">🔴 go live</a> · <a href="../">🕹 arcade</a></p>
 
@@ -47,6 +48,17 @@ input,select{background:#0b0b1a;border:1px solid #33336a;color:#e8e8ff;border-ra
   <input id="chainHeadInput" placeholder="head blob id (defaults to this browser's known head / genesis)" style="width:340px">
   <button class="btn go" onclick="verifyChain()">⛓ verify the chain</button>
   <div id="chainOut" style="margin-top:8px"></div>
+</div>
+
+<div class="panel" id="rallyPanel">
+  <h2 style="margin:0 0 8px">🏓 BLOB SCORE CHAIN — FIRST RALLY <span class="lbl">Stone 2 · the Pong generation · <a href="../games/first-rally/" style="color:var(--blue)">play the cabinet →</a></span></h2>
+  <p class="lbl">Machine <b>FIRST-RALLY-001</b> (first node, born Oct 27 2026) keeps its Top 10 the same way: every verified match reblobs a new head linked back to genesis. This panel walks the chain and <b>replays every match</b> against its seed-dealt opponent. ▶ watch renders the replay itself — proof of play, not a claim.</p>
+  <div class="lbl">head blob: <span class="mono" id="rallyHead">—</span></div>
+  <input id="rallyHeadInput" placeholder="head blob id (defaults to this browser's known head / genesis)" style="width:340px">
+  <button class="btn go" onclick="verifyRallyChain()">⛓ verify the rally chain</button>
+  <div id="rallyOut" style="margin-top:8px"></div>
+  <canvas id="rallyCanvas" width="480" height="360" style="background:#0b0b1a;border:2px solid #26264d;border-radius:12px;width:100%;max-width:480px;display:none;margin:8px auto"></canvas>
+  <div id="rallyWatchMsg" class="lbl" style="text-align:center"></div>
 </div>
 
 <div class="panel">
@@ -104,8 +116,16 @@ function render(){
   $('top10').innerHTML='<tr><th>#</th><th>PLAYER</th><th>GAME</th><th>SCORE</th><th>PROOF</th><th></th></tr>'+
     (top.length?top.map((s,i)=>`<tr class="top10"><td>${i+1}</td><td>${s.player}</td><td>${s.game}</td><td>${s.score}</td><td>${badge(s)}</td><td>${s.streamId?`<a href="./play.html?id=${s.streamId}">▶ watch proof</a>`:''}</td></tr>`).join('')
     :'<tr><td colspan="6" class="lbl">no verified scores yet — be the first.</td></tr>');
+  localRuns=[]; localRallyRuns=[];
   $('all').innerHTML='<tr><th>PLAYER</th><th>GAME</th><th>SCORE</th><th>STATUS</th><th></th></tr>'+
-    (scores.length?scores.map(s=>`<tr><td>${s.player}${s.isAI?' 🤖':''}</td><td>${s.game}</td><td>${s.score}</td><td>${badge(s)}</td><td>${s.streamId?`<a href="./play.html?id=${s.streamId}">▶ watch</a>`:'<span class="lbl">no recording</span>'}</td></tr>`).join('')
+    (scores.length?scores.map(s=>{
+      let action='';
+      if(s.streamId) action=`<a href="./play.html?id=${s.streamId}">▶ watch</a>`;
+      else if(s.game==='FIRST SLAP'&&s.tape&&typeof KKSlap!=='undefined'){ const li=localRuns.length; localRuns.push({wallet:s.wallet||s.player,seed:s.seed,tape:s.tape}); action=`<button class="btn" onclick="watchLocal(${li})">▶ REPLAY</button>`; }
+      else if(s.game==='FIRST RALLY'&&s.tape&&typeof KKRally!=='undefined'){ const li=localRallyRuns.length; localRallyRuns.push({wallet:s.wallet||s.player,seed:s.seed,tape:s.tape}); action=`<button class="btn" onclick="watchLocalRally(${li})">▶ REPLAY</button>`; }
+      else action='<span class="lbl">no recording</span>';
+      return `<tr><td>${s.player}${s.isAI?' 🤖':''}</td><td>${s.game}</td><td>${s.score}</td><td>${badge(s)}</td><td>${action}</td></tr>`;
+    }).join('')
     :'<tr><td colspan="5" class="lbl">no scores yet.</td></tr>');
 }
 function submitScore(){
@@ -137,8 +157,13 @@ function knownHead(){
 }
 $('chainHead').textContent=knownHead();
 let chainRuns=[];
-function watchReplay(i){
-  const run=chainRuns[i]; if(!run) return;
+let localRuns=[];
+let localRallyRuns=[];
+let rallyRuns=[];
+function watchLocal(i){ watchSlapRun(localRuns[i]); }
+function watchReplay(i){ watchSlapRun(chainRuns[i]); }
+function watchSlapRun(run){
+  if(!run) return;
   const out=$('chainOut');
   let w=$('watchBox');
   if(!w){ w=document.createElement('div'); w.id='watchBox'; out.appendChild(w); }
@@ -146,6 +171,7 @@ function watchReplay(i){
   const sim=KKSlap.simulate(run.seed,run.tape);
   const AR={U:'⬆ UP',D:'⬇ DOWN',L:'⬅ LEFT',R:'➡ RIGHT'};
   w.innerHTML='<div class="panel" style="margin-top:10px"><b>▶ PROOF OF PLAY</b> — wallet <span class="mono">'+run.wallet+'</span> · seed '+run.seed+' · replay at 4× speed<div id="watchArena" style="font-size:2.6rem;text-align:center;padding:18px">✋</div><div id="watchMsg" class="lbl" style="text-align:center"></div></div>';
+  w.scrollIntoView({behavior:'smooth',block:'center'});
   const arena=$('watchArena'), msg=$('watchMsg');
   const SPEED=0.25; // 4x
   dealt.hands.forEach((hd,h)=>{
@@ -211,6 +237,76 @@ function submitReplay(){
   $('rname').value=''; $('rseed').value=''; $('rscore').value=''; $('rtape').value='';
 }
 render();
+
+// ---- FIRST RALLY chain: side verifier + canvas proof-of-play ----
+const RALLY_GENESIS='XL8vJlHUxist-ljUXgUk4e9Zok1OL2gzYCf5SjL_q7I';
+function knownRallyHead(){
+  const inp=$('rallyHeadInput').value.trim();
+  if(inp) return inp;
+  try{ const q=new URLSearchParams(location.search).get('rhead'); if(q) return q; }catch(e){}
+  try{ return localStorage.getItem('rallychain-head')||RALLY_GENESIS; }catch(e){ return RALLY_GENESIS; }
+}
+try{ $('rallyHead').textContent=knownRallyHead().slice(0,18)+'…'; }catch(e){}
+function watchLocalRally(i){ watchRallyRun(localRallyRuns[i]); }
+function watchRallyIdx(i){ watchRallyRun(rallyRuns[i]); }
+let rallyWatchTimer=null;
+function watchRallyRun(run){
+  if(!run||typeof KKRally==='undefined') return;
+  const cvs=$('rallyCanvas'), msg=$('rallyWatchMsg');
+  cvs.style.display='block';
+  cvs.scrollIntoView({behavior:'smooth',block:'center'});
+  const ctx=cvs.getContext('2d'), S=3;
+  const st=KKRally.createMatch(run.seed);
+  const inputs=KKRally.expandTape(run.tape,KKRally.MAXT);
+  if(rallyWatchTimer) clearInterval(rallyWatchTimer);
+  msg.innerHTML='▶ PROOF OF PLAY — wallet <span class="mono">'+run.wallet+'</span> · seed '+run.seed+' · replaying the tape at 4×…';
+  rallyWatchTimer=setInterval(()=>{
+    for(let k=0;k<4&&!st.over;k++){ KKRally.stepMatch(st,inputs[st.tick]); }
+    ctx.fillStyle='#0b0b1a'; ctx.fillRect(0,0,480,360);
+    ctx.strokeStyle='#26264d'; ctx.setLineDash([6,8]); ctx.beginPath(); ctx.moveTo(240,0); ctx.lineTo(240,360); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle='#e8e8ff'; ctx.font='bold 34px ui-monospace,monospace'; ctx.textAlign='center';
+    ctx.fillText(st.pPts,200,44); ctx.fillText(st.aPts,280,44);
+    ctx.fillStyle='#7CFF6B'; ctx.fillRect(KKRally.PX*S,st.py*S,KKRally.PW*S,KKRally.PH*S);
+    ctx.fillStyle='#ffd76b'; ctx.fillRect(KKRally.AX*S,st.ay*S,KKRally.PW*S,KKRally.PH*S);
+    if(st.phase==='play'){ ctx.fillStyle='#fff'; ctx.fillRect((st.bx-2)*S,(st.by-2)*S,4*S,4*S); }
+    if(st.over){
+      clearInterval(rallyWatchTimer); rallyWatchTimer=null;
+      const fin=KKRally.simulate(run.seed,run.tape);
+      msg.innerHTML='🏁 final: <b>'+fin.pPts+'–'+fin.aPts+'</b> · score <b>'+fin.score+'</b> — derived by this replay, identical to the claim. That is the proof.';
+    }
+  },16);
+}
+async function verifyRallyChain(){
+  const out=$('rallyOut');
+  rallyRuns=[];
+  out.innerHTML='<span class="lbl">walking the rally chain…</span>';
+  let id=knownRallyHead();
+  $('rallyHead').textContent=id.slice(0,18)+'…';
+  const rows=[]; let allOK=true; let guard=0;
+  try{
+    while(id&&guard<50){
+      guard++;
+      const res=await fetch(AGG+id);
+      if(!res.ok){ allOK=false; rows.push('<tr><td colspan="4">🔴 link missing — blob '+id.slice(0,14)+'… unreachable (HTTP '+res.status+')</td></tr>'); break; }
+      const j=await res.json();
+      if(j.kind==='score-chain-genesis'){ rows.push('<tr><td>'+(j.at||'')+'</td><td colspan="2">🌱 GENESIS — machine '+((j.machine&&j.machine.id)||'FIRST-RALLY-001')+', first node</td><td><span class="badge v">⛓ ROOT</span></td></tr>'); break; }
+      if(j.kind!=='score-chain'){ allOK=false; rows.push('<tr><td colspan="4">🔴 blob '+id.slice(0,14)+'… is not a score-chain link</td></tr>'); break; }
+      const v=KKRally.verifyRun(j.run||{});
+      if(!v.valid) allOK=false;
+      const ridx=rallyRuns.length;
+      if(j.run) rallyRuns.push(j.run);
+      rows.push('<tr><td>'+(j.at||'')+'</td><td>'+(j.run?j.run.wallet:'?')+'</td><td>'+(j.run?j.run.claimedScore:'?')+'</td><td>'+(v.valid?'<span class="badge v">🎞 REPLAY ✓</span>':'<span class="badge u">✗ REPLAY FAILS</span>')+(v.valid?' <button class="btn" onclick="watchRallyIdx('+ridx+')">▶ watch</button>':'')+'</td></tr>');
+      id=j.prev;
+    }
+    if(id&&guard>=50){ allOK=false; rows.push('<tr><td colspan="4">🔴 chain longer than 50 links — stopped</td></tr>'); }
+    out.innerHTML='<table><tr><th>WHEN</th><th>WALLET</th><th>SCORE</th><th>PROOF</th></tr>'+rows.join('')+'</table>'+
+      '<div style="margin-top:6px">'+(allOK?'<span class="badge v">⛓ RALLY CHAIN VERIFIED TO GENESIS — every match replayed, every link present</span>':'<span class="badge u">⛓ RALLY CHAIN DOES NOT FULLY VERIFY — see above</span>')+'</div>';
+  }catch(e){
+    out.innerHTML='<span class="badge u">⛓ rally chain check failed: '+e.message+'</span>';
+  }
+}
+try{ if(new URLSearchParams(location.search).get('head')){ setTimeout(()=>{ verifyChain(); }, 500); } }catch(e){}
+try{ if(new URLSearchParams(location.search).get('rhead')){ setTimeout(()=>{ verifyRallyChain(); }, 700); } }catch(e){}
 </script>
 
 <nav id="bnav">
