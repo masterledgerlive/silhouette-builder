@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>🛠 BUILDER WALKTHROUGH — make your own blob game · Arcades of Time</title>
+<style>
+:root{--neon:#7CFF6B;--amber:#ffb347;--red:#ff5470;--gold:#ffd76b;--blue:#6bb8ff}
+body{background:#07070f;color:#e8e8ff;font-family:system-ui,sans-serif;margin:0;padding:14px;max-width:900px;margin:0 auto}
+h1{font-size:1.5rem;margin:0 0 2px}
+.lbl{color:#9a9ac0;font-size:.82rem}.mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+.panel{background:#101022;border:1px solid #26264d;border-radius:12px;padding:16px;margin:12px 0;opacity:.45}
+.panel.on{opacity:1}
+.btn{background:#1a1a33;border:1px solid #33336a;color:#e8e8ff;border-radius:8px;padding:10px 16px;cursor:pointer;margin:4px;font-size:1rem}
+.btn.go{background:#0f3a1a;border-color:var(--neon)}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+.pill{display:inline-block;font-size:.72rem;padding:3px 10px;border-radius:999px;letter-spacing:.05em}
+.pill.ok{background:#0f3a1a;border:1px solid var(--neon);color:var(--neon)}
+.pill.bad{background:#3a0f1a;border:1px solid var(--red);color:var(--red)}
+input,select{background:#0b0b1a;border:1px solid #33336a;color:#e8e8ff;border-radius:6px;padding:9px;font-size:.95rem;margin:4px}
+pre{background:#0b0b1a;border:1px solid #26264d;border-radius:8px;padding:10px;overflow-x:auto;font-size:.75rem;color:#b0b0e0;max-height:260px;overflow-y:auto}
+a{color:var(--blue)}
+</style>
+</head>
+<body>
+<script src="./arcade-shared/kk-replay.js"></script>
+<script src="./arcade-shared/kk-slap.js"></script>
+<script src="./arcade-shared/kk-rally.js"></script>
+<h1>🛠 BUILDER WALKTHROUGH <span class="lbl">learn the blob-game technology by building with it — level by level</span></h1>
+<p class="lbl"><a href="./system.html">🗺 The Whole System</a> · <a href="./blob-cinema/scores.html">🏆 Hall of Scores</a> · <a href="./">🕹 arcade</a></p>
+<p class="lbl" style="font-size:.9rem">This is the interactive proof of the arcade system, on testnet: each level uses the <i>real</i> objects, engines, and blobs the cabinets run on. Pass a level and the next one opens — the same gate law the games themselves obey. At any moment you can also go run a blob gameplay (<a href="./games/first-slap/">FIRST SLAP</a> · <a href="./games/first-rally/">FIRST RALLY</a>) and have it remembered in a score chain.</p>
+
+<div class="panel on" id="lv0">
+  <h2 style="margin:0 0 6px">LEVEL 0 · THE LAW ⚖</h2>
+  <p>Every blob game in this arcade obeys one law, stored in one blob that every machine shares:</p>
+  <p>· <b>Fixed tick, integer math</b> — no floating point, so every device replays identically.<br>
+  · <b>Seeded but true to the field</b> — the seed deals controls, opponents, and world events from hidden streams; parameters stay inside the field's real bounds.<br>
+  · <b>The tape is the truth</b> — scores are derived by replaying seed + input tape, chained by SHA-256. Never trusted, always re-computed.<br>
+  · <b>Wallet is the who</b> — run key = <span class="mono">sha256(wallet | seed | nonce)</span>.<br>
+  · <b>Learn before play · spin-up gate</b> — no level, game, or builder advances until the previous one is proven by a full blob spin-up.</p>
+  <button class="btn" onclick="proveBlob(this,'kcmOTGFJNZ_khqB3l8QQFHljz8IV9UTSXexL_5BoGGI','4ef7ee1c220b66fb9ff926a3abcfb6073ebacd8d34496f7a2eb3e4f0d9b9136c')">fetch + prove the law blob</button> <span id="lv0proof"></span><br>
+  <button class="btn go" id="lv0next" onclick="unlock(1)" disabled>✓ I hold the law — Level 1 →</button>
+</div>
+
+<div class="panel" id="lv1">
+  <h2 style="margin:0 0 6px">LEVEL 1 · THE REACTION OBJECT 🧩 <span class="lbl">Stone 1's mastered mechanic, as a file</span></h2>
+  <p>When a mechanic is mastered it becomes an <b>OBJECT</b>: integer parameters, a test tape, and the hash chain that tape must derive. Fetch the REACTION object from its blob and run its test — the engine on this page replays the tape and must land on the object's own expected chain.</p>
+  <button class="btn" onclick="loadObject(1)">fetch the REACTION object blob</button> <span id="lv1fetch"></span>
+  <pre id="lv1pre" style="display:none"></pre>
+  <button class="btn go" id="lv1test" onclick="testObject(1)" disabled>▶ run the object's test tape</button> <span id="lv1out"></span><br>
+  <button class="btn go" id="lv1next" onclick="unlock(2)" disabled>Level 2 →</button>
+</div>
+
+<div class="panel" id="lv2">
+  <h2 style="margin:0 0 6px">LEVEL 2 · THE RALLY-PHYSICS OBJECT 🏓 <span class="lbl">one generation up, same object law</span></h2>
+  <p>Stone 2's mechanic — a whole physics field with a seed-dealt opponent — fits in the same object shape. Its test tape is a full match the Reactor bot played. Replay it here; the derived score and chain must match the object's, or the object is dead.</p>
+  <button class="btn" onclick="loadObject(2)">fetch the RALLY-PHYSICS object blob</button> <span id="lv2fetch"></span>
+  <pre id="lv2pre" style="display:none"></pre>
+  <button class="btn go" id="lv2test" onclick="testObject(2)" disabled>▶ run the object's test match</button> <span id="lv2out"></span><br>
+  <button class="btn go" id="lv2next" onclick="unlock(3)" disabled>Level 3 →</button>
+</div>
+
+<div class="panel" id="lv3">
+  <h2 style="margin:0 0 6px">LEVEL 3 · FORGE YOUR OWN GAME OBJECT 🔨</h2>
+  <p>Now build one. Name your game, pick the mechanic it descends from, set its integer parameters, and state its win condition in one line of law. The page builds your object in the house schema, hashes it — and then you blob it: <b>your game object, remembered on the chain</b>, fetchable by anyone, forever yours.</p>
+  <input id="fName" placeholder="your game's name — e.g. MOON PATROL JR" style="width:280px"><br>
+  <select id="fMech">
+    <option value="REACTION">descends from REACTION (Stone 1)</option>
+    <option value="RALLY-PHYSICS">descends from RALLY-PHYSICS (Stone 2)</option>
+    <option value="NEW">a NEW mechanic (describe it in the law line)</option>
+  </select><br>
+  <input id="fP1" type="number" placeholder="param 1 — e.g. rounds: 12" style="width:170px">
+  <input id="fP2" type="number" placeholder="param 2 — e.g. speed: 4" style="width:170px">
+  <input id="fP3" type="number" placeholder="param 3 — e.g. lives: 3" style="width:170px"><br>
+  <input id="fLaw" placeholder="win condition, one line of law — e.g. first to 7 moons wins" style="width:420px"><br>
+  <button class="btn" onclick="forge()">🔨 forge the object</button> <span id="fOut"></span>
+  <pre id="fPre" style="display:none"></pre>
+  <button class="btn go" id="fBlob" onclick="blobMine()" disabled>⛓ BLOBB IT — put my game object on the chain</button> <span id="fBlobOut"></span><br>
+  <button class="btn go" id="lv3next" onclick="unlock(4)" disabled>Level 4 →</button>
+  <div id="myObjects" class="lbl" style="margin-top:8px"></div>
+</div>
+
+<div class="panel" id="lv4">
+  <h2 style="margin:0 0 6px">LEVEL 4 · SPIN-UP 🚀 <span class="lbl">what makes a forged object a living game</span></h2>
+  <p>Your object is a <i>design</i> — remembered, hashable, fetchable. The stones show the rest of the road, and every step is one this walkthrough has already proven in front of you:</p>
+  <p>1 · <b>Engine</b> — a deterministic simulator implementing your law (the stones' engines are blobs in the <a href="./system.html">registry</a>).<br>
+  2 · <b>Tests</b> — honest verifies, inflation rejected, canned tape dies on a fresh seed.<br>
+  3 · <b>Blobs</b> — manifest + law + engine PUT to Walrus, read back, hash-matched.<br>
+  4 · <b>Cabinet</b> — an HTML page that boots from the blobs, gates play behind the lesson, records tapes.<br>
+  5 · <b>Chain</b> — a genesis blob for your machine; every proven score reblobs a new head.<br>
+  6 · <b>Hall</b> — a verifier that walks your chain and replays every run for anyone, any time.</p>
+  <p class="lbl">That full engine build is the next level of this walkthrough — it unlocks the same way everything here unlocks: as each new stone is mastered and its objects join the registry. Until then: your object is on the chain, the cabinets are open, and the Hall is watching. Go play a blob gameplay and be remembered.</p>
+  <p><a href="./games/first-slap/">✋ play FIRST SLAP</a> · <a href="./games/first-rally/">🏓 play FIRST RALLY</a> · <a href="./blob-cinema/scores.html">🏆 Hall of Scores</a> · <a href="./system.html">🗺 The Whole System</a></p>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const AGG='https://aggregator.walrus-testnet.walrus.space/v1/blobs/';
+const PUBLISHER='https://publisher.walrus-testnet.walrus.space/v1/blobs?epochs=5';
+const OBJ={
+ 1:{id:'ktbEZn2TfwmMPt8E83tQE_oZA5tGWFmImJvNA8OnoyQ',sha:'52241c05c70978247c46e1bd4fc8ffcc6589475e2a646850f6f724b56e3cdbcb',data:null},
+ 2:{id:'9Fb3Pdea8-bz865on2FfcDsj6QjVHmAq6tvpe0jzbfE',sha:'a54c6e2b22e53af501ee140d1c472a08601c053c03a32c3c4215103c6e18e3c9',data:null}
+};
+async function proveBlob(btn,id,sha){
+  btn.disabled=true;
+  try{
+    const txt=await (await fetch(AGG+id)).text();
+    const ok=KKReplay.sha256(txt)===sha;
+    $('lv0proof').innerHTML=ok?'<span class="pill ok">✓ law blob sha256 MATCH — the law is the law</span>':'<span class="pill bad">✗ mismatch</span>';
+    if(ok) $('lv0next').disabled=false;
+  }catch(e){ $('lv0proof').innerHTML='<span class="pill bad">✗ unreachable — try again</span>'; btn.disabled=false; }
+}
+function unlock(n){
+  $('lv'+n).classList.add('on');
+  $('lv'+n).scrollIntoView({behavior:'smooth',block:'start'});
+}
+async function loadObject(n){
+  const o=OBJ[n];
+  try{
+    const txt=await (await fetch(AGG+o.id)).text();
+    if(KKReplay.sha256(txt)!==o.sha){ $('lv'+n+'fetch').innerHTML='<span class="pill bad">✗ blob hash mismatch</span>'; return; }
+    o.data=JSON.parse(txt);
+    $('lv'+n+'fetch').innerHTML='<span class="pill ok">✓ fetched + sha256 VERIFIED</span>';
+    $('lv'+n+'pre').style.display='block';
+    $('lv'+n+'pre').textContent=txt;
+    $('lv'+n+'test').disabled=false;
+  }catch(e){ $('lv'+n+'fetch').innerHTML='<span class="pill bad">✗ fetch failed: '+e.message+'</span>'; }
+}
+function testObject(n){
+  const o=OBJ[n]; if(!o.data) return;
+  const t=o.data.test;
+  const sim=(n===1)?KKSlap.simulate(t.seed,t.tape):KKRally.simulate(t.seed,t.tape);
+  const ok=sim.score===t.expectedScore&&sim.chain===t.expectedChain;
+  $('lv'+n+'out').innerHTML=ok
+    ?'<span class="pill ok">✓ TEST PASSES — replay derives score '+sim.score+' · chain '+sim.chain.slice(0,16)+'… — the object is ALIVE in this engine</span>'
+    :'<span class="pill bad">✗ TEST FAILS — derived '+sim.score+' / '+sim.chain.slice(0,12)+'… vs expected '+t.expectedScore+' / '+t.expectedChain.slice(0,12)+'…</span>';
+  if(ok) $('lv'+n+'next').disabled=false;
+}
+// ---- Level 3 forge ----
+let forged=null;
+function forge(){
+  const name=$('fName').value.trim();
+  if(!name){ $('fOut').innerHTML='<span class="pill bad">name your game first</span>'; return; }
+  forged={
+    kind:'mechanic-object', object:'FORGED-'+name.toUpperCase().replace(/[^A-Z0-9]+/g,'-'), version:'0.1',
+    forgedVia:'Arcades of Time Builder Walkthrough — Level 3',
+    learnedFrom:$('fMech').value,
+    params:{ p1:parseInt($('fP1').value||'0',10), p2:parseInt($('fP2').value||'0',10), p3:parseInt($('fP3').value||'0',10) },
+    law:$('fLaw').value.trim()||'(win condition unstated — the forge allows it, the engine will not)',
+    test:null,
+    note:'A forged design object: remembered and hashable now; it becomes a playable game when an engine passes the spin-up road (Level 4).'
+  };
+  const txt=JSON.stringify(forged,null,2);
+  $('fPre').style.display='block'; $('fPre').textContent=txt;
+  $('fOut').innerHTML='<span class="pill ok">✓ forged · sha256 '+KKReplay.sha256(txt).slice(0,16)+'…</span>';
+  $('fBlob').disabled=false;
+}
+async function blobMine(){
+  if(!forged) return;
+  $('fBlob').disabled=true;
+  $('fBlobOut').innerHTML='<span class="lbl">putting your object on Walrus testnet…</span>';
+  try{
+    const res=await fetch(PUBLISHER,{method:'PUT',body:JSON.stringify(forged)});
+    if(!res.ok) throw new Error('publisher HTTP '+res.status);
+    const j=await res.json();
+    const id=(j.newlyCreated&&j.newlyCreated.blobObject&&j.newlyCreated.blobObject.blobId)||(j.alreadyCertified&&j.alreadyCertified.blobId);
+    if(!id) throw new Error('no blobId returned');
+    $('fBlobOut').innerHTML='<span class="pill ok">⛓ ON THE CHAIN</span> <a href="'+AGG+id+'" target="_blank">open your game object blob</a> <span class="mono lbl">'+id.slice(0,18)+'…</span> — remembered, fetchable by anyone. This is your save point.';
+    try{ const mine=JSON.parse(localStorage.getItem('my-objects')||'[]'); mine.unshift({name:forged.object,blobId:id,at:Date.now()}); localStorage.setItem('my-objects',JSON.stringify(mine)); }catch(e){}
+    renderMine();
+    $('lv3next').disabled=false;
+  }catch(e){
+    $('fBlobOut').innerHTML='<span class="pill bad">✗ blob write failed ('+e.message+') — your object is forged locally; try blobbing again</span>';
+    $('fBlob').disabled=false;
+  }
+}
+function renderMine(){
+  let mine=[]; try{ mine=JSON.parse(localStorage.getItem('my-objects')||'[]'); }catch(e){}
+  if(!mine.length){ $('myObjects').innerHTML=''; return; }
+  $('myObjects').innerHTML='<b>Your forged objects on this device:</b><br>'+mine.map(m=>'🔨 <span class="mono">'+m.name+'</span> → <a href="'+AGG+m.blobId+'" target="_blank">blob '+m.blobId.slice(0,14)+'…</a>').join('<br>');
+}
+renderMine();
+</script>
+</body>
+</html>
