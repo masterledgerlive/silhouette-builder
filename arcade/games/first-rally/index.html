@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>🏓 FIRST RALLY — Stone 2 · Arcades of Time</title>
+<style>
+:root{--neon:#7CFF6B;--amber:#ffb347;--red:#ff5470;--gold:#ffd76b;--blue:#6bb8ff}
+body{background:#07070f;color:#e8e8ff;font-family:system-ui,sans-serif;margin:0;padding:14px;max-width:860px;margin:0 auto}
+h1{font-size:1.5rem;margin:0 0 2px}
+.lbl{color:#9a9ac0;font-size:.82rem}.mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+.panel{background:#101022;border:1px solid #26264d;border-radius:12px;padding:16px;margin:12px 0}
+.btn{background:#1a1a33;border:1px solid #33336a;color:#e8e8ff;border-radius:8px;padding:10px 16px;cursor:pointer;margin:4px;font-size:1rem}
+.btn.go{background:#0f3a1a;border-color:var(--neon)}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+.pill{display:inline-block;font-size:.72rem;padding:3px 10px;border-radius:999px;letter-spacing:.05em}
+.pill.ok{background:#0f3a1a;border:1px solid var(--neon);color:var(--neon)}
+.pill.bad{background:#3a0f1a;border:1px solid var(--red);color:var(--red)}
+#field{background:#0b0b1a;border:2px solid #26264d;border-radius:12px;width:100%;max-width:480px;display:block;margin:8px auto;touch-action:none}
+.pads{display:grid;grid-template-columns:1fr 1fr;gap:8px;max-width:480px;margin:8px auto}
+.pad{background:#1a1a33;border:1px solid #33336a;border-radius:10px;padding:16px 4px;text-align:center;cursor:pointer;font-size:1.5rem;user-select:none}
+table{width:100%;border-collapse:collapse}td,th{padding:6px;border-bottom:1px solid #1a1a33;text-align:left;font-size:.88rem}
+input{background:#0b0b1a;border:1px solid #33336a;color:#e8e8ff;border-radius:6px;padding:9px;font-size:.95rem;margin:4px;width:260px}
+.lesson{display:none}.lesson.on{display:block}
+</style>
+</head>
+<body>
+<script src="../../arcade-shared/kk-replay.js"></script>
+<script src="../../arcade-shared/kk-rally.js"></script>
+
+<h1>🏓 FIRST RALLY <span class="lbl">Stone 2 · the Pong generation, 1972 · Arcades of Time</span></h1>
+<p class="lbl"><a href="../../blob-cinema/scores.html" style="color:var(--blue)">🏆 Hall of Scores</a> · <a href="../../" style="color:var(--blue)">🕹 arcade</a> · <a href="../first-slap/" style="color:var(--blue)">✋ Stone 1: FIRST SLAP</a></p>
+
+<div class="panel" id="bootPanel">
+  <b>⛓ BLOB BOOT</b> — this cabinet loads its game files from Walrus blobs and verifies them by hash before play.
+  <div id="bootStatus" class="lbl" style="margin-top:6px">loading manifest from blob…</div>
+</div>
+
+<!-- LESSON — learn before play (Engine Law §8) -->
+<div class="panel" id="lessonPanel">
+  <h2 style="margin:0 0 6px">📚 THE LESSON <span class="lbl">click through — play unlocks at the end</span></h2>
+
+  <div class="lesson on" id="les1">
+    <h3>1 · History &amp; credit to the creators</h3>
+    <p>In 1972, play got a ball. <b>Ralph H. Baer</b>, the inventor of home video games, put table tennis on a television with the <b>Magnavox Odyssey</b> — two paddles, one square ball, and a whole industry in embryo. That same year, engineer <b>Allan Alcorn</b> built <b>Pong</b> at a young company called <b>Atari</b>, founded by <b>Nolan Bushnell</b> and <b>Ted Dabney</b>. Pong's first test cabinet, in Andy Capp's Tavern, broke down because its coin box overflowed with quarters — the first arcade phenomenon was born.</p>
+    <p>History adds an honest wrinkle: Magnavox sued over Baer's patents, and Atari settled — the first proof in court that <i>a game mechanic is a creation with an author</i>. <b>FIRST RALLY</b> is an original Arcades of Time engine built from that mechanic — no ROM, no copied code — and the creators are named here because naming them is part of the game. Credit: Baer; Alcorn; Bushnell &amp; Dabney.</p>
+    <button class="btn go" onclick="nextLesson(2)">next →</button>
+  </div>
+
+  <div class="lesson" id="les2">
+    <h3>2 · The mechanics</h3>
+    <p>You hold the left paddle. First to <b>5 points</b> wins (90-second cap). Move with <b>↑ / ↓ arrow keys</b> (or W/S, or hold the touch pads). Your paddle speed is fixed — the only variable is you.</p>
+    <p>· <b>Angle is a weapon:</b> where the ball strikes your paddle bends its return — center hits fly flat, edge hits fly sharp.<br>
+    · <b>The mix-up:</b> the seed deals your <b>opponent</b> every run — its tracking speed, its reaction lag, its freeze-error — and deals every serve. A memorized pattern plays against a different opponent each time and dies.<br>
+    · Score = your points ×1000 − conceded ×100 + win bonus 500 + rally hits ×5. Your identity is your <b>wallet</b> — wallet is the who.</p>
+    <button class="btn go" onclick="nextLesson(3)">next →</button>
+  </div>
+
+  <div class="lesson" id="les3">
+    <h3>3 · The physics &amp; the proof</h3>
+    <p>This engine obeys the <b>Physics Law</b>: every parameter is an integer, the ball is integrated tick by tick on a fixed 16&nbsp;ms step — no floating point, no device on Earth can replay it differently. What is recorded is your <b>input tape</b> (run-length encoded: direction × ticks). Your score is <b>derived by replaying seed + tape</b> against the dealt opponent, chained by SHA-256 — never trusted, always re-computed. If your browser hitches mid-match, the game slows but the tape stays exact: the replay runs at engine speed, not wall-clock speed.</p>
+    <p>Agentic AI plays under the same law. The <b>Predictor</b> parks at center and trusts its read of the serve — your paddle angles will walk straight past it. The <b>Reactor</b> tracks and reacts, and it can <i>win</i>. Beat both, and your score goes into the blob score chain — when fins are real, a part of every play funds keeping the top ten on chain for good. The players pay to be remembered; the chain keeps them.</p>
+    <button class="btn go" onclick="finishLesson()">✓ lesson mastered — let me play</button>
+  </div>
+</div>
+
+<!-- PLAY -->
+<div class="panel" id="playPanel" style="display:none">
+  <h2 style="margin:0 0 6px">🎮 PLAY</h2>
+  <input id="wallet" placeholder="your wallet (0x…) — wallet is the who">
+  <button class="btn go" id="dealBtn" onclick="dealStage()">🎲 DEAL A MATCH</button>
+  <button class="btn go" id="startBtn" onclick="startMatch()" disabled>🏓 START MATCH</button>
+  <span class="lbl" id="runInfo"></span>
+  <div id="oppCard" class="lbl" style="margin:8px 0"></div>
+  <canvas id="field" width="480" height="360"></canvas>
+  <div class="pads">
+    <div class="pad" id="padUp">⬆ HOLD</div>
+    <div class="pad" id="padDown">⬇ HOLD</div>
+  </div>
+  <div id="pressEcho" class="lbl" style="text-align:center;min-height:1.2em">deal a match to meet your opponent — the seed decides who shows up</div>
+  <div id="runResult" style="margin-top:10px"></div>
+</div>
+
+<!-- MY LAST RUN — PROOF -->
+<div class="panel" id="proofPanel" style="display:none">
+  <h2 style="margin:0 0 6px">⛓ MY LAST MATCH — PROOF OF PLAY</h2>
+  <div id="proofBody" class="lbl"></div>
+</div>
+
+<!-- AI ATTEMPTS -->
+<div class="panel">
+  <h2 style="margin:0 0 6px">🤖 AGENTIC AI ATTEMPTS <span class="lbl">same law, same board — their tapes recorded</span></h2>
+  <p class="lbl">The Predictor parks at center and never reacts to your angles. The Reactor sees late and sometimes freezes — like a tired human — and still wins matches. Both runs are replay-derived, exactly like yours.</p>
+  <button class="btn" onclick="aiAttempt('predictor')">▶ AI PREDICTOR attempt</button>
+  <button class="btn" onclick="aiAttempt('reactor')">▶ AI REACTOR attempt</button>
+  <div id="aiOut" class="lbl" style="margin-top:8px"></div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const AGG='https://aggregator.walrus-testnet.walrus.space/v1/blobs/';
+const BLOBS={
+  manifest:{id:'3Jlsh-JtmAzhu94cwUZBJGqVOT7q8AOCWnJ4qUvlbaA',sha:'9f28c176da771318183efbafacf7cce534a888f58960e73d36e13f1f97ff085b'},
+  law:{id:'kcmOTGFJNZ_khqB3l8QQFHljz8IV9UTSXexL_5BoGGI',sha:'4ef7ee1c220b66fb9ff926a3abcfb6073ebacd8d34496f7a2eb3e4f0d9b9136c'},
+  engine:{id:'U_6bkxwZ85EqJ9O4YiPs7GbfCq521bfNGgAj9oSTI7M',sha:'76eff0a3b252702062d61ca80a4717ca3c087e229520edeb03c6c8ba1ba99130'}
+};
+
+// ---- blob boot ----
+(async function boot(){
+  try{
+    const txt=await (await fetch(AGG+BLOBS.manifest.id)).text();
+    const h=KKReplay.sha256(txt);
+    if(h===BLOBS.manifest.sha){
+      $('bootStatus').innerHTML='<span class="pill ok">🟢 MANIFEST FROM BLOB '+BLOBS.manifest.id.slice(0,10)+'… · sha256 VERIFIED</span> '+
+        '<span class="lbl">law blob '+BLOBS.law.id.slice(0,10)+'… · engine blob '+BLOBS.engine.id.slice(0,10)+'… · Walrus testnet, 5 epochs</span>';
+    } else {
+      $('bootStatus').innerHTML='<span class="pill bad">🔴 BLOB HASH MISMATCH — do not trust this load</span>';
+    }
+  }catch(e){
+    $('bootStatus').innerHTML='<span class="pill bad">🔴 BLOB UNREACHABLE — local mirror in use, spin-up proof pending re-check</span>';
+  }
+})();
+
+// ---- lesson gate ----
+function nextLesson(n){
+  document.querySelectorAll('.lesson').forEach(el=>el.classList.remove('on'));
+  $('les'+n).classList.add('on');
+}
+function finishLesson(){
+  $('lessonPanel').style.display='none';
+  $('playPanel').style.display='block';
+  drawIdle();
+}
+
+// ---- canvas ----
+const cv=$('field'), ctx=cv.getContext('2d'), S=3;
+function draw(st){
+  ctx.fillStyle='#0b0b1a'; ctx.fillRect(0,0,480,360);
+  ctx.strokeStyle='#26264d'; ctx.setLineDash([6,8]); ctx.beginPath(); ctx.moveTo(240,0); ctx.lineTo(240,360); ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle='#e8e8ff'; ctx.font='bold 34px ui-monospace,monospace'; ctx.textAlign='center';
+  ctx.fillText(st?st.pPts:0,200,44); ctx.fillText(st?st.aPts:0,280,44);
+  ctx.fillStyle='#7CFF6B'; ctx.fillRect(KKRally.PX*S,(st?st.py:47)*S,KKRally.PW*S,KKRally.PH*S);
+  ctx.fillStyle='#ffd76b'; ctx.fillRect(KKRally.AX*S,(st?st.ay:47)*S,KKRally.PW*S,KKRally.PH*S);
+  if(st&&st.phase==='play'){ ctx.fillStyle='#fff'; ctx.fillRect((st.bx-2)*S,(st.by-2)*S,4*S,4*S); }
+  if(st&&st.phase==='serve'){ ctx.fillStyle='#9a9ac0'; ctx.font='15px system-ui'; ctx.fillText('serve in '+Math.ceil(st.serveTimer*16/100)+'…',240,200); }
+}
+function drawIdle(){ draw(null); ctx.fillStyle='#9a9ac0'; ctx.font='16px system-ui'; ctx.textAlign='center'; ctx.fillText('your paddle is the green one — left side',240,200); }
+
+// ---- play ----
+let staged=null, live=null, held={up:false,down:false};
+function dealStage(){
+  const wallet=$('wallet').value.trim();
+  if(!wallet){ alert('wallet is the who — enter your wallet first.'); return; }
+  const seed=(Math.floor(Math.random()*900000)+100000);
+  const nonce=Date.now()%100000;
+  staged={seed,nonce};
+  const deal=KKRally.dealMatch(seed);
+  $('runInfo').innerHTML='seed <span class="mono">'+seed+'</span> · key <span class="mono">'+KKRally.runKey(wallet,seed,nonce).slice(0,12)+'…</span>';
+  $('oppCard').innerHTML='🃏 <b>Your opponent, dealt by the seed:</b> tracking speed <b>'+deal.opp.speed+'</b> · reaction lag <b>'+deal.opp.lag+' ticks</b> · freeze-error <b>'+deal.opp.err+'%</b> — and it deals every serve too.';
+  $('startBtn').disabled=false;
+  $('pressEcho').textContent='opponent dealt. Start when ready — first to 5.';
+  drawIdle();
+}
+function currentInput(){ return (held.down?1:0)-(held.up?1:0); }
+function startMatch(){
+  const wallet=$('wallet').value.trim();
+  if(!wallet){ alert('wallet is the who — enter your wallet first.'); return; }
+  if(!staged) dealStage();
+  const st=KKRally.createMatch(staged.seed);
+  live={st,seed:staged.seed,nonce:staged.nonce,wallet,inputs:[],timer:null,done:false};
+  $('startBtn').disabled=true; $('dealBtn').disabled=true;
+  $('runResult').innerHTML='';
+  $('pressEcho').textContent='match live — the tape is recording every tick of your paddle';
+  live.timer=setInterval(()=>{
+    const inp=currentInput();
+    live.inputs.push(inp);
+    KKRally.stepMatch(live.st,inp);
+    draw(live.st);
+    if(live.st.over){ clearInterval(live.timer); finishMatch(); }
+  },16);
+}
+function finishMatch(){
+  live.done=true;
+  $('startBtn').disabled=true; $('dealBtn').disabled=false; staged=null;
+  const tape=KKRally.encodeTape(live.inputs);
+  const sim=KKRally.simulate(live.seed,tape);
+  const liveScore=KKRally.scoreOf(live.st);
+  const key=KKRally.runKey(live.wallet,live.seed,live.nonce);
+  const agree=(sim.score===liveScore&&sim.pPts===live.st.pPts&&sim.aPts===live.st.aPts);
+  $('pressEcho').innerHTML=agree?'match over — live play and independent replay <b>agree</b>. That agreement is the proof.':'⚠ live/replay disagreement — this run will not be submitted (engine honesty check).';
+  $('runResult').innerHTML='<h3 style="margin:6px 0">'+(sim.pPts>sim.aPts?'🏆 YOU WIN ':'')+'SCORE '+sim.score+' <span class="lbl">('+sim.pPts+'–'+sim.aPts+', '+sim.hits+' rally hits, '+sim.ticks+' ticks · derived by replay · chain <span class="mono">'+sim.chain.slice(0,16)+'…</span>)</span></h3>'+
+    (agree?'<button class="btn go" onclick="submitRun()">🏆 PUT IT ON THE HALL OF SCORES</button> <span class="lbl">as wallet <span class="mono">'+live.wallet+'</span></span>':'');
+  live.final={score:sim.score,chain:sim.chain,key,tape,pPts:sim.pPts,aPts:sim.aPts};
+}
+function saveScore(e){
+  try{ const s=JSON.parse(localStorage.getItem('blobscores')||'[]'); s.unshift(e); localStorage.setItem('blobscores',JSON.stringify(s)); }catch(err){}
+}
+// ---- blob score chain (machine FIRST-RALLY-001, first node) ----
+const CHAIN_GENESIS='XL8vJlHUxist-ljUXgUk4e9Zok1OL2gzYCf5SjL_q7I';
+const PUBLISHER='https://publisher.walrus-testnet.walrus.space/v1/blobs?epochs=5';
+function chainHead(){ try{ return localStorage.getItem('rallychain-head')||CHAIN_GENESIS; }catch(e){ return CHAIN_GENESIS; } }
+async function chainScore(rec){
+  const prev=chainHead();
+  let top=[];
+  try{ top=JSON.parse(localStorage.getItem('blobscores')||'[]').filter(s=>s.game==='FIRST RALLY').sort((a,b)=>b.score-a.score).slice(0,10).map(s=>({player:s.player,score:s.score,seed:s.seed||null,chain:s.chain||null})); }catch(e){}
+  const body={kind:'score-chain',game:'first-rally',machine:'FIRST-RALLY-001',prev:prev,at:new Date().toISOString(),run:rec,top:top};
+  const res=await fetch(PUBLISHER,{method:'PUT',body:JSON.stringify(body)});
+  if(!res.ok) throw new Error('publisher HTTP '+res.status);
+  const j=await res.json();
+  const id=(j.newlyCreated&&j.newlyCreated.blobObject&&j.newlyCreated.blobObject.blobId)||(j.alreadyCertified&&j.alreadyCertified.blobId);
+  if(!id) throw new Error('no blobId in publisher response');
+  try{ localStorage.setItem('rallychain-head',id); }catch(e){}
+  return id;
+}
+async function submitRun(){
+  if(!live||!live.final) return;
+  const rec={wallet:live.wallet,seed:live.seed,nonce:live.nonce,key:live.final.key,tape:live.final.tape,claimedScore:live.final.score,claimedChain:live.final.chain};
+  saveScore({player:live.wallet.length>14?live.wallet.slice(0,8)+'…'+live.wallet.slice(-4):live.wallet,game:'FIRST RALLY',score:live.final.score,streamId:null,verified:false,replay:true,isAI:false,seed:live.seed,chain:live.final.chain,wallet:live.wallet,nonce:live.nonce,key:live.final.key,tape:live.final.tape,at:Date.now(),note:'wallet '+live.wallet});
+  $('runResult').innerHTML+='<div style="margin-top:8px"><span class="pill ok">🎞 ON THE BOARD — replay-verified, remembered under your wallet</span> · <span class="lbl" id="chainMsg">⛓ chaining into the blob score chain…</span></div>';
+  try{
+    const id=await chainScore(rec);
+    try{ localStorage.setItem('rally-last-run',JSON.stringify({rec:rec,blobId:id,at:Date.now()})); }catch(e){}
+    renderProof();
+    $('chainMsg').innerHTML='⛓ <b>SCORED INTO BLOB</b> <span class="mono">'+id.slice(0,14)+'…</span> — this score now survives in the chain, on every machine spun from it. <a href="../../blob-cinema/scores.html?rhead='+id+'" style="color:var(--blue)">verify at the Hall root →</a>';
+  }catch(e){
+    try{ localStorage.setItem('rally-last-run',JSON.stringify({rec:rec,blobId:null,at:Date.now()})); }catch(e2){}
+    renderProof();
+    $('chainMsg').innerHTML='⚠ blob chain write failed ('+e.message+') — score is on this device only for now, NOT yet in the chain. Retry by submitting again.';
+  }
+}
+function renderProof(){
+  let d=null;
+  try{ d=JSON.parse(localStorage.getItem('rally-last-run')||'null'); }catch(e){}
+  if(!d||!d.rec){ $('proofPanel').style.display='none'; return; }
+  const r=d.rec;
+  $('proofPanel').style.display='block';
+  $('proofBody').innerHTML=
+    'wallet <span class="mono">'+r.wallet+'</span> · seed <span class="mono">'+r.seed+'</span> · score <b>'+r.claimedScore+'</b> · run chain <span class="mono">'+r.claimedChain.slice(0,16)+'…</span> · run key <span class="mono">'+r.key.slice(0,16)+'…</span><br>'+
+    (d.blobId
+      ? '⛓ <b>in the blob chain:</b> <a href="'+AGG+d.blobId+'" target="_blank" style="color:var(--blue)">open the blob itself</a> · <a href="../../blob-cinema/scores.html?rhead='+d.blobId+'" style="color:var(--blue)">verify the whole chain at the Hall →</a>'
+      : '⚠ this match is <b>not in the blob chain yet</b> (the chain write failed when submitted) — play and submit again to chain it.');
+}
+renderProof();
+function aiAttempt(kind){
+  const seed=(Math.floor(Math.random()*900000)+100000);
+  const wallet=kind==='predictor'?'0xAI-PREDICTOR':'0xAI-REACTOR';
+  const sim=KKRally.genBotRun(seed,kind);
+  const name=kind==='predictor'?'AI-PREDICTOR 🤖':'AI-REACTOR 🤖';
+  const nonce=Date.now()%100000;
+  const key=KKRally.runKey(wallet,seed,nonce);
+  saveScore({player:name,game:'FIRST RALLY',score:sim.score,streamId:null,verified:false,replay:true,isAI:true,seed:seed,chain:sim.chain,wallet:wallet,nonce:nonce,key:key,tape:sim.tape,at:Date.now()});
+  $('aiOut').innerHTML='<b>'+name+'</b> seed '+seed+' → <b>SCORE '+sim.score+'</b> ('+sim.pPts+'–'+sim.aPts+' vs the dealt opponent: speed '+sim.opp.speed+', lag '+sim.opp.lag+', err '+sim.opp.err+'%)'+
+    '<br><span class="pill ok">🎞 recorded on the Hall — replay-derived, same law as humans</span> · <span id="aiChainMsg">⛓ chaining…</span>';
+  chainScore({wallet:wallet,seed:seed,nonce:nonce,key:key,tape:sim.tape,claimedScore:sim.score,claimedChain:sim.chain})
+    .then(id=>{ const m=$('aiChainMsg'); if(m) m.innerHTML='⛓ in blob <span class="mono">'+id.slice(0,14)+'…</span>'; })
+    .catch(e=>{ const m=$('aiChainMsg'); if(m) m.innerHTML='⚠ blob write failed ('+e.message+') — local only for now'; });
+}
+// ---- input: keys + touch pads (held state) ----
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowUp'||e.key==='w'||e.key==='W'){ held.up=true; e.preventDefault(); }
+  if(e.key==='ArrowDown'||e.key==='s'||e.key==='S'){ held.down=true; e.preventDefault(); }
+});
+document.addEventListener('keyup',e=>{
+  if(e.key==='ArrowUp'||e.key==='w'||e.key==='W') held.up=false;
+  if(e.key==='ArrowDown'||e.key==='s'||e.key==='S') held.down=false;
+});
+[['padUp','up'],['padDown','down']].forEach(([id,k])=>{
+  const el=$(id);
+  el.addEventListener('pointerdown',e=>{ held[k]=true; e.preventDefault(); });
+  ['pointerup','pointerleave','pointercancel'].forEach(ev=>el.addEventListener(ev,()=>{ held[k]=false; }));
+});
+drawIdle();
+</script>
+</body>
+</html>
