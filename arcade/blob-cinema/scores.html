@@ -25,6 +25,7 @@ input,select{background:#0b0b1a;border:1px solid #33336a;color:#e8e8ff;border-ra
 </head>
 <body>
 <script src="./errcatch.js"></script>
+<script src="../arcade-shared/kk-replay.js"></script>
 <h1>🏆 HALL OF SCORES <span class="lbl">verified human gameplay — camera + screen, sealed in blobs</span></h1>
 <p class="lbl"><a href="./reblob.html">📚 library</a> · <a href="./live.html">🔴 go live</a> · <a href="../">🕹 arcade</a></p>
 
@@ -36,6 +37,17 @@ input,select{background:#0b0b1a;border:1px solid #33336a;color:#e8e8ff;border-ra
 <div class="panel">
   <h2 style="margin:0 0 8px">📋 ALL SCORES <span class="lbl">humans vs AI benchmarks — side by side. Unverified human scores flagged.</span></h2>
   <table id="all"><tr><th>PLAYER</th><th>GAME</th><th>SCORE</th><th>STATUS</th><th></th></tr></table>
+</div>
+
+<div class="panel">
+  <h2 style="margin:0 0 8px">🎞 SUBMIT A REPLAY-VERIFIED SCORE — FINN-8 <span class="lbl">deterministic replay engine · the tape is the truth</span></h2>
+  <p class="lbl">Played FINN-8? Paste your run's seed + input tape + claimed score. This page re-runs the simulation itself (SHA-256 state chain, same engine as the verifier) — if the replay derives your score, the run is crowned <b>REPLAY VERIFIED</b> and counts for the Top 10. Trust no claim; replay everything.</p>
+  <input id="rname" placeholder="player name" style="width:140px">
+  <input id="rseed" type="number" placeholder="seed" style="width:110px">
+  <input id="rscore" type="number" placeholder="claimed score" style="width:120px">
+  <input id="rtape" placeholder="input tape — e.g. U D L R A B…" style="width:320px">
+  <button class="btn go" onclick="submitReplay()">verify by replay</button>
+  <div id="rmsg" class="lbl" style="margin-top:8px"></div>
 </div>
 
 <div class="panel">
@@ -71,13 +83,14 @@ function getScores(){
 }
 function saveScores(s){ localStorage.setItem('blobscores',JSON.stringify(s)); }
 function badge(s){
+  if(s.replay) return '<span class="badge v">🎞 REPLAY VERIFIED</span>';
   if(s.verified) return '<span class="badge v">✓ VERIFIED HUMAN</span>';
   if(s.isAI) return '<span class="badge ai">🤖 AI BENCHMARK</span>';
   return '<span class="badge u">⚠ UNVERIFIED</span>';
 }
 function render(){
   const scores=getScores().sort((a,b)=>b.score-a.score);
-  const top=scores.filter(s=>s.verified).slice(0,10);
+  const top=scores.filter(s=>s.verified||s.replay).slice(0,10);
   $('top10').innerHTML='<tr><th>#</th><th>PLAYER</th><th>GAME</th><th>SCORE</th><th>PROOF</th><th></th></tr>'+
     (top.length?top.map((s,i)=>`<tr class="top10"><td>${i+1}</td><td>${s.player}</td><td>${s.game}</td><td>${s.score}</td><td>${badge(s)}</td><td>${s.streamId?`<a href="./play.html?id=${s.streamId}">▶ watch proof</a>`:''}</td></tr>`).join('')
     :'<tr><td colspan="6" class="lbl">no verified scores yet — be the first.</td></tr>');
@@ -103,6 +116,27 @@ function submitScore(){
   saveScores(scores); render();
   alert(verified?'✓ VERIFIED score recorded — camera + screen proof linked.':'⚠ Score recorded as UNVERIFIED. For top-10, record with "✅ VERIFIED GAME" mode.');
   $('pname').value=''; $('sval').value=''; $('sid').value='';
+}
+function submitReplay(){
+  const msg=$('rmsg');
+  if(typeof KKReplay==='undefined'){ msg.textContent='⚠ replay engine failed to load — score not recorded.'; return; }
+  const player=$('rname').value.trim()||'anonymous';
+  const seed=parseInt($('rseed').value,10);
+  const claimed=parseInt($('rscore').value,10);
+  const tape=KKReplay.parseTape($('rtape').value);
+  if(isNaN(seed)||isNaN(claimed)||!tape.length){ msg.textContent='⚠ need a seed, a claimed score, and a non-empty tape.'; return; }
+  let v;
+  try{ v=KKReplay.verifyRun({seed:seed,tape:tape,claimedScore:claimed,claimedChain:KKReplay.simulate(seed,tape).chain}); }
+  catch(e){ msg.textContent='⚠ replay error: '+e.message; return; }
+  if(!v.scoreOK){
+    msg.textContent='✗ REJECTED — replay derives '+v.derivedScore+', not the claimed '+claimed+'. The tape is the truth.';
+    return;
+  }
+  const scores=getScores();
+  scores.unshift({player:player,game:'FINN-8',score:v.derivedScore,streamId:null,verified:false,replay:true,isAI:false,seed:seed,chain:v.derivedChain,at:Date.now()});
+  saveScores(scores); render();
+  msg.innerHTML='🎞 ✓ REPLAY VERIFIED — derived score '+v.derivedScore+' · chain <span class="mono">'+v.derivedChain.slice(0,16)+'…</span> · crowned on the board.';
+  $('rname').value=''; $('rseed').value=''; $('rscore').value=''; $('rtape').value='';
 }
 render();
 </script>
