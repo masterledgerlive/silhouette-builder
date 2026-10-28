@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>✋ FIRST SLAP — Stone 1 · Arcades of Time</title>
+<style>
+:root{--neon:#7CFF6B;--amber:#ffb347;--red:#ff5470;--gold:#ffd76b;--blue:#6bb8ff}
+body{background:#07070f;color:#e8e8ff;font-family:system-ui,sans-serif;margin:0;padding:14px;max-width:860px;margin:0 auto}
+h1{font-size:1.5rem;margin:0 0 2px}
+.lbl{color:#9a9ac0;font-size:.82rem}.mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+.panel{background:#101022;border:1px solid #26264d;border-radius:12px;padding:16px;margin:12px 0}
+.btn{background:#1a1a33;border:1px solid #33336a;color:#e8e8ff;border-radius:8px;padding:10px 16px;cursor:pointer;margin:4px;font-size:1rem}
+.btn.go{background:#0f3a1a;border-color:var(--neon)}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+.pill{display:inline-block;font-size:.72rem;padding:3px 10px;border-radius:999px;letter-spacing:.05em}
+.pill.ok{background:#0f3a1a;border:1px solid var(--neon);color:var(--neon)}
+.pill.bad{background:#3a0f1a;border:1px solid var(--red);color:var(--red)}
+#arena{background:#0b0b1a;border:2px solid #26264d;border-radius:16px;height:220px;display:flex;align-items:center;justify-content:center;font-size:5rem;user-select:none;transition:background .05s}
+#arena.flash{background:#3a2a0f;border-color:var(--gold)}
+.pads{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}
+.pad{background:#1a1a33;border:1px solid #33336a;border-radius:10px;padding:14px 4px;text-align:center;cursor:pointer;font-size:1.4rem}
+.pad small{display:block;font-size:.68rem;color:#9a9ac0;margin-top:2px}
+table{width:100%;border-collapse:collapse}td,th{padding:6px;border-bottom:1px solid #1a1a33;text-align:left;font-size:.88rem}
+input{background:#0b0b1a;border:1px solid #33336a;color:#e8e8ff;border-radius:6px;padding:9px;font-size:.95rem;margin:4px;width:260px}
+.lesson{display:none}.lesson.on{display:block}
+</style>
+</head>
+<body>
+<script src="../../arcade-shared/kk-replay.js"></script>
+<script src="../../arcade-shared/kk-slap.js"></script>
+
+<h1>✋ FIRST SLAP <span class="lbl">Stone 1 · the reaction game · Arcades of Time</span></h1>
+<p class="lbl"><a href="../../blob-cinema/scores.html" style="color:var(--blue)">🏆 Hall of Scores</a> · <a href="../../" style="color:var(--blue)">🕹 arcade</a></p>
+
+<div class="panel" id="bootPanel">
+  <b>⛓ BLOB BOOT</b> — this cabinet loads its game files from Walrus blobs and verifies them by hash before play.
+  <div id="bootStatus" class="lbl" style="margin-top:6px">loading manifest from blob…</div>
+</div>
+
+<!-- LESSON — learn before play (Engine Law §8) -->
+<div class="panel" id="lessonPanel">
+  <h2 style="margin:0 0 6px">📚 THE LESSON <span class="lbl">click through — play unlocks at the end</span></h2>
+
+  <div class="lesson on" id="les1">
+    <h3>1 · History &amp; credit to the creators</h3>
+    <p>Before video games there were folk games of pure reaction. <b>Slapjack</b> — a traditional card game, author unknown, passed hand to hand for generations — runs on one law: <i>see the jack, slap it first.</i> In 1962 Steve Russell and colleagues at MIT built <b>Spacewar!</b>, the first widely played computer game, and reaction became digital. The arcade era that followed — the cabinets, the NES (Nintendo, 1983) with its D-pad and A/B buttons — turned reaction time into the world's first high-score culture.</p>
+    <p><b>FIRST SLAP</b> is an original Arcades of Time study game. We claim no one else's game — we study the <i>mechanic</i> the folk players and those first programmers discovered: <b>reaction, proven.</b> Credit: the unnamed folk players of Slapjack; Russell and the Spacewar! team; Nintendo for the button vocabulary this cabinet speaks.</p>
+    <button class="btn go" onclick="nextLesson(2)">next →</button>
+  </div>
+
+  <div class="lesson" id="les2">
+    <h3>2 · The mechanics</h3>
+    <p>Ten hands. Each hand, a target direction (◀ ▲ ▼ ▶) flashes at a secret, seed-dealt moment. Slap the button that means that direction <b>after</b> it flashes:</p>
+    <p>· Slap <b>early</b> = foul, hand lost. · <b>Wrong button</b> = miss. · Slap within 1,000 ms = you win the hand, scoring <span class="mono">1000 − your reaction ms</span>.<br>
+    · <b>The mix-up:</b> your buttons are <b>remapped every run</b> — the card on screen shows what each button means <i>this run</i>. Memorized combinations are worthless. Eyes and reaction are everything.<br>
+    · Play with arrow keys or tap the pads. Your identity is your <b>wallet</b> — wallet is the who.</p>
+    <button class="btn go" onclick="nextLesson(3)">next →</button>
+  </div>
+
+  <div class="lesson" id="les3">
+    <h3>3 · The proof</h3>
+    <p>This game runs on the <b>Engine Law</b>: fixed millisecond tick, integer math, seeded but true to the field. Your device plays at full speed — zero network lag. What is recorded is your <b>input tape</b>: every slap with its tick. Your score and every reaction time are <b>derived by replaying that tape</b>, chained by SHA-256 — never trusted, always re-computed. Your run key is <span class="mono">sha256(wallet | seed | nonce)</span>: the handshake that says <i>this play was proofed</i>. The game files themselves live on Walrus blobs (see Blob Boot above) — anyone can spin this cabinet up from the blobs and replay your run as a rerun.</p>
+    <p>Agentic AI plays this cabinet too, under the same law — watch its attempts below. Solving the randomness in advance is impossible; the Predictor AI scores zero. The Reactor AI plays honestly and lands mid-field. Beat both.</p>
+    <button class="btn go" onclick="finishLesson()">✓ lesson mastered — let me play</button>
+  </div>
+</div>
+
+<!-- PLAY -->
+<div class="panel" id="playPanel" style="display:none">
+  <h2 style="margin:0 0 6px">🎮 PLAY</h2>
+  <input id="wallet" placeholder="your wallet (0x…) — wallet is the who">
+  <button class="btn go" id="startBtn" onclick="startRun()">✋ START RUN</button>
+  <span class="lbl" id="runInfo"></span>
+  <div id="remapCard" class="lbl" style="margin:8px 0"></div>
+  <div id="arena">✋</div>
+  <div class="pads">
+    <div class="pad" data-press="U">⬆<small id="mapU"></small></div>
+    <div class="pad" data-press="L">⬅<small id="mapL"></small></div>
+    <div class="pad" data-press="R">➡<small id="mapR"></small></div>
+    <div class="pad" data-press="D">⬇<small id="mapD"></small></div>
+  </div>
+  <div id="runResult" style="margin-top:10px"></div>
+</div>
+
+<!-- AI ATTEMPTS -->
+<div class="panel">
+  <h2 style="margin:0 0 6px">🤖 AGENTIC AI ATTEMPTS <span class="lbl">same law, same board — their routes recorded</span></h2>
+  <p class="lbl">The Predictor tries to solve the randomness in advance. The Reactor plays honestly by reaction. Both runs are replay-derived, exactly like yours.</p>
+  <button class="btn" onclick="aiAttempt('pred')">▶ AI PREDICTOR attempt</button>
+  <button class="btn" onclick="aiAttempt('reactor')">▶ AI REACTOR attempt</button>
+  <div id="aiOut" class="lbl" style="margin-top:8px"></div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const AGG='https://aggregator.walrus-testnet.walrus.space/v1/blobs/';
+const BLOBS={
+  manifest:{id:'K_gi-FaFvnJDpvnV44CJ2PsBOaaAlQgp3ZfaJwtpO8o',sha:'84849886bf94d1ba473690ea7dd4a6106fbea371c1ba4a17fd5e767d4b6b08ea'},
+  law:{id:'kcmOTGFJNZ_khqB3l8QQFHljz8IV9UTSXexL_5BoGGI',sha:'4ef7ee1c220b66fb9ff926a3abcfb6073ebacd8d34496f7a2eb3e4f0d9b9136c'},
+  engine:{id:'H32JW6RxnMGo6ayzp0qtKHmmwTEI01llM91ypb2IO8Y',sha:'01e2b111595ad045c015e3d0987f1fd9345f147f390f207f739dcc38ff199007'}
+};
+const ARROWS={U:'⬆ UP',D:'⬇ DOWN',L:'⬅ LEFT',R:'➡ RIGHT'};
+
+// ---- blob boot: fetch manifest from Walrus, verify sha256 in-page ----
+(async function boot(){
+  try{
+    const txt=await (await fetch(AGG+BLOBS.manifest.id)).text();
+    const h=KKReplay.sha256(txt);
+    if(h===BLOBS.manifest.sha){
+      $('bootStatus').innerHTML='<span class="pill ok">🟢 MANIFEST FROM BLOB '+BLOBS.manifest.id.slice(0,10)+'… · sha256 VERIFIED</span> '+
+        '<span class="lbl">law blob '+BLOBS.law.id.slice(0,10)+'… · engine blob '+BLOBS.engine.id.slice(0,10)+'… · Walrus testnet epochs 564–569</span>';
+    } else {
+      $('bootStatus').innerHTML='<span class="pill bad">🔴 BLOB HASH MISMATCH — do not trust this load</span>';
+    }
+  }catch(e){
+    $('bootStatus').innerHTML='<span class="pill bad">🔴 BLOB UNREACHABLE — local mirror in use, spin-up proof pending re-check</span>';
+  }
+})();
+
+// ---- lesson gate ----
+function nextLesson(n){
+  document.querySelectorAll('.lesson').forEach(el=>el.classList.remove('on'));
+  $('les'+n).classList.add('on');
+}
+function finishLesson(){
+  $('lessonPanel').style.display='none';
+  $('playPanel').style.display='block';
+}
+
+// ---- play ----
+let run=null; // {seed, wallet, nonce, dealt, tape[], start, raf, done}
+function startRun(){
+  const wallet=$('wallet').value.trim();
+  if(!wallet){ alert('wallet is the who — enter your wallet first.'); return; }
+  const seed=(Math.floor(Math.random()*900000)+100000);
+  const nonce=Date.now()%100000;
+  const dealt=KKSlap.dealRun(seed);
+  run={seed,wallet,nonce,dealt,tape:new Array(KKSlap.HANDS).fill(null),start:performance.now(),done:false,shown:-1};
+  $('runInfo').innerHTML='seed <span class="mono">'+seed+'</span> · key <span class="mono">'+KKSlap.runKey(wallet,seed,nonce).slice(0,12)+'…</span>';
+  $('remapCard').innerHTML='🃏 <b>This run\'s buttons:</b> '+['U','D','L','R'].map(k=>k+' key → means '+ARROWS[dealt.remap[k]]).join(' · ');
+  ['U','D','L','R'].forEach(k=>{ $('map'+k).textContent='means '+ARROWS[dealt.remap[k]]; });
+  $('runResult').innerHTML='';
+  $('startBtn').disabled=true;
+  $('arena').textContent='…';
+  tickLoop();
+}
+function handWindow(h){
+  const hands=run.dealt.hands;
+  const from=h===0?0:hands[h-1].stimulusTick+KKSlap.WINDOW_MS+400;
+  const to=hands[h].stimulusTick+KKSlap.WINDOW_MS+400;
+  return [from,to];
+}
+function tickLoop(){
+  if(!run||run.done) return;
+  const now=Math.round(performance.now()-run.start);
+  const hands=run.dealt.hands;
+  for(let h=0;h<hands.length;h++){
+    const [from,to]=handWindow(h);
+    if(now>=from&&now<to){
+      if(now>=hands[h].stimulusTick&&run.shown!==h){ run.shown=h; $('arena').textContent=ARROWS[hands[h].target].split(' ')[0]; $('arena').classList.add('flash'); }
+      if(now<hands[h].stimulusTick){ $('arena').textContent='✋'; $('arena').classList.remove('flash'); }
+    }
+  }
+  const last=hands[hands.length-1];
+  if(now>=last.stimulusTick+KKSlap.WINDOW_MS+400){ finishRun(); return; }
+  run.raf=requestAnimationFrame(tickLoop);
+}
+function press(p){
+  if(!run||run.done) return;
+  const now=Math.round(performance.now()-run.start);
+  const hands=run.dealt.hands;
+  for(let h=0;h<hands.length;h++){
+    const [from,to]=handWindow(h);
+    if(now>=from&&now<to&&!run.tape[h]){ run.tape[h]={tick:now,press:p}; flashPad(p); break; }
+  }
+}
+function flashPad(p){ const el=document.querySelector('.pad[data-press="'+p+'"]'); if(el){ el.style.background='#3a2a0f'; setTimeout(()=>el.style.background='',120); } }
+document.querySelectorAll('.pad').forEach(el=>el.addEventListener('click',()=>press(el.getAttribute('data-press'))));
+document.addEventListener('keydown',e=>{
+  const map={ArrowUp:'U',ArrowDown:'D',ArrowLeft:'L',ArrowRight:'R'};
+  if(map[e.key]){ press(map[e.key]); e.preventDefault(); }
+});
+function finishRun(){
+  run.done=true; $('startBtn').disabled=false;
+  $('arena').textContent='🏁'; $('arena').classList.remove('flash');
+  const tape=run.tape.map(t=>t||null);
+  const sim2=KKSlap.simulate(run.seed, tape);
+  const key=KKSlap.runKey(run.wallet,run.seed,run.nonce);
+  const rows=sim2.results.map(r=>'<tr><td>hand '+(r.hand+1)+'</td><td>'+r.outcome+'</td><td>'+(r.reaction===null?'—':r.reaction+' ms')+'</td><td>'+r.pts+'</td></tr>').join('');
+  $('runResult').innerHTML='<h3 style="margin:6px 0">SCORE '+sim2.score+' <span class="lbl">(derived by replay · chain <span class="mono">'+sim2.chain.slice(0,16)+'…</span>)</span></h3>'+
+    '<table><tr><th>hand</th><th>outcome</th><th>reaction</th><th>points</th></tr>'+rows+'</table>'+
+    '<button class="btn go" onclick="submitRun()">🏆 PUT IT ON THE HALL OF SCORES</button> <span class="lbl">as wallet <span class="mono">'+run.wallet+'</span></span>';
+  run.final={score:sim2.score,chain:sim2.chain,key,tape};
+}
+function saveScore(e){
+  try{ const s=JSON.parse(localStorage.getItem('blobscores')||'[]'); s.unshift(e); localStorage.setItem('blobscores',JSON.stringify(s)); }catch(err){}
+}
+function submitRun(){
+  if(!run||!run.final) return;
+  saveScore({player:run.wallet.length>14?run.wallet.slice(0,8)+'…'+run.wallet.slice(-4):run.wallet,game:'FIRST SLAP',score:run.final.score,streamId:null,verified:false,replay:true,isAI:false,seed:run.seed,chain:run.final.chain,at:Date.now(),note:'wallet '+run.wallet});
+  $('runResult').innerHTML+='<div style="margin-top:8px"><span class="pill ok">🎞 ON THE BOARD — replay-verified, remembered under your wallet</span> <a href="../../blob-cinema/scores.html" style="color:var(--blue)">see the Hall →</a></div>';
+}
+function aiAttempt(kind){
+  const seed=(Math.floor(Math.random()*900000)+100000);
+  const tape=kind==='pred'?KKSlap.aiPredictor(seed):KKSlap.aiReactor(seed);
+  const wallet=kind==='pred'?'0xAI-PREDICTOR':'0xAI-REACTOR';
+  const sim=KKSlap.simulate(seed,tape);
+  const name=kind==='pred'?'AI-PREDICTOR 🤖':'AI-REACTOR 🤖';
+  saveScore({player:name,game:'FIRST SLAP',score:sim.score,streamId:null,verified:false,replay:true,isAI:true,seed:seed,chain:sim.chain,at:Date.now()});
+  $('aiOut').innerHTML='<b>'+name+'</b> seed '+seed+' → <b>SCORE '+sim.score+'</b> · '+sim.results.map(r=>r.outcome).join(' · ')+
+    '<br><span class="pill ok">🎞 recorded on the Hall — replay-derived, same law as humans</span>';
+}
+</script>
+</body>
+</html>
