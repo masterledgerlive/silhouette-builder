@@ -132,11 +132,37 @@ const AGG='https://aggregator.walrus-testnet.walrus.space/v1/blobs/';
 function knownHead(){
   const inp=$('chainHeadInput').value.trim();
   if(inp) return inp;
+  try{ const q=new URLSearchParams(location.search).get('head'); if(q) return q; }catch(e){}
   try{ return localStorage.getItem('slapchain-head')||CHAIN_GENESIS; }catch(e){ return CHAIN_GENESIS; }
 }
 $('chainHead').textContent=knownHead();
+let chainRuns=[];
+function watchReplay(i){
+  const run=chainRuns[i]; if(!run) return;
+  const out=$('chainOut');
+  let w=$('watchBox');
+  if(!w){ w=document.createElement('div'); w.id='watchBox'; out.appendChild(w); }
+  const dealt=KKSlap.dealRun(run.seed);
+  const sim=KKSlap.simulate(run.seed,run.tape);
+  const AR={U:'⬆ UP',D:'⬇ DOWN',L:'⬅ LEFT',R:'➡ RIGHT'};
+  w.innerHTML='<div class="panel" style="margin-top:10px"><b>▶ PROOF OF PLAY</b> — wallet <span class="mono">'+run.wallet+'</span> · seed '+run.seed+' · replay at 4× speed<div id="watchArena" style="font-size:2.6rem;text-align:center;padding:18px">✋</div><div id="watchMsg" class="lbl" style="text-align:center"></div></div>';
+  const arena=$('watchArena'), msg=$('watchMsg');
+  const SPEED=0.25; // 4x
+  dealt.hands.forEach((hd,h)=>{
+    const slap=run.tape[h];
+    setTimeout(()=>{ arena.innerHTML=AR[hd.target]; arena.style.color='var(--gold)'; msg.textContent='hand '+(h+1)+' — target flashes'; }, hd.stimulusTick*SPEED);
+    if(slap){
+      setTimeout(()=>{ arena.style.color='var(--neon)'; msg.textContent='hand '+(h+1)+' — slapped '+slap.press+' at tick '+slap.tick+' → '+sim.results[h].outcome+(sim.results[h].reaction!==null?' · reaction '+sim.results[h].reaction+' ms':''); }, slap.tick*SPEED);
+    } else {
+      setTimeout(()=>{ msg.textContent='hand '+(h+1)+' — no slap'; }, (hd.stimulusTick+300)*SPEED);
+    }
+  });
+  const lastTick=dealt.hands[dealt.hands.length-1].stimulusTick+1400;
+  setTimeout(()=>{ arena.innerHTML='🏁'; arena.style.color=''; msg.innerHTML='final score <b>'+sim.score+'</b> — derived by this replay, identical to the claim. That is the proof.'; }, lastTick*SPEED);
+}
 async function verifyChain(){
   const out=$('chainOut');
+  chainRuns=[];
   out.innerHTML='<span class="lbl">walking the chain…</span>';
   let id=knownHead(), rows=[], guard=0, allOK=true;
   try{
@@ -151,7 +177,9 @@ async function verifyChain(){
       }
       const v=KKSlap.verifyRun(j.run||{});
       if(!v.valid) allOK=false;
-      rows.push('<tr><td>'+(j.at||'')+'</td><td>'+(j.run?j.run.wallet:'?')+'</td><td>'+(j.run?j.run.claimedScore:'?')+'</td><td>'+(v.valid?'<span class="badge v">🎞 REPLAY ✓</span>':'<span class="badge u">✗ REPLAY FAILS</span>')+'</td></tr>');
+      const ridx=chainRuns.length;
+      if(j.run) chainRuns.push(j.run);
+      rows.push('<tr><td>'+(j.at||'')+'</td><td>'+(j.run?j.run.wallet:'?')+'</td><td>'+(j.run?j.run.claimedScore:'?')+'</td><td>'+(v.valid?'<span class="badge v">🎞 REPLAY ✓</span>':'<span class="badge u">✗ REPLAY FAILS</span>')+(v.valid?' <button class="btn" onclick="watchReplay('+ridx+')">▶ watch</button>':'')+'</td></tr>');
       id=j.prev;
     }
     if(id&&guard>=50){ allOK=false; rows.push('<tr><td colspan="4">🔴 chain longer than 50 links — stopped</td></tr>'); }
