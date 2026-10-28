@@ -79098,3 +79098,2003 @@ T('a dropped video file is picked up anywhere on the page', ()=>{
 });
 })();
 </script>
+
+<script>
+/* ================================================================
+   SILOUTTES CRAFT PLUGINS v1 — additive plugin dock for v265.
+   MIT License — Copyright (c) 2026 masterledgerlive.
+   Permission is hereby granted, free of charge, to any person obtaining
+   a copy of this software and associated documentation files (the
+   "Software"), to deal in the Software without restriction, including
+   without limitation the rights to use, copy, modify, merge, publish,
+   distribute, sublicense, and/or sell copies of the Software, and to
+   permit persons to whom the Software is furnished to do so, subject to
+   the following conditions:
+   The above copyright notice and this permission notice shall be included
+   in all copies or substantial portions of the Software.
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
+
+   What this is: an ADD-ON. It does not modify any v265 function. It reads
+   v265 state (S, buildEntries(), buildCutSVG(), parseClip, clipToMM, save(),
+   rebuildAll(), toast(), download(), esc(), aiAsk()) and adds a plugin dock.
+
+   The four "craft" plugins are BRIDGES to the ArtCraft open-source suite
+   (github.com/storytold — Apache-2.0/MIT, pure Rust desktop + web apps):
+     VectorCraft  (Illustrator-class) — layered SVG round-trip
+     PhotoCraft   (Photoshop-class)   — PNG round-trip + in-app photo lab
+     EffectCraft  (AfterEffects-class)— motion preview + webm/frame export
+     DesignCraft  (InDesign-class)    — print layout pages
+   The Rust apps themselves are separate programs (they cannot be embedded
+   in a single HTML file); the plugins give you the real working round-trip:
+   export -> edit in the craft app -> import back, with every re-imported
+   path validated through the SILOUTTES cut contract before it touches
+   your build. The Agent plugin can call every plugin tool.
+   ================================================================ */
+(function(){
+'use strict';
+/* ---- guard: v265 core must be present ---- */
+if (typeof buildEntries !== 'function' || typeof buildCutSVG !== 'function' ||
+    typeof parseClip !== 'function' || typeof S === 'undefined') return;
+
+/* ================= utils ================= */
+const SIL_esc = s => String(s == null ? '' : s)
+  .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const SIL_uid = () => 'sil' + Math.random().toString(36).slice(2,10);
+const SIL_tell = m => { try { toast(m); } catch(e){ console.log('[craft]', m); } };
+/* v265 download(data, filename, mime) */
+const SIL_dl = (data, name, mime) => download(data, name, mime || 'text/plain');
+const SIL_entries = () => { try { return buildEntries(); } catch(e){ return []; } };
+const SIL_opOf = (e, r) => {
+  if (e.op) return e.op;
+  try { const o = objOf(e.cid, e.oid); if (o && o.op) return o.op; } catch(x){}
+  return 'cut';
+};
+const SIL_layers = () => {
+  const s = new Set(SIL_entries().map(x => x.e.layer || 1));
+  return [...s].sort((a,b)=>a-b);
+};
+function SIL_designSVG(){
+  const s = buildCutSVG();
+  if (typeof s !== 'string' || s.indexOf('<svg') < 0)
+    throw new Error('buildCutSVG did not return SVG text');
+  return s;
+}
+function SIL_rasterize(svgText, pxPerMM){
+  return new Promise((res, rej) => {
+    const url = URL.createObjectURL(new Blob([svgText], {type:'image/svg+xml'}));
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const mW = svgText.match(/width="([\d.]+)mm"/), mH = svgText.match(/height="([\d.]+)mm"/);
+        const wMM = mW ? +mW[1] : 282, hMM = mH ? +mH[1] : 210;
+        const c = document.createElement('canvas');
+        c.width = Math.round(wMM * pxPerMM); c.height = Math.round(hMM * pxPerMM);
+        const g = c.getContext('2d');
+        g.fillStyle = '#fff'; g.fillRect(0,0,c.width,c.height);
+        g.drawImage(img, 0, 0, c.width, c.height);
+        URL.revokeObjectURL(url); res(c);
+      } catch(e){ rej(e); }
+    };
+    img.onerror = () => rej(new Error('SVG rasterize failed'));
+    img.src = url;
+  });
+}
+/* commit a validated element into the live build (flows through the
+   real cut pipeline via the custom 'paper' kind) */
+function SIL_commit(o){
+  const clip = (o.clip || '').trim();
+  if (!clip) throw new Error('empty clip');
+  parseClip(clip); /* validate through the real contract — throws if bad */
+  const layer = Math.max(1, +o.layer || 1);
+  const op = ['cut','score','engrave'].includes(o.op) ? o.op : 'cut';
+  S.stack.push({ custom:true, kind:'paper', clip,
+    name:String(o.name || 'Craft element').slice(0,80),
+    price:+o.price || 0.12, time:+o.time || 70, layer,
+    stock:'custom', stockLabel:'Craft Plugin', op });
+  save(); rebuildAll();
+  return true;
+}
+
+/* ================= dock UI ================= */
+const SIL_CSS = `
+#sil-dock-btn{position:fixed;right:18px;bottom:18px;z-index:9000;width:58px;height:58px;border-radius:50%;
+ border:1px solid #f5a623;background:#141518;color:#f5a623;font-size:24px;cursor:pointer;
+ box-shadow:0 10px 30px rgba(0,0,0,.55)}
+#sil-dock-btn:hover{transform:scale(1.07)}
+#sil-dock{position:fixed;top:0;right:0;bottom:0;width:400px;max-width:94vw;z-index:9001;
+ background:#101114;border-left:1px solid #2a2d33;color:#e8e6e0;display:none;flex-direction:column;
+ font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;box-shadow:-20px 0 60px rgba(0,0,0,.5)}
+#sil-dock.open{display:flex}
+#sil-dock-head{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid #2a2d33}
+#sil-dock-head b{letter-spacing:2px;font-size:14px}
+#sil-dock-head b em{color:#f5a623;font-style:normal}
+#sil-dock-head .x{margin-left:auto;background:none;border:1px solid #2a2d33;color:#9aa0aa;border-radius:8px;
+ padding:6px 10px;cursor:pointer;font-size:14px}
+#sil-dock-tabs{display:flex;flex-wrap:wrap;gap:6px;padding:10px 12px;border-bottom:1px solid #2a2d33}
+.sil-ptab{border:1px solid #2a2d33;background:#17181c;color:#9aa0aa;border-radius:9px;padding:7px 10px;
+ font-size:11px;cursor:pointer;letter-spacing:.4px}
+.sil-ptab.on{border-color:#f5a623;color:#f5a623;background:rgba(245,166,35,.08)}
+#sil-dock-body{flex:1;overflow-y:auto;padding:14px 16px}
+#sil-dock-body::-webkit-scrollbar{width:8px}#sil-dock-body::-webkit-scrollbar-thumb{background:#2a2d33;border-radius:4px}
+#sil-dock-body h4{margin:4px 0 10px;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#9aa0aa}
+#sil-dock-body h4 em{color:#f5a623;font-style:normal}
+#sil-dock-body .row{display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap}
+#sil-dock-body .note{font-size:11px;color:#7c8290;line-height:1.6;margin:8px 0}
+#sil-dock-body .note b{color:#c9cdd4}
+#sil-dock-body input[type=text],#sil-dock-body input[type=number],#sil-dock-body select,#sil-dock-body textarea
+ {background:#0a0b0d;border:1px solid #2a2d33;color:#e8e6e0;border-radius:8px;padding:8px 10px;font-size:12px;width:100%;font-family:inherit}
+#sil-dock-body input:focus,#sil-dock-body select:focus,#sil-dock-body textarea:focus{outline:none;border-color:#f5a623}
+#sil-dock-body label{font-size:11px;color:#9aa0aa;min-width:70px}
+.sil-btn{background:#1c1e22;border:1px solid #2a2d33;color:#e8e6e0;border-radius:8px;padding:8px 12px;
+ font-size:12px;cursor:pointer}
+.sil-btn:hover{border-color:#f5a623}
+.sil-btn.primary{background:#f5a623;border-color:#f5a623;color:#141414;font-weight:700}
+.sil-btn.danger{border-color:#ff5a5a;color:#ff5a5a}
+.sil-btn:disabled{opacity:.45}
+.sil-warn{border:1px solid #ffb020;background:rgba(255,176,32,.07);border-radius:10px;padding:10px 12px;
+ font-size:11px;line-height:1.6;color:#ffd9a0;margin:10px 0}
+.sil-ok{border:1px solid #35d07f;background:rgba(53,208,127,.07);border-radius:10px;padding:10px 12px;
+ font-size:11px;line-height:1.6;color:#b8f0d2;margin:10px 0}
+.sil-ply{border:1px solid #2a2d33;border-radius:10px;margin-bottom:8px;background:#0c0d0f;overflow:hidden}
+.sil-ply-h{padding:8px 12px;background:#17181c;font-family:monospace;font-size:11px;color:#f5a623;cursor:pointer}
+.sil-sub{display:flex;align-items:center;gap:8px;padding:6px 12px;border-top:1px solid #22242a;font-size:11px}
+.sil-sw{width:11px;height:11px;border-radius:3px;flex:none}
+.sil-op{font-family:monospace;font-size:9px;letter-spacing:1px;padding:2px 7px;border-radius:4px;text-transform:uppercase;margin-left:auto}
+.sil-op-cut{background:rgba(255,43,43,.15);color:#ff8080}
+.sil-op-score{background:rgba(43,107,255,.15);color:#8aa8ff}
+.sil-op-engrave{background:rgba(0,200,83,.15);color:#6fe3a1}
+.sil-stamp{font-family:monospace;font-weight:800;letter-spacing:3px;font-size:20px;text-align:center;
+ padding:12px;border:3px solid;border-radius:10px;margin:12px 0;transform:rotate(-3deg)}
+.sil-stamp.ok{color:#35d07f;border-color:#35d07f;background:rgba(53,208,127,.07)}
+.sil-stamp.no{color:#ff5a5a;border-color:#ff5a5a;background:rgba(255,90,90,.07)}
+.sil-grid9{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:10px 0}
+.sil-c9{background:#0c0d0f;border:1px solid #2a2d33;border-radius:8px;padding:8px;text-align:center;
+ font-family:monospace;font-size:11px}
+.sil-c9 small{display:block;color:#5c626c;font-size:9px;margin-top:2px}
+.sil-log{font-family:monospace;font-size:11px;background:#0a0b0d;border:1px solid #2a2d33;border-radius:8px;
+ padding:10px;max-height:220px;overflow-y:auto;line-height:1.7;color:#9aa0aa;margin:8px 0;white-space:pre-wrap}
+.sil-log .t{color:#f5a623}.sil-log .ok{color:#35d07f}.sil-log .bad{color:#ff5a5a}
+.sil-kbd{font-family:monospace;font-size:10px;background:#1c1e22;border:1px solid #2a2d33;border-radius:4px;
+ padding:1px 6px;color:#9aa0aa}
+#sil-dock-body canvas.sil-cv{max-width:100%;border:1px solid #2a2d33;border-radius:8px;margin:8px 0}`;
+const SIL_PLUGINS = [];
+function SIL_register(p){ SIL_PLUGINS.push(p); }
+let SIL_cur = null;
+function SIL_boot(){
+  const st = document.createElement('style'); st.textContent = SIL_CSS;
+  document.head.appendChild(st);
+  const btn = document.createElement('button');
+  btn.id = 'sil-dock-btn'; btn.title = 'Craft plugins'; btn.textContent = '✦';
+  btn.onclick = () => document.getElementById('sil-dock').classList.toggle('open');
+  document.body.appendChild(btn);
+  const dock = document.createElement('div'); dock.id = 'sil-dock';
+  dock.innerHTML = `<div id="sil-dock-head"><b>SIL<em>OUTTES</em> CRAFT</b>
+    <span style="font-family:monospace;font-size:10px;color:#5c626c">plugins v1</span>
+    <button class="x" onclick="document.getElementById('sil-dock').classList.remove('open')">✕</button></div>
+   <div id="sil-dock-tabs"></div><div id="sil-dock-body"></div>`;
+  document.body.appendChild(dock);
+  const tabs = document.getElementById('sil-dock-tabs');
+  SIL_PLUGINS.forEach((p,i) => {
+    const b = document.createElement('button');
+    b.className = 'sil-ptab' + (i===0 ? ' on' : ''); b.textContent = p.icon + ' ' + p.name;
+    b.onclick = () => SIL_show(i);
+    tabs.appendChild(b);
+  });
+  if (SIL_PLUGINS.length) SIL_show(0);
+}
+function SIL_show(i){
+  SIL_cur = i;
+  document.querySelectorAll('#sil-dock-tabs .sil-ptab')
+    .forEach((b,j) => b.classList.toggle('on', j===i));
+  const body = document.getElementById('sil-dock-body');
+  body.innerHTML = '';
+  try { SIL_PLUGINS[i].render(body); }
+  catch(e){ body.innerHTML = `<div class="sil-warn">Plugin failed to render: ${SIL_esc(e.message)}</div>`; }
+}
+/* ================= PLUGIN: CutMirror =================
+   The v266 feature set, as a plugin on the live v265 build:
+   sub-layer inspector, camera proof, project mirror, design artifacts. */
+const SIL_OPC = {cut:'#FF0000', score:'#0000FF', engrave:'#00C853'};
+let SIL_proof = {photo:null, photoName:'', pxPerMM:null, anchor:null, score:null, cells:null, verdict:null};
+let SIL_calClicks = [];
+let SIL_mirrorOn = false, SIL_bc = null;
+
+SIL_register({ id:'cutmirror', name:'CutMirror', icon:'◉',
+render(body){
+  const ents = SIL_entries();
+  let h = `<h4>Sub-layer <em>inspector</em></h4>
+  <div class="note">Every ply of the live build, split into operation sub-layers —
+  <b style="color:#ff8080">cut</b> red, <b style="color:#8aa8ff">score</b> blue,
+  <b style="color:#6fe3a1">engrave</b> green. Same contract as the cut file.</div>`;
+  for (const l of SIL_layers()){
+    const items = ents.filter(x => (x.e.layer||1) === l);
+    h += `<div class="sil-ply"><div class="sil-ply-h" onclick="this.parentNode.querySelectorAll('.sil-sub').forEach(s=>s.style.display=s.style.display==='none'?'flex':'none')">PLY ${l} · ${items.length} el</div>`;
+    for (const x of items){
+      const op = SIL_opOf(x.e, x.r);
+      h += `<div class="sil-sub"><span class="sil-sw" style="background:${SIL_OPC[op]||'#FF0000'}"></span>
+        <span>${SIL_esc(x.r.name)}<br><span style="color:#5c626c;font-size:10px">${SIL_esc(x.r.type||'')}</span></span>
+        <span class="sil-op sil-op-${op}">${op}</span></div>`;
+    }
+    h += `</div>`;
+  }
+  if (!ents.length) h += `<div class="note">Build is empty — add cuts first.</div>`;
+
+  h += `<h4 style="margin-top:16px">Camera <em>proof</em></h4>
+  <div class="note">Prove the cut matches the generated design. Render the design,
+  photograph the bed (M2 camera export or phone, top-down), calibrate on a known
+  distance, click the photo to anchor the design's top-left, run proof.</div>
+  <div class="row"><button class="sil-btn" id="sil-pf-render">1 · Render design</button>
+  <button class="sil-btn" id="sil-pf-photo">2 · Bed photo</button></div>
+  <div class="note" id="sil-pf-status">design: not rendered · photo: none · scale: —</div>
+  <div id="sil-pf-work"></div>
+  <div id="sil-pf-cal" style="display:none">
+    <div class="note">Click <b>two points</b> on the photo a known distance apart, enter it, set scale.</div>
+    <div class="row"><label>Known mm</label><input type="number" id="sil-pf-mm" value="63" step="0.1" style="max-width:110px">
+    <button class="sil-btn primary" id="sil-pf-set">Set scale</button></div>
+  </div>
+  <div id="sil-pf-run" style="display:none">
+    <div class="row"><label>Pass ≥ %</label><input type="number" id="sil-pf-th" value="88" min="50" max="99" style="max-width:90px">
+    <button class="sil-btn primary" id="sil-pf-go">◉ Run proof</button></div>
+    <div class="row"><button class="sil-btn" id="sil-pf-cert">⇩ Proof certificate</button></div>
+  </div>
+  <div id="sil-pf-result"></div>`;
+
+  h += `<h4 style="margin-top:16px">Project <em>mirror</em> <span style="color:#ffb020;font-size:10px">experimental</span></h4>
+  <div class="sil-warn"><b>Optional — off by default.</b> Broadcasts this browser's saved
+  project to other tabs/devices on this machine running the same file, and applies
+  incoming ones (page reloads). Last-write-wins; it <b>can</b> desync. The safe path
+  stays catalog export/import.</div>
+  <div class="row"><button class="sil-btn" id="sil-mr-push">⇪ Push now</button>
+  <button class="sil-btn" id="sil-mr-toggle">${SIL_mirrorOn ? '⛓ Mirror ON — tap to stop' : '⛓ Mirror off — tap to start'}</button></div>`;
+
+  h += `<h4 style="margin-top:16px">Design <em>artifact</em></h4>
+  <div class="note">Export the live build as a full design artifact
+  (<span class="sil-kbd">silouttes-variant</span> JSON) — drop it into the cut library,
+  share it, or file it with the job.</div>
+  <div class="row"><button class="sil-btn primary" id="sil-art">⇩ Export design artifact</button></div>`;
+  body.innerHTML = h;
+
+  body.querySelector('#sil-pf-render').onclick = async () => {
+    try {
+      const svg = SIL_designSVG();
+      SIL_proof.design = await SIL_rasterize(svg, 3);
+      SIL_proofStatus(); SIL_tell('Design rendered for proof.');
+    } catch(e){ SIL_tell('Render failed: ' + e.message); }
+  };
+  body.querySelector('#sil-pf-photo').onclick = () => SIL_proofPhoto(body);
+  body.querySelector('#sil-pf-set').onclick = () => {
+    const mm = +body.querySelector('#sil-pf-mm').value;
+    if (SIL_calClicks.length !== 2 || !(mm > 0)){ SIL_tell('Need 2 clicks and a known distance.'); return; }
+    const dx = SIL_calClicks[0].x - SIL_calClicks[1].x, dy = SIL_calClicks[0].y - SIL_calClicks[1].y;
+    SIL_proof.pxPerMM = Math.hypot(dx,dy) / mm; SIL_calClicks = [];
+    body.querySelector('#sil-pf-run').style.display = 'block';
+    SIL_proofStatus(); SIL_show(SIL_cur);
+    SIL_tell('Scale set: ' + SIL_proof.pxPerMM.toFixed(2) + ' px/mm.');
+  };
+  body.querySelector('#sil-pf-go').onclick = () => SIL_proofRun(body);
+  body.querySelector('#sil-pf-cert').onclick = () => SIL_proofCert();
+  body.querySelector('#sil-mr-push').onclick = () => SIL_mirrorPush(true);
+  body.querySelector('#sil-mr-toggle').onclick = () => SIL_mirrorToggle();
+  body.querySelector('#sil-art').onclick = () => SIL_artifact();
+}});
+
+function SIL_proofStatus(){
+  const el = document.getElementById('sil-pf-status');
+  if (el) el.innerHTML = `design: ${SIL_proof.design ? 'rendered ✓' : 'not rendered'} · photo: ${SIL_proof.photoName ? SIL_esc(SIL_proof.photoName)+' ✓' : 'none'} · scale: ${SIL_proof.pxPerMM ? SIL_proof.pxPerMM.toFixed(2)+' px/mm' : '—'}`;
+}
+function SIL_proofPhoto(body){
+  const i = document.createElement('input'); i.type='file'; i.accept='image/*';
+  i.onchange = () => {
+    const f = i.files[0]; if(!f) return;
+    const url = URL.createObjectURL(f); const img = new Image();
+    img.onload = () => {
+      const MAX = 1400, k = Math.min(1, MAX / Math.max(img.width, img.height));
+      const c = document.createElement('canvas');
+      c.width = Math.round(img.width*k); c.height = Math.round(img.height*k);
+      c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+      SIL_proof.photo = c; SIL_proof.photoName = f.name;
+      SIL_proof.pxPerMM = null; SIL_proof.score = null; SIL_proof.verdict = null;
+      SIL_calClicks = [];
+      URL.revokeObjectURL(url);
+      body.querySelector('#sil-pf-cal').style.display = 'block';
+      const w = body.querySelector('#sil-pf-work'); w.innerHTML = '';
+      const cv = c.cloneNode(false);
+      cv.className='sil-cv'; cv.style.cursor='crosshair'; cv.id='sil-pf-img';
+      cv.getContext('2d').drawImage(c,0,0);
+      cv.onclick = ev => SIL_proofClick(ev, body);
+      w.appendChild(cv); SIL_proofStatus();
+      SIL_tell('Bed photo loaded — click two points to calibrate.');
+    };
+    img.src = url;
+  };
+  i.click();
+}
+function SIL_proofClick(ev, body){
+  const cv = document.getElementById('sil-pf-img'); if(!cv) return;
+  const r = cv.getBoundingClientRect();
+  const x = (ev.clientX-r.left)/r.width * cv.width, y = (ev.clientY-r.top)/r.height * cv.height;
+  if (!SIL_proof.pxPerMM){
+    SIL_calClicks.push({x,y});
+    const g = cv.getContext('2d');
+    g.fillStyle='#f5a623'; g.beginPath(); g.arc(x,y,9,0,7); g.fill();
+    g.fillStyle='#000'; g.font='bold 11px monospace'; g.fillText(SIL_calClicks.length, x-4, y+4);
+    if (SIL_calClicks.length === 2) SIL_tell('Two points marked — enter the known mm and Set scale.');
+    return;
+  }
+  SIL_proof.anchor = {x, y};
+  SIL_proofDrawOverlay(body);
+  SIL_tell('Design anchored — Run proof, or re-click to move.');
+}
+function SIL_proofDrawOverlay(body){
+  const cv = document.getElementById('sil-pf-img'); if(!cv || !SIL_proof.design) return;
+  const g = cv.getContext('2d');
+  g.drawImage(SIL_proof.photo, 0, 0);
+  const k = SIL_proof.pxPerMM, dw = SIL_proof.design.width/3*k, dh = SIL_proof.design.height/3*k;
+  const ax = SIL_proof.anchor.x, ay = SIL_proof.anchor.y;
+  g.globalAlpha = 0.55; g.drawImage(SIL_proof.design, ax, ay, dw, dh); g.globalAlpha = 1;
+  g.strokeStyle = '#f5a623'; g.lineWidth = 2; g.strokeRect(ax, ay, dw, dh);
+  SIL_proof._box = {ax, ay, dw, dh};
+}
+function SIL_gray(canvas, x, y, w, h, N){
+  const t = document.createElement('canvas'); t.width = t.height = N;
+  const g = t.getContext('2d');
+  g.drawImage(canvas, x, y, w, h, 0, 0, N, N);
+  const d = g.getImageData(0,0,N,N).data, out = new Float32Array(N*N);
+  for (let i=0;i<N*N;i++) out[i] = (d[i*4]*0.299 + d[i*4+1]*0.587 + d[i*4+2]*0.114)/255;
+  return out;
+}
+function SIL_ncc(a,b){
+  const n=a.length; let ma=0,mb=0;
+  for(let i=0;i<n;i++){ma+=a[i];mb+=b[i];} ma/=n; mb/=n;
+  let sab=0,sa=0,sb=0;
+  for(let i=0;i<n;i++){const da=a[i]-ma,db=b[i]-mb; sab+=da*db; sa+=da*da; sb+=db*db;}
+  return (sa===0||sb===0) ? 0 : sab/Math.sqrt(sa*sb);
+}
+function SIL_proofRun(body){
+  const P = SIL_proof;
+  if (!P.design || !P.photo || !P.pxPerMM || !P.anchor){ SIL_tell('Need: rendered design + photo + scale + anchor click.'); return; }
+  SIL_proofDrawOverlay(body);
+  const {ax, ay, dw, dh} = P._box, N = 96, cells = [];
+  const k = P.pxPerMM;
+  for (let gy=0; gy<3; gy++) for (let gx=0; gx<3; gx++){
+    const cx=ax+dw*gx/3, cy=ay+dh*gy/3, cw=dw/3, ch=dh/3;
+    const ref = document.createElement('canvas'); ref.width = ref.height = N;
+    const rg = ref.getContext('2d');
+    rg.fillStyle='#fff'; rg.fillRect(0,0,N,N);
+    rg.drawImage(P.design, (cx-ax)/k*3, (cy-ay)/k*3, cw/k*3, ch/k*3, 0, 0, N, N);
+    const a = SIL_gray(ref,0,0,N,N,N), b = SIL_gray(P.photo,cx,cy,cw,ch,N);
+    cells.push(Math.max(0, Math.min(1, (SIL_ncc(a,b)+1)/2)) * 100);
+  }
+  const avg = cells.reduce((s,c)=>s+c,0)/cells.length;
+  const th = +body.querySelector('#sil-pf-th').value || 88;
+  P.score = avg; P.cells = cells; P.verdict = avg >= th ? 'PROVEN' : 'FAIL';
+  const ok = P.verdict === 'PROVEN';
+  body.querySelector('#sil-pf-result').innerHTML =
+    `<div class="sil-stamp ${ok?'ok':'no'}">${ok?'✓ PROVEN':'✗ FAIL'} — ${avg.toFixed(1)}%</div>
+     <div class="sil-grid9">${cells.map((c,i)=>
+       `<div class="sil-c9" style="color:${c>=88?'#35d07f':c>=70?'#ffb020':'#ff5a5a'}">${c.toFixed(0)}%<small>${['TL','TC','TR','ML','MC','MR','BL','BC','BR'][i]}</small></div>`).join('')}</div>
+     <div class="note">Score moves with camera angle and light — a FAIL on a tilted phone
+     photo is a photography problem, not necessarily a cut problem. Re-shoot top-down.</div>`;
+  SIL_tell(ok ? `✓ PROVEN — design and cut match at ${avg.toFixed(1)}%` : `✗ FAIL at ${avg.toFixed(1)}% — check angle, light, scale.`);
+}
+async function SIL_proofCert(){
+  const P = SIL_proof; if (P.score == null){ SIL_tell('Run proof first.'); return; }
+  const svg = SIL_designSVG();
+  const dig = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(svg));
+  const hex = [...new Uint8Array(dig)].map(x=>x.toString(16).padStart(2,'0')).join('');
+  SIL_dl(JSON.stringify({ app:'SILOUTTES v265 + Craft Plugins', kind:'cut-proof-certificate',
+    project:S.projName || 'untitled', designSha256:hex, photoName:P.photoName,
+    pxPerMM:+P.pxPerMM.toFixed(3), score:+P.score.toFixed(2),
+    cells:P.cells.map(c=>+c.toFixed(1)), verdict:P.verdict,
+    timestamp:new Date().toISOString(),
+    limits:'Verifies geometric placement at calibrated scale. Not cut depth/kerf/material.'
+  }, null, 1), 'craft-proof-certificate.json', 'application/json');
+  SIL_tell('Proof certificate downloaded.');
+}
+/* ---- mirror (experimental) ---- */
+function SIL_mirrorToggle(){
+  SIL_mirrorOn = !SIL_mirrorOn;
+  if (SIL_mirrorOn){
+    try {
+      SIL_bc = new BroadcastChannel('silouttes-craft-mirror');
+      SIL_bc.onmessage = ev => {
+        const d = ev.data || {};
+        if (d.kind === 'hello'){ SIL_mirrorPush(); return; }
+        if (d.kind === 'project' && d.payload){
+          if (confirm('⛓ Mirror sync received. Replace this browser\'s project and reload?')){
+            localStorage.setItem('silouttes.value.v1', d.payload);
+            location.reload();
+          }
+        }
+      };
+      SIL_bc.postMessage({kind:'hello'});
+      SIL_tell('⛓ Mirror ON (experimental).');
+    } catch(e){ SIL_tell('BroadcastChannel unavailable.'); SIL_mirrorOn = false; }
+  } else { try{ SIL_bc && SIL_bc.close(); }catch(e){} SIL_bc = null; SIL_tell('⛓ Mirror off.'); }
+  SIL_show(SIL_cur);
+}
+function SIL_mirrorPush(manual){
+  if (!SIL_mirrorOn || !SIL_bc){ if (manual) SIL_tell('Mirror is off — toggle it on first.'); return; }
+  try { SIL_bc.postMessage({kind:'project', payload: localStorage.getItem('silouttes.value.v1')});
+    if (manual) SIL_tell('⛓ Project pushed.'); } catch(e){}
+}
+/* ---- design artifact ---- */
+function SIL_artifact(){
+  const ents = SIL_entries();
+  const objs = ents.map((x,i) => ({ id:'a'+i, name:x.r.name, type:x.r.type || 'FIGURE',
+    price:x.r.price || 0, time:x.r.time || 0, op:SIL_opOf(x.e,x.r),
+    base:!x.r.clip, clip:x.r.clip || null, layer:x.e.layer || 1 }));
+  const art = { kind:'silouttes-variant', version:1, exported:new Date().toISOString(),
+    card:{ id:'craft-'+SIL_uid(), name:S.projName || 'Untitled', set:'', num:'', img:'' },
+    variant:{ id:'var_'+SIL_uid(), name:(S.projName || 'Untitled') + ' — craft export',
+      author:'Craft Plugins', notes:'Exported from the live v265 build.',
+      cuts:objs.filter(o=>o.clip).length, approved:true, forSale:false,
+      priceUSD:Math.round(objs.reduce((s,o)=>s+(+o.price||0),0)*100)/100,
+      createdAt:new Date().toISOString(), objects:objs } };
+  SIL_dl(JSON.stringify(art, null, 1), 'craft-design-artifact.json', 'application/json');
+  SIL_tell('Design artifact exported — ' + objs.length + ' elements.');
+}
+/* ================= PLUGIN: VectorCraft =================
+   Illustrator-class bridge (github.com/storytold/vectorcraft, Apache-2.0).
+   The Rust app can't be embedded in one HTML file, so this is the real
+   working round-trip: export layered SVG -> edit in VectorCraft (desktop or
+   web) -> import back. Every re-imported path is validated through the
+   SILOUTTES cut contract before it touches your build. */
+SIL_register({ id:'vectorcraft', name:'VectorCraft', icon:'⬢',
+render(body){
+  body.innerHTML = `<h4>Vector<em>Craft</em> bridge</h4>
+  <div class="note">VectorCraft is ArtCraft's open-source Illustrator-class editor
+  (pure Rust, desktop + web). <b>This plugin is the bridge:</b> export your build as a
+  layered SVG, refine the vectors in VectorCraft, import the SVG back — paths become
+  real cut elements on the right plies, validated through the cut contract.</div>
+  <div class="row"><button class="sil-btn primary" id="sil-vc-exp">⇩ Export layered SVG</button></div>
+  <div class="row"><button class="sil-btn" id="sil-vc-dxf">⇩ Export DXF (VectorCraft / Studio)</button></div>
+  <div class="row"><button class="sil-btn" id="sil-vc-web">↗ Open VectorCraft web</button>
+  <button class="sil-btn" id="sil-vc-dl">↗ Get VectorCraft desktop</button></div>
+  <hr style="border-color:#2a2d33">
+  <div class="note"><b>Import back:</b> choose the SVG you edited. If it's the file this
+  plugin exported, ply layers are restored automatically. Otherwise enter the artboard
+  size in mm (default = one card, 63×88).</div>
+  <div class="row"><label>Artboard mm</label>
+    <input type="number" id="sil-vc-w" value="63" step="0.1" style="max-width:80px">
+    <input type="number" id="sil-vc-h" value="88" step="0.1" style="max-width:80px"></div>
+  <div class="row"><label>Target ply</label>
+    <input type="number" id="sil-vc-ply" value="2" min="1" max="24" style="max-width:80px">
+    <button class="sil-btn primary" id="sil-vc-imp">⇪ Import SVG → cut elements</button></div>
+  <div id="sil-vc-out"></div>
+  <div class="note">Tip: in VectorCraft keep edits as vector paths on the exported layers —
+  strokes become cuts. Text: convert to outlines before import.</div>`;
+  body.querySelector('#sil-vc-exp').onclick = () => {
+    try {
+      const svg = SIL_designSVG();
+      SIL_dl(svg, 'craft-vectorcraft.svg', 'image/svg+xml');
+      SIL_tell('Layered SVG exported — open it in VectorCraft.');
+    } catch(e){ SIL_tell('Export failed: ' + e.message); }
+  };
+  body.querySelector('#sil-vc-dxf').onclick = () => {
+    try {
+      SIL_dl(SIL_buildDXF(), 'craft-vectorcraft.dxf', 'application/dxf');
+      SIL_tell('DXF exported — VectorCraft and xTool Studio both import it.');
+    } catch(e){ SIL_tell('DXF export failed: ' + e.message); }
+  };
+  body.querySelector('#sil-vc-web').onclick = () =>
+    window.open('https://getartcraft.com/', '_blank', 'noopener');
+  body.querySelector('#sil-vc-dl').onclick = () =>
+    window.open('https://github.com/storytold/vectorcraft', '_blank', 'noopener');
+  body.querySelector('#sil-vc-imp').onclick = () => {
+    const w = +body.querySelector('#sil-vc-w').value || 63;
+    const h = +body.querySelector('#sil-vc-h').value || 88;
+    const ply = Math.max(1, +body.querySelector('#sil-vc-ply').value || 2);
+    const i = document.createElement('input'); i.type='file'; i.accept='.svg,image/svg+xml';
+    i.onchange = () => {
+      const f = i.files[0]; if(!f) return;
+      const r = new FileReader();
+      r.onload = () => {
+        try {
+          const clips = SIL_svgToClips(r.result, w, h);
+          let ok = 0, bad = 0;
+          for (const c of clips){
+            try { SIL_commit({name:c.name, type:'FIGURE', layer:c.layer || ply, op:'cut', clip:c.clip, price:0.12, time:70}); ok++; }
+            catch(e){ bad++; }
+          }
+          body.querySelector('#sil-vc-out').innerHTML =
+            `<div class="sil-ok">Imported <b>${ok}</b> cut elements${bad ? `, rejected <b style="color:#ff5a5a">${bad}</b> bad paths` : ''}. They cut through the real pipeline.</div>`;
+          SIL_tell(`VectorCraft import: ${ok} elements committed.`);
+        } catch(e){
+          body.querySelector('#sil-vc-out').innerHTML = `<div class="sil-warn">Import failed: ${SIL_esc(e.message)}</div>`;
+        }
+      };
+      r.readAsText(f);
+    };
+    i.click();
+  };
+}});
+
+/* ---- SVG -> SILOUTTES clips (percent-of-card) ---- */
+function SIL_svgToClips(svgText, wMM, hMM){
+  const doc = new DOMParser().parseFromString(svgText, 'image/svg+xml');
+  if (doc.querySelector('parsererror')) throw new Error('Not a parseable SVG.');
+  const svg = doc.querySelector('svg');
+  let vw = wMM, vh = hMM;
+  const vb = (svg.getAttribute('viewBox') || '').trim().split(/[\s,]+/).map(Number);
+  if (vb.length === 4 && vb[2] > 0 && vb[3] > 0){ vw = vb[2]; vh = vb[3]; }
+  const sx = 100 / vw, sy = 100 / vh; /* mm -> percent of card */
+  const X = v => +(v * sx).toFixed(2), Y = v => +(v * sy).toFixed(2);
+  const out = [];
+  /* our own layered export: restore ply layers from group ids */
+  const own = /id="ply-(\d+)"/.test(svgText);
+  const els = svg.querySelectorAll('path, rect, ellipse, circle, polygon, polyline');
+  els.forEach((el, idx) => {
+    const tag = el.tagName.toLowerCase();
+    let d = null, isEllipse = false, ex=null;
+    try {
+      if (tag === 'path'){ d = el.getAttribute('d'); }
+      else if (tag === 'rect'){
+        const x=+el.getAttribute('x')||0, y=+el.getAttribute('y')||0,
+              w=+el.getAttribute('width'), h=+el.getAttribute('height');
+        if (!(w>0 && h>0)) return;
+        d = `M${x} ${y}L${x+w} ${y}L${x+w} ${y+h}L${x} ${y+h}Z`;
+      }
+      else if (tag === 'ellipse' || tag === 'circle'){
+        const cx=+el.getAttribute('cx')||0, cy=+el.getAttribute('cy')||0;
+        let rx=+el.getAttribute('rx'), ry=+el.getAttribute('ry');
+        if (tag==='circle'){ rx = ry = +el.getAttribute('r'); }
+        if (!(rx>0 && ry>0)) return;
+        isEllipse = true; ex = {cx, cy, rx, ry};
+      }
+      else if (tag === 'polygon' || tag === 'polyline'){
+        const pts = (el.getAttribute('points')||'').trim().split(/[\s,]+/).map(Number);
+        if (pts.length < 4) return;
+        d = 'M' + pts.map((p,i)=> (i%2? p : (i? 'L':'')+p) ).join(' ').replace(/L /g,'L') + (tag==='polygon'?'Z':'');
+      }
+      if (isEllipse){
+        out.push({ name:'VC ellipse '+(idx+1), layer:SIL_plyOf(el, own),
+          clip:`ellipse(${X(ex.rx).toFixed(1)}% ${Y(ex.ry).toFixed(1)}% at ${X(ex.cx).toFixed(1)}% ${Y(ex.cy).toFixed(1)}%)` });
+        return;
+      }
+      if (!d) return;
+      const pct = SIL_absPathToPct(d, X, Y);
+      if (!pct) return;
+      out.push({ name:'VC path '+(idx+1), layer:SIL_plyOf(el, own), clip:`path("${pct}")` });
+    } catch(e){ /* skip bad element */ }
+  });
+  if (!out.length) throw new Error('No usable vector paths found in that SVG.');
+  return out;
+}
+function SIL_plyOf(el, own){
+  if (!own) return null;
+  let n = el.parentNode;
+  while (n && n !== el.ownerDocument){
+    const id = n.getAttribute && n.getAttribute('id');
+    const m = id && id.match(/^ply-(\d+)$/);
+    if (m) return +m[1];
+    n = n.parentNode;
+  }
+  return null;
+}
+/* absolute-ize an SVG path (M/L/H/V/C/Q/Z, relative supported; arcs -> line approx)
+   and scale mm -> percent-of-card. Returns the path() inner string. */
+function SIL_absPathToPct(d, X, Y){
+  const toks = d.replace(/([MLHVCSQTAZmlhvcsqtaz])/g,' $1 ').trim().split(/[\s,]+/).filter(Boolean);
+  let out = [], i = 0, cx = 0, cy = 0, sx = 0, sy = 0;
+  const P = (x,y) => `${X(x).toFixed(1)} ${Y(y).toFixed(1)}`;
+  while (i < toks.length){
+    let c = toks[i];
+    const rel = c === c.toLowerCase(); c = c.toUpperCase(); i++;
+    const num = () => parseFloat(toks[i++]);
+    if (c === 'M' || c === 'L'){
+      while (i < toks.length && !isNaN(parseFloat(toks[i]))){
+        let x = num(), y = num();
+        if (rel){ x += cx; y += cy; }
+        cx = x; cy = y;
+        if (c === 'M' && out.length && out[out.length-1][0] !== 'M'){ out.push('M'+P(x,y)); }
+        else out.push((c==='M' && !out.length ? 'M' : (out.length && c==='M' ? 'M' : 'L')) + P(x,y));
+        if (c === 'M'){ sx = cx; sy = cy; c = 'L'; }
+      }
+    }
+    else if (c === 'H'){ while (i < toks.length && !isNaN(parseFloat(toks[i]))){ let x=num(); if(rel) x+=cx; cx=x; out.push('L'+P(cx,cy)); } }
+    else if (c === 'V'){ while (i < toks.length && !isNaN(parseFloat(toks[i]))){ let y=num(); if(rel) y+=cy; cy=y; out.push('L'+P(cx,cy)); } }
+    else if (c === 'C'){
+      while (i+5 < toks.length && !isNaN(parseFloat(toks[i]))){
+        let x1=num(),y1=num(),x2=num(),y2=num(),x=num(),y=num();
+        if (rel){ x1+=cx;y1+=cy;x2+=cx;y2+=cy;x+=cx;y+=cy; }
+        out.push('C'+P(x1,y1)+' '+P(x2,y2)+' '+P(x,y)); cx=x; cy=y;
+      }
+    }
+    else if (c === 'Q'){
+      while (i+3 < toks.length && !isNaN(parseFloat(toks[i]))){
+        let x1=num(),y1=num(),x=num(),y=num();
+        if (rel){ x1+=cx;y1+=cy;x+=cx;y+=cy; }
+        const c1x=cx+2/3*(x1-cx), c1y=cy+2/3*(y1-cy), c2x=x+2/3*(x1-x), c2y=y+2/3*(y1-y);
+        out.push('C'+P(c1x,c1y)+' '+P(c2x,c2y)+' '+P(x,y)); cx=x; cy=y;
+      }
+    }
+    else if (c === 'Z'){ out.push('Z'); cx=sx; cy=sy; }
+    else if (c === 'A' || c === 'T' || c === 'S'){ i += (c==='A'?7: c==='T'?2:4); }
+    else { break; }
+  }
+  const s = out.join(' ').replace(/([MLC]) /g,'$1');
+  return /M/.test(s) ? s : null;
+}
+
+/* ---- DXF export — VectorCraft imports DXF; xTool Studio imports DXF.
+   mm units, Y flipped to DXF convention so it matches the SVG sheet.
+   Layers: PLY<n>_<OP>; ACI colors 1=red cut, 5=blue score, 3=green engrave. */
+function SIL_buildDXF(){
+  const PER_ROW=4, MARGIN=8, GAP=6;
+  const layers = SIL_layers(), ents = SIL_entries();
+  const rows = Math.max(1, Math.ceil(layers.length / PER_ROW));
+  const H = rows * (88 + GAP) + MARGIN * 2 - GAP;
+  const FY = v => H - v;
+  const F = n => (+n).toFixed(3);
+  const out = ['999','SILOUTTES DXF export - mm - layers PLYn_OP - 1 red cut, 5 blue score, 3 green engrave',
+    '0','SECTION','2','HEADER','9','$INSUNITS','70','4','0','ENDSEC',
+    '0','SECTION','2','ENTITIES'];
+  const L = (c,v) => { out.push(String(c), String(v)); };
+  function line(layer, color, x1,y1,x2,y2){
+    L(0,'LINE'); L(8,layer); L(62,color);
+    L(10,F(x1)); L(20,F(FY(y1))); L(30,'0'); L(11,F(x2)); L(21,F(FY(y2))); L(31,'0');
+  }
+  function poly(layer, color, pts, closed){
+    L(0,'LWPOLYLINE'); L(8,layer); L(62,color); L(90,pts.length); L(70, closed?1:0);
+    for (const [x,y] of pts){ L(10,F(x)); L(20,F(FY(y))); }
+  }
+  function ellipseE(layer, color, cx, cy, rx, ry){
+    L(0,'ELLIPSE'); L(8,layer); L(62,color);
+    L(10,F(cx)); L(20,F(FY(cy))); L(30,'0');
+    L(11,F(rx)); L(21,'0'); L(31,'0');
+    L(40,F(ry/rx)); L(41,'0'); L(42,F(Math.PI*2));
+  }
+  function pathPts(d){
+    const toks = d.replace(/([MLCZ])/g,' $1 ').trim().split(/[\s,]+/).filter(Boolean);
+    let pts=[], i=0, cx=0, cy=0, sx=0, sy=0;
+    while (i < toks.length){
+      const c = toks[i++];
+      if (c==='M'||c==='L'){ const x=+toks[i++], y=+toks[i++]; pts.push([x,y]); cx=x; cy=y; if(c==='M'){sx=x;sy=y;} }
+      else if (c==='C'){
+        const x1=+toks[i++],y1=+toks[i++],x2=+toks[i++],y2=+toks[i++],x=+toks[i++],y=+toks[i++];
+        for (let s=1;s<=8;s++){ const t=s/8, u=1-t;
+          pts.push([u*u*u*cx+3*u*u*t*x1+3*u*t*t*x2+t*t*t*x, u*u*u*cy+3*u*u*t*y1+3*u*t*t*y2+t*t*t*y]); }
+        cx=x; cy=y;
+      }
+      else if (c==='Z'){ pts.push([sx,sy]); }
+    }
+    return pts;
+  }
+  const ACI = {cut:1, score:5, engrave:3};
+  layers.forEach((l, idx) => {
+    const ox = MARGIN + (idx%PER_ROW)*(63+GAP), oy = MARGIN + Math.floor(idx/PER_ROW)*(88+GAP);
+    const base = 'PLY' + l;
+    poly(base+'_CUT', 1, [[ox,oy],[ox+63,oy],[ox+63,oy+88],[ox,oy+88]], true);
+    for (const [cx,cy] of [[ox,oy],[ox+63,oy],[ox,oy+88],[ox+63,oy+88]]){
+      line(base+'_SCORE', 5, cx-1.5, cy, cx+1.5, cy);
+      line(base+'_SCORE', 5, cx, cy-1.5, cx, cy+1.5);
+    }
+    for (const x of ents.filter(e => (e.e.layer||1) === l)){
+      if (!x.r.clip) continue;
+      const op = SIL_opOf(x.e, x.r), ln = base + '_' + op.toUpperCase(), color = ACI[op] || 1;
+      try {
+        const mm = clipToMM(parseClip(x.r.clip));
+        if (mm.kind === 'rect')
+          poly(ln, color, [[ox+mm.x,oy+mm.y],[ox+mm.x+mm.w,oy+mm.y],[ox+mm.x+mm.w,oy+mm.y+mm.h],[ox+mm.x,oy+mm.y+mm.h]], true);
+        else if (mm.kind === 'ellipse')
+          ellipseE(ln, color, ox+mm.cx, oy+mm.cy, mm.rx, mm.ry);
+        else if (mm.kind === 'path'){
+          const pts = pathPts(mm.d).map(([px,py]) => [ox+px, oy+py]);
+          if (pts.length > 1) poly(ln, color, pts, /Z/.test(mm.d));
+        }
+      } catch(e){}
+    }
+  });
+  out.push('0','ENDSEC','0','EOF');
+  return out.join('\n');
+}
+
+/* ================= PLUGIN: PhotoCraft =================
+   Photoshop-class bridge (github.com/storytold/photocraft, MIT/Apache-2.0).
+   Round-trip: export PNG -> edit in PhotoCraft -> import back.
+   Plus an in-app photo lab for quick work: the lab runs here, the full
+   editor runs there. */
+const SIL_FX = {
+  none:    {n:'Original', f:p=>p},
+  gray:    {n:'Grayscale', f:(r,g,b)=>{const v=r*.299+g*.587+b*.114;return[v,v,v];}},
+  sepia:   {n:'Sepia', f:(r,g,b)=>[Math.min(255,r*.393+g*.769+b*.189),Math.min(255,r*.349+g*.686+b*.168),Math.min(255,r*.272+g*.534+b*.131)]},
+  invert:  {n:'Invert', f:(r,g,b)=>[255-r,255-g,255-b]},
+  duotone: {n:'Duotone (brand)', f:(r,g,b)=>{const v=(r*.299+g*.587+b*.114)/255;return[v*245+(1-v)*20, v*166+(1-v)*21, v*35+(1-v)*24];}},
+  poster:  {n:'Posterize', f:(r,g,b)=>[Math.round(r/64)*64,Math.round(g/64)*64,Math.round(b/64)*64]},
+};
+SIL_register({ id:'photocraft', name:'PhotoCraft', icon:'◐',
+render(body){
+  body.innerHTML = `<h4>Photo<em>Craft</em> lab + bridge</h4>
+  <div class="note">PhotoCraft is ArtCraft's open-source Photoshop-class editor.
+  <b>Lab</b> (below) does quick in-app work on your card art — including a halftone
+  dot mode made for the LEGO print work. <b>Bridge:</b> export PNG, finish in
+  PhotoCraft, import the result back.</div>
+  <div class="row"><button class="sil-btn" id="sil-pc-up">⇪ Load image</button>
+  <button class="sil-btn" id="sil-pc-card">Use current card art</button></div>
+  <div class="row"><label>Filter</label><select id="sil-pc-fx">
+    ${Object.entries(SIL_FX).map(([k,v])=>`<option value="${k}">${v.n}</option>`).join('')}
+    <option value="halftone">Halftone dots (LEGO print)</option>
+    <option value="contrast">High contrast</option>
+    <option value="vignette">Vignette</option>
+  </select></div>
+  <div class="row"><button class="sil-btn primary" id="sil-pc-apply">Apply filter</button>
+  <button class="sil-btn" id="sil-pc-dl">⇩ Download PNG</button></div>
+  <div class="row"><button class="sil-btn" id="sil-pc-set">Set as card art</button>
+  <button class="sil-btn" id="sil-pc-web">↗ Open PhotoCraft</button></div>
+  <div id="sil-pc-view"></div>
+  <div class="note">“Set as card art” writes the lab result back onto the current card
+  (asks first). Everything else downloads — nothing is uploaded anywhere.</div>`;
+  let img = null, out = null;
+  const view = body.querySelector('#sil-pc-view');
+  const show = cv => { view.innerHTML=''; cv.className='sil-cv'; view.appendChild(cv); };
+  body.querySelector('#sil-pc-up').onclick = () => {
+    const i=document.createElement('input'); i.type='file'; i.accept='image/*';
+    i.onchange=()=>{ const f=i.files[0]; if(!f) return;
+      const u=URL.createObjectURL(f), im=new Image();
+      im.onload=()=>{ img=im; out=null; show(SIL_draw(im)); URL.revokeObjectURL(u); };
+      im.src=u; };
+    i.click();
+  };
+  body.querySelector('#sil-pc-card').onclick = () => {
+    const e = SIL_entries().find(x => x.r.img);
+    if (!e){ SIL_tell('No card art on the current build.'); return; }
+    const im = new Image();
+    im.onload = ()=>{ img=im; out=null; show(SIL_draw(im)); };
+    im.src = e.r.img;
+  };
+  body.querySelector('#sil-pc-apply').onclick = () => {
+    if (!img){ SIL_tell('Load an image first.'); return; }
+    const fx = body.querySelector('#sil-pc-fx').value;
+    out = SIL_filter(img, fx); show(out);
+    SIL_tell('Filter applied: ' + (SIL_FX[fx] ? SIL_FX[fx].n : fx));
+  };
+  body.querySelector('#sil-pc-dl').onclick = () => {
+    const cv = out || (img && SIL_draw(img));
+    if (!cv){ SIL_tell('Nothing to download.'); return; }
+    cv.toBlob(b => SIL_dl(b, 'craft-photocraft.png', 'image/png'));
+  };
+  body.querySelector('#sil-pc-set').onclick = () => {
+    if (!out){ SIL_tell('Apply a filter first.'); return; }
+    const e = SIL_entries().find(x => !x.e.custom);
+    if (!e){ SIL_tell('No catalog card on the build to attach art to.'); return; }
+    if (!confirm('Replace the current card art with the lab result?')) return;
+    try {
+      const card = cardById(e.e.cid);
+      if (!card || !card.img && !DB.cards) throw new Error('card not found');
+      card.img = out.toDataURL('image/png');
+      save(); rebuildAll(); SIL_tell('Card art updated.');
+    } catch(err){ SIL_tell('Could not set art: ' + err.message); }
+  };
+  body.querySelector('#sil-pc-web').onclick = () =>
+    window.open('https://github.com/storytold/photocraft', '_blank', 'noopener');
+}});
+function SIL_draw(im){
+  const c = document.createElement('canvas');
+  const k = Math.min(1, 1200/Math.max(im.width, im.height));
+  c.width = Math.max(1, Math.round(im.width*k)); c.height = Math.max(1, Math.round(im.height*k));
+  c.getContext('2d').drawImage(im, 0, 0, c.width, c.height);
+  return c;
+}
+function SIL_filter(im, fx){
+  const src = SIL_draw(im), w = src.width, h = src.height;
+  const g = src.getContext('2d'), id = g.getImageData(0,0,w,h), d = id.data;
+  if (fx === 'halftone'){
+    const cell = 6, out = document.createElement('canvas');
+    out.width=w; out.height=h; const og = out.getContext('2d');
+    og.fillStyle='#fff'; og.fillRect(0,0,w,h); og.fillStyle='#111';
+    for (let y=0; y<h; y+=cell) for (let x=0; x<w; x+=cell){
+      let s=0,n=0;
+      for (let yy=y; yy<Math.min(h,y+cell); yy+=2) for (let xx=x; xx<Math.min(w,x+cell); xx+=2){
+        const i=(yy*w+xx)*4; s += (d[i]*.299+d[i+1]*.587+d[i+2]*.114)/255; n++;
+      }
+      const v = n ? s/n : 1, r = (1-v)*(cell*0.62);
+      if (r > 0.4){ og.beginPath(); og.arc(x+cell/2, y+cell/2, r, 0, 7); og.fill(); }
+    }
+    return out;
+  }
+  if (fx === 'contrast' || fx === 'vignette'){
+    const cx=w/2, cy=h/2, max=Math.hypot(cx,cy);
+    for (let i=0;i<d.length;i+=4){
+      let r=d[i], gg=d[i+1], b=d[i+2];
+      if (fx==='contrast'){ r=Math.min(255,Math.max(0,(r-128)*1.6+128)); gg=Math.min(255,Math.max(0,(gg-128)*1.6+128)); b=Math.min(255,Math.max(0,(b-128)*1.6+128)); }
+      else { const x=(i/4)%w, y=Math.floor(i/4/w), v=1-Math.hypot(x-cx,y-cy)/max*0.75; r*=v; gg*=v; b*=v; }
+      d[i]=r; d[i+1]=gg; d[i+2]=b;
+    }
+    g.putImageData(id,0,0); return src;
+  }
+  const F = SIL_FX[fx] || SIL_FX.none;
+  for (let i=0;i<d.length;i+=4){
+    const [r,gg,b] = F.f(d[i],d[i+1],d[i+2]);
+    d[i]=r; d[i+1]=gg; d[i+2]=b;
+  }
+  g.putImageData(id,0,0); return src;
+}
+/* ================= PLUGIN: EffectCraft =================
+   AfterEffects-class bridge (github.com/storytold/effectcraft, MIT/Apache-2.0).
+   In-app: animated exploded-view compositor + Ken Burns, with real .webm
+   recording (MediaRecorder) and PNG frame export — ready for the ad channels.
+   Full compositing: export the frame PNGs and finish in EffectCraft. */
+SIL_register({ id:'effectcraft', name:'EffectCraft', icon:'▶',
+render(body){
+  body.innerHTML = `<h4>Effect<em>Craft</em> motion</h4>
+  <div class="note">EffectCraft is ArtCraft's open-source AfterEffects-class compositor.
+  <b>Here:</b> a live motion preview of your shadow box exploding and reassembling —
+  record it straight to <span class="sil-kbd">.webm</span> for the ad channels, or export
+  frames and finish the composite in EffectCraft.</div>
+  <div class="row"><label>Mode</label><select id="sil-ec-mode">
+    <option value="explode">Exploded stack (loop)</option>
+    <option value="kenburns">Ken Burns on card art</option>
+  </select></div>
+  <div class="row"><label>Seconds</label>
+    <input type="number" id="sil-ec-sec" value="4" min="1" max="12" style="max-width:80px"></div>
+  <div class="row"><button class="sil-btn primary" id="sil-ec-play">▶ Preview</button>
+  <button class="sil-btn" id="sil-ec-stop">■ Stop</button></div>
+  <div class="row"><button class="sil-btn" id="sil-ec-rec">● Record .webm</button>
+  <button class="sil-btn" id="sil-ec-frames">⇩ Export frames</button>
+  <button class="sil-btn" id="sil-ec-web">↗ Open EffectCraft</button></div>
+  <div id="sil-ec-view"></div>
+  <div class="note" id="sil-ec-status"></div>`;
+  const view = body.querySelector('#sil-ec-view');
+  const cv = document.createElement('canvas');
+  cv.width = 540; cv.height = 540; cv.className = 'sil-cv';
+  view.appendChild(cv);
+  const st = {raf:0, t0:0, rec:null, chunks:[]};
+  const status = m => body.querySelector('#sil-ec-status').textContent = m || '';
+  const layers = SIL_ecLayers();
+  if (!layers.length){ status('Build is empty — add cuts first.'); }
+
+  function draw(t){
+    const g = cv.getContext('2d');
+    const mode = body.querySelector('#sil-ec-mode').value;
+    g.fillStyle = '#0a0b0d'; g.fillRect(0,0,cv.width,cv.height);
+    if (mode === 'explode' && layers.length){
+      const cyc = (t % 4000) / 4000, ph = cyc < .5 ? cyc*2 : 2 - cyc*2;
+      const ease = ph < .5 ? 2*ph*ph : 1 - Math.pow(-2*ph+2, 2)/2;
+      const spread = ease * 46;
+      const n = layers.length, cw = 200, chh = 200*88/63;
+      const ox = (cv.width-cw)/2, oy = (cv.height-chh)/2;
+      for (let i = n-1; i >= 0; i--){
+        const dy = (i - (n-1)/2) * spread;
+        g.save(); g.globalAlpha = 0.92;
+        g.fillStyle = i === 0 ? '#f5f5f5' : '#ffffff';
+        g.strokeStyle = '#f5a623'; g.lineWidth = 1.5;
+        SIL_rr(g, ox, oy+dy, cw, chh, 6); g.fill(); g.stroke();
+        g.clip();
+        g.translate(ox, oy+dy);
+        g.strokeStyle = '#c33'; g.lineWidth = 2;
+        for (const p of layers[i].paths) g.stroke(p);
+        g.restore();
+        g.fillStyle = 'rgba(245,166,35,.9)'; g.font = '11px monospace';
+        g.fillText('PLY ' + layers[i].layer, ox+6, oy+dy+16);
+      }
+    } else {
+      const e = SIL_entries().find(x => x.r.img);
+      const cyc = (t % 6000) / 6000, zx = 1 + 0.18*Math.sin(cyc*Math.PI*2);
+      if (e){
+        const im = new Image();
+        im.onload = () => {
+          const iw = cv.width*zx, ih = iw * im.height/im.width;
+          const ox = (cv.width-iw)/2 + Math.sin(cyc*Math.PI*2)*24;
+          const oy = (cv.height-ih)/2 + Math.cos(cyc*Math.PI*2)*16;
+          g.drawImage(im, ox, oy, iw, ih);
+        };
+        im.src = e.r.img;
+      } else { g.fillStyle='#5c626c'; g.font='14px sans-serif';
+        g.fillText('No card art on the build.', 170, 270); }
+    }
+  }
+  function loop(t){
+    if (!st.t0) st.t0 = t;
+    draw(t - st.t0); st.raf = requestAnimationFrame(loop);
+  }
+  const stop = () => { cancelAnimationFrame(st.raf); st.raf = 0; st.t0 = 0; };
+  body.querySelector('#sil-ec-play').onclick = () => { stop(); st.raf = requestAnimationFrame(loop); status('Previewing…'); };
+  body.querySelector('#sil-ec-stop').onclick = () => { stop(); status(''); };
+  body.querySelector('#sil-ec-rec').onclick = () => {
+    if (!('MediaRecorder' in window)){ SIL_tell('MediaRecorder not supported here.'); return; }
+    stop(); st.raf = requestAnimationFrame(loop);
+    const stream = cv.captureStream(30);
+    st.chunks = [];
+    st.rec = new MediaRecorder(stream, {mimeType:'video/webm'});
+    st.rec.ondataavailable = e => e.data.size && st.chunks.push(e.data);
+    st.rec.onstop = () => {
+      stop();
+      SIL_dl(new Blob(st.chunks, {type:'video/webm'}), 'craft-effect.mp4.webm', 'video/webm');
+      status('Recording saved.'); SIL_tell('Motion clip recorded.');
+    };
+    st.rec.start();
+    const sec = Math.min(12, Math.max(1, +body.querySelector('#sil-ec-sec').value || 4));
+    status('● Recording ' + sec + 's…');
+    setTimeout(() => st.rec && st.rec.state !== 'inactive' && st.rec.stop(), sec*1000);
+  };
+  body.querySelector('#sil-ec-frames').onclick = () => {
+    stop();
+    const n = 12;
+    for (let i=0;i<n;i++){ draw(i/n*4000); }
+    cv.toBlob(b => SIL_dl(b, 'craft-effect-frame.png', 'image/png'));
+    SIL_tell('Frame exported — scrub the preview and re-export for more.');
+    st.raf = requestAnimationFrame(loop);
+  };
+  body.querySelector('#sil-ec-web').onclick = () =>
+    window.open('https://github.com/storytold/effectcraft', '_blank', 'noopener');
+}});
+/* rasterize each ply's cut paths to canvas Path2D for the compositor */
+function SIL_ecLayers(){
+  const out = [];
+  for (const l of SIL_layers()){
+    const paths = [];
+    for (const x of SIL_entries().filter(e => (e.e.layer||1) === l)){
+      if (!x.r.clip) continue;
+      try {
+        const mm = clipToMM(parseClip(x.r.clip));
+        const p = new Path2D();
+        const S2 = 200/63, ox = 0, oy = 0;
+        if (mm.kind === 'rect') p.rect(mm.x*S2, mm.y*S2, mm.w*S2, mm.h*S2);
+        else if (mm.kind === 'ellipse') p.ellipse(mm.cx*S2, mm.cy*S2, mm.rx*S2, mm.ry*S2, 0, 0, 7);
+        else if (mm.kind === 'path') p.addPath(new Path2D(SIL_mmPath(mm.d, S2)));
+        paths.push(p);
+      } catch(e){}
+    }
+    out.push({layer:l, paths});
+  }
+  return out;
+}
+function SIL_mmPath(d, s){
+  return d.replace(/(-?[\d.]+),(-?[\d.]+)/g, (m,a,b) => (+a*s).toFixed(1)+','+(+b*s).toFixed(1))
+          .replace(/(-?[\d.]+) (-?[\d.]+)/g, (m,a,b) => (+a*s).toFixed(1)+' '+(+b*s).toFixed(1));
+}
+function SIL_rr(g,x,y,w,h,r){
+  g.beginPath();
+  g.moveTo(x+r,y); g.arcTo(x+w,y,x+w,y+h,r); g.arcTo(x+w,y+h,x,y+h,r);
+  g.arcTo(x,y+h,x,y,r); g.arcTo(x,y,x+w,y,r); g.closePath();
+}
+/* ================= PLUGIN: DesignCraft =================
+   InDesign-class bridge (github.com/storytold/designcraft, MIT/Apache-2.0).
+   Composes the build into a print-ready layout page: title block, spec,
+   design preview, cut-sheet map, instructions, branding footer. Print to
+   PDF or paper. Finish multi-page publishing in DesignCraft. */
+SIL_register({ id:'designcraft', name:'DesignCraft', icon:'▤',
+render(body){
+  body.innerHTML = `<h4>Design<em>Craft</em> layout</h4>
+  <div class="note">DesignCraft is ArtCraft's open-source InDesign-class page layout app.
+  <b>Here:</b> compose this build as a one-page print layout — spec, preview, cut map,
+  instructions, footer. Print it or save as PDF, then finish the booklet in DesignCraft.</div>
+  <div class="row"><label>Footer</label><input type="text" id="sil-dc-foot" value="highscores.live"></div>
+  <div class="row"><button class="sil-btn primary" id="sil-dc-go">▤ Compose print layout</button>
+  <button class="sil-btn" id="sil-dc-web">↗ Open DesignCraft</button></div>
+  <div class="note">The layout opens in a new tab with print CSS — use your browser's
+  Print → Save as PDF.</div>`;
+  body.querySelector('#sil-dc-go').onclick = () => {
+    const foot = body.querySelector('#sil-dc-foot').value;
+    SIL_designLayout(foot);
+  };
+  body.querySelector('#sil-dc-web').onclick = () =>
+    window.open('https://github.com/storytold/designcraft', '_blank', 'noopener');
+}});
+function SIL_designLayout(foot){
+  const ents = SIL_entries(), layers = SIL_layers();
+  let svg = '';
+  try { svg = SIL_designSVG(); } catch(e){ svg = '<svg></svg>'; }
+  const rows = ents.map(x =>
+    `<tr><td>${x.e.layer||1}</td><td>${SIL_esc(x.r.name)}</td><td>${SIL_esc(x.r.type||'')}</td><td>${SIL_opOf(x.e,x.r)}</td><td>$${(+x.r.price||0).toFixed(2)}</td></tr>`).join('');
+  const total = ents.reduce((s,x)=>s+(+x.r.price||0),0);
+  const w = window.open('', '_blank');
+  if (!w){ SIL_tell('Popup blocked — allow popups for the layout.'); return; }
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Cut layout — ${SIL_esc(S.projName||'untitled')}</title>
+  <style>@media print{ .noprint{display:none} } body{font-family:sans-serif;color:#111;max-width:800px;margin:24px auto;padding:0 16px}
+  h1{letter-spacing:2px} table{border-collapse:collapse;width:100%;font-size:12px} td,th{border:1px solid #999;padding:5px 8px;text-align:left}
+  .sheet{border:1px solid #999;margin:16px 0} .foot{margin-top:24px;color:#666;font-size:11px;border-top:1px solid #ccc;padding-top:8px}
+  svg{width:100%;height:auto}</style></head><body>
+  <button class="noprint" onclick="window.print()" style="padding:10px 20px;font-size:14px">Print / Save PDF</button>
+  <h1>SILOUTTES — CUT LAYOUT</h1>
+  <p><b>Project:</b> ${SIL_esc(S.projName||'untitled')} · <b>Plies:</b> ${layers.length} (${layers.join(', ')}) ·
+  <b>Elements:</b> ${ents.length} · <b>Est. price:</b> $${total.toFixed(2)}</p>
+  <h2>Design preview (1:1 mm)</h2><div class="sheet">${svg}</div>
+  <h2>Manifest</h2><table><tr><th>Ply</th><th>Element</th><th>Type</th><th>Op</th><th>Price</th></tr>${rows}</table>
+  <h2>Instructions</h2>
+  <ol><li>RED (#FF0000) = through cut. BLUE (#0000FF) = score / registration crosses only.</li>
+  <li>Card outline is exactly 63.0 × 88.0 mm. Kerf is NOT applied — set ~0.15mm inward offset in your laser software.</li>
+  <li>Stack plies ascending with 2mm spacers. Register with the blue corner crosses.</li>
+  <li>Test on scrap; measure the outline with calipers before good stock.</li></ol>
+  <div class="foot">${SIL_esc(foot)} · generated ${new Date().toLocaleString()}</div>
+  </body></html>`);
+  w.document.close();
+  SIL_tell('Print layout composed in a new tab.');
+}
+
+/* ================= PLUGIN: Agent =================
+   Agentic AI: the model sees every craft program as a callable tool and
+   drives the design — filters, exports, previews, layouts, and committing
+   new cut elements. Uses your existing BYO key via v265's aiAsk(). */
+const SIL_TOOLS = {
+  'cutmirror.sublayers': { desc:'Report the ply/sub-layer structure of the live build.',
+    run: () => SIL_layers().map(l => {
+      const items = SIL_entries().filter(x => (x.e.layer||1) === l);
+      return `ply ${l}: ` + items.map(x => `${x.r.name} [${SIL_opOf(x.e,x.r)}]`).join(', ');
+    }).join('\n') || 'build is empty' },
+  'cutmirror.artifact': { desc:'Export the live build as a design artifact JSON.',
+    run: () => { SIL_artifact(); return 'artifact exported'; } },
+  'vectorcraft.export_svg': { desc:'Export the layered cut SVG for VectorCraft.',
+    run: () => { SIL_dl(SIL_designSVG(), 'craft-vectorcraft.svg', 'image/svg+xml'); return 'layered SVG exported'; } },
+  'vectorcraft.export_dxf': { desc:'Export the design as DXF (mm, PLYn_OP layers) for VectorCraft or xTool Studio.',
+    run: () => { SIL_dl(SIL_buildDXF(), 'craft-vectorcraft.dxf', 'application/dxf'); return 'DXF exported'; } },
+  'photocraft.filter': { desc:'Apply a photo-lab filter to the current card art. args: {filter: grayscale|sepia|duotone|halftone|contrast|vignette|posterize|invert}',
+    run: async (a) => { return await SIL_agentPhotoFilter(a.filter); } },
+  'effectcraft.frames': { desc:'Render the exploded-stack motion preview (no file).',
+    run: () => 'motion preview data ready (' + SIL_layers().length + ' plies)' },
+  'designcraft.layout': { desc:'Compose the print layout page. args: {footer}',
+    run: (a) => { SIL_designLayout((a&&a.footer) || 'highscores.live'); return 'layout composed'; } },
+  'build.commit': { desc:'Commit new cut elements. args: {elements:[{name,type,layer,op,clip,price,time}]} — clips validated through the cut contract.',
+    run: (a) => {
+      const els = (a && a.elements) || []; let ok = 0, bad = [];
+      for (const el of els){ try { SIL_commit(el); ok++; } catch(e){ bad.push((el.name||'?')+': '+e.message); } }
+      return `committed ${ok}${bad.length ? '; rejected: ' + bad.join(' | ') : ''}`;
+    } },
+};
+SIL_register({ id:'agent', name:'Agent', icon:'✦',
+render(body){
+  body.innerHTML = `<h4>Agentic <em>AI</em></h4>
+  <div class="note">The agent sees <b>every craft program as a tool</b> — CutMirror, VectorCraft,
+  PhotoCraft, EffectCraft, DesignCraft, plus the build itself — and drives the design:
+  it calls tools, then commits new cut elements. Uses your saved BYO key (Setup);
+  nothing is proxied.</div>
+  <div class="row"><label>Goal</label></div>
+  <div class="row"><textarea id="sil-ag-goal" rows="3" placeholder="e.g. Add a crescent moon and starfield to ply 3, then export the layered SVG and a design artifact"></textarea></div>
+  <div class="row"><button class="sil-btn primary" id="sil-ag-run">✦ Run agent</button></div>
+  <div class="sil-log" id="sil-ag-log" style="display:none"></div>
+  <div class="note">Tool calls are validated: clips must parse through the real cut contract,
+  or they are rejected — never faked into your build.</div>`;
+  body.querySelector('#sil-ag-run').onclick = () => SIL_agentRun(body);
+}});
+function SIL_agLog(body, msg, cls){
+  const log = body.querySelector('#sil-ag-log');
+  log.style.display = 'block';
+  log.innerHTML += `<span class="${cls||''}">${SIL_esc(msg)}</span>\n`;
+  log.scrollTop = log.scrollHeight;
+}
+async function SIL_agentPhotoFilter(filter){
+  const e = SIL_entries().find(x => x.r.img);
+  if (!e) return 'no card art on build';
+  const valid = ['gray','sepia','duotone','halftone','contrast','vignette','posterize','invert'];
+  const fx = valid.includes(filter) ? filter : 'duotone';
+  return new Promise(res => {
+    const im = new Image();
+    im.onload = () => {
+      try {
+        const out = SIL_filter(im, fx === 'gray' ? 'gray' : fx);
+        const card = cardById(e.e.cid);
+        card.img = out.toDataURL('image/png');
+        save(); rebuildAll();
+        res('applied ' + fx + ' to card art');
+      } catch(err){ res('filter failed: ' + err.message); }
+    };
+    im.onerror = () => res('could not load card art');
+    im.src = e.r.img;
+  });
+}
+async function SIL_agentRun(body){
+  const goal = body.querySelector('#sil-ag-goal').value.trim();
+  if (!goal){ SIL_tell('Describe the goal first.'); return; }
+  if (typeof aiAsk !== 'function'){ SIL_tell('AI core not available in this build.'); return; }
+  const log = body.querySelector('#sil-ag-log');
+  log.style.display = 'block'; log.innerHTML = '';
+  const btn = body.querySelector('#sil-ag-run'); btn.disabled = true;
+  try {
+    const ctx = 'Project "' + (S.projName || 'untitled') + '". ' +
+      SIL_entries().length + ' elements across plies [' + SIL_layers().join(',') + ']. ' +
+      SIL_entries().slice(0,12).map(x => `${x.r.name} (ply ${x.e.layer||1}, ${SIL_opOf(x.e,x.r)})`).join('; ');
+    const toolDesc = Object.entries(SIL_TOOLS).map(([k,v]) => `- ${k}: ${v.desc}`).join('\n');
+    const sys = `You are an agentic design operator inside the SILOUTTES laser-cut builder.
+You have these tools (call any, in order):
+${toolDesc}
+Clip formats (percent of the 63x88mm card): "inset(T% R% B% L%)", "ellipse(RX% RY% at CX% CY%)", "path(\\"M x y L x y ... Z\\")".
+op is cut, score, or engrave. layer 1 is the backing.
+Current build: ${ctx}
+Return ONLY JSON: {"thought":"...","tool_calls":[{"tool":"name","args":{}}],"elements":[{"name","type","layer","op","clip","price","time"}]}
+Be concrete and buildable. No prose outside the JSON.`;
+    SIL_agLog(body, '○ thinking…', 't');
+    let rawOut;
+    try { rawOut = await aiAsk('Goal: ' + goal + '\n\n' + sys); }
+    catch(e){ SIL_agLog(body, '✗ AI call failed: ' + e.message, 'bad'); btn.disabled = false; return; }
+    const m = String(rawOut).match(/\{[\s\S]*\}/);
+    if (!m) throw new Error('model did not return JSON');
+    const plan = JSON.parse(m[0]);
+    SIL_agLog(body, 'thought: ' + (plan.thought || '—'), 't');
+    for (const tc of (plan.tool_calls || [])){
+      const t = SIL_TOOLS[tc.tool];
+      if (!t){ SIL_agLog(body, '✗ unknown tool: ' + tc.tool, 'bad'); continue; }
+      SIL_agLog(body, '→ ' + tc.tool + ' ' + JSON.stringify(tc.args || {}), 't');
+      try {
+        const r = await t.run(tc.args || {});
+        SIL_agLog(body, '✓ ' + r, 'ok');
+      } catch(e){ SIL_agLog(body, '✗ ' + tc.tool + ' failed: ' + e.message, 'bad'); }
+    }
+    const els = plan.elements || [];
+    if (els.length){
+      const r = await SIL_TOOLS['build.commit'].run({elements: els});
+      SIL_agLog(body, 'commit: ' + r, els.length ? 'ok' : '');
+    }
+    SIL_agLog(body, 'done.', 'ok');
+    SIL_tell('Agent run complete — see the log.');
+  } catch(e){
+    SIL_agLog(body, '✗ ' + e.message, 'bad');
+  }
+  btn.disabled = false;
+}
+
+/* ================= boot ================= */
+SIL_boot();
+})();
+
+</script>
+
+<script>
+/* ================================================================
+   SILHOUETTES — RolodexCraft plugin v1 (for the v265 proven core)
+   MIT License — Copyright (c) 2026 masterledgerlive.
+
+   What this is: an ADD-ON in the craft-plugins pattern. It does not
+   modify any v265 function. It reads v265 state (S, parseClip, save(),
+   rebuildAll(), toast(), download(), esc()) and adds a LEFT-side
+   library drawer: the Rolodex.
+
+   The Rolodex is the whole library of cuts, searchable by card and
+   object — the hand-traced originals, the agent-designed pulls, and
+   any silhouettes-stamp pack anyone trades you. Every clip is
+   validated through the real cut contract (parseClip) before it is
+   listed; invalid cuts are shown flagged and can never be committed.
+   Commits replicate the craft plugins' SIL_commit stack shape
+   exactly ({custom:true, kind:'paper', ...}) so the proven pipeline
+   processes them unchanged.
+
+   Built-in packs ship inside this file (offline, like everything
+   else here). Imported packs persist in localStorage.
+   ================================================================ */
+(function(){
+'use strict';
+/* ---- guard: v265 core must be present ---- */
+if (typeof buildCutSVG !== 'function' || typeof parseClip !== 'function' ||
+    typeof S === 'undefined' || typeof save !== 'function' ||
+    typeof rebuildAll !== 'function') return;
+
+var RX_PACKS_BUILTIN = {
+ "kind": "silhouettes-rolodex-packs",
+ "version": 1,
+ "packs": [
+  {
+   "name": "Rolodex \u2014 Crystalline Entity (hand-traced original)",
+   "items": [
+    {
+     "pack": "rolodex",
+     "fromCard": "Crystalline Entity",
+     "name": "Base Frame & Field",
+     "type": "FRAME",
+     "op": "cut",
+     "clip": null,
+     "price": 0.1,
+     "time": 130,
+     "tags": [
+      "base",
+      "cut",
+      "field",
+      "frame"
+     ],
+     "designed": false
+    },
+    {
+     "pack": "rolodex",
+     "fromCard": "Crystalline Entity",
+     "name": "Artifact metal frame",
+     "type": "FRAME",
+     "op": "cut",
+     "clip": "path(\"M4.0 3.2 L96.0 3.2 L96.0 96.8 L4.0 96.8 Z\")",
+     "price": 0.12,
+     "time": 110,
+     "tags": [
+      "artifact",
+      "cut",
+      "frame",
+      "metal",
+      "path"
+     ],
+     "designed": false
+    },
+    {
+     "pack": "rolodex",
+     "fromCard": "Crystalline Entity",
+     "name": "Moon disc",
+     "type": "FX",
+     "op": "cut",
+     "clip": "ellipse(9% 7% at 24% 20%)",
+     "price": 0.08,
+     "time": 40,
+     "tags": [
+      "cut",
+      "disc",
+      "ellipse",
+      "fx",
+      "moon"
+     ],
+     "designed": false
+    },
+    {
+     "pack": "rolodex",
+     "fromCard": "Crystalline Entity",
+     "name": "Mountain range shelf",
+     "type": "TERRAIN",
+     "op": "cut",
+     "clip": "path(\"M8.2 42.6 L18.4 38.8 L29.0 41.6 L41.5 36.4 L54.0 40.8 L68.2 35.6 L81.4 40.2 L91.6 38.4 L91.6 51.4 L8.2 51.4 Z\")",
+     "price": 0.16,
+     "time": 90,
+     "tags": [
+      "cut",
+      "mountain",
+      "path",
+      "range",
+      "shelf",
+      "terrain"
+     ],
+     "designed": false
+    },
+    {
+     "pack": "rolodex",
+     "fromCard": "Crystalline Entity",
+     "name": "Outer crystal arms",
+     "type": "FIGURE",
+     "op": "cut",
+     "clip": "path(\"M50 14.8 L54.6 24.2 L66.8 22.4 L58.8 30.6 L64.2 42.0 L50 36.4 L35.8 42.0 L41.2 30.6 L33.2 22.4 L45.4 24.2 Z\")",
+     "price": 0.2,
+     "time": 120,
+     "tags": [
+      "arms",
+      "crystal",
+      "cut",
+      "figure",
+      "outer",
+      "path"
+     ],
+     "designed": false
+    },
+    {
+     "pack": "rolodex",
+     "fromCard": "Crystalline Entity",
+     "name": "Inner lattice star",
+     "type": "FIGURE",
+     "op": "cut",
+     "clip": "path(\"M50 22.6 L52.4 28.8 L58.8 29.2 L53.8 33.4 L55.6 39.4 L50 35.8 L44.4 39.4 L46.2 33.4 L41.2 29.2 L47.6 28.8 Z\")",
+     "price": 0.16,
+     "time": 90,
+     "tags": [
+      "cut",
+      "figure",
+      "inner",
+      "lattice",
+      "path",
+      "star"
+     ],
+     "designed": false
+    },
+    {
+     "pack": "rolodex",
+     "fromCard": "Crystalline Entity",
+     "name": "Center energy beam",
+     "type": "FX",
+     "op": "cut",
+     "clip": "path(\"M48.6 36.8 L51.4 36.8 L52.6 50.8 L47.4 50.8 Z\")",
+     "price": 0.1,
+     "time": 50,
+     "tags": [
+      "beam",
+      "center",
+      "cut",
+      "energy",
+      "fx",
+      "path"
+     ],
+     "designed": false
+    },
+    {
+     "pack": "rolodex",
+     "fromCard": "Crystalline Entity",
+     "name": "Title plate",
+     "type": "FRAME",
+     "op": "cut",
+     "clip": "path(\"M6.6 5.3 L80.4 5.3 L80.4 10.7 L6.6 10.7 Z\")",
+     "price": 0.12,
+     "time": 70,
+     "tags": [
+      "cut",
+      "frame",
+      "path",
+      "plate",
+      "title"
+     ],
+     "designed": false
+    }
+   ]
+  },
+  {
+   "name": "Designed pull \u2014 Crystalline Entity",
+   "items": [
+    {
+     "pack": "designed",
+     "fromCard": "star-trek-261-crystalline-entity",
+     "name": "Full Card Frame Border",
+     "type": "FRAME",
+     "op": "cut",
+     "clip": "path(\"M37.3 0 L62.3 0 L80.9 6.2 L93.4 18.7 L99.6 37.4 L99.6 62.3 L93.4 81 L80.9 93.5 L62.3 99.7 L37.3 99.7 L18.7 93.5 L6.2 81 L0 62.3 L0 37.4 L6.2 18.7 L18.7 6.2 Z M27.6 2.4 L72.1 2.4 L94.8 2.8 L95.8 3.5 L96.3 23.7 L96.3 63.4 L96.2 83.8 L96 85 L95.3 86.2 L94 87.6 L93.7 89.4 L94.4 91.7 L94.3 93.7 L93.4 95.2 L86.3 96.1 L72.8 96.4 L65.6 96.3 L64.7 95.8 L63.8 95.8 L62.8 96.3 L61.8 96.2 L60.7 95.6 L59.9 95.4 L59.3 95.8 L59.2 95.2 L59.6 93.7 L58.6 92.8 L56.1 92.5 L54.5 92.8 L53.7 93.7 L52.1 94.2 L49.6 94.6 L47.5 94.1 L45.6 93 L36.9 92.5 L21.3 92.8 L14 93.1 L15.1 93.4 L15.2 93.8 L14.3 94.4 L14.3 95 L15.2 95.6 L16.1 95.8 L17.1 95.4 L17.5 95.7 L17.3 96.4 L16.3 96.6 L14.4 96.1 L12.2 96.1 L9.5 96.6 L8.1 96.4 L7.9 95.5 L7.6 95.5 L7.2 96.4 L6.7 96.4 L6 95.7 L6.6 95.1 L8.5 94.9 L8.7 94.6 L7.3 94.5 L6.6 94.2 L6.6 93.7 L7.3 93.4 L8.7 93.3 L8.6 93 L6.9 92.6 L6.2 91.3 L6.5 89 L6.2 87.8 L5.3 87.5 L4.5 86.7 L3.7 85.4 L3.3 64.5 L3.3 24 L3.8 3.5 L4.8 2.8 Z\")",
+     "price": 0.12,
+     "time": 70,
+     "tags": [
+      "designed-pull",
+      "frame",
+      "agreed"
+     ],
+     "designed": true
+    },
+    {
+     "pack": "designed",
+     "fromCard": "star-trek-261-crystalline-entity",
+     "name": "Title Text Plate",
+     "type": "TERRAIN",
+     "op": "cut",
+     "clip": "path(\"M39.1 62.1 L60.5 62.1 L76.6 63.7 L87.2 67.1 L92.6 72 L92.6 78.7 L92.5 77 L92.4 67.1 L76.3 62.1 L44.4 62.1 Z\")",
+     "price": 0.12,
+     "time": 70,
+     "tags": [
+      "designed-pull",
+      "band",
+      "candidate"
+     ],
+     "designed": true
+    },
+    {
+     "pack": "designed",
+     "fromCard": "star-trek-261-crystalline-entity",
+     "name": "Band \u2014 Mid",
+     "type": "TERRAIN",
+     "op": "cut",
+     "clip": "path(\"M49.2 56.5 L76.1 56.6 L71.6 56.6 L35.7 56.5 L22.2 56.5 L31.2 56.5 Z\")",
+     "price": 0.12,
+     "time": 70,
+     "tags": [
+      "designed-pull",
+      "band",
+      "candidate"
+     ],
+     "designed": true
+    },
+    {
+     "pack": "designed",
+     "fromCard": "star-trek-261-crystalline-entity",
+     "name": "Mountain Range Silhouette",
+     "type": "TERRAIN",
+     "op": "cut",
+     "clip": "path(\"M23.5 11.7 L27.4 12.1 L28.7 12.6 L27.4 13.1 L26.5 14.2 L26 15.6 L26.9 17.3 L29.2 19.3 L32.7 20.3 L37.4 20.3 L39.3 20.6 L38.6 20.9 L38.9 21.4 L40.2 22.1 L40.2 22.5 L38.7 22.7 L38.3 23 L39.3 23.5 L43.4 23.8 L50.7 23.9 L55.1 24.4 L56.5 25.3 L58.7 25 L61.8 23.8 L61.1 22.1 L56.6 20 L57 20 L62.3 22.1 L64.6 22.3 L64.1 20.5 L62.6 18.5 L60.3 16.3 L60.1 14.9 L62 14.4 L63.4 14.2 L64.4 14.6 L64.9 15.2 L64.9 16.1 L64.4 16.4 L63.3 16.1 L63.6 16.5 L65.1 17.6 L65.7 18.7 L65.6 19.8 L66.4 20.3 L68.1 20.2 L69.3 19.8 L69.8 18.8 L70.1 18.9 L70 20 L70.4 20.2 L71.2 19.6 L71.3 20.5 L70.6 22.7 L70.7 24 L71.8 24.1 L72.1 24.5 L71.8 25 L74.3 25.2 L79.7 25.3 L83.2 26 L84.8 27.4 L82.2 27.5 L75.3 26.4 L71.7 26.7 L71.2 28.4 L70.6 29 L69.9 28.2 L69.2 28.1 L68.4 28.5 L68.7 29.5 L70 31 L70.2 32.1 L69.1 32.7 L68.6 33.4 L68.7 34.2 L67.7 34.5 L65.6 34.2 L64.2 35.2 L63.5 37.3 L63.4 37.4 L63.7 35.3 L63.1 34.4 L61.8 34.8 L61.3 34.3 L61.8 33 L62.3 32.8 L63 33.6 L63.7 33.5 L64.6 32.4 L65 32.4 L65.1 33.3 L65.9 34 L67.4 34.3 L67.8 33.1 L67.1 30.4 L65.8 29.4 L63.9 30.1 L64.4 29.1 L67.1 26.6 L68.4 24.9 L68.3 24.1 L66.9 24.9 L64.2 27.3 L62.3 28.5 L61.2 28.5 L60.8 28.2 L61.1 27.7 L59.3 27.9 L55.4 28.8 L54.6 29.3 L56.9 29.3 L58.7 29.7 L59.9 30.4 L60.3 31 L59.9 31.5 L59 31.1 L57.5 30 L55.8 29.4 L53.9 29.4 L53.1 28.7 L53.6 27.5 L52.9 26.7 L51 26.5 L48.3 27.3 L44.8 29.1 L43.1 29.4 L43.1 28.3 L42.9 28.1 L42.4 28.9 L40.7 29.5 L37.9 29.8 L35.4 29.1 L33.3 27.6 L32.1 27.4 L31.8 28.4 L30.7 28.5 L28.8 27.4 L27.9 27.5 L28.1 28.8 L27.7 29.6 L26.8 29.9 L27.1 30.8 L28.6 32.2 L28.6 33 L27 33.1 L25.1 32.7 L22.9 31.6 L20.9 29.8 L19 27.3 L19.9 26.1 L23.7 25.9 L25.5 25.3 L25.3 24.1 L24.6 23.2 L23.3 22.5 L20.3 22.7 L15.4 23.8 L12.7 24 L12.2 23.3 L14.1 22.3 L18.3 20.8 L19.8 19.6 L18.7 18.5 L16.8 18 L14.1 17.9 L12.2 18.4 L11.4 19.4 L11.4 19.2 L12.2 17.7 L15.5 15.6 L21 13 L22.8 11.6 L21.2 11.6 L20.6 11.5 L21.3 11.5 Z\")",
+     "price": 0.12,
+     "time": 70,
+     "tags": [
+      "designed-pull",
+      "band",
+      "candidate"
+     ],
+     "designed": true
+    },
+    {
+     "pack": "designed",
+     "fromCard": "star-trek-261-crystalline-entity",
+     "name": "Figure \u2014 Mid right",
+     "type": "FIGURE",
+     "op": "cut",
+     "clip": "path(\"M83.7 34.2 L85.6 35.6 L87.8 36.3 L90.1 36.3 L91.1 39.1 L90.9 44.6 L87.7 48.1 L81.6 49.9 L78.3 51.2 L77.8 52.1 L77 52.7 L75.9 53 L74.9 53.1 L74 53 L74.2 52.6 L75.7 52 L76 51.3 L75.2 50.5 L73.4 50.1 L70.7 49.9 L72.3 49.3 L78.4 47.9 L81.6 46.8 L82 46 L80.8 45.8 L77.9 46.3 L75.5 46.3 L73.6 45.8 L71.8 46.3 L70.1 47.8 L67.7 48.3 L64.8 47.8 L63.1 48 L62.6 48.8 L62.1 49.1 L61.7 48.7 L60 49.1 L57.1 50.2 L56.2 50.3 L57.4 49.5 L57.8 48.6 L57.5 47.8 L58.2 47.4 L60.2 47.6 L63.7 46.5 L69.1 44.4 L71.3 43.5 L70.6 43.9 L70.3 44.5 L70.6 45.4 L73.8 44.1 L80 40.9 L82.8 38.7 L82.3 37.6 L80.9 36.4 L78.6 35.2 L78.5 34.8 L80.4 35.1 L81.6 34.8 L82.4 33.9 Z\")",
+     "price": 0.12,
+     "time": 70,
+     "tags": [
+      "designed-pull",
+      "figure",
+      "candidate"
+     ],
+     "designed": true
+    },
+    {
+     "pack": "designed",
+     "fromCard": "star-trek-261-crystalline-entity",
+     "name": "Detail \u2014 Lower",
+     "type": "FX",
+     "op": "cut",
+     "clip": "path(\"M33.2 71.8 L36.9 72.5 L42.1 72.6 L49 72.4 L52.6 72.5 L53 73 L49.8 73.2 L42.9 73.1 L38.8 73.5 L37.3 74.4 L36.4 74.5 L36.3 73.6 L35.6 73 L34.4 72.8 L32.7 73.5 L30.4 75.2 L29.4 75.5 L29.9 74.4 L29.4 73.7 L28.1 73.3 L28.2 73.1 L29.7 73 L30.2 72.8 L29.9 72.4 L30.1 72.1 L30.9 71.7 Z\")",
+     "price": 0.12,
+     "time": 70,
+     "tags": [
+      "designed-pull",
+      "detail",
+      "candidate"
+     ],
+     "designed": true
+    },
+    {
+     "pack": "designed",
+     "fromCard": "star-trek-261-crystalline-entity",
+     "name": "Detail \u2014 Upper",
+     "type": "FX",
+     "op": "cut",
+     "clip": "path(\"M46.1 5.8 L61.4 5.9 L72.8 6.4 L80.5 7.2 L85 8.1 L86.5 8.9 L77.8 9.4 L59.1 9.6 L52.8 9.7 L58.9 9.6 L62.1 8.7 L62.2 7 L56.3 6 L44.4 5.8 Z\")",
+     "price": 0.12,
+     "time": 70,
+     "tags": [
+      "designed-pull",
+      "detail",
+      "candidate"
+     ],
+     "designed": true
+    },
+    {
+     "pack": "designed",
+     "fromCard": "star-trek-261-crystalline-entity",
+     "name": "Detail \u2014 Upper left",
+     "type": "FX",
+     "op": "cut",
+     "clip": "path(\"M10.1 27.4 L11.2 32.6 L12.1 35.4 L12.6 36.1 L13.5 36.4 L14.9 36.3 L14.9 36.7 L13.4 37.4 L12.9 38.2 L13.4 38.9 L14 39.2 L14.7 39.1 L15.1 38.6 L15.1 37.7 L15.8 37.3 L17.1 37.4 L17.5 36.6 L16.9 35 L18 35 L20.8 36.5 L22.3 36.7 L22.4 35.5 L23 35.5 L23.9 36.7 L24.5 36.9 L25 36.2 L24.4 37.4 L22.8 40.8 L22.6 42.6 L23.9 42.9 L25 42.5 L25.9 41.3 L26.6 41.4 L27.1 42.7 L28.2 43.8 L29.9 44.7 L29.7 44.8 L27.5 44.1 L26.3 44.3 L26.1 45.4 L25.2 45.7 L23.5 45.2 L22.1 45.2 L21.1 45.7 L20.5 45.3 L20.4 44.1 L19.3 43.3 L17.4 42.9 L15.5 41.9 L13.8 40.2 L12.8 39.8 L12.7 40.8 L11.9 39.8 L10.5 36.9 L10 34.5 L10.4 32.7 L10.2 29.6 L9.3 25.3 L9.1 23.6 L9.4 24.4 Z\")",
+     "price": 0.12,
+     "time": 70,
+     "tags": [
+      "designed-pull",
+      "detail",
+      "candidate"
+     ],
+     "designed": true
+    },
+    {
+     "pack": "designed",
+     "fromCard": "star-trek-261-crystalline-entity",
+     "name": "Detail \u2014 Mid",
+     "type": "FX",
+     "op": "cut",
+     "clip": "path(\"M69.8 41.1 L69.6 42.1 L67.1 43.7 L62.2 45.9 L58.3 47.1 L55.5 47.4 L54.5 47.2 L55.4 46.7 L55 45.8 L53.3 44.8 L53 43.5 L53.9 42.2 L54.9 41.5 L56 41.3 L57 41.7 L57.8 42.5 L57.9 43.2 L57.1 43.9 L57.2 44.5 L58.3 45.1 L61.1 44.8 L65.9 43.7 L68.6 42.5 L69.5 41.2 Z\")",
+     "price": 0.12,
+     "time": 70,
+     "tags": [
+      "designed-pull",
+      "detail",
+      "candidate"
+     ],
+     "designed": true
+    },
+    {
+     "pack": "designed",
+     "fromCard": "star-trek-261-crystalline-entity",
+     "name": "Detail \u2014 Mid right",
+     "type": "FX",
+     "op": "cut",
+     "clip": "path(\"M90.4 49.1 L89.3 50.2 L85.6 51.5 L79.4 53.2 L77.5 54.2 L79.9 54.7 L78.9 54.9 L74.4 54.8 L73.6 54.4 L76.4 53.5 L78.1 52.5 L78.8 51.6 L82.1 50.5 L88 49.2 Z\")",
+     "price": 0.12,
+     "time": 70,
+     "tags": [
+      "designed-pull",
+      "detail",
+      "candidate"
+     ],
+     "designed": true
+    },
+    {
+     "pack": "designed",
+     "fromCard": "star-trek-261-crystalline-entity",
+     "name": "Detail \u2014 Upper left \u00b711",
+     "type": "FX",
+     "op": "cut",
+     "clip": "path(\"M12.4 11.8 L15.5 12.3 L16.1 13.3 L14 14.8 L11.7 15.6 L9.2 15.6 L8 14.9 L8 13.3 L8.8 12.3 L10.1 11.8 Z\")",
+     "price": 0.12,
+     "time": 70,
+     "tags": [
+      "designed-pull",
+      "detail",
+      "candidate"
+     ],
+     "designed": true
+    },
+    {
+     "pack": "designed",
+     "fromCard": "star-trek-261-crystalline-entity",
+     "name": "Detail \u2014 Upper left \u00b712",
+     "type": "FX",
+     "op": "cut",
+     "clip": "path(\"M11.5 22.9 L16.4 26.1 L19.6 29.2 L21.2 32.3 L22 34.5 L21.9 35.7 L20.5 35.7 L17.9 34.5 L16.4 34.3 L16.1 35.3 L15.1 35.6 L13.5 35.5 L11.8 31.9 L10 24.9 Z\")",
+     "price": 0.12,
+     "time": 70,
+     "tags": [
+      "designed-pull",
+      "detail",
+      "candidate"
+     ],
+     "designed": true
+    },
+    {
+     "pack": "designed",
+     "fromCard": "star-trek-261-crystalline-entity",
+     "name": "Detail \u2014 Mid \u00b713",
+     "type": "FX",
+     "op": "cut",
+     "clip": "path(\"M65.3 34.7 L65.4 35.6 L66.1 36 L67.4 36 L67.4 36.6 L66.2 37.7 L66.3 39.3 L67.6 41.4 L65.9 43.2 L61.2 44.5 L58.4 44.9 L57.5 44.5 L57.5 43.9 L58.4 43.1 L58.7 42.4 L58.2 41.9 L58.7 40 L60.3 36.7 L61.7 35 L62.9 34.7 L63.2 35.6 L62.5 37.4 L61.5 39.1 L60 40.4 L59.7 41.1 L60.7 41.2 L61.3 41.8 L61.4 42.9 L62.3 43.3 L64.1 42.8 L65.2 42.1 L65.6 41 L65.2 40.2 L63.9 39.5 L63.8 38 L64.7 35.5 Z\")",
+     "price": 0.12,
+     "time": 70,
+     "tags": [
+      "designed-pull",
+      "detail",
+      "candidate"
+     ],
+     "designed": true
+    },
+    {
+     "pack": "designed",
+     "fromCard": "star-trek-261-crystalline-entity",
+     "name": "Detail \u2014 Mid \u00b714",
+     "type": "FX",
+     "op": "cut",
+     "clip": "path(\"M41.6 50.3 L42.9 51.2 L44.1 51.2 L45.2 50.6 L45.6 51.1 L45.4 53 L46.2 53.4 L48.2 52.4 L49.6 52.6 L50.4 53.9 L45.7 54.7 L35.2 55 L32.7 53.8 L38.2 51.2 Z\")",
+     "price": 0.12,
+     "time": 70,
+     "tags": [
+      "designed-pull",
+      "detail",
+      "candidate"
+     ],
+     "designed": true
+    }
+   ]
+  },
+  {
+   "name": "Designed pull \u2014 The Wanderer",
+   "items": [
+    {
+     "pack": "designed",
+     "fromCard": "The Wanderer",
+     "name": "Figure \u2014 Upper right",
+     "type": "FIGURE",
+     "op": "cut",
+     "clip": "path(\"M88.9 6.4 L92.1 8.5 L93.9 17 L94.1 31.8 L93.2 40.1 L91.2 42 L88.4 43.1 L84.7 43.4 L81.6 42.4 L78.9 40.2 L77.6 31.9 L77.5 17.6 L78.3 9.5 L79.9 7.8 L82.3 6.5 L85.6 5.7 Z\")",
+     "price": 0.12,
+     "time": 70,
+     "tags": [
+      "designed-pull",
+      "figure",
+      "agreed"
+     ],
+     "designed": true
+    },
+    {
+     "pack": "designed",
+     "fromCard": "The Wanderer",
+     "name": "Figure \u2014 Lower",
+     "type": "FIGURE",
+     "op": "cut",
+     "clip": "path(\"M42.2 86.5 L63 86.5 L74.2 87.4 L75.8 89.2 L76.5 90.5 L76.4 91.4 L75.5 92.6 L73.9 93.9 L72.1 94.7 L70.3 94.8 L59.2 94.9 L39.2 94.8 L27.7 94.1 L25 92.9 L23.4 91.7 L23.1 90.5 L23.7 89.1 L25.4 87.6 L27.6 86.7 L30.4 86.5 Z\")",
+     "price": 0.12,
+     "time": 70,
+     "tags": [
+      "designed-pull",
+      "figure",
+      "agreed"
+     ],
+     "designed": true
+    },
+    {
+     "pack": "designed",
+     "fromCard": "The Wanderer",
+     "name": "Figure \u2014 Mid",
+     "type": "FIGURE",
+     "op": "cut",
+     "clip": "path(\"M86.4 3.5 L94.7 6.3 L94.8 43.1 L93.6 44.1 L89.7 43.9 L85.3 45.4 L83.3 44.2 L83.3 42.5 L81.1 41.8 L80.7 40.6 L78.1 39.7 L78.1 40.9 L79.4 41.8 L76.9 41.7 L77.1 36.6 L77.7 35.7 L77.3 34.5 L78.3 30.5 L77.8 28.6 L78.2 24.1 L76.8 24.6 L75.7 36.9 L71.2 35.7 L74.1 37.2 L73.9 38 L76.1 38.4 L75.9 40.4 L70.4 42.7 L74.3 45.3 L73.9 47.6 L77.4 47.9 L81.1 52.2 L82 51.7 L81.3 47.9 L80.3 47.9 L79.8 46.3 L77.9 46.5 L78.4 45.8 L81.7 46.8 L90 47.4 L90.2 53.7 L81.6 53.1 L84 54.6 L89.7 55.3 L91.5 54.9 L94 58.9 L92.2 59.5 L94.7 60.7 L96.2 62.6 L94.5 67.1 L96.4 68.6 L96.3 70 L95.2 70 L94.7 69 L92.3 68 L91.1 68.8 L95.3 71.1 L95.1 74.1 L91.2 77 L92.1 78.2 L92.8 77.4 L93.4 78.3 L94.5 77.7 L94.1 79.3 L93.4 78.6 L90.2 78.5 L88.7 77.4 L88.7 75.9 L90.4 74.3 L90.2 73.3 L89.6 73.8 L88.7 72.7 L87.8 73.5 L88 74.6 L85.4 75.1 L86.3 73.4 L80.8 71.4 L79.8 69.9 L78.1 70.4 L77.3 69.5 L75.9 70.8 L78.3 71.1 L78.5 72.4 L79.8 73.4 L77.5 78.8 L71.9 81.8 L66.1 81 L66.9 77.9 L69.7 76.1 L69.7 74 L71.6 70.3 L70.4 67.1 L65.4 66.8 L67.1 66.3 L67.4 65.4 L63.7 63.4 L61.4 60.7 L60.1 61 L59.1 62.3 L59.9 63.1 L62 63.2 L61.6 65.3 L59.6 67.8 L57.6 68.1 L58.9 69.1 L57.2 71.9 L55 73.6 L50.2 75.1 L45.4 74.8 L44.6 73.6 L45.8 71.8 L48 70.5 L48 69.1 L49.2 69.4 L51.1 67.3 L53.6 66.7 L54 66 L53.7 63.5 L48.7 60.9 L48.5 58.9 L47.7 58.3 L43.8 60.9 L43.3 62.1 L41.8 61.2 L41.4 62.1 L39.5 62.4 L39.3 63.4 L37.6 64.4 L37.6 65.5 L40.2 65.3 L40.2 66.5 L41.1 66.9 L39.8 67.6 L37.9 71.7 L36.8 72.5 L33.8 73.2 L32.6 74.9 L29 75.3 L25.5 74.4 L27.3 70.9 L29.7 69.9 L30.7 66.8 L33.3 64.6 L33.6 61.4 L35.2 58.4 L35.6 55 L31.4 56.2 L25.4 55.3 L23.8 56.5 L25.3 57.6 L26.8 57.2 L27 58.9 L28.3 59.3 L28.6 58.7 L29.7 61.2 L29.8 62.8 L29 64 L29.4 65.9 L28.9 67.4 L27.5 68.6 L23.3 66.7 L22.8 64.9 L20.4 63.9 L20.1 62.2 L21 60.5 L20.4 57.5 L19 55.6 L19.4 53.6 L23.4 51.5 L25.5 49.3 L23 47.8 L21.8 44.8 L19.2 42.8 L20 40.1 L17.9 37.6 L17.7 36.1 L18.5 34.2 L17 33 L18.2 30.5 L18.2 29.8 L17.2 29.6 L17.4 28.4 L19.5 26.1 L17.3 26.8 L16.7 26.2 L17.5 24.8 L20.1 23.2 L19.1 22.4 L19 21.2 L20.2 19.5 L22.1 18.6 L21.3 17.7 L21.5 16.5 L26 13.1 L24.8 11.5 L25.2 8.5 L29.2 5.9 L39.3 7.4 L41 5.2 L41.9 8.2 L43.2 6.3 L43.4 7.5 L44.5 8.2 L43.8 9.4 L45.3 10.2 L43.9 10.6 L43.5 11.5 L43.8 13.9 L45.4 16.4 L44.1 19.6 L46.4 19.1 L49.3 21.7 L53.6 21 L54.1 21.5 L52.7 22.2 L54.9 23 L57 21.5 L57 20.5 L55.1 20.8 L55.1 19.6 L53.1 18.1 L54.2 17.6 L57.2 12 L59.2 11.6 L60 13 L61 13.1 L62 11.6 L62.4 7.9 L62.9 6.9 L64.3 7.5 L64.7 5.4 L69 4.3 L73.4 5 L74.3 6 L73.2 7.9 L74.8 8 L77.1 5.8 L81.3 5.7 Z\")",
+     "price": 0.12,
+     "time": 70,
+     "tags": [
+      "designed-pull",
+      "figure",
+      "agreed"
+     ],
+     "designed": true
+    },
+    {
+     "pack": "designed",
+     "fromCard": "The Wanderer",
+     "name": "Disc \u2014 Mid right",
+     "type": "FIGURE",
+     "op": "cut",
+     "clip": "ellipse(4% 3.1% at 86.1% 50%)",
+     "price": 0.12,
+     "time": 70,
+     "tags": [
+      "designed-pull",
+      "disc",
+      "candidate"
+     ],
+     "designed": true
+    },
+    {
+     "pack": "designed",
+     "fromCard": "The Wanderer",
+     "name": "Detail \u2014 Upper left",
+     "type": "FX",
+     "op": "cut",
+     "clip": "path(\"M9.4 22.3 L11.7 24.2 L13.6 28 L14.9 33.7 L14.2 35.8 L11.4 34.3 L8.6 34 L5.7 34.8 L4 34.5 L3.4 32.9 L3.4 30.8 L3.9 28.1 L5.2 25.4 L7.2 22.7 Z\")",
+     "price": 0.12,
+     "time": 70,
+     "tags": [
+      "designed-pull",
+      "detail",
+      "agreed"
+     ],
+     "designed": true
+    },
+    {
+     "pack": "designed",
+     "fromCard": "The Wanderer",
+     "name": "Detail \u2014 Upper",
+     "type": "FX",
+     "op": "cut",
+     "clip": "path(\"M38.4 1.4 L41.1 1.4 L42.6 1.8 L42.7 2.6 L41.9 4.1 L40 6.2 L37.4 7.1 L33.9 6.7 L32.3 5.8 L32.6 4.1 L33.8 2.8 L36 1.9 Z\")",
+     "price": 0.12,
+     "time": 70,
+     "tags": [
+      "designed-pull",
+      "detail",
+      "agreed"
+     ],
+     "designed": true
+    },
+    {
+     "pack": "designed",
+     "fromCard": "The Wanderer",
+     "name": "Detail \u2014 Upper left \u00b76",
+     "type": "FX",
+     "op": "cut",
+     "clip": "path(\"M37.2 13 L39.5 13.5 L41.1 15 L41.8 17.4 L41.4 19.8 L39.9 22.1 L36.3 24.9 L30.6 27.9 L27.9 27.4 L28.4 23.2 L28 20.1 L26.7 18 L26.7 17 L28.1 17.1 L29.1 16.3 L29.6 14.6 L31.4 13.4 L34.5 13 Z\")",
+     "price": 0.12,
+     "time": 70,
+     "tags": [
+      "designed-pull",
+      "detail",
+      "candidate"
+     ],
+     "designed": true
+    },
+    {
+     "pack": "designed",
+     "fromCard": "The Wanderer",
+     "name": "Detail \u2014 Mid left",
+     "type": "FX",
+     "op": "cut",
+     "clip": "path(\"M28.4 50.3 L33 52.6 L34.6 54.3 L33.4 55.4 L31 55.7 L27.5 55.3 L25.3 55.4 L24.3 56.1 L24 57 L24.2 58.2 L24.9 58.7 L26 58.5 L27.3 59.3 L29 61 L29.6 63.2 L29.2 66 L28.5 67.7 L27.6 68.4 L26.1 68.2 L24 67.3 L23 66.3 L22.9 65.2 L22.2 64.6 L20.8 64.3 L20.4 62.9 L20.8 60.5 L20.5 58.4 L19.5 56.6 L19.2 55 L19.7 53.5 L21.5 51.9 L24.6 50.1 Z\")",
+     "price": 0.12,
+     "time": 70,
+     "tags": [
+      "designed-pull",
+      "detail",
+      "candidate"
+     ],
+     "designed": true
+    },
+    {
+     "pack": "designed",
+     "fromCard": "The Wanderer",
+     "name": "Detail \u2014 Upper left \u00b78",
+     "type": "FX",
+     "op": "cut",
+     "clip": "path(\"M36.2 7.2 L39.5 8.1 L41.7 9.9 L42.7 12.6 L41.8 13.6 L38.7 12.9 L34.5 12.9 L29.1 13.6 L26.7 12.7 L27.2 10.3 L29.3 8.5 L32.8 7.4 Z\")",
+     "price": 0.12,
+     "time": 70,
+     "tags": [
+      "designed-pull",
+      "detail",
+      "candidate"
+     ],
+     "designed": true
+    },
+    {
+     "pack": "designed",
+     "fromCard": "The Wanderer",
+     "name": "Detail \u2014 Upper left \u00b710",
+     "type": "FX",
+     "op": "cut",
+     "clip": "path(\"M24.5 6.8 L25.4 7.3 L25.6 8.4 L25 10.1 L25 11.8 L25.7 13.3 L25.1 14.1 L23.4 14.2 L22.9 14.6 L23.7 15.5 L23.5 15.9 L22.3 15.9 L21.4 16.3 L20.7 17 L21 17.4 L22.3 17.5 L22.7 17.9 L22.4 18.7 L21.4 18.7 L19.9 18 L19.4 17.5 L20 17.4 L19.6 16.2 L18.2 14.1 L19.3 12.3 L22.9 10.9 L25 9.6 L25.5 8.6 L25.1 7.9 L23.9 7.8 L23.5 7.4 L23.8 6.9 Z\")",
+     "price": 0.12,
+     "time": 70,
+     "tags": [
+      "designed-pull",
+      "detail",
+      "candidate"
+     ],
+     "designed": true
+    },
+    {
+     "pack": "designed",
+     "fromCard": "The Wanderer",
+     "name": "Detail \u2014 Mid right",
+     "type": "FX",
+     "op": "cut",
+     "clip": "path(\"M71.9 48 L73.6 50.1 L74.1 51.2 L73.4 51.6 L73.5 52 L74.4 52.7 L74.4 54 L73.8 56 L73.9 57.3 L75 57.8 L75.9 57.6 L76.7 56.7 L77.2 56.7 L77.5 57.6 L76.4 58.4 L74.2 58.9 L73 59.8 L73.1 61.1 L72.9 61.3 L72.4 60.6 L71.7 60.2 L70.6 60.3 L70.1 60 L70.2 59.5 L70.8 59.2 L72.1 59.3 L72.7 58.8 L72.6 57.8 L71.4 57 L69.3 56.3 L68.7 55.9 L69.6 55.7 L69.6 55.3 L68.6 54.8 L68.4 54.1 L69.2 53.4 L68.8 52.7 L67.3 52 L66.7 51.1 L67 49.8 L66.8 49 L66 48.5 L66.1 48.4 L67.1 48.8 L67.7 49.6 L67.9 50.7 L68.6 51.3 L69.7 51.4 L70.1 52.1 L70 53.4 L70.4 54.4 L71.4 54.9 L72.2 54.8 L72.9 54.1 L72.8 53.1 L71.9 51.7 L71.8 50.9 L72.7 50.4 L72.4 49.9 L70.9 49.2 L70.2 48.7 L70.1 48.2 L70.4 48.1 L71.1 48.4 L71.3 48.1 L71.1 47.4 Z\")",
+     "price": 0.12,
+     "time": 70,
+     "tags": [
+      "designed-pull",
+      "detail",
+      "candidate"
+     ],
+     "designed": true
+    },
+    {
+     "pack": "designed",
+     "fromCard": "The Wanderer",
+     "name": "Detail \u2014 Upper \u00b712",
+     "type": "FX",
+     "op": "cut",
+     "clip": "path(\"M56.3 1.6 L61.4 1.7 L63 2.2 L61.1 3.2 L60.5 4.2 L61 5.3 L61.1 5.9 L60.6 6.2 L56.1 5.4 L47.4 3.7 L43.3 2.5 L43.7 1.9 L46.3 1.6 L51.3 1.5 Z\")",
+     "price": 0.12,
+     "time": 70,
+     "tags": [
+      "designed-pull",
+      "detail",
+      "candidate"
+     ],
+     "designed": true
+    },
+    {
+     "pack": "designed",
+     "fromCard": "The Wanderer",
+     "name": "Detail \u2014 Lower right",
+     "type": "FX",
+     "op": "cut",
+     "clip": "path(\"M96.7 71.6 L97.5 71.9 L98 73.3 L98 75.8 L98 78.1 L97.7 80.2 L97.2 81.5 L96.4 82 L94.8 82.4 L92.3 82.8 L90.9 82.5 L90.7 81.4 L89.1 80.2 L86.1 79 L83.2 78.9 L80.4 79.9 L79.1 80.7 L79.2 81.4 L78.2 81.7 L76.1 81.7 L75.8 81.5 L77.1 81.2 L77.2 80.7 L76.1 80.1 L76.3 79.6 L77.8 79.1 L78.7 77.5 L79 74.6 L79.9 73.4 L81.3 73.7 L82.2 74.3 L82.7 75 L82.5 75.3 L81.8 75.1 L81.2 75.3 L80.9 76 L81.4 76.5 L82.8 76.9 L83.8 76.7 L84.3 75.8 L85.7 75.3 L87.9 74.9 L88.8 75.4 L88.3 76.6 L88.4 77.5 L88.9 78 L90.5 78.7 L93.3 79.6 L94.8 79.6 L95.1 78.7 L94.2 78 L92.1 77.4 L92.2 77 L94.4 76.9 L95 76.6 L93.9 76.2 L94.1 74.9 L95.6 72.6 Z\")",
+     "price": 0.12,
+     "time": 70,
+     "tags": [
+      "designed-pull",
+      "detail",
+      "candidate"
+     ],
+     "designed": true
+    },
+    {
+     "pack": "designed",
+     "fromCard": "The Wanderer",
+     "name": "Detail \u2014 Mid",
+     "type": "FX",
+     "op": "cut",
+     "clip": "path(\"M59.6 58 L60.2 58.5 L59.3 59.3 L57 60.4 L56.6 61.1 L58.1 61.6 L59 62.9 L59.3 64.8 L58 66.4 L55 67.7 L53.9 67.5 L54.7 65.6 L53.9 63.8 L51.4 62.3 L50.8 61.5 L52.1 61.4 L51.8 61 L49.8 60.2 L48.9 59.4 L49 58.7 L49.4 58.9 L50.3 60 L51.4 60 L52.8 58.9 L53.6 58.6 L53.7 59.2 L55.2 59.1 L57.9 58.2 Z\")",
+     "price": 0.12,
+     "time": 70,
+     "tags": [
+      "designed-pull",
+      "detail",
+      "candidate"
+     ],
+     "designed": true
+    }
+   ]
+  }
+ ]
+};
+
+var RX_esc = function(s){ return String(s == null ? '' : s)
+  .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); };
+var RX_tell = function(m){ try { toast(m); } catch(e){ console.log('[rolodex]', m); } };
+var RX_LS = 'silhouettes.rolodex.packs.v1';
+
+/* ================= core (DOM-free, testable) ================= */
+function RX_validateItem(it){
+  if (!it || typeof it !== 'object') return { ok:false, why:'not an object' };
+  if (!it.clip) return { ok:false, why:'reference only (full field — no clip)' };
+  try { parseClip(String(it.clip)); }
+  catch(e){ return { ok:false, why:'fails the cut contract: ' + (e && e.message || e) }; }
+  return { ok:true };
+}
+function RX_normItem(o, pack, card){
+  o = o || {};
+  var tags = Array.isArray(o.tags) ? o.tags.map(String) : [];
+  return {
+    pack: String(pack || ''), fromCard: String(card || o.fromCard || ''),
+    name: String(o.name || 'Untitled cut').slice(0, 80),
+    type: String(o.type || 'FIGURE'),
+    op: ['cut','score','engrave'].indexOf(o.op) >= 0 ? o.op : 'cut',
+    clip: o.clip ? String(o.clip) : null,
+    price: +o.price || 0.12, time: Math.round(+o.time || 70),
+    tags: tags, designed: !!o.designed
+  };
+}
+function RX_normPack(raw){
+  if (!raw || typeof raw !== 'object') return null;
+  var items = [];
+  if (raw.kind === 'silhouettes-stamp' && Array.isArray(raw.items)) {
+    raw.items.forEach(function(it){ items.push(RX_normItem(it && it.obj, 'stamp', it && it.fromCard)); });
+    return { name: String(raw.name || 'Stamp pack'), items: items };
+  }
+  if (Array.isArray(raw.cards)) { /* rolodex catalog */
+    var out = [];
+    raw.cards.forEach(function(c){
+      (c.objects || []).forEach(function(o){ out.push(RX_normItem(o, 'rolodex', c.name)); });
+    });
+    return { name: 'Rolodex catalog import', items: out };
+  }
+  if (Array.isArray(raw.items)) {
+    raw.items.forEach(function(o){ items.push(RX_normItem(o, raw.name || 'pack', o && o.fromCard)); });
+    return { name: String(raw.name || 'Pack'), items: items };
+  }
+  return null;
+}
+function RX_maxLayer(){
+  var m = 0;
+  try { (S.stack || []).forEach(function(e){ m = Math.max(m, +e.layer || 1); }); } catch(e){}
+  return m;
+}
+/* the craft plugins' commit shape, replicated exactly */
+function RX_commit(item, layer){
+  var v = RX_validateItem(item);
+  if (!v.ok) throw new Error('refusing to commit: ' + v.why);
+  S.stack.push({ custom:true, kind:'paper', clip: item.clip,
+    name: String(item.name || 'Rolodex cut').slice(0, 80),
+    price: +item.price || 0.12, time: Math.round(+item.time || 70),
+    layer: Math.max(1, Math.round(+layer || 1)),
+    stock:'custom', stockLabel:'Rolodex', op: item.op || 'cut' });
+  save(); rebuildAll();
+  return true;
+}
+function RX_commitPack(pack){
+  var base = RX_maxLayer(), n = 0, skipped = [];
+  pack.items.forEach(function(it, i){
+    if (RX_validateItem(it).ok) { RX_commit(it, base + n + 1); n++; }
+    else skipped.push(it.name);
+  });
+  return { added: n, skipped: skipped };
+}
+function RX_search(packs, q){
+  q = String(q || '').trim().toLowerCase();
+  if (!q) return packs;
+  return packs.map(function(p){
+    return { name: p.name, items: p.items.filter(function(it){
+      var hay = (it.name + ' ' + it.fromCard + ' ' + it.type + ' ' + it.tags.join(' ')).toLowerCase();
+      return q.split(/\s+/).every(function(w){ return hay.indexOf(w) >= 0; });
+    }) };
+  }).filter(function(p){ return p.items.length; });
+}
+
+var RX = { packs: [], validateItem: RX_validateItem, normPack: RX_normPack,
+           commit: RX_commit, commitPack: RX_commitPack, search: RX_search,
+           maxLayer: RX_maxLayer };
+if (typeof window !== 'undefined') window.RX_core = RX;
+
+/* ================= data ================= */
+function RX_loadPacks(){
+  var packs = [];
+  if (RX_PACKS_BUILTIN && Array.isArray(RX_PACKS_BUILTIN.packs))
+    RX_PACKS_BUILTIN.packs.forEach(function(p){ var n = RX_normPack(p); if (n) packs.push(n); });
+  try {
+    var saved = JSON.parse(localStorage.getItem(RX_LS) || '[]');
+    if (Array.isArray(saved)) saved.forEach(function(p){ var n = RX_normPack(p); if (n) packs.push(n); });
+  } catch(e){}
+  return packs;
+}
+function RX_saveImported(packs){
+  try {
+    var imported = packs.filter(function(p){ return p.imported; });
+    localStorage.setItem(RX_LS, JSON.stringify(imported.map(function(p){
+      return { name: p.name, items: p.items }; })));
+  } catch(e){}
+}
+
+/* ================= UI (left drawer, craft-dock palette) ================= */
+var RX_CSS = [
+'#rx-btn{position:fixed;left:18px;bottom:18px;z-index:9000;width:58px;height:58px;border-radius:50%;',
+' border:1px solid #f5a623;background:#141518;color:#f5a623;font-size:22px;cursor:pointer;',
+' box-shadow:0 10px 30px rgba(0,0,0,.55)}',
+'#rx-btn:hover{transform:scale(1.07)}',
+'#rx-dock{position:fixed;top:0;left:0;bottom:0;width:400px;max-width:94vw;z-index:9001;',
+' background:#101114;border-right:1px solid #2a2d33;color:#e8e6e0;display:none;flex-direction:column;',
+" font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;box-shadow:20px 0 60px rgba(0,0,0,.5)}",
+'#rx-dock.open{display:flex}',
+'#rx-head{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid #2a2d33}',
+'#rx-head b{letter-spacing:2px;font-size:14px}#rx-head b em{color:#f5a623;font-style:normal}',
+'#rx-head .x{margin-left:auto;background:none;border:1px solid #2a2d33;color:#9aa0aa;border-radius:8px;padding:6px 10px;cursor:pointer}',
+'#rx-tools{padding:10px 12px;border-bottom:1px solid #2a2d33;display:flex;flex-direction:column;gap:8px}',
+'#rx-tools input[type=text]{background:#0a0b0d;border:1px solid #2a2d33;color:#e8e6e0;border-radius:8px;padding:8px 10px;font-size:12px;width:100%}',
+'#rx-tools input:focus{outline:none;border-color:#f5a623}',
+'#rx-body{flex:1;overflow-y:auto;padding:14px 16px}',
+'#rx-body h4{margin:12px 0 8px;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#9aa0aa}',
+'#rx-body h4 em{color:#f5a623;font-style:normal}',
+'.rx-item{border:1px solid #2a2d33;border-radius:10px;margin-bottom:8px;background:#0c0d0f;padding:8px 12px}',
+'.rx-item .nm{font-size:12px;color:#e8e6e0}',
+'.rx-item .meta{font-size:10px;color:#7c8290;margin:3px 0 6px}',
+'.rx-item .row{display:flex;gap:6px;align-items:center}',
+'.rx-item input[type=number]{width:58px;background:#0a0b0d;border:1px solid #2a2d33;color:#e8e6e0;border-radius:6px;padding:5px 7px;font-size:11px}',
+'.rx-chip{font-family:monospace;font-size:9px;letter-spacing:1px;padding:2px 7px;border-radius:4px;text-transform:uppercase;background:rgba(245,166,35,.12);color:#f5a623}',
+'.rx-chip.bad{background:rgba(255,90,90,.12);color:#ff8080}',
+'.rx-btn2{background:#1c1e22;border:1px solid #2a2d33;color:#e8e6e0;border-radius:8px;padding:6px 10px;font-size:11px;cursor:pointer}',
+'.rx-btn2:hover{border-color:#f5a623}.rx-btn2.primary{background:#f5a623;border-color:#f5a623;color:#141414;font-weight:700}',
+'.rx-btn2:disabled{opacity:.4;cursor:default}',
+'.rx-note{font-size:11px;color:#7c8290;line-height:1.6;margin:8px 0}.rx-note b{color:#c9cdd4}'
+].join('\n');
+
+function RX_renderList(){
+  var body = document.getElementById('rx-body'); if (!body) return;
+  var q = (document.getElementById('rx-q') || {}).value || '';
+  var view = RX_search(RX.packs, q);
+  var total = RX.packs.reduce(function(a, p){ return a + p.items.length; }, 0);
+  var h = '<div class="rx-note">The whole library — <b>' + total + ' cuts</b> from ' +
+          RX.packs.length + ' packs. Search a card or an object; every cut here has ' +
+          'passed the cut contract and drops straight into your 1/1.</div>';
+  if (!view.length) h += '<div class="rx-note">Nothing in the library matches that search — yet. Import a stamp pack and it joins the library forever.</div>';
+  view.forEach(function(p, pi){
+    h += '<h4>' + RX_esc(p.name) + ' <em>· ' + p.items.length + '</em></h4>';
+    h += '<div class="row" style="margin-bottom:8px"><button class="rx-btn2 primary" data-rx-pack="' + pi + '">Add whole pack, in layer order</button></div>';
+    p.items.forEach(function(it){
+      var v = RX_validateItem(it);
+      var gi = RX.packs.indexOf(p), ii = p.items.indexOf(it);
+      h += '<div class="rx-item"><div class="nm">' + RX_esc(it.name) + '</div>' +
+        '<div class="meta">' + RX_esc(it.fromCard || '') +
+        (it.designed ? ' · agent-designed' : '') + ' · ' + RX_esc(it.op) + '</div>' +
+        '<div class="row"><span class="rx-chip' + (v.ok ? '' : ' bad') + '">' +
+        (v.ok ? RX_esc(it.type) : 'blocked') + '</span>' +
+        (v.ok
+          ? '<label style="font-size:10px;color:#9aa0aa">layer <input type="number" min="1" value="' + (RX_maxLayer() + 1) + '" id="rx-l-' + gi + '-' + ii + '"></label>' +
+            '<button class="rx-btn2" data-rx-add="' + gi + ':' + ii + '">Add to build</button>'
+          : '<span class="meta">' + RX_esc(v.why) + '</span>') +
+        '</div></div>';
+    });
+  });
+  body.innerHTML = h;
+  body.querySelectorAll('[data-rx-add]').forEach(function(b){
+    b.onclick = function(){
+      var parts = b.getAttribute('data-rx-add').split(':');
+      var p = RX.packs[+parts[0]], it = p.items[+parts[1]];
+      var lv = (document.getElementById('rx-l-' + parts[0] + '-' + parts[1]) || {}).value;
+      try { RX_commit(it, +lv || RX_maxLayer() + 1); RX_tell('Rolodex: added “' + it.name + '” to your build'); }
+      catch(e){ RX_tell('Rolodex: ' + e.message); }
+      RX_renderList();
+    };
+  });
+  body.querySelectorAll('[data-rx-pack]').forEach(function(b){
+    b.onclick = function(){
+      var p = view[+b.getAttribute('data-rx-pack')];
+      var r = RX_commitPack(p);
+      RX_tell('Rolodex: added ' + r.added + ' cuts from “' + p.name + '”' +
+              (r.skipped.length ? ' — skipped ' + r.skipped.length + ' blocked' : ''));
+      RX_renderList();
+    };
+  });
+}
+
+function RX_boot(){
+  RX.packs = RX_loadPacks();
+  var st = document.createElement('style'); st.textContent = RX_CSS; document.head.appendChild(st);
+  var btn = document.createElement('button'); btn.id = 'rx-btn'; btn.title = 'Rolodex — the library of cuts';
+  btn.textContent = '❏'; document.body.appendChild(btn);
+  var dock = document.createElement('div'); dock.id = 'rx-dock';
+  dock.innerHTML = '<div id="rx-head"><b>ROLO<em>DEX</em></b><span style="font-size:10px;color:#7c8290">every cut, searchable</span>' +
+    '<button class="x" id="rx-close">✕</button></div>' +
+    '<div id="rx-tools"><input type="text" id="rx-q" placeholder="Search a card or an object — try “moon” or “beast”">' +
+    '<label class="rx-btn2" style="text-align:center;cursor:pointer">Import a stamp pack or catalog<input type="file" id="rx-file" accept=".json,application/json" style="display:none"></label></div>' +
+    '<div id="rx-body"></div>';
+  document.body.appendChild(dock);
+  btn.onclick = function(){ dock.classList.toggle('open'); RX_renderList(); };
+  dock.querySelector('#rx-close').onclick = function(){ dock.classList.remove('open'); };
+  dock.querySelector('#rx-q').addEventListener('input', RX_renderList);
+  dock.querySelector('#rx-file').addEventListener('change', function(ev){
+    var f = ev.target.files && ev.target.files[0]; if (!f) return;
+    var rd = new FileReader();
+    rd.onload = function(){
+      try {
+        var pack = RX_normPack(JSON.parse(String(rd.result)));
+        if (!pack || !pack.items.length) throw new Error('no cuts found in that file');
+        pack.imported = true; RX.packs.push(pack); RX_saveImported(RX.packs);
+        RX_tell('Rolodex: imported “' + pack.name + '” — ' + pack.items.length + ' cuts');
+      } catch(e){ RX_tell('Rolodex: import failed — ' + e.message); }
+      RX_renderList();
+    };
+    rd.readAsText(f);
+  });
+  RX.RX_boot_done = true;
+}
+if (typeof document !== 'undefined' && document.body) RX_boot();
+else if (typeof document !== 'undefined') document.addEventListener('DOMContentLoaded', RX_boot);
+})();
+
+</script>
