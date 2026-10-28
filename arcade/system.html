@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>🗺 THE WHOLE SYSTEM — Arcades of Time</title>
+<style>
+:root{--neon:#7CFF6B;--amber:#ffb347;--red:#ff5470;--gold:#ffd76b;--blue:#6bb8ff}
+body{background:#07070f;color:#e8e8ff;font-family:system-ui,sans-serif;margin:0;padding:14px;max-width:900px;margin:0 auto}
+h1{font-size:1.5rem;margin:0 0 2px}
+.lbl{color:#9a9ac0;font-size:.82rem}.mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+.panel{background:#101022;border:1px solid #26264d;border-radius:12px;padding:16px;margin:12px 0}
+.btn{background:#1a1a33;border:1px solid #33336a;color:#e8e8ff;border-radius:8px;padding:8px 14px;cursor:pointer;margin:4px;font-size:.92rem}
+.pill{display:inline-block;font-size:.72rem;padding:3px 10px;border-radius:999px;letter-spacing:.05em}
+.pill.ok{background:#0f3a1a;border:1px solid var(--neon);color:var(--neon)}
+.pill.bad{background:#3a0f1a;border:1px solid var(--red);color:var(--red)}
+table{width:100%;border-collapse:collapse}td,th{padding:6px;border-bottom:1px solid #1a1a33;text-align:left;font-size:.85rem;vertical-align:top}
+.flow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:10px 0}
+.node{background:#1a1a33;border:1px solid #33336a;border-radius:10px;padding:10px 12px;font-size:.85rem;max-width:250px}
+.node b{color:var(--gold)}
+.arrow{color:#9a9ac0;font-size:1.1rem}
+a{color:var(--blue)}
+pre{background:#0b0b1a;border:1px solid #26264d;border-radius:8px;padding:10px;overflow-x:auto;font-size:.78rem;color:#b0b0e0}
+</style>
+</head>
+<body>
+<script src="./arcade-shared/kk-replay.js"></script>
+<h1>🗺 THE WHOLE SYSTEM <span class="lbl">how a blob arcade game is built, tied, and proven · Arcades of Time</span></h1>
+<p class="lbl"><a href="./blob-cinema/scores.html">🏆 Hall of Scores</a> · <a href="./builder.html">🛠 Builder Walkthrough</a> · <a href="./">🕹 arcade</a></p>
+
+<div class="panel">
+  <h2 style="margin:0 0 6px">THE SHAPE OF IT</h2>
+  <p class="lbl" style="font-size:.9rem">A game here is not a website with a database. It is a <b>bundle of blobs</b> — law, manifest, engine, mechanic objects — plus a <b>score chain</b> of blobs, plus a thin HTML cabinet that boots from the blobs and a Hall that verifies everything by replay. The chain remembers; the devices compute; the checking makes it true.</p>
+  <div class="flow">
+    <div class="node"><b>⚖ ENGINE LAW</b><br>one law blob, shared by every stone — fixed tick, integer math, seeded but true, tape is truth, wallet is who</div><span class="arrow">→</span>
+    <div class="node"><b>📜 MANIFEST</b><br>names the game, its mechanics, its creators, its verify rule</div><span class="arrow">→</span>
+    <div class="node"><b>⚙ ENGINE</b><br>the deterministic simulator — the same bytes run in the cabinet, the Hall, and any future machine</div><span class="arrow">→</span>
+    <div class="node"><b>🧩 MECHANIC OBJECTS</b><br>mastered mechanics as files: integer params + test tape + expected hash chain</div><span class="arrow">→</span>
+    <div class="node"><b>🕹 CABINET (HTML)</b><br>boots the manifest FROM its blob, sha-verifies it, plays at device speed, records the tape</div><span class="arrow">→</span>
+    <div class="node"><b>⛓ SCORE CHAIN</b><br>every verified score reblobs a new head: prev + run record + Top-10 snapshot, back to the machine's genesis</div><span class="arrow">→</span>
+    <div class="node"><b>🏆 HALL</b><br>the side verifier: walks the chain to genesis, replays every run, renders proof-of-play on demand</div>
+  </div>
+</div>
+
+<div class="panel">
+  <h2 style="margin:0 0 6px">🔑 THE MASTER RENDER KEY — DOUBLE SWITCHED</h2>
+  <p>What you <i>see</i> is a render. What decides the game is a <b>deal</b> — and the deal is never in the render. Two switches stand between a player and the parameters that trigger outcomes:</p>
+  <pre>RUN KEY (switch 1 — identity)     sha256( wallet | seed | nonce )
+  binds the run to its wallet. Nobody else's key verifies this tape.
+
+DEAL (switch 2 — the hidden parameters)   seed → separate PRNG streams
+  stream A deals the CONTROLS (slap remap)     stream B deals the OPPONENT (speed/lag/err)
+  stream C deals the WORLD (stimulus ticks / serves, one by one, as needed)
+
+RENDER shows only: the field, the flash, the ball — never the streams.
+So nobody — player, bot, or page insider — knows the correct play or the
+parameter set in advance. Correct play cannot be precomputed; it can only
+be PLAYED, taped, and then PROVEN by replay against the same deal.</pre>
+  <p class="lbl">That is why the Predictor AI scores like it does: it plays the render. The tape, judged against the hidden deal, is the only truth — and replay is the judge that cannot be bribed, because it re-derives the deal from the seed and the score from the tape.</p>
+</div>
+
+<div class="panel">
+  <h2 style="margin:0 0 6px">📦 THE OBJECT REGISTRY — every piece, tied to its blob</h2>
+  <p class="lbl">Press PROVE on any row: this page fetches the blob from Walrus and checks its SHA-256 in front of you. No blob, no object. Testnet, 5 epochs per write; a keeper renews — permanence is a funded habit, not a promise.</p>
+  <table id="registry">
+    <tr><th>OBJECT</th><th>ROLE</th><th>BLOB</th><th></th></tr>
+  </table>
+</div>
+
+<div class="panel">
+  <h2 style="margin:0 0 6px">🚀 SPIN-UP — the blob plays itself</h2>
+  <p class="lbl" style="font-size:.9rem">Any machine can spin a game up from the blobs alone, with its player enlocked to the HTML cabinet and the blockchain record:</p>
+  <p>
+  1 · Fetch the <b>manifest blob</b> → sha-verify (the cabinet does this on boot, live).<br>
+  2 · Fetch the <b>engine blob</b> → the exact simulator bytes; the browser twin must match it bit-for-bit (cross-tested 16/16 on Stone 2).<br>
+  3 · The cabinet <b>plays</b>: seed dealt, tape recorded, score derived by replay — live play and independent replay must agree before submit is even offered.<br>
+  4 · The score is <b>reblobbed</b> as a new chain head; the old head becomes its <span class="mono">prev</span>. Nothing is overwritten; history only grows.<br>
+  5 · The <b>Hall walks</b> head → genesis and replays every run. A spin-up is proven when a stranger's machine can do steps 1–5 and get the same numbers.<br>
+  </p>
+  <p class="lbl">The two proven spin-ups: <a href="./games/first-slap/">✋ FIRST SLAP</a> (machine FIRST-SLAP-001) · <a href="./games/first-rally/">🏓 FIRST RALLY</a> (machine FIRST-RALLY-001). Build your own at the <a href="./builder.html">🛠 Builder Walkthrough</a>.</p>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const AGG='https://aggregator.walrus-testnet.walrus.space/v1/blobs/';
+const REG=[
+ {name:'ENGINE LAW',role:'the one law for every game',id:'kcmOTGFJNZ_khqB3l8QQFHljz8IV9UTSXexL_5BoGGI',sha:'4ef7ee1c220b66fb9ff926a3abcfb6073ebacd8d34496f7a2eb3e4f0d9b9136c'},
+ {name:'SLAP MANIFEST',role:'Stone 1 game definition',id:'K_gi-FaFvnJDpvnV44CJ2PsBOaaAlQgp3ZfaJwtpO8o',sha:'84849886bf94d1ba473690ea7dd4a6106fbea371c1ba4a17fd5e767d4b6b08ea'},
+ {name:'SLAP ENGINE',role:'Stone 1 simulator bytes',id:'H32JW6RxnMGo6ayzp0qtKHmmwTEI01llM91ypb2IO8Y',sha:'01e2b111595ad045c015e3d0987f1fd9345f147f390f207f739dcc38ff199007'},
+ {name:'OBJECT: REACTION',role:'mechanic — params + test tape + expected chain',id:'ktbEZn2TfwmMPt8E83tQE_oZA5tGWFmImJvNA8OnoyQ',sha:'52241c05c70978247c46e1bd4fc8ffcc6589475e2a646850f6f724b56e3cdbcb'},
+ {name:'SLAP GENESIS',role:'FIRST-SLAP-001 score-chain root',id:'ehJq01aAB6wAGh-f_37INVun0eV3Xboi8LtOa66K3eU',sha:'6ee3dbee0fbb75797e89f37cd1d4572efe7e185e50d8c92bcc9d1cca33ce2818'},
+ {name:'RALLY MANIFEST',role:'Stone 2 game definition',id:'3Jlsh-JtmAzhu94cwUZBJGqVOT7q8AOCWnJ4qUvlbaA',sha:'9f28c176da771318183efbafacf7cce534a888f58960e73d36e13f1f97ff085b'},
+ {name:'RALLY ENGINE',role:'Stone 2 simulator bytes',id:'U_6bkxwZ85EqJ9O4YiPs7GbfCq521bfNGgAj9oSTI7M',sha:'76eff0a3b252702062d61ca80a4717ca3c087e229520edeb03c6c8ba1ba99130'},
+ {name:'OBJECT: RALLY-PHYSICS',role:'mechanic — params + test tape + expected chain',id:'9Fb3Pdea8-bz865on2FfcDsj6QjVHmAq6tvpe0jzbfE',sha:'a54c6e2b22e53af501ee140d1c472a08601c053c03a32c3c4215103c6e18e3c9'},
+ {name:'RALLY GENESIS',role:'FIRST-RALLY-001 score-chain root',id:'XL8vJlHUxist-ljUXgUk4e9Zok1OL2gzYCf5SjL_q7I',sha:'1d2528079319f6ef563f0bb7ccd9cd76e00bb08a5f6a57d21dffd200bf4e36f5'}
+];
+$('registry').innerHTML='<tr><th>OBJECT</th><th>ROLE</th><th>BLOB</th><th></th></tr>'+REG.map((r,i)=>
+ '<tr><td><b>'+r.name+'</b></td><td class="lbl">'+r.role+'</td><td class="mono"><a href="'+AGG+r.id+'" target="_blank">'+r.id.slice(0,14)+'…</a></td>'+
+ '<td><button class="btn" onclick="prove('+i+')">PROVE</button> <span id="pv'+i+'"></span></td></tr>').join('');
+async function prove(i){
+  const r=REG[i], out=$('pv'+i);
+  out.innerHTML='<span class="lbl">fetching…</span>';
+  try{
+    const txt=await (await fetch(AGG+r.id)).text();
+    const h=KKReplay.sha256(txt);
+    out.innerHTML=(h===r.sha)?'<span class="pill ok">✓ sha256 MATCH</span>':'<span class="pill bad">✗ MISMATCH</span>';
+  }catch(e){ out.innerHTML='<span class="pill bad">✗ unreachable</span>'; }
+}
+</script>
+</body>
+</html>
