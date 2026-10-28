@@ -75,12 +75,19 @@ input{background:#0b0b1a;border:1px solid #33336a;color:#e8e8ff;border-radius:6p
   <div id="remapCard" class="lbl" style="margin:8px 0"></div>
   <div id="arena">✋</div>
   <div class="pads">
-    <div class="pad" data-press="U">⬆<small id="mapU"></small></div>
-    <div class="pad" data-press="L">⬅<small id="mapL"></small></div>
-    <div class="pad" data-press="R">➡<small id="mapR"></small></div>
-    <div class="pad" data-press="D">⬇<small id="mapD"></small></div>
+    <div class="pad" data-press="U"><span id="meanU">⬆ UP</span><small>physical ⬆ key</small></div>
+    <div class="pad" data-press="L"><span id="meanL">⬅ LEFT</span><small>physical ⬅ key</small></div>
+    <div class="pad" data-press="R"><span id="meanR">➡ RIGHT</span><small>physical ➡ key</small></div>
+    <div class="pad" data-press="D"><span id="meanD">⬇ DOWN</span><small>physical ⬇ key</small></div>
   </div>
+  <p class="lbl">⚠ <b>Read the pads by their big label — what the button MEANS this run.</b> The physical arrows lie; the remap is the game. When ◀ LEFT flashes, slap the pad <i>labeled</i> ◀ LEFT, wherever it sits.</p>
   <div id="runResult" style="margin-top:10px"></div>
+</div>
+
+<!-- MY LAST RUN — PROOF -->
+<div class="panel" id="proofPanel" style="display:none">
+  <h2 style="margin:0 0 6px">⛓ MY LAST RUN — PROOF OF PLAY</h2>
+  <div id="proofBody" class="lbl"></div>
 </div>
 
 <!-- AI ATTEMPTS -->
@@ -139,7 +146,7 @@ function startRun(){
   run={seed,wallet,nonce,dealt,tape:new Array(KKSlap.HANDS).fill(null),start:performance.now(),done:false,shown:-1};
   $('runInfo').innerHTML='seed <span class="mono">'+seed+'</span> · key <span class="mono">'+KKSlap.runKey(wallet,seed,nonce).slice(0,12)+'…</span>';
   $('remapCard').innerHTML='🃏 <b>This run\'s buttons:</b> '+['U','D','L','R'].map(k=>k+' key → means '+ARROWS[dealt.remap[k]]).join(' · ');
-  ['U','D','L','R'].forEach(k=>{ $('map'+k).textContent='means '+ARROWS[dealt.remap[k]]; });
+  ['U','D','L','R'].forEach(k=>{ $('mean'+k).textContent=ARROWS[dealt.remap[k]]; });
   $('runResult').innerHTML='';
   $('startBtn').disabled=true;
   $('arena').textContent='…';
@@ -158,7 +165,7 @@ function tickLoop(){
   for(let h=0;h<hands.length;h++){
     const [from,to]=handWindow(h);
     if(now>=from&&now<to){
-      if(now>=hands[h].stimulusTick&&run.shown!==h){ run.shown=h; $('arena').textContent=ARROWS[hands[h].target].split(' ')[0]; $('arena').classList.add('flash'); }
+      if(now>=hands[h].stimulusTick&&run.shown!==h){ run.shown=h; $('arena').innerHTML=ARROWS[hands[h].target].split(' ')[0]+'<div style="font-size:1.1rem;letter-spacing:.2em">'+ARROWS[hands[h].target].split(' ')[1]+'</div>'; $('arena').classList.add('flash'); }
       if(now<hands[h].stimulusTick){ $('arena').textContent='✋'; $('arena').classList.remove('flash'); }
     }
   }
@@ -221,11 +228,28 @@ async function submitRun(){
   $('runResult').innerHTML+='<div style="margin-top:8px"><span class="pill ok">🎞 ON THE BOARD — replay-verified, remembered under your wallet</span> · <span class="lbl" id="chainMsg">⛓ chaining into the blob score chain…</span></div>';
   try{
     const id=await chainScore(rec);
-    $('chainMsg').innerHTML='⛓ <b>SCORED INTO BLOB</b> <span class="mono">'+id.slice(0,14)+'…</span> — this score now survives in the chain, on every machine spun from it. <a href="../../blob-cinema/scores.html" style="color:var(--blue)">verify at the Hall root →</a>';
+    try{ localStorage.setItem('slap-last-run',JSON.stringify({rec:rec,blobId:id,at:Date.now()})); }catch(e){}
+    renderProof();
+    $('chainMsg').innerHTML='⛓ <b>SCORED INTO BLOB</b> <span class="mono">'+id.slice(0,14)+'…</span> — this score now survives in the chain, on every machine spun from it. <a href="../../blob-cinema/scores.html?head='+id+'" style="color:var(--blue)">verify at the Hall root →</a>';
   }catch(e){
+    try{ localStorage.setItem('slap-last-run',JSON.stringify({rec:rec,blobId:null,at:Date.now()})); }catch(e2){}
+    renderProof();
     $('chainMsg').innerHTML='⚠ blob chain write failed ('+e.message+') — score is on this device only for now, NOT yet in the chain. Retry by submitting again.';
   }
 }
+function renderProof(){
+  let d=null;
+  try{ d=JSON.parse(localStorage.getItem('slap-last-run')||'null'); }catch(e){}
+  if(!d||!d.rec){ $('proofPanel').style.display='none'; return; }
+  const r=d.rec;
+  $('proofPanel').style.display='block';
+  $('proofBody').innerHTML=
+    'wallet <span class="mono">'+r.wallet+'</span> · seed <span class="mono">'+r.seed+'</span> · score <b>'+r.claimedScore+'</b> · run chain <span class="mono">'+r.claimedChain.slice(0,16)+'…</span> · run key <span class="mono">'+r.key.slice(0,16)+'…</span><br>'+
+    (d.blobId
+      ? '⛓ <b>in the blob chain:</b> <a href="'+AGG+d.blobId+'" target="_blank" style="color:var(--blue)">open the blob itself</a> · <a href="../../blob-cinema/scores.html?head='+d.blobId+'" style="color:var(--blue)">verify the whole chain at the Hall →</a>'
+      : '⚠ this run is <b>not in the blob chain yet</b> (the chain write failed when submitted) — play and submit again to chain it.');
+}
+renderProof();
 function aiAttempt(kind){
   const seed=(Math.floor(Math.random()*900000)+100000);
   const tape=kind==='pred'?KKSlap.aiPredictor(seed):KKSlap.aiReactor(seed);
