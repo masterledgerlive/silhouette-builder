@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>THE TIP-OFF — Quantinuum &amp; the New Quantum Era · SUI LAB</title>
+<style>
+  :root{--bg:#070b24;--panel:#101736;--line:#2a3568;--ink:#eef1ff;--dim:#a7b0d8;--gold:#ffb703;--cyan:#7df9ff;--green:#7CFC90;--pink:#ff8fc7;--red:#ff7a7a;}
+  *{box-sizing:border-box;}
+  body{margin:0;background:radial-gradient(1100px 560px at 12% -10%,#1d2a6e 0%,transparent 55%),radial-gradient(1000px 520px at 96% 0%,#3b1d5e 0%,transparent 55%),var(--bg);color:var(--ink);font-family:ui-rounded,"Segoe UI",system-ui,sans-serif;}
+  .wrap{max-width:1080px;margin:0 auto;padding:20px 16px 70px;}
+  a{color:var(--cyan);}
+  .banner{background:var(--gold);color:#3a2b00;font-weight:800;border-radius:12px;padding:10px 14px;text-align:center;box-shadow:0 4px 0 #b57f00;}
+  h1{font-size:clamp(30px,5.4vw,50px);margin:16px 0 4px;line-height:1.08;}
+  h2.sec{font-size:clamp(21px,3.4vw,28px);margin:34px 0 6px;border-bottom:2px dashed var(--line);padding-bottom:6px;}
+  .sub{color:var(--dim);font-size:clamp(14px,2.2vw,17px);line-height:1.55;}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;margin-top:14px;}
+  .grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin-top:14px;}
+  .panel{background:var(--panel);border:2px solid var(--line);border-radius:18px;padding:18px;}
+  .panel h3{margin:0 0 8px;font-size:18px;}
+  .big{font-size:32px;font-weight:900;line-height:1.1;}
+  .mid{font-size:21px;font-weight:900;}
+  table{width:100%;border-collapse:collapse;font-size:14px;margin-top:8px;}
+  td,th{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top;}
+  th{color:var(--cyan);}
+  .chip{display:inline-block;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:800;background:#26307a;}
+  .chip.green{background:#14532d;color:#bbf7d0;} .chip.gold{background:#713f12;color:#fde68a;} .chip.pink{background:#831843;color:#fbcfe8;} .chip.red{background:#7f1d1d;color:#fecaca;}
+  .grade{font-size:11.5px;font-weight:900;letter-spacing:.04em;}
+  .note{color:var(--dim);font-size:13.5px;line-height:1.6;}
+  .hl{color:var(--gold);font-weight:900;}
+  .up{color:var(--green);font-weight:800;} .down{color:var(--red);font-weight:800;}
+  .mono{font-family:ui-monospace,Menlo,monospace;font-size:13px;}
+  .formula{background:#0a1030;border:2px solid var(--line);border-radius:12px;padding:12px 14px;font-family:ui-monospace,Menlo,monospace;font-size:14.5px;line-height:1.7;overflow-x:auto;}
+  .foot{color:var(--dim);font-size:13px;line-height:1.65;margin-top:30px;border-top:1px dashed var(--line);padding-top:12px;}
+  ul{line-height:1.65;margin:6px 0 6px 18px;padding:0;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="banner">📡 THE TIP-OFF — an evidence-graded briefing, not a sales pitch. Every number below carries its source class. Vendor claims are labeled as vendor claims. Scenarios are labeled as scenarios. Nothing here is financial advice.</div>
+  <p style="margin:14px 0 0;"><a href="../sui-lab.html">← SUI LAB</a> · <a href="gateway.html">⚛️ Quantum Gateway (TEST GENIQ)</a> · <a href="kids-lab/index.html">🦆 Kids Quantum Lab</a></p>
+
+  <h1>📡 THE TIP-OFF<br><span style="color:var(--gold);">Quantinuum &amp; the New Quantum Era</span></h1>
+  <p class="sub">This is the page we would hand to a friend who asked one question: <b>“If quantum computing actually arrives, whose machine does it arrive on — and how would I know?”</b> Our answer, after months of graded research: the most proven route in the world right now runs through Quantinuum's Helios — and the honest way to share that future is to publish the numbers, the error bars, the prices, and our own working gateway, open source, so anyone can check the math and start building alongside us. That is what this page does.</p>
+
+  <h2 class="sec">1 · THE NUMBER THAT STARTED THE ERA</h2>
+  <div class="grid3">
+    <div class="panel"><div class="big">99.9995%</div><p class="note" style="margin:6px 0 0;">Logical memory fidelity on Helios — <b style="color:var(--ink);">5 errors per million rounds</b>, announced Oct 19, 2026 via the color code at distance 7, with error suppression Λ = 12. <span class="grade" style="color:var(--gold);">GRADE B — company announcement + arXiv preprint, NOT yet peer-reviewed.</span></p></div>
+    <div class="panel"><div class="big">3 / 29,000</div><p class="note" style="margin:6px 0 0;">The fine print we insist on printing: the distance-7 figure rests on <b style="color:var(--ink);">3 observed failures in 29,000 runs of 20 rounds</b> (1σ range ≈ 3–9 × 10⁻⁶). Awe and honesty fit in the same sentence. <span class="grade" style="color:var(--gold);">GRADE B — preprint's own statistics.</span></p></div>
+    <div class="panel"><div class="big">98 → 48</div><p class="note" style="margin:6px 0 0;">Helios: <b style="color:var(--ink);">98 physical qubits yielding 48 logical qubits</b> — the highest logical count of any commercial system, on the trapped-ion architecture with all-to-all connectivity. <span class="grade" style="color:var(--green);">GRADE A− — vendor spec, widely corroborated.</span></p></div>
+  </div>
+  <p class="sub">You'll see “six nines” headlines. The measured claim is <span class="hl">99.9995%</span> — five nines and change — and the next real test is distance-7 logical <i>gates</i>, which the preprint does not yet reach and which will need more qubits than Helios carries. That is exactly why the roadmap matters: <b>Sol (2027)</b> next, <b>Apollo (~2029)</b> — the universal fault-tolerant machine this result is a down payment on. The era is not declared by a press release. It is declared by error rates falling below threshold while systems scale — and on the public record, this is the route where that is measurably happening.</p>
+
+  <h2 class="sec">2 · WHO IS ALREADY ON THE MACHINE — AND HOW DEEP</h2>
+  <div class="grid">
+    <div class="panel"><h3>🏦 JPMorgan Chase — PROVEN ON HARDWARE</h3><p class="note" style="color:var(--ink);font-size:14.5px;">The flagship proof. Fault-tolerant runs on Helios: <b>12 logical qubits on 97 physical</b>, largest circuits of <b>2,132 physical two-qubit gates</b>, a fault-tolerant logical T gate at ~2.6 × 10⁻³ infidelity (Steane code) — plus the portfolio-optimization work that made Helios's name in finance. The team's own caveat, which we love them for: counting logical gates can mislead; a precise noise model beats a nominal tally. <span class="grade" style="color:var(--gold);">GRADE B — IEEE Quantum Week coverage of ~Oct 12 work + company record.</span></p></div>
+    <div class="panel"><h3>☁️ Oracle — ALL-IN INFRASTRUCTURE</h3><p class="note" style="color:var(--ink);font-size:14.5px;">The <b>OCI Quantum AI Compute Beta Program launched Oct 22, 2026</b>. Precision matters here: beta participants get <b>no-cost access to hardware and emulators hosted by Quantinuum</b>; Helios is <b>not yet installed</b> inside an OCI data center — that install, expected 2027, is what turns a beta into a public cloud service. Toolchain: Nexus + Guppy + Selene. <span class="grade" style="color:var(--green);">GRADE A− — Oracle / Quantinuum program pages.</span></p></div>
+    <div class="panel"><h3>🪟 Microsoft — THE DISTRIBUTION ROUTE</h3><p class="note" style="color:var(--ink);font-size:14.5px;">Quantinuum rides <b>Azure Quantum</b> at enterprise tiers — listed at <b>$125k/month (Standard)</b> and <b>$175k/month (Premium)</b>. AWS Braket does <i>not</i> carry Quantinuum; if someone tells you otherwise, they're guessing. <span class="grade" style="color:var(--gold);">GRADE B — listed pricing, not re-confirmed live this week.</span></p></div>
+    <div class="panel"><h3>⚡ GE Vernova — TRYING IT ON REAL PHYSICS</h3><p class="note" style="color:var(--ink);font-size:14.5px;">Began applying Helios via Nexus to <b>Fermi-Hubbard superconductivity models</b> — energy-sector materials science on the machine, this month. <span class="grade" style="color:var(--pink);">GRADE C+ — single-source roundup (Qubit Report, Oct 27); logged, watched, not yet leaned on.</span></p></div>
+    <div class="panel"><h3>🏭 Quanta Computer — BUILDING THE FACTORY</h3><p class="note" style="color:var(--ink);font-size:14.5px;">A manufacturing agreement for the Apollo era. Date discipline: it is <b>August 13, 2026</b> news (first-party release) — a crypto commentary piece this week re-dated it as a fresh October signing. The partnership is real; the timeline inflation is not. <span class="grade" style="color:var(--green);">GRADE A — company press release.</span></p></div>
+    <div class="panel"><h3>🍯 Honeywell — THE BACKER</h3><p class="note" style="color:var(--ink);font-size:14.5px;">Honeywell holds roughly <b>49% of the voting power</b> after the IPO — an industrial giant's balance sheet standing behind the roadmap while the public float prices the story month to month. <span class="grade" style="color:var(--green);">GRADE A — offering documents / coverage.</span></p></div>
+  </div>
+  <p class="sub">And the door is open at the bottom as well as the top: OCI beta seats are application-based and no-cost while the beta lasts, and OLCF's QCUP program takes rolling applications — industry PIs included — with Quantinuum Nexus among its vendors. Early adopters are not watching this era. They are queued inside it.</p>
+
+  <h2 class="sec">3 · THE REAL MATH OF USAGE — HQC</h2>
+  <p class="sub">Quantum time on Quantinuum hardware is metered in <b>HQCs</b> (Helios Quantum Credits), by a published formula — no mystery pricing:</p>
+  <div class="formula">HQC = 5 + C × (N<sub>1q</sub> + 10·N<sub>2q</sub> + 5·N<sub>m</sub>) / 5000<br><span style="color:var(--dim);">C = shots · N<sub>1q</sub> = one-qubit gates · N<sub>2q</sub> = two-qubit gates · N<sub>m</sub> = measurements</span></div>
+  <div class="grid">
+    <div class="panel"><h3>✏️ The documented worked example</h3><p class="note" style="color:var(--ink);font-size:14.5px;">A circuit with 8 one-qubit gates, 1 ZZPhase (two-qubit) gate and 3 measurements, run for 100 shots:<br><span class="mono">5 + 100 × (8 + 10 + 15) / 5000 = 5 + 0.66 = <b>5.66 HQC</b></span> — exact, from Quantinuum's own documentation. In our gateway's pricing rule (disclosed margin ×1.2, rounded up), that job quotes at <b>7 GENIQ</b>.</p></div>
+    <div class="panel"><h3>🎛️ Our gateway, measured live</h3><p class="note" style="color:var(--ink);font-size:14.5px;">On the live <a href="gateway.html">TEST GENIQ gateway</a>: a 500-round CHSH match quotes at <b>9 TEST GENIQ</b> — ceil((5 + 500×22/5000) × 1.2) — locks in escrow, settles, burns 9, and the ledger's conservation check still balances to the credit. Free-lane emulator runs charge <b>0</b>. Protocol caps: 10,000 shots · 98 qubits · 50 HQC per request · 200 GENIQ per caller per day.</p></div>
+  </div>
+  <table>
+    <tr><th>Route</th><th>What it costs</th><th>Status (Oct 27, 2026)</th></tr>
+    <tr><td><b>Nexus — Helios hardware</b></td><td>HQC formula above; per-HQC dollar price unpublished</td><td>Live route; our signup is blocked on Quantinuum's side (their expired Azure AD secret) — their bug, our paperwork is done</td></tr>
+    <tr><td><b>Nexus — emulators</b></td><td>0 while learning</td><td>Route exists; Selene + Guppy also run fully local and free</td></tr>
+    <tr><td><b>Azure Quantum</b></td><td>$125k/mo Standard · $175k/mo Premium (listed)</td><td>Enterprise lane; list prices not re-confirmed live</td></tr>
+    <tr><td><b>OCI Quantum AI Compute Beta</b></td><td>No cost to accepted participants</td><td>Application-gated; hosted by Quantinuum until the 2027 in-DC install</td></tr>
+    <tr><td><b>OLCF QCUP</b></td><td>Program credits</td><td>Rolling applications; industry PIs eligible; Nexus among vendors</td></tr>
+    <tr><td><b>Our gateway (emulator tier)</b></td><td>0 GENIQ — free lane</td><td><a href="gateway.html">Live now</a> · hardware tier unlocks only at Gate 2, on a named amount</td></tr>
+  </table>
+
+  <h2 class="sec">4 · THE STOCK — QNT, THE CLASSIC MONTH-TO-MONTH</h2>
+  <div class="banner" style="background:#7f1d1d;color:#fecaca;box-shadow:0 4px 0 #450a0a;">⚠️ TICKER TRAP: crypto “Quant (QNT)” trading near $200 is a completely different asset. This section is only about <b>Quantinuum Inc., NASDAQ: QNT</b> — $40.21 at the Oct 27 close.</div>
+  <div class="grid3" style="margin-top:14px;">
+    <div class="panel"><div class="big">$40.21</div><p class="note" style="margin:6px 0 0;">Close, Tue Oct 27, 2026 — <span class="up">+7.14%</span> on the day, into earnings. Market cap <b style="color:var(--ink);">$10.59B</b> · 263.31M shares out · float just 32.24M · beta 3.13 (it moves like it means it).</p></div>
+    <div class="panel"><div class="big">$60 → $33.02</div><p class="note" style="margin:6px 0 0;">IPO price (Jun 4, 2026; $1.68B raised) → the all-time low printed Oct 14–15. 52-week high <b style="color:var(--ink);">$86.79</b>. October's range is the whole story: despair at $33, a record physics headline, and a run back to $40.</p></div>
+    <div class="panel"><div class="big">$94.23</div><p class="note" style="margin:6px 0 0;">Analyst consensus target (MarketBeat): <b style="color:var(--ink);">Moderate Buy — 13 Buy / 2 Hold / 1 Sell</b>. Named targets: Needham $100 · Craig-Hallum $100 · Cantor $90 · Mizuho $90 · Morgan Stanley $62 (Overweight, its top quantum pick) · Yorkville Ives $60. Targets are opinions, not promises.</p></div>
+  </div>
+  <div class="panel" style="margin-top:14px;">
+    <h3>📈 October 2026, close by close (MarketBeat)</h3>
+    <svg viewBox="0 0 600 185" style="width:100%;height:auto;" role="img" aria-label="QNT October closing prices">
+      <polyline points="0,26 38,25 75,40 113,69 150,71 188,90 225,119 263,159 300,120 338,122 375,139 413,131 450,99 488,129 525,122 563,111 600,83" fill="none" stroke="#7df9ff" stroke-width="2.5"/>
+      <circle cx="263" cy="159" r="4" fill="#ff7a7a"/><circle cx="600" cy="83" r="4" fill="#7CFC90"/>
+      <text x="255" y="178" fill="#ff7a7a" font-size="12">$33.02 low · Oct 14</text>
+      <text x="520" y="70" fill="#7CFC90" font-size="12">$40.21 · Oct 27</text>
+    </svg>
+    <table>
+      <tr><th>Week of</th><th>Closes</th><th>What the tape was pricing</th></tr>
+      <tr><td>Oct 5–9</td><td>$45.53 → $41.30</td><td>Post-IPO gravity; market cap sliding from ~$12.0B</td></tr>
+      <tr><td>Oct 12–16</td><td>$39.52 → $36.55, low <b>$33.02</b></td><td>Capitulation — then Morgan Stanley's Overweight upgrade (PT $78 → $62) off the lows</td></tr>
+      <tr><td>Oct 19–23</td><td>$34.93 → $36.50</td><td>The 99.9995% world record lands Oct 19; the stock shrugs first, believes later</td></tr>
+      <tr><td>Oct 26–27</td><td>$37.53 → <b>$40.21</b> <span class="up">+7.14%</span></td><td>Running into earnings; market cap $9.61B → $10.59B in three sessions</td></tr>
+    </table>
+    <p class="note">Month view: market cap $12.65B (Sep 30) → $10.59B (Oct 27), ≈ −16% on the month with a full round trip through the lows inside it. Two structural facts for the months ahead: <b style="color:var(--ink);">no share-repurchase program exists</b> in any source we checked — and the real float event is the <b style="color:var(--ink);">IPO lock-up expiry around December 2026</b>. We show no entry cards and no house positions on this page; the data above is the public tape, complete.</p>
+  </div>
+
+  <h2 class="sec">5 · NOV 5 — THE EARNINGS PRINT, CALLED HONESTLY</h2>
+  <p class="sub">Q3 results land <b>Thursday, Nov 5, 2026, after the close</b>. Consensus (aggregator grade): <b>≈ −$0.56/share on ≈ $8.07M revenue</b>. Context: Q2 printed $8.00M revenue (+279% YoY) with EPS −$0.28 vs −$0.26 expected; full-year guidance was raised toward ~$32M; the balance sheet holds roughly $2.1B in cash from the IPO. Here is our desk's scenario card — written Oct 27, before the number exists:</p>
+  <div class="grid">
+    <div class="panel"><h3>🟢 BEAT &amp; CONVERT</h3><p class="note" style="color:var(--ink);font-size:14.5px;">Revenue <b>$9.5M+</b>, bookings language that names enterprise demand, Sol tape-out on schedule, FY guide raised. This is the print that converts the physics headline into a commercial story — the one the $94 consensus target is actually betting on.</p></div>
+    <div class="panel"><h3>🟡 IN LINE &amp; HOLD</h3><p class="note" style="color:var(--ink);font-size:14.5px;">Revenue <b>$7.5–8.5M</b>, guide held, milestones repeated. Our working expectation sits here on revenue — with the real reaction decided by bookings and Apollo language, not the EPS line. With beta 3.13, “in line” can still swing violently either way.</p></div>
+    <div class="panel"><h3>🔴 MISS &amp; OVERHANG</h3><p class="note" style="color:var(--ink);font-size:14.5px;">Revenue <b>under $7M</b> or a guide cut, and December's lock-up expiry becomes the whole conversation. Nothing about the physics changes; everything about the float does. That distinction — machine vs. market — is the discipline this page exists to teach.</p></div>
+  </div>
+  <p class="sub">What we will check the morning after, in order: (1) revenue vs the ~$8.07M consensus, (2) bookings vs the company's $120M+ year-to-date ambition, (3) Sol/Apollo milestone wording, (4) any lock-up or secondary language. Then this section gets rewritten with the real data — that's the deal with every number on this page.</p>
+
+  <h2 class="sec">6 · WHAT WE BUILT ON IT — AND WHY IT'S OPEN SOURCE</h2>
+  <p class="sub">A tip-off you can't build on is just gossip. So the house system that meters access to this machine — <b>GENIQ / FIN</b> — is published <span class="hl">MIT, all of it</span>, as of today:</p>
+  <div class="grid">
+    <div class="panel"><h3>🧾 The design in one paragraph</h3><p class="note" style="color:var(--ink);font-size:14.5px;">GENIQ exists <b>only as numbers inside one shared ledger object</b> — no coin is ever minted, so there is nothing to trade, pump, or rug. Quotes bind to a SHA-256 commitment of the exact job; escrow locks before execution; settlement verifies the price rule <i>in Move</i> (actual × 5 ≤ quoted × 6) and burns the charge on delivery; if actual cost ever beat 1.2× the quote, the job aborts and the escrow releases in full. Receipts are soulbound and hash-stamped, so results enter a learning corpus (Yaae's Watch verifies every hash before learning from it) and peer-review podcasts trigger off real, recomputable work.</p></div>
+    <div class="panel"><h3>📦 The release</h3>
+      <ul>
+        <li><a href="open-source/geniq-open-source.zip"><b>geniq-open-source.zip</b></a> (54 KB, 24 files) — Move package + tests, the Lamp reference implementation, the free-first router, the Kids Lab emulator, Yaae's Watch, and the design docs including the full token audit.</li>
+        <li><a href="open-source/LICENSE">LICENSE</a> · <a href="open-source/README.md">README</a></li>
+        <li>Test record at release: Move <b>15/15</b> · Lamp <b>106/106</b> · Router <b>15/15</b> · watcher rejects tampered receipts on sight.</li>
+        <li>Try the rehearsal: <a href="gateway.html">Quantum Gateway</a> · Teach it: <a href="kids-lab/index.html">Kids Quantum Lab</a></li>
+      </ul>
+      <p class="note">TEST GENIQ is a test credit: real ledger numbers, no monetary value, not transferable, not for sale. The MIT license covers code and documents — it does not create a tradable token, and neither do we.</p>
+    </div>
+  </div>
+
+  <h2 class="sec">7 · THE PICTURE, PAINTED PLAINLY</h2>
+  <p class="sub">Every era has a machine that turns out to have been the obvious choice — obvious only afterwards. The evidence tonight says: the machine with the world's best logical error rate, the bank running fault-tolerant finance on it, the cloud giants racing to host it, the factory being built for its successor, and a public stock the market is still pricing like a rumor — that machine is Helios, and the era it opens is the one where quantum stops being a lab trick and becomes metered, receipted, buildable infrastructure. We are not asking anyone to take that on faith. The formula is on this page. The error bars are on this page. The code is on this page. <b>Check the math, run the gateway, teach a kid the Impossible Game — and then come build the inevitable with us.</b></p>
+  <p class="sub">— Koda Kai desk, SUI LAB · filed the night of Oct 27, 2026, nine days before the Nov 5 print.</p>
+
+  <div class="foot">
+    <b>Sources &amp; grades.</b> Color-code record: Quantinuum announcement + arXiv preprint (Oct 19, 2026), PostQuantum analysis, eWeek (Oct 27) — preprint, not peer-reviewed. JPMorgan runs: IEEE Quantum Week coverage of ~Oct 12, 2026 work + company record. OCI beta: Oracle / Quantinuum program pages (Oct 22, 2026). GE Vernova: Qubit Report roundup (Oct 27, 2026), single source. Quanta Computer: company press release dated Aug 13, 2026. HQC formula and worked example: Quantinuum's published documentation. Prices, market cap, share counts, analyst ratings and targets: MarketBeat, Finnhub, stockanalysis.com prints for Oct 27, 2026; Q3 consensus via Longbridge as logged by our watch desk; Q2 results as reported Aug 11, 2026. Figures marked “listed” or “aggregator grade” have not been re-confirmed against a primary filing this week.<br><br>
+    <b>Not financial advice.</b> This page is education and research documentation. Scenarios in §5 are the desk's pre-earnings framework, not a forecast and not a recommendation to buy, sell, or hold any security. QNT is a volatile, high-beta, pre-profit company; its IPO lock-up expiry (~Dec 2026) may add supply. Do your own diligence, or hire someone whose job it is.<br><br>
+    <b>Trademarks.</b> Quantinuum, Helios, Nexus, Guppy and Selene are trademarks of Quantinuum; Oracle, Microsoft, Azure, JPMorgan, GE Vernova, Quanta and Honeywell marks belong to their owners. This is an independent research page, not affiliated with or endorsed by Quantinuum. Our own code and documents are MIT-licensed as noted in §6.
+  </div>
+</div>
+</body>
+</html>
