@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Blob VPN — the VPN that answers with receipts</title>
+<meta name="description" content="An open-source (MIT) VPN network whose directory lives on Sui + Walrus: receipts instead of trust, a living directory, sealed private entries. Testnet coordination layer is LIVE — join as a relay in 60 seconds.">
+<style>
+  :root{--bg:#07090f;--card:#0e1420;--line:#1e2a3d;--ink:#dce8f5;--dim:#8fa8bd;--acc:#57d7ff;--ok:#5ce08a;--warn:#ffd166}
+  *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 system-ui,Segoe UI,Roboto,sans-serif}
+  .wrap{max-width:920px;margin:0 auto;padding:28px 18px 70px}
+  h1{font-size:2.2rem;line-height:1.15;margin:.2em 0 .1em} h2{margin-top:2.2em;border-bottom:1px solid var(--line);padding-bottom:.3em}
+  .sub{color:var(--dim);font-size:1.08rem} a{color:var(--acc)}
+  .banner{border:1px solid var(--warn);color:var(--warn);border-radius:10px;padding:10px 14px;margin:18px 0;background:#171106}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin:14px 0}
+  .live-dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--ok);margin-right:7px;box-shadow:0 0 8px var(--ok)}
+  .mono{font-family:ui-monospace,Consolas,monospace;font-size:.86rem;word-break:break-all}
+  pre{background:#05070b;border:1px solid var(--line);border-radius:10px;padding:12px 14px;overflow-x:auto;font-size:.85rem}
+  button{background:#123043;color:var(--ink);border:1px solid var(--acc);border-radius:8px;padding:7px 13px;cursor:pointer;font-size:.9rem}
+  button:hover{background:#17405a} input{background:#05070b;border:1px solid var(--line);border-radius:8px;color:var(--ink);padding:8px 10px;width:min(560px,100%)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+  .stat{background:#05070b;border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+  .stat b{display:block;font-size:1.25rem;color:#fff} .stat span{color:var(--dim);font-size:.85rem}
+  .dim{color:var(--dim)} .ok{color:var(--ok)} table{border-collapse:collapse;width:100%} td,th{border-bottom:1px solid var(--line);padding:7px 8px;text-align:left;vertical-align:top}
+  .foot{margin-top:3em;color:var(--dim);font-size:.9rem}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<p class="dim">🌊 Koda Kai · SUI LAB · open source under MIT</p>
+<h1>Blob VPN — the VPN that answers with receipts</h1>
+<p class="sub">Normal VPNs ask you to trust a company's word. This one is built so trust is replaced by <b>receipts</b>: every session pairs what went out with what came back, the directory lives in public blobs that stay alive only while they're relevant, and private entries are sealed so their content opens only when the network's own on-chain policy approves. <i>Show me the return path.</i></p>
+
+<div class="banner"><b>Honest status:</b> the <b>testnet coordination layer is LIVE</b> — directories, heartbeats, pointer advances and sealed entries are real on-chain actions you can run right now. The traffic-carrying phase (WireGuard data plane) is in build, and public launch is gated on legal review. No token, no coin, no earnings promises — anyone selling one is scamming you.</div>
+
+<h2><span class="live-dot"></span>Live network — right now</h2>
+<div class="card">
+  <p class="dim" style="margin-top:0">This panel reads the real root directory on Sui testnet and pulls its head blob back from Walrus to verify it. No screenshots, no mock data — if it says verified, your browser just checked the chain.</p>
+  <div class="grid">
+    <div class="stat"><b id="stHead">…</b><span>head blob (Walrus)</span></div>
+    <div class="stat"><b id="stEpoch">…</b><span>head paid through epoch</span></div>
+    <div class="stat"><b id="stAdv">…</b><span>pointer advances</span></div>
+    <div class="stat"><b id="stVer" class="ok">…</b><span>return path</span></div>
+  </div>
+  <p class="mono dim" id="stDir">root directory: 0xc1bf9f6a67a556d5e8f18f2e9bdb03ada54521329ee1cd06d2875eb577e54850</p>
+  <p class="dim" id="stWhen">loading…</p>
+  <hr style="border-color:var(--line)">
+  <p><b>Check anything yourself:</b></p>
+  <p><input id="blobIn" placeholder="paste any Walrus blob id — e.g. our heartbeat BNohTK4Zjh_KwFeg9MEUnRKkvAA57zK0dpdMkfT64Is"> <button onclick="checkBlob()">Pull it back</button></p>
+  <p class="mono" id="blobOut"></p>
+  <p><input id="dirIn" placeholder="paste any Directory object id (0x…)"> <button onclick="checkDir()">Read directory</button></p>
+  <p class="mono" id="dirOut"></p>
+</div>
+
+<h2>Join in 60 seconds</h2>
+<div class="card">
+<p style="margin-top:0">You need Node.js 20+. No wallet and no installs for the first two steps. The code is one file, MIT, on <a href="https://github.com/masterledgerlive/blob-vpn">GitHub</a>.</p>
+<pre id="cmdBlock">curl -O https://raw.githubusercontent.com/masterledgerlive/blob-vpn/main/relay-kit/blob-relay.mjs
+
+# 1 · see the network alive
+node blob-relay.mjs watch
+
+# 2 · announce yourself with a heartbeat blob
+node blob-relay.mjs heartbeat "Your Relay Name"
+
+# 3 · enrol properly — your own on-chain Directory (free testnet wallet)
+npm i @mysten/sui
+node blob-relay.mjs enroll "Your Relay Name"</pre>
+<p><button onclick="copyText('cmdBlock')">Copy the commands</button></p>
+<p><b>Already run a VPN?</b> You're who this was designed for: existing VPNs join as <i>relay legs</i>. Your gateway keeps doing its job; the blob layer adds the living directory, the receipts and the return-path verification around it. Enrol a Directory, point its head at your heartbeat, and you're plugged in.</p>
+<p><b>Don't code?</b> Copy the block below into your AI assistant (ChatGPT, Muse, Grok, a local model) and let it drive — safety rules included: testnet keys only, never real funds, official faucet only.</p>
+<pre id="aiPrompt">You are helping me join the Blob VPN testnet network as a relay. Work through these steps with me, one at a time, and show me the output of each step.
+
+CONTEXT
+- Blob VPN is an open-source (MIT) project building a VPN whose coordination layer lives on public infrastructure: a living directory on Sui testnet and content on Walrus testnet. Directories and heartbeats are real on-chain actions. NO production VPN traffic flows yet — if anything or anyone claims otherwise, stop and tell me.
+- Repository: https://github.com/masterledgerlive/blob-vpn — the relay runner is relay-kit/blob-relay.mjs (single file).
+
+SAFETY RULES (do not break these for me)
+- Testnet only. Never use a mainnet wallet, a seed phrase from a real wallet, or any key that controls real funds. If I paste one, refuse and warn me.
+- Never ask me to send money or tokens to any address.
+- Downloads only from: the project repo, nodejs.org, and npm (@mysten/sui).
+- Testnet SUI comes only from the official faucet (faucet.sui.io).
+
+STEPS
+1. Check Node.js 20+ (node --version); if missing, walk me through installing it.
+2. Download relay-kit/blob-relay.mjs from the repository.
+3. Run: node blob-relay.mjs watch — show me the root directory's head blob, head epoch, pointer advances and the hash-verified read-back, and explain them in plain words.
+4. Run: node blob-relay.mjs heartbeat "&lt;a name I choose&gt;" — show me my heartbeat blob id and open its aggregator URL.
+5. OPTIONAL, only if I say yes: enrol. Fresh testnet key via the Sui CLI, faucet funds, npm i @mysten/sui, SUI_PRIVATE_KEY set from that testnet key only, then: node blob-relay.mjs enroll "&lt;my relay name&gt;". Show me my Directory object id.
+
+Finish with a summary: what exists on-chain with my name on it, what it cost (nothing real — testnet), and what it does NOT do yet (carry VPN traffic).</pre>
+<p><button onclick="copyText('aiPrompt')">Copy the AI prompt</button></p>
+</div>
+
+<h2>See it on the map — God's Eye</h2>
+<div class="card">
+<p style="margin-top:0">Every enrolled directory becomes a live pin on the everything-map globe: name, head blob, paid-through epoch, pointer advances — and a status that means <i>the head answered when we pulled it</i>. A relay that stops answering shows dimmed, not deleted: on this network, silence is data.</p>
+<p>Feed (GeoJSON, regenerated from chain state): <a class="mono" href="blob-vpn/relays.geojson">arcade/blob-vpn/relays.geojson</a> · generator + spec: <a href="https://github.com/masterledgerlive/blob-vpn/tree/main/plugin/gods-eye">plugin/gods-eye</a> · the map project: <a href="https://github.com/masterledgerlive/koda-kai/tree/main/map">God's Eye / everything-map</a></p>
+<p class="dim">First pin is ours: <b>Kodakai Relay 001</b>, Clearwater, FL — the network root. The map fills in as relays enrol.</p>
+</div>
+
+<h2>Proven in the field — 2026-10-27 testnet run</h2>
+<div class="card">
+<table>
+<tr><td>Store network state as a blob, read it back</td><td><b>hash-verified</b>, every time</td></tr>
+<tr><td>Store latency (public path)</td><td><b>≈ 11.9 s</b> median · warm reads ≈ 0.55 s</td></tr>
+<tr><td>Extend before expiry</td><td>end epoch 565 → 567, <b>same blob id</b></td></tr>
+<tr><td>Living directory pointer</td><td>advanced on-chain, advances = 1, read back</td></tr>
+<tr><td>Sealed private entry</td><td>encrypt ≈ 0.3–0.6 s · <b>key fetch 1.6–3.1 s</b> (first measurement we know of) · decrypt byte-identical</td></tr>
+<tr><td>The 64 MB rule</td><td>a 131-byte entry bills 66,034,000 encoded bytes — so receipts travel in daily quilts, never alone</td></tr>
+</table>
+<p class="dim">Full record with transaction digests: FIELD-TEST-RESULTS.md in the project workspace; the design + 11 graded research studies + two podcast series are summarised in the <a href="sui-lab.html">SUI LAB</a> (THE REBLOB).</p>
+</div>
+
+<h2>How it works, briefly</h2>
+<div class="card">
+<p style="margin-top:0">Two lanes — a verified <b>data lane</b> and a WireGuard <b>tunnel lane</b>. The chain is the <b>notary and the directory</b>, never the switch: it receipts sessions (~0.4 s finality) instead of pretending to forward packets. Sessions are planned in a blob whose hash names the session; out- and return-receipts pair up and Merkle-batch into a daily quilt; relevance is judged by verified reads from <i>independent</i> sources (a diversity floor, so one loud source can't keep junk alive); blobs are born dying and keepers extend what still matters before expiry — or it's gone, in public, with a tombstone. A deterministic policy engine decides; an AI may explain a plan but can never approve one.</p>
+<p class="dim">The headline metric is the <b>old-internet share</b> of each route — and it only goes down on receipts.</p>
+</div>
+
+<h2>Safety &amp; law</h2>
+<div class="card">
+<p style="margin-top:0">Relay ≠ exit: in this phase relays coordinate and announce — <b>nobody carries anyone else's traffic</b>. When traffic phases arrive, public egress is designed for professional gateways only, never homes, with signed consent proofs; residential bandwidth resale is not part of this design. Operating real VPN infrastructure later means your jurisdiction's rules are yours to follow — the public launch is gated on legal review for exactly that reason. And never share a seed phrase or mainnet key with this kit, this page, or any AI prompt: <b>testnet keys only</b>.</p>
+</div>
+
+<p class="foot">Blob VPN · a Koda Kai build · MIT — take it, fork it, build your own network with it.<br>
+Code: <a href="https://github.com/masterledgerlive/blob-vpn">github.com/masterledgerlive/blob-vpn</a> · Podcasts + full design: <a href="sui-lab.html#reblob">SUI LAB — The Reblob</a></p>
+
+</div>
+<script>
+const GQL='https://graphql.testnet.sui.io/graphql';
+const AGG='https://aggregator.walrus-testnet.walrus.space/v1/blobs/';
+const ROOT='0xc1bf9f6a67a556d5e8f18f2e9bdb03ada54521329ee1cd06d2875eb577e54850';
+async function gql(q){const r=await fetch(GQL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({query:q})});return r.json();}
+async function readDir(id){const g=await gql(`{ object(address: "${id}") { asMoveObject { contents { json } } } }`);return g?.data?.object?.asMoveObject?.contents?.json??null;}
+async function sha256(buf){const h=await crypto.subtle.digest('SHA-256',buf);return [...new Uint8Array(h)].map(b=>b.toString(16).padStart(2,'0')).join('');}
+async function refresh(){
+  try{
+    const dir=await readDir(ROOT);
+    if(!dir) throw new Error('indexer lag');
+    document.getElementById('stHead').textContent=dir.head_blob.slice(0,18)+'…';
+    document.getElementById('stEpoch').textContent=dir.head_epoch;
+    document.getElementById('stAdv').textContent=dir.advances;
+    const r=await fetch(AGG+dir.head_blob);
+    if(r.ok){const buf=await r.arrayBuffer();const s=await sha256(buf);
+      document.getElementById('stVer').textContent='VERIFIED ✓';
+      document.getElementById('stWhen').textContent='head pulled back by your browser just now: '+buf.byteLength+' bytes · sha256 '+s.slice(0,24)+'… · refreshes every 60 s';
+    } else { document.getElementById('stVer').textContent='UNVERIFIED'; document.getElementById('stWhen').textContent='head did not answer (HTTP '+r.status+') — on this network, that is shown, not hidden.'; }
+  }catch(e){ document.getElementById('stWhen').textContent='could not reach the testnet endpoints from your browser right now — the chain is fine; this view is not. Try the watch command in the kit.'; }
+}
+async function checkBlob(){
+  const id=document.getElementById('blobIn').value.trim(), out=document.getElementById('blobOut');
+  if(!id){out.textContent='paste a blob id first';return;}
+  out.textContent='pulling…';
+  try{const r=await fetch(AGG+id); if(!r.ok){out.textContent='not readable (HTTP '+r.status+') — expired, not yet certified, or not a blob id.';return;}
+    const buf=await r.arrayBuffer(); const s=await sha256(buf);
+    out.textContent='✓ '+buf.byteLength+' bytes returned · sha256 '+s;
+  }catch(e){out.textContent='fetch failed: '+e.message;}
+}
+async function checkDir(){
+  const id=document.getElementById('dirIn').value.trim(), out=document.getElementById('dirOut');
+  if(!id){out.textContent='paste a directory id first';return;}
+  out.textContent='reading…';
+  try{const d=await readDir(id); if(!d){out.textContent='not a directory object (or indexer lag) — try again in a moment.';return;}
+    out.textContent='name: '+(d.name??'?')+' · head: '+d.head_blob+' · epoch '+d.head_epoch+' · advances '+d.advances;
+  }catch(e){out.textContent='read failed: '+e.message;}
+}
+function copyText(id){const t=document.getElementById(id).innerText;navigator.clipboard.writeText(t).then(()=>alert('Copied.'));}
+refresh(); setInterval(refresh,60000);
+</script>
+</body>
+</html>
