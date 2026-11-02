@@ -17,17 +17,17 @@
  a{color:#7fd4ff}
 </style></head><body>
 <h1>📊 MARKETS — LIVE, INSIDE THE ARCADE</h1>
-<p class="note">These are the real Polymarket and Kalshi markets, drawn by <b>our own page</b> from their official public data feeds — that's why it works in here while their sites refuse to be framed. Tap any market to open it in the real app (portal tab) where sign-in and trading live. Prices refresh every 60 s. Data only — no trading happens on this page.</p>
+<p class="note">These are the real Polymarket and Kalshi markets, drawn by <b>our own page</b> from their official public data feeds — that's why it works in here while their sites refuse to be framed. Tap any market to expand it — everything stays in-screen by house rule. Prices refresh every 60 s. Data only — no trading happens on this page.</p>
 <h2>📈 POLYMARKET — top by 24h volume</h2><div id="poly"><p class="note">loading…</p></div>
 <h2>🎾 KALSHI — open markets</h2><div id="kal"><p class="note">loading…</p></div>
 <script>
 function row(q, yes, vol, url){
   const d=document.createElement('div'); d.className='row';
-  d.innerHTML='<div class="q"></div><div class="p"><div class="yes"></div><div class="vol"></div></div>';
+  d.innerHTML='<div style="flex:1"><div class="q"></div><div class="note2" style="display:none;font-size:12px;color:#8b93ad;margin-top:4px">Kept in-screen by house rule — this board watches the market; it never sends you outside. Watching is free and the data is real.</div></div><div class="p"><div class="yes"></div><div class="vol"></div></div>';
   d.querySelector('.q').textContent=q;
   d.querySelector('.yes').textContent=(yes==null?'—':'YES '+Math.round(yes*100)+'¢');
   d.querySelector('.vol').textContent=vol?('vol $'+Number(vol).toLocaleString(undefined,{maximumFractionDigits:0})):'';
-  d.addEventListener('click',()=>window.open(url,'_blank'));
+  d.addEventListener('click',()=>{ const n=d.querySelector('.note2'); if(n) n.style.display = n.style.display==='block' ? 'none' : 'block'; });
   return d;
 }
 async function loadPoly(){
