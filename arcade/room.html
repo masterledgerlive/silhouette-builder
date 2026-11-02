@@ -174,7 +174,7 @@
   </div>
 </div>
 <a-scene background="color:#0b0b10" vr-mode-ui="enabled:true">
-  <a-camera id="cam" position="0 1.6 4.6" user-height="0" look-controls="pointerLockEnabled:false" cursor="rayOrigin:mouse;fuse:false" raycaster="objects:.cabinet,.doorlink,#courtsdoor,.playring;far:30"></a-camera>
+  <a-camera id="cam" position="0 1.6 4.6" user-height="0" look-controls="pointerLockEnabled:false" cursor="rayOrigin:mouse;fuse:false" raycaster="objects:.cabinet,.doorlink,#courtsdoor,.playring,.clickable;far:30"></a-camera>
 
   <!-- ROOM SHELL -->
   <a-plane id="floor" rotation="-90 0 0" width="14" height="11" color="#14101e"></a-plane>
@@ -585,10 +585,10 @@ function makeWindow(startUrl, title){
   const w = document.createElement('div');
   w.className = 'win';
   const off = (winCount - 1) * 34;
-  w.style.left = (40 + off) + 'px'; w.style.top = (60 + off) + 'px';
+  w.style.left = Math.max(4, Math.min(40 + off, window.innerWidth - 130)) + 'px'; w.style.top = Math.max(4, Math.min(60 + off, window.innerHeight - 230)) + 'px';
   w.innerHTML = `
     <div class="winbar">
-      <b>🌐 ${title || 'WINDOW'}</b>
+      <span class="wgrip" title="drag to move">⠿</span><b>🌐 ${title || 'WINDOW'}</b>
       <input class="winurl" type="text" placeholder="paste a link, or a video link…" value="${startUrl || ''}"/>
       <button class="wbtn go">GO</button>
       <button class="wbtn vid">▶ TAKE VIDEO</button>
@@ -599,7 +599,7 @@ function makeWindow(startUrl, title){
       <button class="wbtn red close">✕</button>
     </div>
     <div class="winbody"><iframe title="window"></iframe></div>
-    <div class="winnote">A real window, not a copy — the arcade holds <b>no code and no passwords</b>. Everything in this room stays in-screen by house rule — nothing opens outside. Sites that refuse frames (Google sign-in class) are served by our own in-screen surfaces instead: Markets for the trading data, embeds for video, and the phone mirror when it lands.</div>`;
+    <div class="winnote">A real window, not a copy — the arcade holds <b>no code and no passwords</b>. Everything in this room stays in-screen by house rule — nothing opens outside. Sites that refuse frames (Google sign-in class) are served by our own in-screen surfaces instead: Markets for the trading data, embeds for video, and the phone mirror when it lands.</div><div class="wresize" title="drag to resize">◢</div>`;
   document.body.appendChild(w);
   const frame = w.querySelector('iframe'), urlIn = w.querySelector('.winurl'), body = w.querySelector('.winbody');
   let zoom = 1, current = startUrl || '';
@@ -641,6 +641,10 @@ function makeWindow(startUrl, title){
   bar.addEventListener('pointermove', e=>{ if (drag && !w.classList.contains('wall')){ w.style.left = (e.clientX - drag.dx) + 'px'; w.style.top = (e.clientY - drag.dy) + 'px'; } });
   bar.addEventListener('pointerup', ()=> drag = null);
   w.addEventListener('pointerdown', ()=>{ document.querySelectorAll('.win').forEach(x=> x.style.zIndex = 18); w.style.zIndex = 19; });
+  const rz = w.querySelector('.wresize'); let rsz = null;
+  rz.addEventListener('pointerdown', e=>{ rsz = { x:e.clientX, y:e.clientY, w:w.offsetWidth, h:w.offsetHeight }; rz.setPointerCapture(e.pointerId); e.stopPropagation(); });
+  rz.addEventListener('pointermove', e=>{ if (rsz){ w.style.width = Math.max(280, Math.min(window.innerWidth*0.97, rsz.w + e.clientX - rsz.x)) + 'px'; w.style.height = Math.max(210, Math.min(window.innerHeight*0.92, rsz.h + e.clientY - rsz.y)) + 'px'; } });
+  rz.addEventListener('pointerup', ()=> rsz = null);
   if (startUrl) load(startUrl);
   return w;
 }
@@ -830,8 +834,8 @@ const G_SCREENS=[
   {key:'slap',   name:'FIRST SLAP',     u:'games/first-slap/'},
   {key:'map',    name:'SYSTEM MAP',     u:'system.html'},
   {key:'builder',name:'BUILDER',        u:'builder.html'},
-  {key:'network',name:'KODA KAI NETWORK', u:'../network/', wall:'left', slot:0},
-  {key:'site',   name:'HIGHSCORES.LIVE',  u:'../',          wall:'left', slot:1}
+  {key:'network',name:'KODA KAI NETWORK', u:'../network/', wall:'left', slot:0, lazy:true},
+  {key:'site',   name:'HIGHSCORES.LIVE',  u:'../',          wall:'left', slot:1, lazy:true}
 ];
 const G_WALLS={
   back: {slots:[[-5.2,2.05,-5.44,0],[-2.6,2.05,-5.44,0],[0,2.05,-5.44,0],[2.6,2.05,-5.44,0],[5.2,2.05,-5.44,0]], pw:1.6, ph:1.2, ew:3.3, eh:2.48, el:'backwall'},
@@ -842,6 +846,11 @@ const G_ORDER=['back','left','right'];
 const G_GRAND=[[-4.95,2.95],[-1.65,2.95],[1.65,2.95],[4.95,2.95],[-3.3,1.12],[0,1.12],[3.3,1.12]];
 let G={screens:{}, grand:false, rr:0};
 function gPlace(sc, x,y,z,ry, w,h){
+  if(!sc.inGrand){
+    const ox=sc.ox||0, oy=sc.oy||0, k=sc.scale||1;
+    if(ry===0) x+=ox; else if(ry===90) z-=ox; else if(ry===-90) z+=ox;
+    y+=oy; w*=k; h*=k;
+  }
   sc.root.setAttribute('position', x+' '+y+' '+z);
   sc.root.setAttribute('rotation', '0 '+ry+' 0');
   sc.plane.setAttribute('width', w); sc.plane.setAttribute('height', h);
@@ -854,6 +863,7 @@ function gSlotPos(sc){
   return {x:sl[0], y:sl[1], z:sl[2], ry:sl[3], w:W.pw, h:W.ph};
 }
 function gToPortrait(sc){
+  sc.inGrand=false;
   const p=gSlotPos(sc); gPlace(sc, p.x,p.y,p.z,p.ry, p.w,p.h);
   sc.chrome.setAttribute('visible','false'); sc.state='portrait';
 }
@@ -865,7 +875,7 @@ function enlargeScreen(key){
   const inw = sc.wall==='back' ? 0.10 : (sc.wall==='left' ? 0.10 : -0.10);
   const x = sc.wall==='back' ? sl[0] : (sc.wall==='left' ? sl[0]+0.10 : sl[0]-0.10);
   const z = sc.wall==='back' ? sl[2]+0.10 : sl[2];
-  gPlace(sc, x, 1.98, z, sl[3], W.ew, W.eh);
+  sc.inGrand=false; gPlace(sc, x, 1.98, z, sl[3], W.ew, W.eh);
   sc.chrome.setAttribute('visible','true'); sc.state='enlarged';
   snapScreen(sc);
   setStat('🖼️ '+sc.name+' enlarged — its buttons are live (click its face). MIN shrinks it back · WALL > moves it to another wall · GRAND tiles the whole wall.');
@@ -892,7 +902,7 @@ function enterGrand(){
   if(G.grand) return; G.grand=true;
   G_SCREENS.forEach((sdef,i)=>{
     const sc=G.screens[sdef.key]; const g=G_GRAND[i];
-    gPlace(sc, g[0], g[1], -5.40, 0, 2.13, 1.6);
+    sc.inGrand=true; gPlace(sc, g[0], g[1], -5.40, 0, 2.13, 1.6);
     sc.chrome.setAttribute('visible','true'); sc.state='grand';
     snapScreen(sc);
   });
@@ -905,6 +915,7 @@ function exitGrand(){
 }
 function snapScreen(sc){
   if(sc.busy || typeof html2canvas==='undefined') return; sc.busy=true;
+  if(sc.lazy && !sc.ifr.getAttribute('src')){ sc.ifr.src=sc.u; sc.busy=false; setTimeout(()=>snapScreen(sc), 3200); return; }
   try{
     const doc=sc.ifr.contentDocument;
     if(doc && doc.body){
@@ -929,7 +940,7 @@ function buildGallery(){
   G_SCREENS.forEach((sdef,i)=>{
     const host=document.createElement('div');
     host.style.cssText='position:fixed;left:-10000px;top:0;width:512px;height:384px;overflow:hidden;background:#0a0c14';
-    const ifr=document.createElement('iframe'); ifr.src=sdef.u; ifr.style.cssText='width:512px;height:384px;border:0';
+    const ifr=document.createElement('iframe'); if(!sdef.lazy) ifr.src=sdef.u; ifr.style.cssText='width:512px;height:384px;border:0';
     host.appendChild(ifr); document.body.appendChild(host);
     const cv=document.createElement('canvas'); cv.width=512; cv.height=384;
     const ctx=cv.getContext('2d'); ctx.fillStyle='#0a0c14'; ctx.fillRect(0,0,512,384);
@@ -946,25 +957,25 @@ function buildGallery(){
     plate.setAttribute('color','#ffd76a'); root.appendChild(plate);
     const chrome=document.createElement('a-entity'); chrome.setAttribute('visible','false'); root.appendChild(chrome);
     const sc={key:sdef.key, name:sdef.name, root, frame, plane, chrome, plate, ifr, cv, ctx, tex:null,
-              wall:(sdef.wall||'back'), slot:(sdef.slot!=null?sdef.slot:i), state:'portrait', busy:false};
+              wall:(sdef.wall||'back'), slot:(sdef.slot!=null?sdef.slot:i), state:'portrait', busy:false, lazy:!!sdef.lazy, u:sdef.u};
     const mkB=(label,dx,act,color)=>{
       const b=document.createElement('a-plane');
-      b.setAttribute('width','0.34'); b.setAttribute('height','0.15');
+      b.setAttribute('width','0.5'); b.setAttribute('height','0.23');
       b.setAttribute('position', dx+' 0 0.004');
       b.setAttribute('material','color:'+(color||'#232842')+'; shader:flat');
       b.setAttribute('data-click','1'); b.setAttribute('data-gbtn',act); b.classList.add('clickable');
       const t=document.createElement('a-text');
-      t.setAttribute('value',label); t.setAttribute('width','1.5'); t.setAttribute('align','center');
+      t.setAttribute('value',label); t.setAttribute('width','2.3'); t.setAttribute('align','center');
       t.setAttribute('position','0 0 0.003'); t.setAttribute('color','#fff');
       b.appendChild(t); chrome.appendChild(b);
       b.addEventListener('click',()=>gBtn(sc,act));
     };
-    mkB('— MIN', -0.68,'min'); mkB('SNAP', -0.34,'snap'); mkB('FOL/FIX', 0,'fol','#1d3a2a'); mkB('WALL >', 0.34,'wall','#3a2a5a'); mkB('GRAND', 0.68,'grand','#5a2432');
+    mkB('— MIN', -1.02,'min'); mkB('SNAP', -0.51,'snap'); mkB('FOL/FIX', 0,'fol','#1d3a2a'); mkB('WALL >', 0.51,'wall','#3a2a5a'); mkB('GRAND', 1.02,'grand','#5a2432');
     plane.addEventListener('loaded',()=>{
       sc.tex=new THREE.CanvasTexture(cv);
       const mesh=plane.getObject3D('mesh');
       if(mesh){ mesh.material.map=sc.tex; mesh.material.needsUpdate=true; }
-      setTimeout(()=>snapScreen(sc), 1500+i*700);
+      setTimeout(()=>{ if(!sdef.lazy) snapScreen(sc); }, 1500+i*700);
     });
     plane.addEventListener('click',e=>{
       if(sc.state==='portrait'){ enlargeScreen(sc.key); return; }
@@ -982,12 +993,15 @@ function buildGallery(){
     gToPortrait(sc);
   });
   setInterval(()=>{
+    if(document.hidden) return;
     const enlarged=Object.values(G.screens).find(x=>x.state==='enlarged'||x.state==='grand');
     if(enlarged && Math.random()<0.7){ snapScreen(enlarged); return; }
-    const keys=Object.keys(G.screens); G.rr=(G.rr+1)%keys.length; snapScreen(G.screens[keys[G.rr]]);
-  }, 2800);
+    const keys=Object.keys(G.screens).filter(k=>{ const x=G.screens[k]; return !x.lazy || x.state!=='portrait'; });
+    if(!keys.length) return;
+    G.rr=(G.rr+1)%keys.length; snapScreen(G.screens[keys[G.rr]]);
+  }, 4200);
   document.getElementById('grandBtn').addEventListener('click', ()=>{ G.grand ? exitGrand() : enterGrand(); });
-  setStat('🖼️ The gallery is hung: five paintings on the back wall — HALL, RALLY, SLAP, MAP, BUILDER. Click any painting to enlarge it.');
+  setStat('🖼️ The gallery is hung: five paintings on the back wall, NETWORK + HIGHSCORES.LIVE on the left. Click any painting to enlarge it — or use the control row that appears under the chips.');
 }
 window.addEventListener('load', ()=> setTimeout(buildGallery, 2500));
 
@@ -1160,7 +1174,7 @@ function renderChips(){
 }
 function saveSetup(n){
   const data={screens:{}};
-  Object.values(G.screens).forEach(sc=> data.screens[sc.key]={wall:sc.wall, slot:sc.slot, st: sc.follow?'enlarged':sc.state});
+  Object.values(G.screens).forEach(sc=> data.screens[sc.key]={wall:sc.wall, slot:sc.slot, st: sc.follow?'enlarged':sc.state, ox:sc.ox||0, oy:sc.oy||0, k:sc.scale||1});
   try{ localStorage.setItem('room-setup-'+n, JSON.stringify(data)); }catch(e){}
   setStat('💾 SETUP '+n+' saved — paintings, walls and focus, as they stand.');
 }
@@ -1169,7 +1183,7 @@ function loadSetup(n){
   if(!data){ setStat('SETUP '+n+' is empty — arrange the room, then alt-tap S'+n+' (or tell FINN "save setup '+n+'").'); return; }
   if(G.grand) exitGrand();
   let focus=null;
-  Object.values(G.screens).forEach(sc=>{ const d=data.screens[sc.key]; if(!d) return; sc.follow=false; sc.wall=d.wall; sc.slot=d.slot; gToPortrait(sc); if(d.st==='enlarged') focus=sc.key; });
+  Object.values(G.screens).forEach(sc=>{ const d=data.screens[sc.key]; if(!d) return; sc.follow=false; sc.wall=d.wall; sc.slot=d.slot; sc.ox=d.ox||0; sc.oy=d.oy||0; sc.scale=d.k||1; gToPortrait(sc); if(d.st==='enlarged') focus=sc.key; });
   if(focus) enlargeScreen(focus);
   renderChips();
   setStat('⚡ SETUP '+n+' — the room snapped to your saved arrangement.');
@@ -1352,6 +1366,55 @@ window.addEventListener('load', ()=>{
     a.addEventListener('timeupdate', ()=>{ const bar=rEl('radioProg'); if(bar && a.duration) bar.firstElementChild.style.width=(100*a.currentTime/a.duration)+'%'; });
   }
   try{ FINN_CAN.push('run Koda Kai Radio — the Network station’s podcast line in a hideaway player that walks with you: now playing, up next, skip, or take a podcast out of the line'); }catch(e){}
+});
+</script>
+
+
+<style>
+.wgrip{cursor:grab;padding:7px 9px;color:#ffd76a;font-size:16px;touch-action:none;flex:none}
+.wgrip:active{cursor:grabbing}
+.wresize{position:absolute;right:3px;bottom:3px;color:#ffd76a;font-size:17px;padding:8px;cursor:nwse-resize;touch-action:none;z-index:5}
+#selCtl{position:fixed;left:50%;transform:translateX(-50%);bottom:112px;z-index:36;display:none;flex-wrap:wrap;gap:5px;align-items:center;justify-content:center;max-width:96vw;background:rgba(10,10,20,.88);border:1.5px solid #7c4dff;border-radius:12px;padding:6px 9px;font-family:Georgia,serif;color:#e8e0c8;box-shadow:0 6px 24px rgba(0,0,0,.5)}
+#selCtl b{color:#ffd76a;font-size:12.5px}
+#selCtl button{background:#232842;color:#e8e0c8;border:1px solid #7c4dff;border-radius:8px;padding:6px 9px;cursor:pointer;font-family:inherit;font-size:12.5px}
+#selCtl .mv{background:#1d3a2a;border-color:#3f7a52}
+#selCtl .sz{background:#3a2a5a}
+</style>
+<div id="selCtl"><b id="selName">SCREEN</b>
+<button data-a="min">— MIN</button><button data-a="snap">SNAP</button><button data-a="fol">FOL/FIX</button><button data-a="wall">WALL &gt;</button><button data-a="grand">GRAND</button>
+<button class="mv" data-a="ml">◀</button><button class="mv" data-a="mu">▲</button><button class="mv" data-a="md">▼</button><button class="mv" data-a="mr">▶</button>
+<button class="sz" data-a="s-">A−</button><button class="sz" data-a="s+">A+</button>
+</div>
+<script>
+// ============ SELECTED-SCREEN CONTROL ROW (v0.9.1) ============
+// DOM twins of the 3D chrome: thumb-true buttons for the enlarged/following screen,
+// plus MOVE (nudge along its wall) and SIZE. Placement sticks (offsets live on the
+// screen and ride into setups). The row follows whichever screen is up.
+window.addEventListener('load', ()=>{
+  const row=document.getElementById('selCtl'), nm=document.getElementById('selName');
+  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+  function sel(){ return Object.values(G.screens).find(x=>x.state==='enlarged'||x.state==='follow') || (G.grand ? Object.values(G.screens)[0] : null); }
+  function replace(sc){ if(sc.state==='portrait') gToPortrait(sc); else if(sc.state==='enlarged') enlargeScreen(sc.key); }
+  setInterval(()=>{
+    const sc=sel();
+    if(!sc){ row.style.display='none'; return; }
+    row.style.display='flex'; nm.textContent='🖼️ '+sc.name+(sc.state==='follow'?' · FOLLOWING':'');
+    row._sc=sc;
+  }, 500);
+  row.querySelectorAll('button').forEach(b=> b.addEventListener('click', ()=>{
+    const sc=row._sc; if(!sc) return; const a=b.dataset.a;
+    if(a==='ml'||a==='mr'||a==='mu'||a==='md'){
+      if(sc.state==='follow'){ setStat('📌 Nudge takes hold when it FIXES — tap FOL/FIX, then move it.'); return; }
+      if(a==='ml') sc.ox=clamp((sc.ox||0)-0.25,-3,3);
+      if(a==='mr') sc.ox=clamp((sc.ox||0)+0.25,-3,3);
+      if(a==='mu') sc.oy=clamp((sc.oy||0)+0.2,-1.2,1.3);
+      if(a==='md') sc.oy=clamp((sc.oy||0)-0.2,-1.2,1.3);
+      replace(sc); setStat('🖼️ '+sc.name+' moved — placement sticks, and setups remember it.');
+    } else if(a==='s-'||a==='s+'){
+      sc.scale=clamp((sc.scale||1)*(a==='s+'?1.18:0.85),0.6,2.2); replace(sc);
+      setStat('🖼️ '+sc.name+' resized to '+Math.round((sc.scale||1)*100)+'%.');
+    } else { gBtn(sc, a); }
+  }));
 });
 </script>
 
