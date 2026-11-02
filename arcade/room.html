@@ -68,7 +68,7 @@
 <body>
 <div id="ui">
   <h1>🕹️ THE ROOM — HANGOUT v0.2</h1>
-  <p><b>Step into a cabinet's glowing circle</b> and stand 3 seconds — or click its screen — to step up and play. WASD to walk, drag to look. Big screen on the right wall: live matches, prediction board, reputation on the ding. Courts door on the left wall hot-jumps you to the seats.</p>
+  <p><b>Step into a cabinet's glowing circle</b> and stand 9 seconds — or click its screen — to step up and play. WASD to walk, drag to look. Big screen on the right wall: live matches, prediction board, reputation on the ding. Courts door on the left wall hot-jumps you to the seats.</p>
   <p>SKIN:
     <button class="sbtn on" data-skin="neon">NEON</button>
     <button class="sbtn" data-skin="wood">WOOD &amp; BRASS</button>
@@ -185,7 +185,7 @@
   <a-text value="every score derived by replay · no score without its tape" position="0 2.72 -5.4" align="center" width="7" color="#9f95c9"></a-text>
 
   <!-- CABINET: FIRST RALLY -->
-  <a-entity class="cabinet" id="cab-rally" position="-2.2 0 -3.4" data-game="rally" data-title="FIRST RALLY" data-href="games/first-rally/">
+  <a-entity class="cabinet" id="cab-rally" position="-3.1 0 -4.8" data-game="rally" data-title="FIRST RALLY" data-href="games/first-rally/">
     <a-box class="cabbody" width="1.1" height="1.9" depth="0.85" position="0 0.95 0" color="#2a1450"></a-box>
     <a-box class="cabtrim" width="1.14" height="0.3" depth="0.88" position="0 1.98 0" color="#ff2d95" material="emissive:#ff2d95;emissiveIntensity:.7"></a-box>
     <a-text value="FIRST RALLY" position="0 1.98 0.46" align="center" width="2.6" color="#fff"></a-text>
@@ -193,10 +193,10 @@
     <a-box width="1.0" height="0.06" depth="0.3" position="0 0.78 0.5" rotation="18 0 0" color="#120a24"></a-box>
     <a-text class="standlabel" value="" position="0 2.42 0.3" align="center" width="3" color="#ffd76a"></a-text>
   </a-entity>
-  <a-ring class="playring" data-for="cab-rally" position="-2.2 0.03 -2.25" rotation="-90 0 0" radius-inner="0.78" radius-outer="0.95" color="#ffd76a" material="transparent:true;opacity:0.18;shader:flat"></a-ring>
+  <a-ring class="playring" data-for="cab-rally" position="-3.1 0.03 -3.65" rotation="-90 0 0" radius-inner="0.42" radius-outer="0.55" color="#ffd76a" material="transparent:true;opacity:0.18;shader:flat"></a-ring>
 
   <!-- CABINET: FIRST SLAP -->
-  <a-entity class="cabinet" id="cab-slap" position="0.6 0 -3.6" data-game="slap" data-title="FIRST SLAP" data-href="games/first-slap/">
+  <a-entity class="cabinet" id="cab-slap" position="0.9 0 -4.8" data-game="slap" data-title="FIRST SLAP" data-href="games/first-slap/">
     <a-box class="cabbody" width="1.1" height="1.9" depth="0.85" position="0 0.95 0" color="#123a2a"></a-box>
     <a-box class="cabtrim" width="1.14" height="0.3" depth="0.88" position="0 1.98 0" color="#ffd76a" material="emissive:#ffd76a;emissiveIntensity:.7"></a-box>
     <a-text value="FIRST SLAP" position="0 1.98 0.46" align="center" width="2.6" color="#1a1206"></a-text>
@@ -204,7 +204,7 @@
     <a-box width="1.0" height="0.06" depth="0.3" position="0 0.78 0.5" rotation="18 0 0" color="#0a1f16"></a-box>
     <a-text class="standlabel" value="" position="0 2.42 0.3" align="center" width="3" color="#ffd76a"></a-text>
   </a-entity>
-  <a-ring class="playring" data-for="cab-slap" position="0.6 0.03 -2.45" rotation="-90 0 0" radius-inner="0.78" radius-outer="0.95" color="#ffd76a" material="transparent:true;opacity:0.18;shader:flat"></a-ring>
+  <a-ring class="playring" data-for="cab-slap" position="0.9 0.03 -3.65" rotation="-90 0 0" radius-inner="0.42" radius-outer="0.55" color="#ffd76a" material="transparent:true;opacity:0.18;shader:flat"></a-ring>
 
   <!-- POOL TABLE + FINN -->
   <a-entity position="3.1 0 -3.1" rotation="0 -18 0">
@@ -400,8 +400,8 @@ setInterval(()=>{
 
 // ================= proximity play: the circle =================
 const cabs = [
-  { el: document.getElementById('cab-rally'), ring: document.querySelector('[data-for="cab-rally"]'), x: -2.2, z: -2.25, inside: 0 },
-  { el: document.getElementById('cab-slap'),  ring: document.querySelector('[data-for="cab-slap"]'),  x: 0.6,  z: -2.45, inside: 0 }
+  { el: document.getElementById('cab-rally'), ring: document.querySelector('[data-for="cab-rally"]'), x: -3.1, z: -3.65, inside: 0 },
+  { el: document.getElementById('cab-slap'),  ring: document.querySelector('[data-for="cab-slap"]'),  x: 0.9,  z: -3.65, inside: 0 }
 ];
 setInterval(()=>{
   if (inMachine || fly) return;
@@ -411,13 +411,13 @@ setInterval(()=>{
     const label = c.el.querySelector('.standlabel');
     const trim = c.el.querySelector('.cabtrim');
     const trimCol = trim.getAttribute('color');
-    if (d < 1.0){
+    if (d < 0.62){
       c.inside += 0.12;
       c.ring.setAttribute('material', 'color:#ffd76a;transparent:true;shader:flat;opacity:' + (0.55 + 0.35*Math.sin(now/130)));
-      const left = Math.max(0, 3 - c.inside);
+      const left = Math.max(0, 9 - c.inside);
       label.setAttribute('value', left > 0.15 ? 'STAND… ' + left.toFixed(1) : 'STEP UP!');
       trim.setAttribute('material', 'emissive:' + trimCol + ';emissiveIntensity:1.6');
-      if (c.inside >= 3) enterMachine(c.el);
+      if (c.inside >= 9) enterMachine(c.el);
     } else {
       c.inside = 0;
       c.ring.setAttribute('material', 'color:#ffd76a;transparent:true;shader:flat;opacity:0.18');
@@ -503,7 +503,7 @@ setInterval(()=>{
   cam.setAttribute('position', p);
 }, 30);
 
-// tap a glowing circle -> walk into it (the 3-second stand then takes over)
+// tap a glowing circle -> walk into it (the 9-second stand then takes over)
 cabs.forEach(c=> c.ring.addEventListener('click', ()=> flyTo(c.x, 1.6, c.z)));
 // ghost view: courtside, right at the big screen — in the action, unseen by the players
 document.getElementById('ghostBtn').addEventListener('click', ()=> flyTo(5.7, 1.5, -1.6));
