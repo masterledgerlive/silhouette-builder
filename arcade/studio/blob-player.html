@@ -158,15 +158,21 @@ async function spinUp(){
 
 /* ================= the proof: the bot lives inside the game ================= */
 let echoCount=0;
+function echoState(tag){
+  try{
+    const kb=window.player&&window.player.runtime&&window.player.runtime.keyboard&&window.player.runtime.keyboard.keyboard;
+    if(kb) log("   engine sees ["+tag+"]: LEFT="+kb.LEFT+" RIGHT="+kb.RIGHT+" ARROW_LEFT="+kb.ARROW_LEFT+" ARROW_RIGHT="+kb.ARROW_RIGHT,"dim");
+  }catch(err){}
+}
 document.addEventListener("keydown", function(e){
-  if(echoCount>=10) return; echoCount++;
-  log("⌨️ key event — key=\""+e.key+"\" code=\""+e.code+"\"","dim");
-  setTimeout(()=>{
-    try{
-      const kb=window.player&&window.player.runtime&&window.player.runtime.keyboard&&window.player.runtime.keyboard.keyboard;
-      if(kb) log("   engine sees: LEFT="+kb.LEFT+" RIGHT="+kb.RIGHT+" ARROW_LEFT="+kb.ARROW_LEFT+" ARROW_RIGHT="+kb.ARROW_RIGHT,"dim");
-    }catch(err){}
-  }, 90);
+  if(echoCount>=12) return; echoCount++;
+  log("⌨️ keydown — key=\""+e.key+"\" code=\""+e.code+"\"","dim");
+  setTimeout(()=>echoState("just after"), 0);
+  setTimeout(()=>echoState("+250ms"), 250);
+}, true);
+document.addEventListener("keyup", function(e){
+  if(echoCount>=12) return;
+  log("⌨️ keyup — key=\""+e.key+"\"","dim");
 }, true);
 
 let proofStarted=false;
@@ -190,12 +196,15 @@ function onStarted(){
           log("⛓️ state chain: "+chain);
           log("🎞️ tape: "+tape.slice(0,120)+(tape.length>120?"…":""),"dim");
           if(MODE==="live"){
-            localStorage.setItem(storeKey, JSON.stringify({chain:chain, tape:tape}));
+            try{ localStorage.setItem(storeKey, JSON.stringify({chain:chain, tape:tape})); }catch(e){ log("storage unavailable ("+e.message+") — carrying the chain in the URL instead","dim"); }
             log("live run chained — replaying from a cold start…");
             const u=new URL(location.href); u.searchParams.set("mode","replay");
+            u.searchParams.set("live", chain); u.searchParams.set("tape", tape);
             setTimeout(()=>location.href=u, 700);
           } else {
-            let live=null; try{ live=JSON.parse(localStorage.getItem(storeKey)); }catch(e){}
+            let live=null;
+            if(qs.get("live")){ live={chain:qs.get("live"), tape:qs.get("tape")||""}; log("replay mode — live chain arrived in the URL: "+live.chain,"dim"); }
+            if(!live){ try{ live=JSON.parse(localStorage.getItem(storeKey)); }catch(e){} }
             window.__proof={chain:chain, tape:tape, live:live};
             if(!live){ verdictEl.className="fail"; verdictEl.textContent="REPLAY ran, but no live chain was stored — run the proof again from the top."; return; }
             const same=live.chain===chain, tapeSame=live.tape===tape;
