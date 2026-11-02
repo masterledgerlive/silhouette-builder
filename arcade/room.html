@@ -6,6 +6,7 @@
 <title>THE ROOM v0.2 — Arcades of Time Hangout</title>
 <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
 <script src="arcade-shared/kk-rally.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
   body{margin:0;font-family:Georgia,serif;background:#0b0b10;color:#e8e0c8;overflow:hidden}
   #ui{position:fixed;top:10px;left:10px;z-index:10;background:rgba(10,10,16,.85);border:1px solid #8a6d2f;border-radius:10px;padding:10px 12px;max-width:340px}
@@ -79,8 +80,10 @@
     <button class="sbtn" id="upSlap">✋ SLAP</button>
     <button class="sbtn" id="upSeats">🎾 COURTS SEATS</button>
     <button class="sbtn" id="ghostBtn">👻 GHOST VIEW</button>
+    <button class="sbtn" id="worldWinBtn">🪟 WORLD WINDOW</button>
     <button class="sbtn" id="homeBtn">⌂ RESET VIEW</button>
     <button class="sbtn" id="arrangeBtn">🪟 ARRANGE WINDOWS</button>
+    <p id="worldStat" style="color:#c9a7ff;font-size:12px;margin:4px 0 0"></p>
   </p>
   <p>Walk: <b>joystick</b> (bottom-left) or WASD · tap a cabinet's <b>glowing circle</b> to walk into it · tap the machine to play.</p>
 </div>
@@ -99,6 +102,7 @@
   </div>
   <div id="phportal" style="display:none;padding:16px 14px;font-size:13.5px;line-height:1.6;color:#dfe9ff"></div>
   <button id="winLaunch">🌐 OPEN A WINDOW — the web, as an app</button>
+  <button id="worldWinLaunch" style="display:block;width:calc(100% - 16px);margin:6px 8px 0;background:#1b1430;color:#c9a7ff;border:1px solid #7a4fd0;border-radius:9px;padding:9px;font-family:inherit;font-size:13.5px;cursor:pointer">🪟 IN-WORLD WINDOW — HTML living in the room</button>
   <div id="phapps"></div>
   <iframe id="phframe" title="phone screen"></iframe>
   <div id="phnote">Your phone, inside the room — translucent, always yours. Apps that refuse to embed open in a tab instead (their rule, not ours). <b>CAST TO WALL</b> throws this screen up big for the whole room. Real phone mirroring (easy-connect) is the next layer — this is its working frame.</div>
@@ -466,6 +470,8 @@ setInterval(()=>{
 cabs.forEach(c=> c.ring.addEventListener('click', ()=> flyTo(c.x, 1.6, c.z)));
 // ghost view: courtside, right at the big screen — in the action, unseen by the players
 document.getElementById('ghostBtn').addEventListener('click', ()=> flyTo(5.7, 1.5, -1.6));
+document.getElementById('worldWinBtn').addEventListener('click', ()=> spawnWorldPanel());
+document.getElementById('worldWinLaunch').addEventListener('click', ()=> spawnWorldPanel());
 document.getElementById('homeBtn').addEventListener('click', ()=> flyTo(0, 1.6, 4.6));
 
 // ================= THE PHONE =================
@@ -658,6 +664,124 @@ function applySkin(name){
 }
 document.querySelectorAll('.sbtn[data-skin]').forEach(b=> b.addEventListener('click', ()=>{ applySkin(b.dataset.skin); try{ localStorage.setItem('room-skin', b.dataset.skin); }catch(e){} }));
 try{ const savedSkin = localStorage.getItem('room-skin'); if (savedSkin) applySkin(savedSkin); }catch(e){}
+
+// ================= IN-WORLD WINDOWS (v0.5) =================
+function setStat(t){ var el=document.getElementById('worldStat'); if(el) el.textContent=t; }
+// HTML living inside the game: a same-origin page renders into a hidden iframe,
+// snapshots onto a 3D panel in the scene; raycast clicks forward into the real DOM,
+// so its buttons genuinely work. 📌 pins it to the wall, huge. External sites can't
+// be captured by ANY web tech (cross-origin) — portal law stands for those.
+const WORLD_PAGES=[
+  {t:'🏆 HALL OF SCORES', u:'blob-cinema/scores.html'},
+  {t:'🏓 FIRST RALLY', u:'games/first-rally/'},
+  {t:'✋ FIRST SLAP', u:'games/first-slap/'},
+  {t:'🗺️ SYSTEM MAP', u:'system.html'}
+];
+let worldPanels=[];
+function spawnWorldPanel(){
+  if(worldPanels.length>=2){ setStat('Two in-world windows max — close one first (✕ on its bar).'); return; }
+  if(typeof html2canvas==='undefined'){ setStat('In-world renderer still loading — try again in a few seconds.'); return; }
+  const idx=worldPanels.length? (worldPanels[worldPanels.length-1].page+1)%WORLD_PAGES.length : 0;
+  const host=document.createElement('div');
+  host.style.cssText='position:fixed;left:-10000px;top:0;width:512px;height:384px;overflow:hidden;background:#0a0c14';
+  const ifr=document.createElement('iframe');
+  ifr.src=WORLD_PAGES[idx].u; ifr.style.cssText='width:512px;height:384px;border:0';
+  host.appendChild(ifr); document.body.appendChild(host);
+  const cv=document.createElement('canvas'); cv.width=512; cv.height=384;
+  const ctx=cv.getContext('2d'); ctx.fillStyle='#0a0c14'; ctx.fillRect(0,0,512,384);
+  ctx.fillStyle='#ffd76a'; ctx.font='20px monospace'; ctx.fillText('summoning '+WORLD_PAGES[idx].t+' …',24,60);
+  const scene=document.querySelector('a-scene');
+  const root=document.createElement('a-entity');
+  const px = worldPanels.length? -1.9 : 1.9;
+  root.setAttribute('position', px+' 1.7 1.6'); root.setAttribute('rotation','0 '+(px>0?-18:18)+' 0');
+  const plane=document.createElement('a-plane');
+  plane.setAttribute('width','1.7'); plane.setAttribute('height','1.275');
+  plane.setAttribute('material','color:#ffffff; shader:flat');
+  plane.setAttribute('data-click','1'); plane.classList.add('clickable');
+  root.appendChild(plane);
+  const bar=document.createElement('a-plane');
+  bar.setAttribute('width','1.7'); bar.setAttribute('height','0.11'); bar.setAttribute('position','0 0.7 0.001');
+  bar.setAttribute('material','color:#141828; shader:flat'); root.appendChild(bar);
+  const title=document.createElement('a-text');
+  title.setAttribute('value', WORLD_PAGES[idx].t); title.setAttribute('width','2.6');
+  title.setAttribute('position','-0.82 0.7 0.003'); title.setAttribute('color','#ffd76a');
+  root.appendChild(title);
+  const panel={root, plane, ifr, cv, ctx, page:idx, pinned:false, tex:null, busy:false, dead:false,
+               homePos:root.getAttribute('position'), homeRot:root.getAttribute('rotation')};
+  const mkBtn=(label,x,act,color)=>{
+    const b=document.createElement('a-plane');
+    b.setAttribute('width','0.13'); b.setAttribute('height','0.09'); b.setAttribute('position', x+' 0.7 0.002');
+    b.setAttribute('material','color:'+(color||'#232842')+'; shader:flat');
+    b.setAttribute('data-click','1'); b.setAttribute('data-wbtn',act); b.classList.add('clickable');
+    const t=document.createElement('a-text');
+    t.setAttribute('value',label); t.setAttribute('width','1.1'); t.setAttribute('align','center');
+    t.setAttribute('position','0 0 0.002'); t.setAttribute('color','#fff');
+    b.appendChild(t); root.appendChild(b);
+    b.addEventListener('click',()=>worldBtn(panel,act));
+    return b;
+  };
+  mkBtn('PAGE >', 0.40,'page'); mkBtn('SNAP', 0.56,'snap'); mkBtn('WALL', 0.71,'pin','#3a2a5a'); mkBtn('X', 0.84,'close','#5a2432');
+  plane.addEventListener('loaded',()=>{
+    panel.tex=new THREE.CanvasTexture(cv);
+    const mesh=plane.getObject3D('mesh');
+    if(mesh){ mesh.material.map=panel.tex; mesh.material.color.set('#ffffff'); mesh.material.needsUpdate=true; }
+    snapPanel(panel);
+  });
+  plane.addEventListener('click',e=>{
+    const uv=e.detail && e.detail.intersection && e.detail.intersection.uv;
+    if(!uv) return;
+    try{
+      const doc=ifr.contentDocument; if(!doc) return;
+      const x=uv.x*512, y=(1-uv.y)*384;
+      const el=doc.elementFromPoint(x,y);
+      if(el){ el.dispatchEvent(new ifr.contentWindow.MouseEvent('click',{bubbles:true,cancelable:true})); if(el.click) el.click(); }
+      setTimeout(()=>snapPanel(panel),450);
+    }catch(err){ setStat('That page will not take clicks through the wall yet.'); }
+  });
+  scene.appendChild(root);
+  worldPanels.push(panel);
+  setStat('🪟 In-world window summoned: '+WORLD_PAGES[idx].t+' — click its face to press its real buttons · 📌 WALL pins it huge · ▶ PAGE cycles pages. (Keyboard games still play at the cabinet.)');
+  panel.timer=setInterval(()=>snapPanel(panel), 2500);
+}
+async function snapPanel(p){
+  if(p.dead || p.busy) return; p.busy=true;
+  try{
+    const doc=p.ifr.contentDocument;
+    if(doc && doc.body){
+      const c=await html2canvas(doc.body,{width:512,height:384,windowWidth:512,windowHeight:384,logging:false,backgroundColor:'#0a0c14'});
+      p.ctx.clearRect(0,0,512,384); p.ctx.drawImage(c,0,0,512,384);
+      if(p.tex) p.tex.needsUpdate=true;
+    }
+  }catch(e){ /* cross-origin or mid-load: keep last frame */ }
+  p.busy=false;
+}
+function worldBtn(p,act){
+  if(act==='close'){
+    p.dead=true; clearInterval(p.timer);
+    if(p.root.parentNode) p.root.parentNode.removeChild(p.root);
+    if(p.ifr.parentNode) p.ifr.parentNode.removeChild(p.ifr);
+    worldPanels=worldPanels.filter(x=>x!==p);
+    setStat('In-world window closed.');
+  } else if(act==='snap'){ snapPanel(p); setStat('Window refreshed.'); }
+  else if(act==='page'){
+    p.page=(p.page+1)%WORLD_PAGES.length;
+    p.ifr.src=WORLD_PAGES[p.page].u;
+    const t=p.root.querySelector('a-text'); if(t) t.setAttribute('value', WORLD_PAGES[p.page].t);
+    setTimeout(()=>snapPanel(p),900);
+    setStat('Window now shows '+WORLD_PAGES[p.page].t);
+  } else if(act==='pin'){
+    if(!p.pinned){
+      p.homePos=p.root.getAttribute('position'); p.homeRot=p.root.getAttribute('rotation');
+      p.root.setAttribute('position','-3.1 2.9 -5.88'); p.root.setAttribute('rotation','0 0 0');
+      p.root.setAttribute('scale','2.6 2.6 2.6'); p.pinned=true;
+      setStat('📌 Pinned to the wall — huge. Everyone in the room watches this one.');
+    } else {
+      p.root.setAttribute('position', p.homePos); p.root.setAttribute('rotation', p.homeRot);
+      p.root.setAttribute('scale','1 1 1'); p.pinned=false;
+      setStat('Window back to floating.');
+    }
+  }
+}
 </script>
 </body>
 </html>
