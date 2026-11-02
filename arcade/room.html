@@ -1073,6 +1073,8 @@ function finnAsk(raw){
   }
   if(/visit|other.*room|world|enter|permission|boot|mod/.test(t)) return reply('World visits are on the sealed roadmap (Addendum 7): rooms are containers, entry is by the creator\u2019s pass, and the creator or their mods can boot any guest — host authority is absolute at home. This room is single-player tonight; the paintings are how other worlds will hang here.');
   if(/vote|seal|bond|curve|token|graduate/.test(t)) return reply('The graduation path: BUILD from objects, TEST by proof and a human gate, VOTE with reputation (the ding, made formal), then SEAL — container and registry made permanent on chain, cheap by design. The curve\u2019s money shape stays paper until David\u2019s word and legal review — Token Gate Ruling #001. Reputation is the stake I deal in.');
+  if(/save setup\s*([123])/.test(t)){ saveSetup(t.match(/save setup\s*([123])/)[1]); return reply('Setup saved. The room will remember this arrangement of paintings and focus.'); }
+  if(/setup\s*([123])/.test(t)){ loadSetup(t.match(/setup\s*([123])/)[1]); return reply('Setup loaded — watch the walls rearrange.'); }
   if(/save/.test(t)) return reply('Saving here is the blob way: play chains your score onto Walrus with its replay, the room remembers its skin, and a build\u2019s SAVE is its container re-blobbed with the new chain head. Nothing is saved because I say so — it is saved because the hash says so.');
   if(/can you|what can|help|do you do|abilities/.test(t)) return reply('I can: '+FINN_CAN.join('; ')+'.');
   if(/can'?t|cannot|rules|not allowed|forbidden/.test(t)) return reply('Hard lines, kept honest: '+FINN_CANNOT.join('; ')+'.');
@@ -1088,8 +1090,6 @@ function finnAsk(raw){
   if(/kick|my show/.test(t)){ openKick(); return reply('Your show, in a window — WALL on its bar casts it huge. It rides the phone too (Kick tile). One channel, everywhere.'); }
   if(/follow/.test(t)){ const sc=Object.values(G.screens).find(x=>x.state==='enlarged')||G.screens.hall; if(sc.state==='portrait') enlargeScreen(sc.key); if(!sc.follow) toggleFollow(sc); return reply(sc.name+' is following you now — walk, it keeps its place off your shoulder. Say "fix" and it locks where it hangs.'); }
   if(/^fix|fix it|lock it|stay there/.test(t)){ let n=0; Object.values(G.screens).forEach(sc=>{ if(sc.follow){ toggleFollow(sc); n++; } }); return reply(n? 'Fixed. Every following screen locked to its zone.' : 'Nothing is following right now — enlarge a painting and say "follow".'); }
-  if(/save setup\s*([123])/.test(t)){ saveSetup(t.match(/save setup\s*([123])/)[1]); return reply('Setup saved. The room will remember this arrangement of paintings and focus.'); }
-  if(/setup\s*([123])/.test(t)){ loadSetup(t.match(/setup\s*([123])/)[1]); return reply('Setup loaded — watch the walls rearrange.'); }
   if(/sleeve|wrist|watch/.test(t)){ toggleSleeve(); return reply('Sleeve up — your show on the left, my quick buttons on the right. Drag it anywhere; it is a tattoo, not a fixture. The 🤚 edge buttons summon it too.'); }
   if(/wall/.test(t)) return reply('Pick a painting first (click it, or tell me to pull one up), then its WALL > button hops it to the next wall — the wall flashes, the frame reshapes itself. GRAND WALL takes all five at once.');
   if(/phone/.test(t)){ const p=document.getElementById('phone'); if(p) p.style.display='block'; return reply('Phone\u2019s up. HOME always brings you back — nobody gets stuck in my room.'); }
