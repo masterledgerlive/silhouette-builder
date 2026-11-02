@@ -283,7 +283,7 @@ function flyTo(x, y, z, done){ fly = { x, y, z, done }; }
 setInterval(()=>{
   const p = cam.getAttribute('position');
   if (fly){
-    p.x += (fly.x - p.x) * 0.12; p.y += (fly.y - p.y) * 0.12; p.z += (fly.z - p.z) * 0.12;
+    p.x += (fly.x - p.x) * 0.17; p.y += (fly.y - p.y) * 0.17; p.z += (fly.z - p.z) * 0.17;
     if (Math.hypot(fly.x-p.x, fly.y-p.y, fly.z-p.z) < 0.05){ const d = fly.done; fly = null; cam.setAttribute('position', p); if(d) d(); return; }
     cam.setAttribute('position', p); return;
   }
@@ -363,7 +363,11 @@ document.getElementById('lookR').addEventListener('mousedown', ()=> peek(0.55));
 ['lookL','lookR'].forEach(id=> document.getElementById(id).addEventListener('mouseup', ()=>{ if (peekBack){ const p = cam.getAttribute('position'); flyTo(peekBack.x, p.y, peekBack.z); peekBack = null; } }));
 
 // clicks: cabinets step up; hall door walks out; courts door hot-jumps to the seats
-document.querySelectorAll('.cabinet').forEach(el=> el.addEventListener('click', ()=> enterMachine(el)));
+// (raycast click lands on the cabinet's CHILD meshes — wire every descendant, not just the parent)
+document.querySelectorAll('.cabinet').forEach(el=>{
+  el.addEventListener('click', ()=> enterMachine(el));
+  el.querySelectorAll('*').forEach(kid=> kid.addEventListener('click', ()=> enterMachine(el)));
+});
 document.getElementById('upRally').addEventListener('click', ()=> enterMachine(document.getElementById('cab-rally')));
 document.getElementById('upSlap').addEventListener('click', ()=> enterMachine(document.getElementById('cab-slap')));
 document.getElementById('upSeats').addEventListener('click', ()=> flyTo(3.4, 1.6, -1.5));
