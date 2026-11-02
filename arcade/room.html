@@ -83,6 +83,8 @@
     <button class="sbtn" id="worldWinBtn">🪟 WORLD WINDOW</button>
     <button class="sbtn" id="grandBtn">🏛️ GRAND WALL</button>
     <button class="sbtn" id="finnBtn">🎙️ TALK TO FINN</button>
+    <button class="sbtn" id="kickBtn">🟢 KICK LIVE</button>
+    <button class="sbtn" id="sleeveBtn">⌚ SLEEVE</button><br/><small style="color:#8b93ad">SETUPS (tap load · alt-tap save):</small> <button class="sbtn setupBtn" data-n="1">S1</button> <button class="sbtn setupBtn" data-n="2">S2</button> <button class="sbtn setupBtn" data-n="3">S3</button>
     <button class="sbtn" id="homeBtn">⌂ RESET VIEW</button>
     <button class="sbtn" id="arrangeBtn">🪟 ARRANGE WINDOWS</button>
     <p id="worldStat" style="color:#c9a7ff;font-size:12px;margin:4px 0 0"></p>
@@ -144,6 +146,26 @@
   <div style="display:flex;gap:6px;padding:8px;border-top:1px solid #2c3350">
     <input id="finnIn" placeholder="ask FINN — try: what can you do · open rally · search markets · build a memory game" style="flex:1;background:#0d0f1a;border:1px solid #2c3350;border-radius:8px;color:#fff;padding:8px;font-family:inherit"/>
     <button id="finnSend" style="background:#3a2a5a;color:#fff;border:1px solid #7a4fd0;border-radius:8px;padding:8px 12px;cursor:pointer;font-family:inherit">ASK</button>
+  </div>
+</div>
+
+<div id="chipStrip" style="position:fixed;left:50%;transform:translateX(-50%);bottom:64px;z-index:35;display:flex;gap:6px;align-items:center;background:rgba(10,10,18,.55);border:1px solid rgba(122,79,208,.5);border-radius:999px;padding:5px 10px;backdrop-filter:blur(3px);font-family:Georgia,serif"></div>
+<button id="handL" title="summon sleeve" style="position:fixed;left:2px;top:46%;z-index:44;background:rgba(27,20,48,.8);border:1px solid #7a4fd0;border-radius:0 10px 10px 0;color:#c9a7ff;padding:10px 5px;cursor:pointer">🤚</button>
+<button id="handR" title="summon sleeve" style="position:fixed;right:2px;top:46%;z-index:44;background:rgba(27,20,48,.8);border:1px solid #7a4fd0;border-radius:10px 0 0 10px;color:#c9a7ff;padding:10px 5px;cursor:pointer">🤚</button>
+<div id="sleeve" style="display:none;position:fixed;left:12px;top:40%;z-index:45;width:min(440px,94vw);background:rgba(10,10,18,.94);border:1px solid #7a4fd0;border-radius:14px;overflow:hidden;font-family:Georgia,serif;box-shadow:0 8px 40px rgba(0,0,0,.6)">
+  <div id="sleeveBar" style="display:flex;justify-content:space-between;align-items:center;background:#1b1430;padding:7px 12px;cursor:move">
+    <b style="color:#c9a7ff;font-size:13.5px">⌚ SLEEVE — your wrist, your rules</b>
+    <button id="sleeveClose" style="background:none;border:1px solid #7a4fd0;color:#c9a7ff;border-radius:6px;cursor:pointer;padding:1px 8px">✕</button>
+  </div>
+  <div style="display:flex;gap:8px;padding:8px">
+    <div style="flex:1.25;min-height:130px;background:#000;border-radius:8px;overflow:hidden"><iframe id="sleeveVid" style="width:100%;height:100%;min-height:130px;border:0" allowfullscreen></iframe></div>
+    <div style="flex:1;display:flex;flex-direction:column;gap:6px">
+      <button class="sbtn slv" data-act="grand">🏛️ GRAND</button>
+      <button class="sbtn slv" data-act="fix">📌 FIX ALL</button>
+      <button class="sbtn slv" data-act="markets">📊 MARKETS</button>
+      <button class="sbtn slv" data-act="chat">🎙️ FINN CHAT</button>
+      <button class="sbtn slv" data-act="follow">🚶 FOLLOW HALL</button>
+    </div>
   </div>
 </div>
 <a-scene background="color:#0b0b10" vr-mode-ui="enabled:true">
@@ -502,27 +524,18 @@ function phoneShow(url, name){
   document.getElementById('phnote').innerHTML = 'Now showing: <b>' + name + '</b> · 🏠 HOME (top) takes you back to the apps.';
 }
 function phonePortal(a){
-  // portal-first for outside apps: the REAL app opens in your browser (sign-in works there);
-  // the phone shows a card so you are never stuck inside a broken frame again.
-  window.open(a.url, '_blank');
-  phApps.style.display = 'none'; phFrame.style.display = 'none';
-  phPortal.style.display = 'block';
-  phPortal.innerHTML = `<div style="font-size:26px">${a.icon}</div><b>${a.name}</b> opened as a real app in your browser tab — sign in there, it works like the app should.<br/><br/>
-    <button class="phbtn gold" id="ppHtml">Try the HTML view in here instead</button>
-    <button class="phbtn" id="ppAgain">↗ Open the tab again</button><br/><br/>
-    <small style="color:#9fb6cc">Why a portal? ${a.name}'s sign-in refuses to run inside any framed screen (their rule, internet-wide). The tab IS the app. When phone-mirroring lands, this card disappears — your own screen comes inside directly.</small>`;
-  document.getElementById('ppHtml').addEventListener('click', ()=> phoneShow(a.url, a.name));
-  document.getElementById('ppAgain').addEventListener('click', ()=> window.open(a.url, '_blank'));
-  document.getElementById('phnote').textContent = '🏠 HOME (top) takes you back to the apps — you can never get stuck in here.';
+  // House rule (David, 2026-11-01): nothing opens outside the room anymore.
+  phoneShow('markets.html', a.name + ' — live, in-screen');
 }
 const APPS = [
-  { icon:'📈', name:'Polymarket', url:'https://polymarket.com', portal:true },
+  { icon:'📈', name:'Polymarket', url:'markets.html' },
   { icon:'📊', name:'Markets LIVE', url:'markets.html' },
-  { icon:'🎾', name:'Kalshi', url:'https://kalshi.com', portal:true },
+  { icon:'🎾', name:'Kalshi', url:'markets.html' },
   { icon:'🏆', name:'Hall of Scores', url:'blob-cinema/scores.html' },
   { icon:'🏓', name:'FIRST RALLY', url:'games/first-rally/' },
   { icon:'✋', name:'FIRST SLAP', url:'games/first-slap/' },
   { icon:'🗺️', name:'System Map', url:'system.html' },
+  { icon:'🟢', name:'Kick LIVE', act:'kick' },
   { icon:'🎙️', name:'FINN — operator', act:'finn' },
   { icon:'🗣️', name:'Voice Avatar', off:true, note:'soon' },
   { icon:'🪞', name:'Mirror My Phone', off:true, note:'easy-connect · next layer' },
@@ -532,7 +545,7 @@ APPS.forEach(a=>{
   const d = document.createElement('div');
   d.className = 'app' + (a.off ? ' off' : '');
   d.innerHTML = `<span>${a.icon}</span>${a.name}` + (a.off ? `<br/><small>${a.note}</small>` : '');
-  if (!a.off) d.addEventListener('click', ()=> a.act==='finn' ? (phoneHome(), toggleFinn(true)) : a.portal ? phonePortal(a) : phoneShow(a.url, a.name));
+  if (!a.off) d.addEventListener('click', ()=> a.act==='finn' ? (phoneHome(), toggleFinn(true)) : a.act==='kick' ? (phoneHome(), openKick()) : a.portal ? phonePortal(a) : phoneShow(a.url, a.name));
   phApps.appendChild(d);
 });
 document.getElementById('phHome').addEventListener('click', phoneHome);
@@ -577,12 +590,11 @@ function makeWindow(startUrl, title){
       <button class="wbtn gold cast">⛶ WALL</button>
       <button class="wbtn zoomout">−</button>
       <button class="wbtn zoomin">+</button>
-      <button class="wbtn tab">↗ TAB</button>
       <button class="wbtn min">— PARK</button>
       <button class="wbtn red close">✕</button>
     </div>
     <div class="winbody"><iframe title="window"></iframe></div>
-    <div class="winnote">A real window, not a copy — the arcade holds <b>no code and no passwords</b>. Sign-in happens between you and the site, in your own browser. Some sites (Google sign-in, Gmail) refuse to live inside any frame on any website — use <b>↗ TAB</b> for those; it's the same browser, the same account.</div>`;
+    <div class="winnote">A real window, not a copy — the arcade holds <b>no code and no passwords</b>. Everything in this room stays in-screen by house rule — nothing opens outside. Sites that refuse frames (Google sign-in class) are served by our own in-screen surfaces instead: Markets for the trading data, embeds for video, and the phone mirror when it lands.</div>`;
   document.body.appendChild(w);
   const frame = w.querySelector('iframe'), urlIn = w.querySelector('.winurl'), body = w.querySelector('.winbody');
   let zoom = 1, current = startUrl || '';
@@ -597,7 +609,7 @@ function makeWindow(startUrl, title){
   w.querySelector('.vid').addEventListener('click', ()=>{
     const emb = videoEmbed(urlIn.value.trim() || current);
     if (emb){ load(emb); w.querySelector('b').textContent = '▶ VIDEO'; }
-    else alert('No YouTube/Vimeo video found in that link. Paste a video page link, or open it with ↗ TAB.');
+    else alert('No YouTube/Vimeo video found in that link. Paste a direct video page link.');
   });
   w.querySelector('.cast').addEventListener('click', function(){
     w.classList.toggle('wall');
@@ -606,7 +618,6 @@ function makeWindow(startUrl, title){
   });
   w.querySelector('.zoomin').addEventListener('click', ()=>{ zoom = Math.min(2, zoom + 0.25); frame.style.transform = `scale(${zoom})`; frame.style.width = (100/zoom) + '%'; frame.style.height = (100/zoom) + '%'; });
   w.querySelector('.zoomout').addEventListener('click', ()=>{ zoom = Math.max(0.5, zoom - 0.25); frame.style.transform = `scale(${zoom})`; frame.style.width = (100/zoom) + '%'; frame.style.height = (100/zoom) + '%'; });
-  w.querySelector('.tab').addEventListener('click', ()=>{ if (current) window.open(current, '_blank'); });
   w.querySelector('.min').addEventListener('click', ()=>{
     w.style.display = 'none';
     const chip = document.createElement('button');
@@ -631,9 +642,9 @@ function makeWindow(startUrl, title){
 document.getElementById('winLaunch').addEventListener('click', ()=> makeWindow('', 'WINDOW'));
 // a window tile inside the phone's app grid too, plus a Google sign-in helper tile (opens the real tab)
 const extraApps = [
-  { icon:'🔐', name:'Sign in to Google', act:()=> window.open('https://accounts.google.com/', '_blank') },
+  { icon:'🔐', name:'Sign in to Google', act:()=>{ toggleFinn(true); finnSay('FINN','Google sign-in refuses to live inside any frame on any website — that is Google’s rule, not a broken button. This room keeps you in-screen: tell me what you were reaching for (a video? a game?) and I will pull up the in-screen version we do have.','#ffd76a'); } },
   { icon:'▶️', name:'YouTube', act:()=> makeWindow('', 'YOUTUBE — paste a video link, then ▶ TAKE VIDEO') },
-  { icon:'🔎', name:'Search Games', act:()=> window.open('https://www.google.com/search?q=free+browser+games', '_blank') }
+  { icon:'🔎', name:'Search Games', act:()=>{ toggleFinn(true); finnAsk('search games'); } }
 ];
 extraApps.forEach(a=>{
   const d = document.createElement('div');
@@ -903,6 +914,7 @@ function gBtn(sc, act){
   else if(act==='snap'){ snapScreen(sc); setStat(sc.name+' refreshed.'); }
   else if(act==='wall'){ gWallCycle(sc); }
   else if(act==='grand'){ enterGrand(); }
+  else if(act==='fol'){ toggleFollow(sc); }
 }
 function buildGallery(){
   const scene=document.querySelector('a-scene');
@@ -939,7 +951,7 @@ function buildGallery(){
       b.appendChild(t); chrome.appendChild(b);
       b.addEventListener('click',()=>gBtn(sc,act));
     };
-    mkB('— MIN', -0.56,'min'); mkB('SNAP', -0.19,'snap'); mkB('WALL >', 0.19,'wall','#3a2a5a'); mkB('GRAND', 0.57,'grand','#5a2432');
+    mkB('— MIN', -0.68,'min'); mkB('SNAP', -0.34,'snap'); mkB('FOL/FIX', 0,'fol','#1d3a2a'); mkB('WALL >', 0.34,'wall','#3a2a5a'); mkB('GRAND', 0.68,'grand','#5a2432');
     plane.addEventListener('loaded',()=>{
       sc.tex=new THREE.CanvasTexture(cv);
       const mesh=plane.getObject3D('mesh');
@@ -984,7 +996,9 @@ const FINN_CAN = [
   'open the phone, the Markets board (live Polymarket + Kalshi data), and browser windows you can park, cast and zoom',
   'take a BUILD ORDER: assemble a forge ticket from the MOVE object library, crediting every creator',
   'tell you who created any object and prove it — the registry is hash-chained blobs',
-  'save the room\u2019s state the blob way: scores chain on Walrus, the skin remembers itself'
+  'save the room\u2019s state the blob way: scores chain on Walrus, the skin remembers itself',
+  'make a screen FOLLOW you as you walk — and FIX it to a zone on your word',
+  'save whole room SETUPS (S1/S2/S3) and snap between them; keep your show and my quick buttons on your SLEEVE'
 ];
 const FINN_CANNOT = [
   'sign or move money, tokens or chain assets — that is always David\u2019s hand, exact amounts only',
@@ -1069,6 +1083,12 @@ function finnAsk(raw){
     if(/builder/.test(t)){ enlargeScreen('builder'); return reply('BUILDER enlarged. Levels 0 to 4: law, objects, forge, spin-up.'); }
     return reply('Name the thing — rally, slap, hall, map, builder, markets, grand wall — and it is up.');
   }
+  if(/kick|stream|my show|watch live/.test(t)){ openKick(); return reply('Your show, in a window — WALL on its bar casts it huge. It rides the phone too (Kick tile). One channel, everywhere.'); }
+  if(/follow/.test(t)){ const sc=Object.values(G.screens).find(x=>x.state==='enlarged')||G.screens.hall; if(sc.state==='portrait') enlargeScreen(sc.key); if(!sc.follow) toggleFollow(sc); return reply(sc.name+' is following you now — walk, it keeps its place off your shoulder. Say "fix" and it locks where it hangs.'); }
+  if(/^fix|fix it|lock it|stay there/.test(t)){ let n=0; Object.values(G.screens).forEach(sc=>{ if(sc.follow){ toggleFollow(sc); n++; } }); return reply(n? 'Fixed. Every following screen locked to its zone.' : 'Nothing is following right now — enlarge a painting and say "follow".'); }
+  if(/save setup\s*([123])/.test(t)){ saveSetup(t.match(/save setup\s*([123])/)[1]); return reply('Setup saved. The room will remember this arrangement of paintings and focus.'); }
+  if(/setup\s*([123])/.test(t)){ loadSetup(t.match(/setup\s*([123])/)[1]); return reply('Setup loaded — watch the walls rearrange.'); }
+  if(/sleeve|wrist|watch/.test(t)){ toggleSleeve(); return reply('Sleeve up — your show on the left, my quick buttons on the right. Drag it anywhere; it is a tattoo, not a fixture. The 🤚 edge buttons summon it too.'); }
   if(/wall/.test(t)) return reply('Pick a painting first (click it, or tell me to pull one up), then its WALL > button hops it to the next wall — the wall flashes, the frame reshapes itself. GRAND WALL takes all five at once.');
   if(/phone/.test(t)){ const p=document.getElementById('phone'); if(p) p.style.display='block'; return reply('Phone\u2019s up. HOME always brings you back — nobody gets stuck in my room.'); }
   return reply('I deal in a short menu, done well: pull up a game (rally, slap, hall, map, builder), GRAND WALL, MARKETS, a BUILD ORDER, the registry (who made what), or the ledger — ask "what can you do" or "what can\u2019t you do".');
@@ -1079,6 +1099,114 @@ window.addEventListener('load', ()=>{
   const send=()=>{ const i=document.getElementById('finnIn'); finnAsk(i.value); i.value=''; };
   const sb=document.getElementById('finnSend'); if(sb) sb.addEventListener('click', send);
   const ii=document.getElementById('finnIn'); if(ii) ii.addEventListener('keydown', e=>{ if(e.key==='Enter') send(); });
+});
+
+</script>
+<script>
+// ================= FOLLOW · SETUPS · SLEEVE · KICK (v0.8) =================
+// David's movement law: screens follow in a fixed place as he moves; on his word
+// (or the FIX button) they lock to that zone. Placements stick when chosen.
+// Setups save the whole arrangement; the sleeve is a movable wrist skin:
+// favorite show left, FINN's quick buttons right, summoned by either hand.
+let gridSide = 0; // 0 center, -1 left, +1 right
+function followers(){ return Object.values(G.screens).filter(x=>x.follow); }
+function toggleFollow(sc){
+  sc.follow = !sc.follow;
+  if(sc.follow){ sc.state='follow'; sc.chrome.setAttribute('visible','true'); setStat('🚶 '+sc.name+' is FOLLOWING you — walk and it holds its place. FIX (its bar, or tell FINN "fix") locks it to the wall zone.'); }
+  else { enlargeScreen(sc.key); setStat('📌 '+sc.name+' FIXED — locked back to its wall zone.'); }
+  renderChips();
+}
+setInterval(()=>{
+  const fols = followers(); if(!fols.length) return;
+  const scene=document.querySelector('a-scene'); const cam=scene && scene.camera; if(!cam) return;
+  const dir=new THREE.Vector3(); cam.getWorldDirection(dir);
+  const right=new THREE.Vector3().crossVectors(dir, new THREE.Vector3(0,1,0)).normalize();
+  fols.forEach((sc,i)=>{
+    const off=(i-(fols.length-1)/2)*1.45 + gridSide*1.25;
+    const p=cam.position.clone().add(dir.clone().multiplyScalar(2.4)).add(right.clone().multiplyScalar(off));
+    p.y = cam.position.y + 0.05;
+    sc.root.setAttribute('position', p.x+' '+p.y+' '+p.z);
+    if(sc.root.object3D) sc.root.object3D.lookAt(cam.position.x, p.y, cam.position.z);
+  });
+}, 120);
+function renderChips(){
+  const strip=document.getElementById('chipStrip'); if(!strip) return;
+  strip.innerHTML='';
+  const mk=(label, act, on)=>{
+    const b=document.createElement('button');
+    b.textContent=label;
+    b.style.cssText='background:'+(on?'#3a2a5a':'rgba(20,20,34,.7)')+';color:#e8e0c8;border:1px solid '+(on?'#ffd76a':'#4a4a6a')+';border-radius:999px;padding:4px 10px;cursor:pointer;font-family:inherit;font-size:12px';
+    b.addEventListener('click', act); strip.appendChild(b);
+  };
+  Object.values(G.screens).forEach(sc=> mk(sc.name.split(' ')[0]==='FIRST'? sc.name.split(' ')[1] : sc.name.split(' ')[0], ()=>{
+    if(sc.state==='portrait') enlargeScreen(sc.key);
+    toggleFollow(sc);
+  }, !!sc.follow));
+  mk(gridSide===0?'GRID · CENTER':(gridSide<0?'GRID · LEFT':'GRID · RIGHT'), ()=>{ gridSide = gridSide===0 ? 1 : (gridSide===1 ? -1 : 0); renderChips(); setStat('Follow grid shifted '+(gridSide===0?'to center — small and clear of your view':(gridSide<0?'LEFT':'RIGHT'))+'.'); }, false);
+}
+function saveSetup(n){
+  const data={screens:{}};
+  Object.values(G.screens).forEach(sc=> data.screens[sc.key]={wall:sc.wall, slot:sc.slot, st: sc.follow?'enlarged':sc.state});
+  try{ localStorage.setItem('room-setup-'+n, JSON.stringify(data)); }catch(e){}
+  setStat('💾 SETUP '+n+' saved — paintings, walls and focus, as they stand.');
+}
+function loadSetup(n){
+  let data=null; try{ data=JSON.parse(localStorage.getItem('room-setup-'+n)||'null'); }catch(e){}
+  if(!data){ setStat('SETUP '+n+' is empty — arrange the room, then alt-tap S'+n+' (or tell FINN "save setup '+n+'").'); return; }
+  if(G.grand) exitGrand();
+  let focus=null;
+  Object.values(G.screens).forEach(sc=>{ const d=data.screens[sc.key]; if(!d) return; sc.follow=false; sc.wall=d.wall; sc.slot=d.slot; gToPortrait(sc); if(d.st==='enlarged') focus=sc.key; });
+  if(focus) enlargeScreen(focus);
+  renderChips();
+  setStat('⚡ SETUP '+n+' — the room snapped to your saved arrangement.');
+}
+function kickChannel(){ try{ return localStorage.getItem('kick-channel')||''; }catch(e){ return ''; } }
+function openKick(){
+  let ch=kickChannel();
+  if(!ch){
+    ch=((window.prompt && prompt('Your Kick channel name — the part after kick.com/ :'))||'').trim();
+    if(!ch){ setStat('No channel yet — the 🟢 KICK button will ask once, then remember it on this device.'); return; }
+    try{ localStorage.setItem('kick-channel', ch); }catch(e){}
+  }
+  makeWindow('https://player.kick.com/'+ch, '🟢 KICK — '+ch);
+  const sv=document.getElementById('sleeveVid');
+  if(sv && !sv.src) sv.src='https://player.kick.com/'+ch;
+  setStat('🟢 KICK live ('+ch+') — in a window: WALL casts it huge, PARK keeps it handy. It is on your sleeve too.');
+}
+function toggleSleeve(side){
+  const sl=document.getElementById('sleeve'); if(!sl) return;
+  const show = sl.style.display==='none';
+  sl.style.display = show ? 'block' : 'none';
+  if(show){
+    if(side==='R'){ sl.style.left='auto'; sl.style.right='12px'; } else if(side==='L'){ sl.style.right='auto'; sl.style.left='12px'; }
+    const ch=kickChannel(); const sv=document.getElementById('sleeveVid');
+    if(sv && ch && !sv.src) sv.src='https://player.kick.com/'+ch;
+    if(sv && !ch && !sv.src) sv.src='markets.html';
+  }
+}
+window.addEventListener('load', ()=>{
+  setTimeout(renderChips, 3500);
+  const kb=document.getElementById('kickBtn'); if(kb) kb.addEventListener('click', openKick);
+  const sb=document.getElementById('sleeveBtn'); if(sb) sb.addEventListener('click', ()=>toggleSleeve());
+  const hl=document.getElementById('handL'); if(hl) hl.addEventListener('click', ()=>toggleSleeve('L'));
+  const hr=document.getElementById('handR'); if(hr) hr.addEventListener('click', ()=>toggleSleeve('R'));
+  const sc=document.getElementById('sleeveClose'); if(sc) sc.addEventListener('click', ()=>toggleSleeve());
+  document.querySelectorAll('.setupBtn').forEach(b=> b.addEventListener('click', e=>{ e.altKey ? saveSetup(b.dataset.n) : loadSetup(b.dataset.n); }));
+  document.querySelectorAll('.slv').forEach(b=> b.addEventListener('click', ()=>{
+    const a=b.dataset.act;
+    if(a==='grand'){ G.grand ? exitGrand() : enterGrand(); }
+    else if(a==='fix'){ Object.values(G.screens).forEach(x=>{ if(x.follow) toggleFollow(x); }); }
+    else if(a==='markets'){ const p=document.getElementById('phone'); if(p) p.style.display='block'; phoneShow('markets.html','Markets LIVE'); }
+    else if(a==='chat'){ toggleFinn(true); }
+    else if(a==='follow'){ const h=G.screens.hall; if(h){ if(h.state==='portrait') enlargeScreen('hall'); if(!h.follow) toggleFollow(h); } }
+  }));
+  const bar=document.getElementById('sleeveBar'), sl=document.getElementById('sleeve');
+  if(bar && sl){
+    let drag=null;
+    bar.addEventListener('pointerdown', e=>{ drag={x:e.clientX-sl.offsetLeft, y:e.clientY-sl.offsetTop}; });
+    window.addEventListener('pointermove', e=>{ if(!drag) return; sl.style.left=(e.clientX-drag.x)+'px'; sl.style.top=(e.clientY-drag.y)+'px'; sl.style.right='auto'; });
+    window.addEventListener('pointerup', ()=> drag=null);
+  }
 });
 </script>
 </body>
