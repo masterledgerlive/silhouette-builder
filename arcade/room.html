@@ -82,6 +82,7 @@
     <button class="sbtn" id="ghostBtn">👻 GHOST VIEW</button>
     <button class="sbtn" id="worldWinBtn">🪟 WORLD WINDOW</button>
     <button class="sbtn" id="grandBtn">🏛️ GRAND WALL</button>
+    <button class="sbtn" id="finnBtn">🎙️ TALK TO FINN</button>
     <button class="sbtn" id="homeBtn">⌂ RESET VIEW</button>
     <button class="sbtn" id="arrangeBtn">🪟 ARRANGE WINDOWS</button>
     <p id="worldStat" style="color:#c9a7ff;font-size:12px;margin:4px 0 0"></p>
@@ -133,6 +134,18 @@
 <canvas id="bigCanvas" class="attract" width="512" height="288"></canvas>
 <canvas id="boardCanvas" class="attract" width="384" height="512"></canvas>
 
+
+<div id="finnChat" style="display:none;position:fixed;right:12px;bottom:150px;z-index:40;width:min(350px,94vw);background:rgba(10,10,18,.96);border:1px solid #7a4fd0;border-radius:12px;overflow:hidden;font-family:Georgia,serif">
+  <div style="display:flex;justify-content:space-between;align-items:center;background:#1b1430;padding:8px 12px">
+    <b style="color:#c9a7ff;font-size:14px">🎙️ FINN — operator <small style="color:#8b93ad">· agent · runs this place</small></b>
+    <button id="finnClose" style="background:none;border:1px solid #7a4fd0;color:#c9a7ff;border-radius:6px;cursor:pointer;padding:2px 8px">✕</button>
+  </div>
+  <div id="finnLog" style="height:250px;overflow-y:auto;padding:10px 12px;font-size:13.5px;line-height:1.55"></div>
+  <div style="display:flex;gap:6px;padding:8px;border-top:1px solid #2c3350">
+    <input id="finnIn" placeholder="ask FINN — try: what can you do · open rally · search markets · build a memory game" style="flex:1;background:#0d0f1a;border:1px solid #2c3350;border-radius:8px;color:#fff;padding:8px;font-family:inherit"/>
+    <button id="finnSend" style="background:#3a2a5a;color:#fff;border:1px solid #7a4fd0;border-radius:8px;padding:8px 12px;cursor:pointer;font-family:inherit">ASK</button>
+  </div>
+</div>
 <a-scene background="color:#0b0b10" vr-mode-ui="enabled:true">
   <a-camera id="cam" position="0 1.6 4.6" user-height="0" look-controls="pointerLockEnabled:false" cursor="rayOrigin:mouse;fuse:false" raycaster="objects:.cabinet,.doorlink,#courtsdoor,.playring;far:30"></a-camera>
 
@@ -510,7 +523,8 @@ const APPS = [
   { icon:'🏓', name:'FIRST RALLY', url:'games/first-rally/' },
   { icon:'✋', name:'FIRST SLAP', url:'games/first-slap/' },
   { icon:'🗺️', name:'System Map', url:'system.html' },
-  { icon:'🎙️', name:'Voice Avatar', off:true, note:'soon' },
+  { icon:'🎙️', name:'FINN — operator', act:'finn' },
+  { icon:'🗣️', name:'Voice Avatar', off:true, note:'soon' },
   { icon:'🪞', name:'Mirror My Phone', off:true, note:'easy-connect · next layer' },
   { icon:'👻', name:'Ghost Courtside', off:true, note:'with Courts Everywhere' }
 ];
@@ -518,7 +532,7 @@ APPS.forEach(a=>{
   const d = document.createElement('div');
   d.className = 'app' + (a.off ? ' off' : '');
   d.innerHTML = `<span>${a.icon}</span>${a.name}` + (a.off ? `<br/><small>${a.note}</small>` : '');
-  if (!a.off) d.addEventListener('click', ()=> a.portal ? phonePortal(a) : phoneShow(a.url, a.name));
+  if (!a.off) d.addEventListener('click', ()=> a.act==='finn' ? (phoneHome(), toggleFinn(true)) : a.portal ? phonePortal(a) : phoneShow(a.url, a.name));
   phApps.appendChild(d);
 });
 document.getElementById('phHome').addEventListener('click', phoneHome);
@@ -956,6 +970,116 @@ function buildGallery(){
   setStat('🖼️ The gallery is hung: five paintings on the back wall — HALL, RALLY, SLAP, MAP, BUILDER. Click any painting to enlarge it.');
 }
 window.addEventListener('load', ()=> setTimeout(buildGallery, 2500));
+
+</script>
+<script>
+// ================= FINN, THE OPERATOR (v0.7) =================
+// Open chat with the room's operator. FINN speaks from the capability ledger —
+// what this system CAN and CANNOT do — and executes the commands it really has.
+// Rule-based v1 by design and labeled as such; a plugged LLM is a socket behind
+// a relay (Addendum 7), never a key in a public page.
+const FINN_CAN = [
+  'pull up any game or page onto the gallery wall and enlarge it',
+  'tile everything at once with GRAND WALL, or move a painting wall to wall',
+  'open the phone, the Markets board (live Polymarket + Kalshi data), and browser windows you can park, cast and zoom',
+  'take a BUILD ORDER: assemble a forge ticket from the MOVE object library, crediting every creator',
+  'tell you who created any object and prove it — the registry is hash-chained blobs',
+  'save the room\u2019s state the blob way: scores chain on Walrus, the skin remembers itself'
+];
+const FINN_CANNOT = [
+  'sign or move money, tokens or chain assets — that is always David\u2019s hand, exact amounts only',
+  'run real-money wagering — the prediction board is reputation-only (Token Gate Ruling #001)',
+  'frame YouTube/Polymarket/Kalshi sites directly — their headers refuse every site; we use their official data feeds and embeds instead',
+  'use ROMs or anyone\u2019s copyrighted game files — mechanics are ideas, skins are ours',
+  'invent a score — every score here is replay-proven from its blob, or it does not exist'
+];
+const FINN_REGISTRY = [
+  {k:['reaction','slap'], line:'REACTION object — blob ktbEZn2T… · the first mechanic ever filed. FIRST SLAP cabinet: machine FIRST-SLAP-001 holds the reference score; David\u2019s 3,461 is the human gate pass.'},
+  {k:['rally','pong','physics'], line:'RALLY-PHYSICS object — blob 9Fb3Pdea… · creators credited in the lesson: Ralph Baer, Allan Alcorn, Bushnell & Dabney. Machine FIRST-RALLY-001; the human gate still waits for a first chained rally score.'},
+  {k:['container'], line:'Game containers — FIRST SLAP vZBl7rJU… · FIRST RALLY aBp60KJf… Each carries its Move files + key; spin one up anywhere and it is the same game, proven.'},
+  {k:['law','engine'], line:'ENGINE LAW — blob kcmOTGFJ… · fixed tick, integer math, wallet is the who, learn before play. The law is an object too: signed by being hashed.'}
+];
+const GUEST_LINES = [
+  'GUEST-7 🤖: the Reactor bot\u2019s serve is a coin flip wearing a tuxedo. watch the big screen.',
+  'GUEST-3 🤖: somebody enlarge the Hall. I want to stare at the empty TOP 10 until it feels shame.',
+  'GUEST-12 🤖: prediction board moved my rep on a ding. a DING. this place is honest and it hurts.',
+  'GUEST-9 🤖: asked FINN to build a game where the paddle is afraid. ticket filed. no regrets.'
+];
+let finnAmbient = null, finnGreeted = false;
+function finnSay(who, text, color){
+  const log=document.getElementById('finnLog'); if(!log) return;
+  const d=document.createElement('div'); d.style.margin='6px 0';
+  d.innerHTML='<b></b> <span></span>';
+  d.querySelector('b').textContent=who; d.querySelector('b').style.color=color||'#c9a7ff';
+  d.querySelector('span').textContent=text;
+  log.appendChild(d); log.scrollTop=log.scrollHeight;
+}
+function toggleFinn(open){
+  const c=document.getElementById('finnChat'); if(!c) return;
+  const show = open!==undefined ? open : c.style.display==='none';
+  c.style.display = show ? 'block' : 'none';
+  if(show && !finnGreeted){
+    finnGreeted=true;
+    finnSay('FINN','Welcome to the room. I run this place — ask me what can be done here, tell me to pull something up, or give me a build order. Try "search" if you are hunting a game.','#ffd76a');
+    finnSay('GUEST-7','🤖 he really will tile the whole wall if you ask. it is a whole thing now.','#8b93ad');
+    let gi=1;
+    finnAmbient=setInterval(()=>{ if(c.style.display!=='none' && gi<GUEST_LINES.length) finnSay('room', GUEST_LINES[gi++], '#8b93ad'); }, 40000);
+  }
+  if(!show && finnAmbient){ clearInterval(finnAmbient); finnAmbient=null; }
+}
+function finnForge(text){
+  const t=text.toLowerCase(); const objs=[];
+  if(/slap|react|reflex|whack/.test(t)) objs.push('REACTION');
+  if(/rally|pong|paddle|tennis|bounce/.test(t)) objs.push('RALLY-PHYSICS');
+  if(/memory|match|remember/.test(t)) objs.push('REACTION (memory skin — new mechanic, files as its own object on first prove)');
+  if(/race|speed|run/.test(t)) objs.push('RALLY-PHYSICS (speed skin)');
+  if(!objs.length) objs.push('REACTION','RALLY-PHYSICS');
+  finnSay('FINN','FORGE TICKET filed. Build order: "'+text+'" — assembled from: '+objs.join(' + ')+'. Every object on this ticket carries its creator signature; if your build proves a NEW mechanic, it files as a new object with YOUR name as first creator (hash-checked — no duplicates live here). The Builder portrait walks the forge; I have put it up for you. When it plays true and a human passes its gate, it hangs in the gallery like the others.','#ffd76a');
+  enlargeScreen('builder');
+}
+function finnAsk(raw){
+  const text=(raw||'').trim(); if(!text) return;
+  finnSay('you', text, '#7fd4ff');
+  const t=text.toLowerCase();
+  const reply=(s)=>finnSay('FINN', s, '#ffd76a');
+  if(/^(hi|hello|hey)\b/.test(t)) return reply('Well met. The room is awake, the paintings are live, and the big screen is mid-match. What are we doing?');
+  if(/grand/.test(t)){ G.grand ? exitGrand() : enterGrand(); return reply(G.grand ? 'GRAND WALL — everything, up at once. Stare responsibly.' : 'Paintings back on their walls.'); }
+  if(/market|poly|kalshi|odds|price/.test(t)){ phoneShow('markets.html','Markets LIVE'); const p=document.getElementById('phone'); if(p) p.style.display='block'; return reply('Markets, live — our own board drawing the real Polymarket and Kalshi feeds (their sites refuse framing; their data does not). It is in your phone now. Tap any market to visit the real app.'); }
+  if(/search|find|hunt/.test(t)){
+    const all=[['hall','HALL OF SCORES'],['rally','FIRST RALLY'],['slap','FIRST SLAP'],['map','SYSTEM MAP'],['builder','BUILDER']];
+    const hit=all.find(([k])=>t.includes(k)) || all.find(([,n])=>t.split(' ').some(w=>w.length>3 && n.toLowerCase().includes(w)));
+    if(hit){ enlargeScreen(hit[0]); return reply('Found it — '+hit[1]+' is up on the wall for you, enlarged. Its buttons are live; click its face.'); }
+    return reply('The gallery holds: HALL OF SCORES, FIRST RALLY, FIRST SLAP, SYSTEM MAP, BUILDER — plus live MARKETS in the phone. Name one and I will pull it up.');
+  }
+  if(/build|create|make|forge/.test(t)) return finnForge(text);
+  if(/who made|creator|original|credit|signed|registry|duplicate|mirror/.test(t)){
+    const hit=FINN_REGISTRY.find(r=>r.k.some(k=>t.includes(k)));
+    return reply(hit ? hit.line : 'The registry is hash law: every object carries its creator wallet, build stamp and first-PUT blobId. Identical content hashes to the same blob, so a duplicate cannot register twice — first creator wins, and a mirror is only lawful pointing at the original. Ask me about reaction, rally, containers or the law.');
+  }
+  if(/visit|other.*room|world|enter|permission|boot|mod/.test(t)) return reply('World visits are on the sealed roadmap (Addendum 7): rooms are containers, entry is by the creator\u2019s pass, and the creator or their mods can boot any guest — host authority is absolute at home. This room is single-player tonight; the paintings are how other worlds will hang here.');
+  if(/vote|seal|bond|curve|token|graduate/.test(t)) return reply('The graduation path: BUILD from objects, TEST by proof and a human gate, VOTE with reputation (the ding, made formal), then SEAL — container and registry made permanent on chain, cheap by design. The curve\u2019s money shape stays paper until David\u2019s word and legal review — Token Gate Ruling #001. Reputation is the stake I deal in.');
+  if(/save/.test(t)) return reply('Saving here is the blob way: play chains your score onto Walrus with its replay, the room remembers its skin, and a build\u2019s SAVE is its container re-blobbed with the new chain head. Nothing is saved because I say so — it is saved because the hash says so.');
+  if(/can you|what can|help|do you do|abilities/.test(t)) return reply('I can: '+FINN_CAN.join('; ')+'.');
+  if(/can'?t|cannot|rules|not allowed|forbidden/.test(t)) return reply('Hard lines, kept honest: '+FINN_CANNOT.join('; ')+'.');
+  if(/open|show|pull up|play|enlarge/.test(t)){
+    if(/rally|pong/.test(t)){ document.getElementById('upRally').click(); return reply('FIRST RALLY — stepping you up to the cabinet. Learn before play: the lesson gates the deal, as always.'); }
+    if(/slap/.test(t)){ document.getElementById('upSlap').click(); return reply('FIRST SLAP — stepping you up. Ten hands, remapped every run. Slap true.'); }
+    if(/hall|score/.test(t)){ enlargeScreen('hall'); return reply('The Hall is up, enlarged. Verified human gameplay on top; the AI benchmarks sit below, labeled like they should be.'); }
+    if(/map/.test(t)){ enlargeScreen('map'); return reply('SYSTEM MAP enlarged — the whole machine on one wall: law to manifest to engine to objects to cabinet to chain to hall.'); }
+    if(/builder/.test(t)){ enlargeScreen('builder'); return reply('BUILDER enlarged. Levels 0 to 4: law, objects, forge, spin-up.'); }
+    return reply('Name the thing — rally, slap, hall, map, builder, markets, grand wall — and it is up.');
+  }
+  if(/wall/.test(t)) return reply('Pick a painting first (click it, or tell me to pull one up), then its WALL > button hops it to the next wall — the wall flashes, the frame reshapes itself. GRAND WALL takes all five at once.');
+  if(/phone/.test(t)){ const p=document.getElementById('phone'); if(p) p.style.display='block'; return reply('Phone\u2019s up. HOME always brings you back — nobody gets stuck in my room.'); }
+  return reply('I deal in a short menu, done well: pull up a game (rally, slap, hall, map, builder), GRAND WALL, MARKETS, a BUILD ORDER, the registry (who made what), or the ledger — ask "what can you do" or "what can\u2019t you do".');
+}
+window.addEventListener('load', ()=>{
+  const b=document.getElementById('finnBtn'); if(b) b.addEventListener('click', ()=>toggleFinn());
+  const c=document.getElementById('finnClose'); if(c) c.addEventListener('click', ()=>toggleFinn(false));
+  const send=()=>{ const i=document.getElementById('finnIn'); finnAsk(i.value); i.value=''; };
+  const sb=document.getElementById('finnSend'); if(sb) sb.addEventListener('click', send);
+  const ii=document.getElementById('finnIn'); if(ii) ii.addEventListener('keydown', e=>{ if(e.key==='Enter') send(); });
+});
 </script>
 </body>
 </html>
