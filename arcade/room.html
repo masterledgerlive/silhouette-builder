@@ -108,7 +108,7 @@
   </div>
   <div id="phportal" style="display:none;padding:16px 14px;font-size:13.5px;line-height:1.6;color:#dfe9ff"></div>
   <button id="winLaunch">🌐 OPEN A WINDOW — the web, as an app</button>
-  <button id="worldWinLaunch" style="display:block;width:calc(100% - 16px);margin:6px 8px 0;background:#1b1430;color:#c9a7ff;border:1px solid #7a4fd0;border-radius:9px;padding:9px;font-family:inherit;font-size:13.5px;cursor:pointer">🪟 IN-WORLD WINDOW — HTML living in the room</button>
+  <button id="worldWinLaunch" style="display:block;width:calc(100% - 16px);margin:6px 8px 0;background:#1b1430;color:#c9a7ff;border:1px solid #7a4fd0;border-radius:9px;padding:9px;font-family:inherit;font-size:13.5px;cursor:pointer">🖼️ PULL UP THE HALL — the scores, big on the wall</button>
   <div id="phapps"></div>
   <iframe id="phframe" title="phone screen"></iframe>
   <div id="phnote">Your phone, inside the room — translucent, always yours. Apps that refuse to embed open in a tab instead (their rule, not ours). <b>CAST TO WALL</b> throws this screen up big for the whole room. Real phone mirroring (easy-connect) is the next layer — this is its working frame.</div>
@@ -511,7 +511,7 @@ setInterval(()=>{
 cabs.forEach(c=> c.ring.addEventListener('click', ()=> flyTo(c.x, 1.6, c.z)));
 // ghost view: courtside, right at the big screen — in the action, unseen by the players
 document.getElementById('ghostBtn').addEventListener('click', ()=> flyTo(5.7, 1.5, -1.6));
-document.getElementById('worldWinBtn').addEventListener('click', ()=> spawnWorldPanel());
+document.getElementById('worldWinBtn').addEventListener('click', ()=> makeWindow('', 'WINDOW'));
 document.getElementById('worldWinLaunch').addEventListener('click', ()=> spawnWorldPanel());
 document.getElementById('homeBtn').addEventListener('click', ()=> flyTo(0, 1.6, 4.6));
 
@@ -864,6 +864,7 @@ function gSlotPos(sc){
 }
 function gToPortrait(sc){
   sc.inGrand=false;
+  if(sc.follow){ sc.follow=false; if(typeof renderChips==='function') renderChips(); }
   const p=gSlotPos(sc); gPlace(sc, p.x,p.y,p.z,p.ry, p.w,p.h);
   sc.chrome.setAttribute('visible','false'); sc.state='portrait';
 }
