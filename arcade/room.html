@@ -28,6 +28,24 @@
   .deckbtn{background:#241b08;color:#ffd76a;border:1px solid #8a6d2f;border-radius:6px;padding:7px 12px;cursor:pointer;font-family:inherit;font-size:13px}
   .deckbtn.red{border-color:#a33;color:#ff9a9a}
   #decknote{font-size:12px;color:#9f95c9;margin-left:auto;text-align:right}
+  /* ---------- walk joystick ---------- */
+  #joy{position:fixed;left:18px;bottom:18px;width:118px;height:118px;border-radius:50%;background:rgba(20,16,36,.55);border:2px solid rgba(255,215,106,.55);z-index:15;touch-action:none;backdrop-filter:blur(3px)}
+  #stick2{position:absolute;left:50%;top:50%;width:52px;height:52px;margin:-26px 0 0 -26px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#ffe9a0,#b98a2f);border:2px solid rgba(0,0,0,.45)}
+  #joylbl{position:fixed;left:18px;bottom:142px;z-index:15;font-size:11px;color:#cfc4a0;background:rgba(10,10,16,.6);padding:2px 8px;border-radius:6px}
+  /* ---------- the phone ---------- */
+  #phoneBtn{position:fixed;right:16px;bottom:16px;z-index:16;background:rgba(16,20,34,.85);color:#e8e0c8;border:2px solid #7fd4ff;border-radius:14px;padding:12px 16px;font-family:inherit;font-size:15px;cursor:pointer}
+  #phone{position:fixed;right:14px;bottom:74px;z-index:17;width:min(330px,88vw);height:min(560px,72vh);display:none;flex-direction:column;background:rgba(12,16,28,.72);border:2px solid rgba(127,212,255,.65);border-radius:22px;backdrop-filter:blur(9px);box-shadow:0 0 44px rgba(127,212,255,.25);overflow:hidden}
+  #phone.wall{right:50%;bottom:50%;transform:translate(50%,50%);width:min(980px,96vw);height:min(640px,88vh)}
+  #phbar{display:flex;align-items:center;gap:8px;padding:9px 12px;background:rgba(8,10,20,.65);color:#bfe6ff;font-size:12.5px}
+  #phbar b{color:#fff;letter-spacing:1px}
+  .phbtn{margin-left:auto;background:#16233c;color:#bfe6ff;border:1px solid #7fd4ff;border-radius:6px;padding:4px 9px;cursor:pointer;font-family:inherit;font-size:12px}
+  .phbtn.gold{border-color:#ffd76a;color:#ffd76a}
+  #phapps{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;padding:12px}
+  .app{background:rgba(22,30,52,.8);border:1px solid rgba(127,212,255,.35);border-radius:12px;padding:11px 4px;text-align:center;cursor:pointer;color:#e8e0c8;font-size:12px}
+  .app span{display:block;font-size:21px;margin-bottom:4px}
+  .app.off{opacity:.45;cursor:default}
+  #phframe{flex:1;width:100%;border:0;background:#fff;display:none}
+  #phnote{padding:0 12px 10px;font-size:11.5px;color:#9fb6cc;line-height:1.5}
 </style>
 </head>
 <body>
@@ -44,7 +62,23 @@
     <button class="sbtn" id="upRally">🏓 RALLY</button>
     <button class="sbtn" id="upSlap">✋ SLAP</button>
     <button class="sbtn" id="upSeats">🎾 COURTS SEATS</button>
+    <button class="sbtn" id="ghostBtn">👻 GHOST VIEW</button>
+    <button class="sbtn" id="homeBtn">⌂ RESET VIEW</button>
   </p>
+  <p>Walk: <b>joystick</b> (bottom-left) or WASD · tap a cabinet's <b>glowing circle</b> to walk into it · tap the machine to play.</p>
+</div>
+
+<div id="joylbl">🕹️ WALK</div>
+<div id="joy"><div id="stick2"></div></div>
+<button id="phoneBtn">📱 PHONE</button>
+<div id="phone">
+  <div id="phbar"><b>📱 KODAKAI PHONE</b><span id="phclock"></span>
+    <button class="phbtn gold" id="castBtn">CAST TO WALL ⛶</button>
+    <button class="phbtn" id="phClose">✕</button>
+  </div>
+  <div id="phapps"></div>
+  <iframe id="phframe" title="phone screen"></iframe>
+  <div id="phnote">Your phone, inside the room — translucent, always yours. Apps that refuse to embed open in a tab instead (their rule, not ours). <b>CAST TO WALL</b> throws this screen up big for the whole room. Real phone mirroring (easy-connect) is the next layer — this is its working frame.</div>
 </div>
 
 <!-- MACHINE VIEW -->
@@ -72,7 +106,7 @@
 <canvas id="boardCanvas" class="attract" width="384" height="512"></canvas>
 
 <a-scene background="color:#0b0b10" vr-mode-ui="enabled:true">
-  <a-entity id="cam" position="0 1.6 4.6"><a-camera look-controls="pointerLockEnabled:false" cursor="rayOrigin:mouse;fuse:false" raycaster="objects:.cabinet,.doorlink,#courtsdoor;far:30"></a-camera></a-entity>
+  <a-entity id="cam" position="0 1.6 4.6"><a-camera look-controls="pointerLockEnabled:false" cursor="rayOrigin:mouse;fuse:false" raycaster="objects:.cabinet,.doorlink,#courtsdoor,.playring;far:30"></a-camera></a-entity>
 
   <!-- ROOM SHELL -->
   <a-plane id="floor" rotation="-90 0 0" width="14" height="11" color="#14101e"></a-plane>
@@ -373,6 +407,77 @@ document.getElementById('upSlap').addEventListener('click', ()=> enterMachine(do
 document.getElementById('upSeats').addEventListener('click', ()=> flyTo(3.4, 1.6, -1.5));
 document.querySelectorAll('.doorlink').forEach(el=> el.addEventListener('click', ()=>{ window.location.href = el.getAttribute('data-href'); }));
 document.getElementById('courtsdoor').addEventListener('click', ()=> flyTo(3.4, 1.6, -1.5));
+
+// ================= joystick (touch + mouse) =================
+const joyVec = { x: 0, y: 0 };
+(function(){
+  const joy = document.getElementById('joy'), knob = document.getElementById('stick2');
+  let active = null;
+  function setKnob(dx, dy){ knob.style.transform = `translate(${dx}px,${dy}px)`; }
+  function move(e){
+    const r = joy.getBoundingClientRect(), cx = r.left + r.width/2, cy = r.top + r.height/2;
+    let dx = e.clientX - cx, dy = e.clientY - cy;
+    const m = Math.hypot(dx, dy), max = 34;
+    if (m > max){ dx *= max/m; dy *= max/m; }
+    setKnob(dx, dy); joyVec.x = dx/max; joyVec.y = dy/max;
+  }
+  joy.addEventListener('pointerdown', e=>{ active = e.pointerId; joy.setPointerCapture(active); move(e); });
+  joy.addEventListener('pointermove', e=>{ if (e.pointerId === active) move(e); });
+  ['pointerup','pointercancel'].forEach(ev=> joy.addEventListener(ev, ()=>{ active = null; joyVec.x = 0; joyVec.y = 0; setKnob(0,0); }));
+})();
+// joystick feeds the same movement tick as WASD
+const _oldTick = null;
+setInterval(()=>{
+  if (inMachine || fly || (joyVec.x === 0 && joyVec.y === 0)) return;
+  const p = cam.getAttribute('position');
+  const rot = cam.querySelector('a-camera').getAttribute('rotation') || {x:0,y:0,z:0};
+  const yaw = (rot.y || 0) * Math.PI/180, sp = 0.06;
+  const f = { x: -Math.sin(yaw), z: -Math.cos(yaw) }, r = { x: Math.cos(yaw), z: -Math.sin(yaw) };
+  p.x += (f.x * -joyVec.y + r.x * joyVec.x) * sp * Math.max(Math.abs(joyVec.x), Math.abs(joyVec.y), 0.4);
+  p.z += (f.z * -joyVec.y + r.z * joyVec.x) * sp * Math.max(Math.abs(joyVec.x), Math.abs(joyVec.y), 0.4);
+  p.x = Math.max(-6.4, Math.min(6.4, p.x)); p.z = Math.max(-5.0, Math.min(5.2, p.z)); p.y = 1.6;
+  cam.setAttribute('position', p);
+}, 30);
+
+// tap a glowing circle -> walk into it (the 3-second stand then takes over)
+cabs.forEach(c=> c.ring.addEventListener('click', ()=> flyTo(c.x, 1.6, c.z)));
+// ghost view: courtside, right at the big screen — in the action, unseen by the players
+document.getElementById('ghostBtn').addEventListener('click', ()=> flyTo(5.7, 1.5, -1.6));
+document.getElementById('homeBtn').addEventListener('click', ()=> flyTo(0, 1.6, 4.6));
+
+// ================= THE PHONE =================
+const phoneDiv = document.getElementById('phone'), phFrame = document.getElementById('phframe'), phApps = document.getElementById('phapps');
+const APPS = [
+  { icon:'📈', name:'Polymarket', url:'https://polymarket.com' },
+  { icon:'🎾', name:'Kalshi', url:'https://kalshi.com' },
+  { icon:'🏆', name:'Hall of Scores', url:'blob-cinema/scores.html' },
+  { icon:'🏓', name:'FIRST RALLY', url:'games/first-rally/' },
+  { icon:'✋', name:'FIRST SLAP', url:'games/first-slap/' },
+  { icon:'🗺️', name:'System Map', url:'system.html' },
+  { icon:'🎙️', name:'Voice Avatar', off:true, note:'soon' },
+  { icon:'🪞', name:'Mirror My Phone', off:true, note:'easy-connect · next layer' },
+  { icon:'👻', name:'Ghost Courtside', off:true, note:'with Courts Everywhere' }
+];
+APPS.forEach(a=>{
+  const d = document.createElement('div');
+  d.className = 'app' + (a.off ? ' off' : '');
+  d.innerHTML = `<span>${a.icon}</span>${a.name}` + (a.off ? `<br/><small>${a.note}</small>` : '');
+  if (!a.off) d.addEventListener('click', ()=>{
+    phFrame.style.display = 'block'; phApps.style.display = 'none';
+    phFrame.setAttribute('src', a.url);
+    document.getElementById('phnote').innerHTML = 'Now showing: <b>' + a.name + '</b> · if the screen stays blank, the app refuses embedding — <a href="' + a.url + '" target="_blank" style="color:#7fd4ff">open it in a tab ↗</a> · CAST TO WALL throws it up for the room.';
+  });
+  phApps.appendChild(d);
+});
+document.getElementById('phoneBtn').addEventListener('click', ()=>{
+  phoneDiv.style.display = phoneDiv.style.display === 'flex' ? 'none' : 'flex';
+});
+document.getElementById('phClose').addEventListener('click', ()=> phoneDiv.style.display = 'none');
+document.getElementById('castBtn').addEventListener('click', function(){
+  phoneDiv.classList.toggle('wall');
+  this.textContent = phoneDiv.classList.contains('wall') ? 'BACK TO HAND ⤢' : 'CAST TO WALL ⛶';
+});
+setInterval(()=>{ document.getElementById('phclock').textContent = new Date().toLocaleTimeString([], {hour:'numeric', minute:'2-digit'}); }, 1000);
 
 // ================= skins =================
 const SKINS = {
