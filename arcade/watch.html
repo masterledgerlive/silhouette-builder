@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>📺 WATCH — games, live, inside the arcade</title>
+<style>
+ body{margin:0;font-family:Georgia,serif;background:#0a0c14;color:#e8e0c8;padding:14px}
+ h1{font-size:19px;color:#ffd76a;margin:2px 0;letter-spacing:1px}
+ h2{font-size:15px;color:#7fd4ff;margin:16px 0 6px}
+ .note{font-size:12.5px;color:#cfc4a0;line-height:1.5}
+ .stage{position:relative;width:100%;padding-top:56.25%;background:#000;border:1px solid #2c3350;border-radius:10px;overflow:hidden}
+ .stage iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+ .src{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+ .src button,.go{background:#1b1430;color:#c9a7ff;border:1px solid #7a4fd0;border-radius:8px;padding:7px 12px;cursor:pointer;font-family:inherit;font-size:13px}
+ input{background:#0d0f1a;border:1px solid #2c3350;border-radius:8px;color:#fff;padding:8px;font-family:inherit;flex:1;min-width:140px}
+ .row{display:flex;justify-content:space-between;gap:10px;padding:8px 10px;border:1px solid #2c3350;border-radius:8px;margin:6px 0;background:#10131f}
+ .live{color:#ff6b6b;font-weight:bold}
+ .yes{color:#6fe08a;font-weight:bold}
+ .vol{color:#8b93ad;font-size:11.5px}
+ a{color:#7fd4ff}
+</style></head><body>
+<h1>📺 WATCH — THE GAMES, INSIDE</h1>
+<p class="note">Polymarket's own video player refuses to be framed (their lock, same as their site) — so the match stream rides the players that <b>do</b> allow in-screen play: <b>Kick, Twitch, YouTube</b>. Polymarket's live matches and odds run right alongside, from their official feed. Same match, same screen, all inside the room. Put a stream on the stage, then cast this page to the wall.</p>
+<div class="stage"><iframe id="stage" allow="autoplay; fullscreen; encrypted-media" allowfullscreen title="watch stage"></iframe></div>
+<div class="src">
+  <button id="srcKick">🟢 MY KICK</button>
+  <button id="srcYt">▶️ YOUTUBE</button>
+  <button id="srcTw">🟣 TWITCH</button>
+</div>
+<div class="src"><input id="inp" placeholder="paste a YouTube link — or type a Twitch channel name"/><button class="go" id="goBtn">PLAY ▶</button></div>
+<p class="note" id="hint">Pick a source: your saved Kick channel, any YouTube link, or any Twitch channel.</p>
+<h2>🔴 POLYMARKET — LIVE &amp; TOP MATCHES (odds refresh 30s)</h2>
+<div id="matches"><p class="note">loading the feed…</p></div>
+<p class="note">Full odds board: <a href="markets.html">📊 MARKETS</a> — watching and wagering stay separate; this room never sends you outside.</p>
+<script>
+const stage=document.getElementById('stage'), inp=document.getElementById('inp'), hint=document.getElementById('hint');
+function ytId(u){
+  const m=String(u).match(/(?:youtube\.com\/(?:watch\?v=|live\/|shorts\/)|youtu\.be\/)([\w-]{6,})/);
+  return m? m[1] : (/^[\w-]{6,}$/.test(u.trim())? u.trim() : null);
+}
+function playYT(u){
+  const id=ytId(u);
+  if(id){ stage.src='https://www.youtube-nocookie.com/embed/'+id+'?autoplay=1&rel=0'; hint.textContent='YouTube on stage — playing inside the room.'; }
+  else hint.textContent='That does not look like a YouTube link yet — paste a full watch link.';
+}
+function playKick(){
+  let ch=''; try{ ch=localStorage.getItem('kick-channel')||''; }catch(e){}
+  if(!ch){ hint.textContent='No Kick channel saved yet — type your channel name in the box and press PLAY, or set it once from the room\u2019s KICK button.'; inp.placeholder='type your Kick channel name, then PLAY'; inp.focus(); return; }
+  stage.src='https://player.kick.com/'+ch; hint.textContent='Your Kick channel on stage.';
+}
+function playTwitch(name){
+  const ch=(name||'').trim().replace(/^.*twitch\.tv\//,'').split(/[\/?#]/)[0];
+  if(!ch){ hint.textContent='Type a Twitch channel name (or a twitch.tv link) and press PLAY.'; inp.focus(); return; }
+  stage.src='https://player.twitch.tv/?channel='+encodeURIComponent(ch)+'&parent=arcade.highscores.live&muted=false';
+  hint.textContent='Twitch channel "'+ch+'" on stage.';
+}
+document.getElementById('srcKick').addEventListener('click', playKick);
+document.getElementById('srcYt').addEventListener('click', ()=>{ if(inp.value) playYT(inp.value); else { hint.textContent='Paste a YouTube link in the box, then PLAY — or press MY KICK for your channel.'; inp.focus(); } });
+document.getElementById('srcTw').addEventListener('click', ()=> playTwitch(inp.value));
+document.getElementById('goBtn').addEventListener('click', ()=>{
+  const v=inp.value.trim(); if(!v) return;
+  if(/youtube|youtu\.be/.test(v)) return playYT(v);
+  let kc=''; try{ kc=localStorage.getItem('kick-channel')||''; }catch(e){}
+  if(kc && v.toLowerCase()===kc.toLowerCase()) return playKick();
+  return playTwitch(v);
+});
+async function loadMatches(){
+  const box=document.getElementById('matches');
+  try{
+    const r=await fetch('https://gamma-api.polymarket.com/events?limit=14&active=true&order=volume24hr&ascending=false');
+    const evs=await r.json();
+    evs.sort((a,b)=> (b.live===true)-(a.live===true));
+    box.innerHTML='';
+    evs.forEach(e=>{
+      const m=(e.markets||[])[0]; let p=null;
+      if(m){ try{ p=JSON.parse(m.outcomePrices||'[]')[0]; }catch(err){} }
+      const d=document.createElement('div'); d.className='row';
+      d.innerHTML='<div style="flex:1"></div><div style="text-align:right;white-space:nowrap"></div>';
+      const left=d.children[0], right=d.children[1];
+      left.innerHTML=(e.live? '<span class="live">🔴 LIVE</span> ' : '')+'<span></span>';
+      left.querySelector('span:last-child').textContent=e.title||'';
+      right.innerHTML='<div class="yes"></div><div class="vol"></div>';
+      right.querySelector('.yes').textContent=(m&&p!=null)? (m.question===e.title? 'YES '+Math.round(Number(p)*100)+'¢' : '') : '';
+      right.querySelector('.vol').textContent=e.volume24hr? 'vol $'+Number(e.volume24hr).toLocaleString(undefined,{maximumFractionDigits:0}) : '';
+      box.appendChild(d);
+    });
+    if(!evs.length) box.innerHTML='<p class="note">No events returned right now.</p>';
+  }catch(e){ box.innerHTML='<p class="note">Match feed unreachable from this browser right now.</p>'; }
+}
+loadMatches(); setInterval(loadMatches, 30000);
+try{ if(localStorage.getItem('kick-channel')) playKick(); }catch(e){}
+</script></body></html>
