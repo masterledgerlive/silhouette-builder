@@ -40,6 +40,11 @@
     <button class="sbtn" data-skin="space">DEEP SPACE</button>
   </p>
   <p>Patrons with 🤖 are our agents playing <i>real engine matches</i> right now. Human presence is the next layer. <a href="blob-cinema/scores.html">Hall of Scores</a> · <a href="system.html">System Map</a></p>
+  <p>STEP UP:
+    <button class="sbtn" id="upRally">🏓 RALLY</button>
+    <button class="sbtn" id="upSlap">✋ SLAP</button>
+    <button class="sbtn" id="upSeats">🎾 COURTS SEATS</button>
+  </p>
 </div>
 
 <!-- MACHINE VIEW -->
@@ -67,7 +72,7 @@
 <canvas id="boardCanvas" class="attract" width="384" height="512"></canvas>
 
 <a-scene background="color:#0b0b10" vr-mode-ui="enabled:true">
-  <a-entity id="cam" position="0 1.6 4.6"><a-camera look-controls="pointerLockEnabled:false"></a-camera></a-entity>
+  <a-entity id="cam" position="0 1.6 4.6"><a-camera look-controls="pointerLockEnabled:false" cursor="rayOrigin:mouse;fuse:false" raycaster="objects:.cabinet,.doorlink,#courtsdoor;far:30"></a-camera></a-entity>
 
   <!-- ROOM SHELL -->
   <a-plane id="floor" rotation="-90 0 0" width="14" height="11" color="#14101e"></a-plane>
@@ -163,14 +168,14 @@ function patron(x,y,z,color,name,seated,rotY){
   const bodyH = seated ? 0.55 : 0.85, bodyY = seated ? 0.28 : 0.45;
   g.innerHTML = `<a-cylinder radius="0.16" height="${bodyH}" position="0 ${bodyY} 0" color="${color}"></a-cylinder>
     <a-sphere radius="0.14" position="0 ${bodyY + bodyH/2 + 0.15} 0" color="#e8c39e"></a-sphere>
-    <a-text value="${name}" position="0 ${bodyY + bodyH/2 + 0.48} 0" align="center" width="1.7" color="#fff"></a-text>`;
+    <a-text value="${name}" position="0 ${bodyY + bodyH/2 + 0.48} 0" align="center" width="2.3" color="#fff"></a-text>`;
   scene.appendChild(g); return g;
 }
 patron(2.1, 0, -2.2, '#8a6d2f', 'FINN · HOST', false, -40);            // at the pool table
-patron(4.9, 0.52, -2.3, '#5b4a8a', 'GUEST-3 🤖', true, -90);           // seats
-patron(4.9, 0.52, -1.5, '#2a6e8a', 'GUEST-7 🤖', true, -90);
-patron(4.15, 0.52, -0.9, '#8a2a4a', 'GUEST-12 🤖', true, -90);
-patron(-3.6, 0, -2.0, '#3a7a4a', 'GUEST-9 🤖', false, 35);             // watching rally cab
+patron(4.9, 0.52, -2.3, '#5b4a8a', 'GUEST-3', true, -90);           // seats
+patron(4.9, 0.52, -1.5, '#2a6e8a', 'GUEST-7', true, -90);
+patron(4.15, 0.52, -0.9, '#8a2a4a', 'GUEST-12', true, -90);
+patron(-3.6, 0, -2.0, '#3a7a4a', 'GUEST-9', false, 35);             // watching rally cab
 
 // ================= screen textures =================
 function bindScreen(name, canvasId){
@@ -359,6 +364,9 @@ document.getElementById('lookR').addEventListener('mousedown', ()=> peek(0.55));
 
 // clicks: cabinets step up; hall door walks out; courts door hot-jumps to the seats
 document.querySelectorAll('.cabinet').forEach(el=> el.addEventListener('click', ()=> enterMachine(el)));
+document.getElementById('upRally').addEventListener('click', ()=> enterMachine(document.getElementById('cab-rally')));
+document.getElementById('upSlap').addEventListener('click', ()=> enterMachine(document.getElementById('cab-slap')));
+document.getElementById('upSeats').addEventListener('click', ()=> flyTo(3.4, 1.6, -1.5));
 document.querySelectorAll('.doorlink').forEach(el=> el.addEventListener('click', ()=>{ window.location.href = el.getAttribute('data-href'); }));
 document.getElementById('courtsdoor').addEventListener('click', ()=> flyTo(3.4, 1.6, -1.5));
 
