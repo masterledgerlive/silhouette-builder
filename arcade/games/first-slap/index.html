@@ -113,18 +113,32 @@ const BLOBS={
 const ARROWS={U:'⬆ UP',D:'⬇ DOWN',L:'⬅ LEFT',R:'➡ RIGHT'};
 
 // ---- blob boot: fetch manifest from Walrus, verify sha256 in-page ----
+// hardened 2026-11-01: no-store (a cached lapse-window 404 once masqueraded as a mismatch),
+// status-aware pills (NOT FOUND = keeper problem, MISMATCH = wrong bytes), one retry.
 (async function boot(){
+  const pill=(cls,msg)=>{ $('bootStatus').innerHTML='<span class="pill '+cls+'">'+msg+'</span>'; };
+  async function attempt(){
+    const r=await fetch(AGG+BLOBS.manifest.id,{cache:'no-store'});
+    if(r.status===404) return {notfound:true};
+    if(!r.ok) throw new Error('http '+r.status);
+    return {txt:await r.text()};
+  }
   try{
-    const txt=await (await fetch(AGG+BLOBS.manifest.id)).text();
-    const h=KKReplay.sha256(txt);
+    let res=await attempt().catch(()=>null);
+    if(!res){ await new Promise(s=>setTimeout(s,1500)); res=await attempt(); }
+    if(res.notfound){
+      pill('bad','🔴 BLOB NOT FOUND — this game refuses unverified loads · keeper renewal needed');
+      return;
+    }
+    const h=KKReplay.sha256(res.txt);
     if(h===BLOBS.manifest.sha){
       $('bootStatus').innerHTML='<span class="pill ok">🟢 MANIFEST FROM BLOB '+BLOBS.manifest.id.slice(0,10)+'… · sha256 VERIFIED</span> '+
-        '<span class="lbl">law blob '+BLOBS.law.id.slice(0,10)+'… · engine blob '+BLOBS.engine.id.slice(0,10)+'… · Walrus testnet epochs 564–569</span>';
+        '<span class="lbl">law blob '+BLOBS.law.id.slice(0,10)+'… · engine blob '+BLOBS.engine.id.slice(0,10)+'… · Walrus testnet · keeper-renewed 30 epochs</span>';
     } else {
-      $('bootStatus').innerHTML='<span class="pill bad">🔴 BLOB HASH MISMATCH — do not trust this load</span>';
+      pill('bad','🔴 BLOB HASH MISMATCH — do not trust this load');
     }
   }catch(e){
-    $('bootStatus').innerHTML='<span class="pill bad">🔴 BLOB UNREACHABLE — local mirror in use, spin-up proof pending re-check</span>';
+    pill('bad','🔴 BLOB UNREACHABLE — local mirror in use, spin-up proof pending re-check');
   }
 })();
 
