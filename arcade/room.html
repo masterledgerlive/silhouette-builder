@@ -46,6 +46,19 @@
   .app.off{opacity:.45;cursor:default}
   #phframe{flex:1;width:100%;border:0;background:#fff;display:none}
   #phnote{padding:0 12px 10px;font-size:11.5px;color:#9fb6cc;line-height:1.5}
+  /* ---------- windows ---------- */
+  .win{position:fixed;z-index:18;width:min(560px,94vw);height:min(480px,74vh);display:flex;flex-direction:column;background:rgba(10,13,24,.88);border:2px solid rgba(255,215,106,.6);border-radius:14px;backdrop-filter:blur(8px);box-shadow:0 8px 44px rgba(0,0,0,.55);overflow:hidden}
+  .win.wall{left:50%!important;top:50%!important;transform:translate(-50%,-50%);width:min(1100px,97vw);height:min(720px,92vh)}
+  .winbar{display:flex;align-items:center;gap:6px;padding:7px 9px;background:rgba(6,8,16,.8);cursor:grab;touch-action:none}
+  .winbar b{color:#ffd76a;font-size:12.5px;letter-spacing:.5px;white-space:nowrap}
+  .winurl{flex:1;min-width:60px;background:#0d1526;color:#dfe9ff;border:1px solid #39507a;border-radius:6px;padding:5px 8px;font-family:inherit;font-size:12.5px}
+  .wbtn{background:#16233c;color:#bfe6ff;border:1px solid #39507a;border-radius:6px;padding:4px 8px;cursor:pointer;font-family:inherit;font-size:12px;white-space:nowrap}
+  .wbtn.gold{border-color:#ffd76a;color:#ffd76a}
+  .wbtn.red{border-color:#a33;color:#ff9a9a}
+  .winbody{flex:1;overflow:auto;background:#0a0e18}
+  .winbody iframe{width:100%;height:100%;border:0;background:#fff;transform-origin:0 0}
+  .winnote{padding:5px 10px;font-size:11px;color:#8fa3bd;background:rgba(6,8,16,.8)}
+  #winLaunch{display:block;width:calc(100% - 24px);margin:12px 12px 0;background:linear-gradient(180deg,#2a4a7a,#16233c);color:#fff;border:2px solid #7fd4ff;border-radius:12px;padding:13px;font-family:inherit;font-size:15.5px;cursor:pointer}
 </style>
 </head>
 <body>
@@ -76,6 +89,7 @@
     <button class="phbtn gold" id="castBtn">CAST TO WALL ⛶</button>
     <button class="phbtn" id="phClose">✕</button>
   </div>
+  <button id="winLaunch">🌐 OPEN A WINDOW — the web, as an app</button>
   <div id="phapps"></div>
   <iframe id="phframe" title="phone screen"></iframe>
   <div id="phnote">Your phone, inside the room — translucent, always yours. Apps that refuse to embed open in a tab instead (their rule, not ours). <b>CAST TO WALL</b> throws this screen up big for the whole room. Real phone mirroring (easy-connect) is the next layer — this is its working frame.</div>
@@ -478,6 +492,88 @@ document.getElementById('castBtn').addEventListener('click', function(){
   this.textContent = phoneDiv.classList.contains('wall') ? 'BACK TO HAND ⤢' : 'CAST TO WALL ⛶';
 });
 setInterval(()=>{ document.getElementById('phclock').textContent = new Date().toLocaleTimeString([], {hour:'numeric', minute:'2-digit'}); }, 1000);
+
+// ================= WINDOWS — the web as an app, no code held =================
+let winCount = 0;
+function videoEmbed(url){
+  let m = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/)([\w-]{6,})/);
+  if (m) return 'https://www.youtube-nocookie.com/embed/' + m[1] + '?autoplay=0&rel=0';
+  m = url.match(/vimeo\.com\/(\d+)/);
+  if (m) return 'https://player.vimeo.com/video/' + m[1];
+  return null;
+}
+function makeWindow(startUrl, title){
+  if (winCount >= 3){ alert('Three windows open already — close one to open another.'); return; }
+  winCount++;
+  const w = document.createElement('div');
+  w.className = 'win';
+  const off = (winCount - 1) * 34;
+  w.style.left = (40 + off) + 'px'; w.style.top = (60 + off) + 'px';
+  w.innerHTML = `
+    <div class="winbar">
+      <b>🌐 ${title || 'WINDOW'}</b>
+      <input class="winurl" type="text" placeholder="paste a link, or a video link…" value="${startUrl || ''}"/>
+      <button class="wbtn go">GO</button>
+      <button class="wbtn vid">▶ TAKE VIDEO</button>
+      <button class="wbtn gold cast">⛶ WALL</button>
+      <button class="wbtn zoomout">−</button>
+      <button class="wbtn zoomin">+</button>
+      <button class="wbtn tab">↗ TAB</button>
+      <button class="wbtn red close">✕</button>
+    </div>
+    <div class="winbody"><iframe title="window"></iframe></div>
+    <div class="winnote">A real window, not a copy — the arcade holds <b>no code and no passwords</b>. Sign-in happens between you and the site, in your own browser. Some sites (Google sign-in, Gmail) refuse to live inside any frame on any website — use <b>↗ TAB</b> for those; it's the same browser, the same account.</div>`;
+  document.body.appendChild(w);
+  const frame = w.querySelector('iframe'), urlIn = w.querySelector('.winurl'), body = w.querySelector('.winbody');
+  let zoom = 1, current = startUrl || '';
+  function load(u){
+    if (!u) return;
+    if (!/^https?:\/\//i.test(u)) u = 'https://' + u;
+    current = u; urlIn.value = u;
+    frame.setAttribute('src', u);
+  }
+  w.querySelector('.go').addEventListener('click', ()=> load(urlIn.value.trim()));
+  urlIn.addEventListener('keydown', e=>{ if (e.key === 'Enter') load(urlIn.value.trim()); });
+  w.querySelector('.vid').addEventListener('click', ()=>{
+    const emb = videoEmbed(urlIn.value.trim() || current);
+    if (emb){ load(emb); w.querySelector('b').textContent = '▶ VIDEO'; }
+    else alert('No YouTube/Vimeo video found in that link. Paste a video page link, or open it with ↗ TAB.');
+  });
+  w.querySelector('.cast').addEventListener('click', function(){
+    w.classList.toggle('wall');
+    this.textContent = w.classList.contains('wall') ? '⤢ HAND' : '⛶ WALL';
+  });
+  w.querySelector('.zoomin').addEventListener('click', ()=>{ zoom = Math.min(2, zoom + 0.25); frame.style.transform = `scale(${zoom})`; frame.style.width = (100/zoom) + '%'; frame.style.height = (100/zoom) + '%'; });
+  w.querySelector('.zoomout').addEventListener('click', ()=>{ zoom = Math.max(0.5, zoom - 0.25); frame.style.transform = `scale(${zoom})`; frame.style.width = (100/zoom) + '%'; frame.style.height = (100/zoom) + '%'; });
+  w.querySelector('.tab').addEventListener('click', ()=>{ if (current) window.open(current, '_blank'); });
+  w.querySelector('.close').addEventListener('click', ()=>{ w.remove(); winCount--; });
+  // drag by the bar
+  const bar = w.querySelector('.winbar'); let drag = null;
+  bar.addEventListener('pointerdown', e=>{
+    if (e.target.closest('button') || e.target.closest('input')) return;
+    drag = { dx: e.clientX - w.offsetLeft, dy: e.clientY - w.offsetTop };
+    bar.setPointerCapture(e.pointerId);
+  });
+  bar.addEventListener('pointermove', e=>{ if (drag && !w.classList.contains('wall')){ w.style.left = (e.clientX - drag.dx) + 'px'; w.style.top = (e.clientY - drag.dy) + 'px'; } });
+  bar.addEventListener('pointerup', ()=> drag = null);
+  w.addEventListener('pointerdown', ()=>{ document.querySelectorAll('.win').forEach(x=> x.style.zIndex = 18); w.style.zIndex = 19; });
+  if (startUrl) load(startUrl);
+  return w;
+}
+document.getElementById('winLaunch').addEventListener('click', ()=> makeWindow('', 'WINDOW'));
+// a window tile inside the phone's app grid too, plus a Google sign-in helper tile (opens the real tab)
+const extraApps = [
+  { icon:'🔐', name:'Sign in to Google', act:()=> window.open('https://accounts.google.com/', '_blank') },
+  { icon:'▶️', name:'YouTube', act:()=> makeWindow('', 'YOUTUBE — paste a video link, then ▶ TAKE VIDEO') },
+  { icon:'🔎', name:'Search Games', act:()=> window.open('https://www.google.com/search?q=free+browser+games', '_blank') }
+];
+extraApps.forEach(a=>{
+  const d = document.createElement('div');
+  d.className = 'app';
+  d.innerHTML = `<span>${a.icon}</span>${a.name}`;
+  d.addEventListener('click', a.act);
+  phApps.appendChild(d);
+});
 
 // ================= skins =================
 const SKINS = {
