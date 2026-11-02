@@ -58,6 +58,9 @@
   .winbody{flex:1;overflow:auto;background:#0a0e18}
   .winbody iframe{width:100%;height:100%;border:0;background:#fff;transform-origin:0 0}
   .winnote{padding:5px 10px;font-size:11px;color:#8fa3bd;background:rgba(6,8,16,.8)}
+  #dim{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:14;display:none}
+  #tray{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);z-index:17;display:flex;gap:8px}
+  .chip{background:rgba(16,20,34,.9);color:#ffd76a;border:1.5px solid #8a6d2f;border-radius:999px;padding:7px 14px;font-family:inherit;font-size:12.5px;cursor:pointer}
   #winLaunch{display:block;width:calc(100% - 24px);margin:12px 12px 0;background:linear-gradient(180deg,#2a4a7a,#16233c);color:#fff;border:2px solid #7fd4ff;border-radius:12px;padding:13px;font-family:inherit;font-size:15.5px;cursor:pointer}
 </style>
 </head>
@@ -77,6 +80,7 @@
     <button class="sbtn" id="upSeats">🎾 COURTS SEATS</button>
     <button class="sbtn" id="ghostBtn">👻 GHOST VIEW</button>
     <button class="sbtn" id="homeBtn">⌂ RESET VIEW</button>
+    <button class="sbtn" id="arrangeBtn">🪟 ARRANGE WINDOWS</button>
   </p>
   <p>Walk: <b>joystick</b> (bottom-left) or WASD · tap a cabinet's <b>glowing circle</b> to walk into it · tap the machine to play.</p>
 </div>
@@ -84,11 +88,16 @@
 <div id="joylbl">🕹️ WALK</div>
 <div id="joy"><div id="stick2"></div></div>
 <button id="phoneBtn">📱 PHONE</button>
+<div id="dim"></div>
+<div id="tray"></div>
 <div id="phone">
-  <div id="phbar"><b>📱 KODAKAI PHONE</b><span id="phclock"></span>
-    <button class="phbtn gold" id="castBtn">CAST TO WALL ⛶</button>
+  <div id="phbar"><b>📱 PHONE</b><span id="phclock"></span>
+    <button class="phbtn" id="phBack">◀ BACK</button>
+    <button class="phbtn" id="phHome">🏠 HOME</button>
+    <button class="phbtn gold" id="castBtn">CAST ⛶</button>
     <button class="phbtn" id="phClose">✕</button>
   </div>
+  <div id="phportal" style="display:none;padding:16px 14px;font-size:13.5px;line-height:1.6;color:#dfe9ff"></div>
   <button id="winLaunch">🌐 OPEN A WINDOW — the web, as an app</button>
   <div id="phapps"></div>
   <iframe id="phframe" title="phone screen"></iframe>
@@ -461,9 +470,34 @@ document.getElementById('homeBtn').addEventListener('click', ()=> flyTo(0, 1.6, 
 
 // ================= THE PHONE =================
 const phoneDiv = document.getElementById('phone'), phFrame = document.getElementById('phframe'), phApps = document.getElementById('phapps');
+const phPortal = document.getElementById('phportal');
+function phoneHome(){
+  phFrame.style.display = 'none'; phFrame.setAttribute('src', 'about:blank');
+  phPortal.style.display = 'none'; phApps.style.display = 'grid';
+  document.getElementById('phnote').textContent = 'Your phone, inside the room — translucent, always yours. Our own pages open right here; outside apps open as portals (the real app, in your browser) because their sign-ins refuse to live inside frames. HOME always brings you back here.';
+}
+function phoneShow(url, name){
+  phPortal.style.display = 'none'; phApps.style.display = 'none';
+  phFrame.style.display = 'block'; phFrame.setAttribute('src', url);
+  document.getElementById('phnote').innerHTML = 'Now showing: <b>' + name + '</b> · 🏠 HOME (top) takes you back to the apps.';
+}
+function phonePortal(a){
+  // portal-first for outside apps: the REAL app opens in your browser (sign-in works there);
+  // the phone shows a card so you are never stuck inside a broken frame again.
+  window.open(a.url, '_blank');
+  phApps.style.display = 'none'; phFrame.style.display = 'none';
+  phPortal.style.display = 'block';
+  phPortal.innerHTML = `<div style="font-size:26px">${a.icon}</div><b>${a.name}</b> opened as a real app in your browser tab — sign in there, it works like the app should.<br/><br/>
+    <button class="phbtn gold" id="ppHtml">Try the HTML view in here instead</button>
+    <button class="phbtn" id="ppAgain">↗ Open the tab again</button><br/><br/>
+    <small style="color:#9fb6cc">Why a portal? ${a.name}'s sign-in refuses to run inside any framed screen (their rule, internet-wide). The tab IS the app. When phone-mirroring lands, this card disappears — your own screen comes inside directly.</small>`;
+  document.getElementById('ppHtml').addEventListener('click', ()=> phoneShow(a.url, a.name));
+  document.getElementById('ppAgain').addEventListener('click', ()=> window.open(a.url, '_blank'));
+  document.getElementById('phnote').textContent = '🏠 HOME (top) takes you back to the apps — you can never get stuck in here.';
+}
 const APPS = [
-  { icon:'📈', name:'Polymarket', url:'https://polymarket.com' },
-  { icon:'🎾', name:'Kalshi', url:'https://kalshi.com' },
+  { icon:'📈', name:'Polymarket', url:'https://polymarket.com', portal:true },
+  { icon:'🎾', name:'Kalshi', url:'https://kalshi.com', portal:true },
   { icon:'🏆', name:'Hall of Scores', url:'blob-cinema/scores.html' },
   { icon:'🏓', name:'FIRST RALLY', url:'games/first-rally/' },
   { icon:'✋', name:'FIRST SLAP', url:'games/first-slap/' },
@@ -476,20 +510,23 @@ APPS.forEach(a=>{
   const d = document.createElement('div');
   d.className = 'app' + (a.off ? ' off' : '');
   d.innerHTML = `<span>${a.icon}</span>${a.name}` + (a.off ? `<br/><small>${a.note}</small>` : '');
-  if (!a.off) d.addEventListener('click', ()=>{
-    phFrame.style.display = 'block'; phApps.style.display = 'none';
-    phFrame.setAttribute('src', a.url);
-    document.getElementById('phnote').innerHTML = 'Now showing: <b>' + a.name + '</b> · if the screen stays blank, the app refuses embedding — <a href="' + a.url + '" target="_blank" style="color:#7fd4ff">open it in a tab ↗</a> · CAST TO WALL throws it up for the room.';
-  });
+  if (!a.off) d.addEventListener('click', ()=> a.portal ? phonePortal(a) : phoneShow(a.url, a.name));
   phApps.appendChild(d);
 });
+document.getElementById('phHome').addEventListener('click', phoneHome);
+document.getElementById('phBack').addEventListener('click', ()=>{
+  if (phPortal.style.display === 'block' || phFrame.style.display === 'block') phoneHome();
+});
 document.getElementById('phoneBtn').addEventListener('click', ()=>{
-  phoneDiv.style.display = phoneDiv.style.display === 'flex' ? 'none' : 'flex';
+  const opening = phoneDiv.style.display !== 'flex';
+  phoneDiv.style.display = opening ? 'flex' : 'none';
+  if (opening) phoneHome();   // a phone always wakes to its home screen — nobody stays stuck
 });
 document.getElementById('phClose').addEventListener('click', ()=> phoneDiv.style.display = 'none');
 document.getElementById('castBtn').addEventListener('click', function(){
   phoneDiv.classList.toggle('wall');
   this.textContent = phoneDiv.classList.contains('wall') ? 'BACK TO HAND ⤢' : 'CAST TO WALL ⛶';
+  refreshDim();
 });
 setInterval(()=>{ document.getElementById('phclock').textContent = new Date().toLocaleTimeString([], {hour:'numeric', minute:'2-digit'}); }, 1000);
 
@@ -519,6 +556,7 @@ function makeWindow(startUrl, title){
       <button class="wbtn zoomout">−</button>
       <button class="wbtn zoomin">+</button>
       <button class="wbtn tab">↗ TAB</button>
+      <button class="wbtn min">— PARK</button>
       <button class="wbtn red close">✕</button>
     </div>
     <div class="winbody"><iframe title="window"></iframe></div>
@@ -542,10 +580,18 @@ function makeWindow(startUrl, title){
   w.querySelector('.cast').addEventListener('click', function(){
     w.classList.toggle('wall');
     this.textContent = w.classList.contains('wall') ? '⤢ HAND' : '⛶ WALL';
+    refreshDim();
   });
   w.querySelector('.zoomin').addEventListener('click', ()=>{ zoom = Math.min(2, zoom + 0.25); frame.style.transform = `scale(${zoom})`; frame.style.width = (100/zoom) + '%'; frame.style.height = (100/zoom) + '%'; });
   w.querySelector('.zoomout').addEventListener('click', ()=>{ zoom = Math.max(0.5, zoom - 0.25); frame.style.transform = `scale(${zoom})`; frame.style.width = (100/zoom) + '%'; frame.style.height = (100/zoom) + '%'; });
   w.querySelector('.tab').addEventListener('click', ()=>{ if (current) window.open(current, '_blank'); });
+  w.querySelector('.min').addEventListener('click', ()=>{
+    w.style.display = 'none';
+    const chip = document.createElement('button');
+    chip.className = 'chip'; chip.textContent = '🌐 ' + (title || 'WINDOW') + ' — pull up';
+    chip.addEventListener('click', ()=>{ w.style.display = 'flex'; chip.remove(); });
+    document.getElementById('tray').appendChild(chip);
+  });
   w.querySelector('.close').addEventListener('click', ()=>{ w.remove(); winCount--; });
   // drag by the bar
   const bar = w.querySelector('.winbar'); let drag = null;
@@ -575,6 +621,24 @@ extraApps.forEach(a=>{
   phApps.appendChild(d);
 });
 
+
+// theater dim: the room darkens when anything is on the wall (Meta Theater pattern)
+function refreshDim(){
+  document.getElementById('dim').style.display =
+    (document.querySelector('.win.wall') || document.getElementById('phone').classList.contains('wall')) ? 'block' : 'none';
+}
+// window manager: lay every open window side by side (Horizon OS v2.9 pattern)
+document.getElementById('arrangeBtn').addEventListener('click', ()=>{
+  const wins = [...document.querySelectorAll('.win')].filter(w=> w.style.display !== 'none');
+  wins.forEach((w,i)=>{
+    w.classList.remove('wall');
+    w.style.width = Math.floor(94/wins.length) + 'vw';
+    w.style.left = (2 + i*(96/wins.length)) + 'vw';
+    w.style.top = '64px';
+  });
+  refreshDim();
+});
+
 // ================= skins =================
 const SKINS = {
   neon:  { floor:'#14101e', wall:'#1b1430', side:'#170f28', cab:['#2a1450','#123a2a'], trim:'#ff2d95', trim2:'#22d3ee', felt:'#0d6e3f' },
@@ -592,7 +656,8 @@ function applySkin(name){
   document.getElementById('felt').setAttribute('color', s.felt);
   document.querySelectorAll('.sbtn').forEach(b=> b.classList.toggle('on', b.dataset.skin === name));
 }
-document.querySelectorAll('.sbtn').forEach(b=> b.addEventListener('click', ()=> applySkin(b.dataset.skin)));
+document.querySelectorAll('.sbtn[data-skin]').forEach(b=> b.addEventListener('click', ()=>{ applySkin(b.dataset.skin); try{ localStorage.setItem('room-skin', b.dataset.skin); }catch(e){} }));
+try{ const savedSkin = localStorage.getItem('room-skin'); if (savedSkin) applySkin(savedSkin); }catch(e){}
 </script>
 </body>
 </html>
