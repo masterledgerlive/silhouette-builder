@@ -3,74 +3,108 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>THE ROOM — Arcades of Time</title>
+<title>THE ROOM v0.2 — Arcades of Time Hangout</title>
 <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
 <script src="arcade-shared/kk-rally.js"></script>
 <style>
-  body{margin:0;font-family:Georgia,serif;background:#0b0b10;color:#e8e0c8}
-  #ui{position:fixed;top:10px;left:10px;z-index:10;background:rgba(10,10,16,.82);border:1px solid #8a6d2f;border-radius:10px;padding:10px 12px;max-width:330px}
+  body{margin:0;font-family:Georgia,serif;background:#0b0b10;color:#e8e0c8;overflow:hidden}
+  #ui{position:fixed;top:10px;left:10px;z-index:10;background:rgba(10,10,16,.85);border:1px solid #8a6d2f;border-radius:10px;padding:10px 12px;max-width:340px}
   #ui h1{font-size:17px;margin:0 0 4px;color:#ffd76a;letter-spacing:1px}
   #ui p{font-size:12.5px;margin:4px 0;color:#cfc4a0;line-height:1.45}
   .sbtn{background:#241b08;color:#ffd76a;border:1px solid #8a6d2f;border-radius:6px;padding:5px 10px;margin:2px;cursor:pointer;font-family:inherit;font-size:12.5px}
   .sbtn.on{background:#ffd76a;color:#241b08}
   a{color:#7fd4ff}
   canvas.attract{position:absolute;width:2px;height:2px;opacity:0;pointer-events:none}
+  /* ---------- machine view ---------- */
+  #machine{position:fixed;inset:0;z-index:20;display:none;align-items:center;justify-content:center;background:rgba(4,4,8,.45)}
+  #bezel{background:linear-gradient(180deg,#1c1430,#0d0a18);border:3px solid #8a6d2f;border-radius:18px;padding:12px 14px 10px;width:min(880px,94vw);box-shadow:0 0 60px rgba(255,215,106,.25)}
+  #marquee{text-align:center;color:#ffd76a;font-size:19px;letter-spacing:2px;margin:2px 0 8px}
+  #mscreen{width:100%;height:56vh;border:2px solid #000;border-radius:8px;background:#000}
+  #deck{display:flex;align-items:center;gap:18px;margin-top:10px}
+  #stick{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 50% 38%,#3a2a5e,#17102a);border:2px solid #8a6d2f;position:relative;flex:none}
+  #stick:before{content:"";position:absolute;left:50%;top:16%;width:8px;height:26px;margin-left:-4px;background:#0a0a12;border-radius:4px}
+  #stick:after{content:"";position:absolute;left:50%;top:2%;width:22px;height:22px;margin-left:-11px;background:radial-gradient(circle at 40% 35%,#ff7a90,#c21847);border-radius:50%}
+  .abtn{width:34px;height:34px;border-radius:50%;border:2px solid rgba(0,0,0,.5);flex:none}
+  .deckbtn{background:#241b08;color:#ffd76a;border:1px solid #8a6d2f;border-radius:6px;padding:7px 12px;cursor:pointer;font-family:inherit;font-size:13px}
+  .deckbtn.red{border-color:#a33;color:#ff9a9a}
+  #decknote{font-size:12px;color:#9f95c9;margin-left:auto;text-align:right}
 </style>
 </head>
 <body>
 <div id="ui">
-  <h1>🕹️ THE ROOM</h1>
-  <p>Arcades of Time, standing up. The cabinets run the <b>real engines</b> in attract mode — walk up and <b>click a cabinet</b> to play it for proof at its own page. WASD + drag to look (or tap Enter VR in your headset).</p>
+  <h1>🕹️ THE ROOM — HANGOUT v0.2</h1>
+  <p><b>Step into a cabinet's glowing circle</b> and stand 3 seconds — or click its screen — to step up and play. WASD to walk, drag to look. Big screen on the right wall: live matches, prediction board, reputation on the ding. Courts door on the left wall hot-jumps you to the seats.</p>
   <p>SKIN:
     <button class="sbtn on" data-skin="neon">NEON</button>
     <button class="sbtn" data-skin="wood">WOOD &amp; BRASS</button>
     <button class="sbtn" data-skin="space">DEEP SPACE</button>
   </p>
-  <p>Dual-World Law: this room is a skin. The games underneath stay 2D, deterministic, replay-proven — <a href="blob-cinema/scores.html">Hall of Scores</a> · <a href="system.html">System Map</a></p>
+  <p>Patrons with 🤖 are our agents playing <i>real engine matches</i> right now. Human presence is the next layer. <a href="blob-cinema/scores.html">Hall of Scores</a> · <a href="system.html">System Map</a></p>
+</div>
+
+<!-- MACHINE VIEW -->
+<div id="machine">
+  <div id="bezel">
+    <div id="marquee">FIRST RALLY</div>
+    <iframe id="mscreen" title="machine screen" allow="autoplay"></iframe>
+    <div id="deck">
+      <div id="stick"></div>
+      <div class="abtn" style="background:#d42a2a"></div>
+      <div class="abtn" style="background:#f2c018"></div>
+      <div class="abtn" style="background:#2745c9"></div>
+      <div class="abtn" style="background:#39d353"></div>
+      <button class="deckbtn" id="lookL">◀ LOOK</button>
+      <button class="deckbtn" id="lookR">LOOK ▶</button>
+      <button class="deckbtn red" id="exitMachine">STEP BACK ✕</button>
+      <div id="decknote">you're at the machine — the room is still around you.<br/><a id="fullpage" href="games/first-rally/" target="_blank">open full cabinet page ↗</a></div>
+    </div>
+  </div>
 </div>
 
 <canvas id="rallyCanvas" class="attract" width="320" height="240"></canvas>
 <canvas id="slapCanvas" class="attract" width="320" height="240"></canvas>
+<canvas id="bigCanvas" class="attract" width="512" height="288"></canvas>
+<canvas id="boardCanvas" class="attract" width="384" height="512"></canvas>
 
 <a-scene background="color:#0b0b10" vr-mode-ui="enabled:true">
-  <!-- CAMERA -->
-  <a-entity position="0 1.6 4.6"><a-camera wasd-controls="acceleration:14" look-controls></a-camera></a-entity>
+  <a-entity id="cam" position="0 1.6 4.6"><a-camera look-controls="pointerLockEnabled:false"></a-camera></a-entity>
 
   <!-- ROOM SHELL -->
   <a-plane id="floor" rotation="-90 0 0" width="14" height="11" color="#14101e"></a-plane>
   <a-plane id="backwall" position="0 2 -5.5" width="14" height="4" color="#1b1430"></a-plane>
   <a-plane id="leftwall" position="-7 2 0" rotation="0 90 0" width="11" height="4" color="#170f28"></a-plane>
   <a-plane id="rightwall" position="7 2 0" rotation="0 -90 0" width="11" height="4" color="#170f28"></a-plane>
-  <a-box id="ceil" position="0 4 0" width="14" height="0.1" depth="11" color="#0d0a16"></a-box>
+  <a-box position="0 4 0" width="14" height="0.1" depth="11" color="#0d0a16"></a-box>
   <a-box class="trim" position="0 3.6 -5.45" width="13" height="0.09" depth="0.05" color="#ff2d95" material="emissive:#ff2d95;emissiveIntensity:1.4"></a-box>
   <a-box class="trim" position="-6.95 3.6 0" rotation="0 90 0" width="10" height="0.09" depth="0.05" color="#22d3ee" material="emissive:#22d3ee;emissiveIntensity:1.4"></a-box>
   <a-box class="trim" position="6.95 3.6 0" rotation="0 90 0" width="10" height="0.09" depth="0.05" color="#22d3ee" material="emissive:#22d3ee;emissiveIntensity:1.4"></a-box>
-
   <a-text value="ARCADES OF TIME" position="0 3.1 -5.4" align="center" width="11" color="#ffd76a"></a-text>
   <a-text value="every score derived by replay · no score without its tape" position="0 2.72 -5.4" align="center" width="7" color="#9f95c9"></a-text>
 
-  <!-- CABINET: FIRST RALLY (live engine attract) -->
-  <a-entity class="cabinet" position="-2.2 0 -3.4" data-href="games/first-rally/">
+  <!-- CABINET: FIRST RALLY -->
+  <a-entity class="cabinet" id="cab-rally" position="-2.2 0 -3.4" data-game="rally" data-title="FIRST RALLY" data-href="games/first-rally/">
     <a-box class="cabbody" width="1.1" height="1.9" depth="0.85" position="0 0.95 0" color="#2a1450"></a-box>
     <a-box class="cabtrim" width="1.14" height="0.3" depth="0.88" position="0 1.98 0" color="#ff2d95" material="emissive:#ff2d95;emissiveIntensity:.7"></a-box>
     <a-text value="FIRST RALLY" position="0 1.98 0.46" align="center" width="2.6" color="#fff"></a-text>
     <a-plane class="screen" data-screen="rally" width="0.92" height="0.69" position="0 1.32 0.435" rotation="-8 0 0" material="shader:flat"></a-plane>
     <a-box width="1.0" height="0.06" depth="0.3" position="0 0.78 0.5" rotation="18 0 0" color="#120a24"></a-box>
-    <a-text value="STONE 2 · PONG GENERATION" position="0 0.35 0.44" align="center" width="1.9" color="#cfc4a0"></a-text>
+    <a-text class="standlabel" value="" position="0 2.42 0.3" align="center" width="3" color="#ffd76a"></a-text>
   </a-entity>
+  <a-ring class="playring" data-for="cab-rally" position="-2.2 0.03 -2.25" rotation="-90 0 0" radius-inner="0.78" radius-outer="0.95" color="#ffd76a" material="transparent:true;opacity:0.18;shader:flat"></a-ring>
 
-  <!-- CABINET: FIRST SLAP (attract) -->
-  <a-entity class="cabinet" position="0.1 0 -3.6" data-href="games/first-slap/">
+  <!-- CABINET: FIRST SLAP -->
+  <a-entity class="cabinet" id="cab-slap" position="0.6 0 -3.6" data-game="slap" data-title="FIRST SLAP" data-href="games/first-slap/">
     <a-box class="cabbody" width="1.1" height="1.9" depth="0.85" position="0 0.95 0" color="#123a2a"></a-box>
     <a-box class="cabtrim" width="1.14" height="0.3" depth="0.88" position="0 1.98 0" color="#ffd76a" material="emissive:#ffd76a;emissiveIntensity:.7"></a-box>
     <a-text value="FIRST SLAP" position="0 1.98 0.46" align="center" width="2.6" color="#1a1206"></a-text>
     <a-plane class="screen" data-screen="slap" width="0.92" height="0.69" position="0 1.32 0.435" rotation="-8 0 0" material="shader:flat"></a-plane>
     <a-box width="1.0" height="0.06" depth="0.3" position="0 0.78 0.5" rotation="18 0 0" color="#0a1f16"></a-box>
-    <a-text value="STONE 1 · THE REACTION GAME" position="0 0.35 0.44" align="center" width="1.9" color="#cfc4a0"></a-text>
+    <a-text class="standlabel" value="" position="0 2.42 0.3" align="center" width="3" color="#ffd76a"></a-text>
   </a-entity>
+  <a-ring class="playring" data-for="cab-slap" position="0.6 0.03 -2.45" rotation="-90 0 0" radius-inner="0.78" radius-outer="0.95" color="#ffd76a" material="transparent:true;opacity:0.18;shader:flat"></a-ring>
 
-  <!-- POOL TABLE PROP -->
-  <a-entity position="2.9 0 -2.2" rotation="0 -18 0">
+  <!-- POOL TABLE + FINN -->
+  <a-entity position="3.1 0 -3.1" rotation="0 -18 0">
     <a-box width="2.4" height="0.1" depth="1.3" position="0 0.78 0" color="#5a3a1c"></a-box>
     <a-box id="felt" width="2.16" height="0.04" depth="1.06" position="0 0.84 0" color="#0d6e3f"></a-box>
     <a-cylinder radius="0.055" height="0.03" color="#050505" position="-1.05 0.86 -0.5"></a-cylinder>
@@ -87,15 +121,33 @@
     <a-box width="0.09" height="0.74" depth="0.09" position="1.1 0.38 -0.58" color="#3c2712"></a-box>
     <a-box width="0.09" height="0.74" depth="0.09" position="-1.1 0.38 0.58" color="#3c2712"></a-box>
     <a-box width="0.09" height="0.74" depth="0.09" position="1.1 0.38 0.58" color="#3c2712"></a-box>
-    <a-text value="HOUSE POOL — SKIN DEEP, BY LAW" position="0 1.25 0" align="center" width="2.6" color="#9fd8b4"></a-text>
+  </a-entity>
+
+  <!-- BIG SCREEN + PREDICTION BOARD (right wall) -->
+  <a-plane class="screen" data-screen="big" width="3.6" height="2.02" position="6.9 2.15 -1.6" rotation="0 -90 0" material="shader:flat"></a-plane>
+  <a-box width="0.06" height="2.2" depth="3.8" position="6.97 2.15 -1.6" color="#241b08"></a-box>
+  <a-text value="THE BIG SCREEN — LIVE" position="6.88 3.42 -1.6" rotation="0 -90 0" align="center" width="4" color="#ffd76a"></a-text>
+  <a-plane class="screen" data-screen="board" width="1.35" height="1.8" position="6.9 1.95 1.15" rotation="0 -90 0" material="shader:flat"></a-plane>
+  <a-text value="PREDICTION BOARD" position="6.88 3.0 1.15" rotation="0 -90 0" align="center" width="2.6" color="#7fd4ff"></a-text>
+
+  <!-- SEATS facing big screen -->
+  <a-box width="0.5" height="0.09" depth="2.6" position="4.9 0.5 -1.6" color="#33234f"></a-box>
+  <a-box width="0.5" height="0.09" depth="2.6" position="4.15 0.5 -1.6" color="#33234f"></a-box>
+
+  <!-- COURTS DOOR (left wall) -->
+  <a-entity id="courtsdoor" position="-6.9 0 -1.2" rotation="0 90 0">
+    <a-box width="1.5" height="2.7" depth="0.16" position="0 1.35 0" color="#0d3a24"></a-box>
+    <a-box width="1.56" height="0.34" depth="0.18" position="0 2.86 0" color="#39d353" material="emissive:#39d353;emissiveIntensity:.5"></a-box>
+    <a-text value="SPORTS COURTS" position="0 2.86 0.11" align="center" width="2.8" color="#04150a"></a-text>
+    <a-text value="hot jump to the seats →\nwatch live · courts soon" position="0 1.7 0.1" align="center" width="2.1" color="#b9f4cd"></a-text>
   </a-entity>
 
   <!-- HALL DOOR -->
-  <a-entity class="cabinet" position="5.6 0 -4.6" rotation="0 -24 0" data-href="blob-cinema/scores.html">
+  <a-entity class="doorlink" position="5.4 0 -4.7" rotation="0 -24 0" data-href="blob-cinema/scores.html">
     <a-box width="1.5" height="2.7" depth="0.18" position="0 1.35 0" color="#241b08"></a-box>
     <a-box width="1.56" height="0.34" depth="0.2" position="0 2.85 0" color="#ffd76a" material="emissive:#ffd76a;emissiveIntensity:.55"></a-box>
     <a-text value="HALL OF SCORES" position="0 2.85 0.12" align="center" width="3" color="#241b08"></a-text>
-    <a-text value="walk in · every score\nreplayed before your eyes" position="0 1.7 0.11" align="center" width="2.2" color="#ffd76a"></a-text>
+    <a-text value="every score replayed\nbefore your eyes" position="0 1.7 0.11" align="center" width="2.2" color="#ffd76a"></a-text>
   </a-entity>
 
   <a-light type="ambient" color="#665a8a" intensity="0.9"></a-light>
@@ -103,40 +155,58 @@
 </a-scene>
 
 <script>
-// ---------- screen textures ----------
+// ================= patrons =================
+const scene = document.querySelector('a-scene');
+function patron(x,y,z,color,name,seated,rotY){
+  const g = document.createElement('a-entity');
+  g.setAttribute('position', `${x} ${y} ${z}`); g.setAttribute('rotation', `0 ${rotY||0} 0`);
+  const bodyH = seated ? 0.55 : 0.85, bodyY = seated ? 0.28 : 0.45;
+  g.innerHTML = `<a-cylinder radius="0.16" height="${bodyH}" position="0 ${bodyY} 0" color="${color}"></a-cylinder>
+    <a-sphere radius="0.14" position="0 ${bodyY + bodyH/2 + 0.15} 0" color="#e8c39e"></a-sphere>
+    <a-text value="${name}" position="0 ${bodyY + bodyH/2 + 0.48} 0" align="center" width="1.7" color="#fff"></a-text>`;
+  scene.appendChild(g); return g;
+}
+patron(2.1, 0, -2.2, '#8a6d2f', 'FINN · HOST', false, -40);            // at the pool table
+patron(4.9, 0.52, -2.3, '#5b4a8a', 'GUEST-3 🤖', true, -90);           // seats
+patron(4.9, 0.52, -1.5, '#2a6e8a', 'GUEST-7 🤖', true, -90);
+patron(4.15, 0.52, -0.9, '#8a2a4a', 'GUEST-12 🤖', true, -90);
+patron(-3.6, 0, -2.0, '#3a7a4a', 'GUEST-9 🤖', false, 35);             // watching rally cab
+
+// ================= screen textures =================
 function bindScreen(name, canvasId){
   const cv = document.getElementById(canvasId);
   const tex = new THREE.CanvasTexture(cv);
   document.querySelectorAll('[data-screen="'+name+'"]').forEach(el=>{
-    el.addEventListener('loaded', ()=>{ el.getObject3D('mesh').material.map = tex; el.getObject3D('mesh').material.needsUpdate = true; });
+    el.addEventListener('loaded', ()=>{ const m = el.getObject3D('mesh'); if(m){ m.material.map = tex; m.material.needsUpdate = true; } });
   });
   return { cv, ctx: cv.getContext('2d'), tex };
 }
 const rallyScr = bindScreen('rally','rallyCanvas');
 const slapScr  = bindScreen('slap','slapCanvas');
+const bigScr   = bindScreen('big','bigCanvas');
+const boardScr = bindScreen('board','boardCanvas');
 
-// ---------- FIRST RALLY attract: the real engine, bot-driven ----------
+// ================= cabinet attract: FIRST RALLY (real engine) =================
 let rst = KKRally.createMatch(20261101), rTick = 0;
+function drawRally(ctx, cv, st, S, title){
+  ctx.fillStyle = '#0a0f1e'; ctx.fillRect(0,0,cv.width,cv.height);
+  ctx.fillStyle = '#27407a'; for(let y=4;y<120;y+=10) ctx.fillRect(79*S, y*S, 2*S, 6);
+  ctx.fillStyle = '#7fd4ff'; ctx.fillRect(KKRally.PX*S, st.py*S, 3*S, KKRally.PH*S);
+  ctx.fillStyle = '#ff5d7a'; ctx.fillRect(KKRally.AX*S, st.ay*S, 3*S, KKRally.PH*S);
+  ctx.fillStyle = '#fff'; ctx.fillRect(st.bx*S-3, st.by*S-3, 6, 6);
+  ctx.font = 'bold ' + (11*S) + 'px monospace'; ctx.fillStyle = '#ffd76a';
+  ctx.fillText(st.pPts + ' : ' + st.aPts, cv.width/2 - 22, 13*S);
+  if (title){ ctx.font = (5.5*S) + 'px monospace'; ctx.fillStyle = '#8fa8d8'; ctx.fillText(title, 26*S, cv.height - 4*S); }
+}
 function rallyFrame(){
-  const {ctx, cv, tex} = rallyScr, S = 2; // 160x120 field x2
-  // reactor-style self-play: player paddle tracks the ball with a human-ish lag
   const center = rst.py + KKRally.PH/2;
   const inp = rst.by > center + 3 ? 1 : (rst.by < center - 3 ? -1 : 0);
   KKRally.stepMatch(rst, inp);
   if (rst.over || ++rTick > 5400){ rst = KKRally.createMatch((Math.random()*1e9)|0); rTick = 0; }
-  ctx.fillStyle = '#0a0f1e'; ctx.fillRect(0,0,cv.width,cv.height);
-  ctx.fillStyle = '#27407a'; for(let y=4;y<120;y+=10) ctx.fillRect(79,y*S,2,6);
-  ctx.fillStyle = '#7fd4ff'; ctx.fillRect(KKRally.PX*S, rst.py*S, 3*S, KKRally.PH*S);
-  ctx.fillStyle = '#ff5d7a'; ctx.fillRect(KKRally.AX*S, rst.ay*S, 3*S, KKRally.PH*S);
-  ctx.fillStyle = '#fff'; ctx.fillRect(rst.bx*S-3, rst.by*S-3, 6, 6);
-  ctx.font = 'bold 22px monospace'; ctx.fillStyle = '#ffd76a';
-  ctx.fillText(rst.pPts + ' : ' + rst.aPts, 128, 26);
-  ctx.font = '11px monospace'; ctx.fillStyle = '#8fa8d8';
-  ctx.fillText('ATTRACT · REAL ENGINE · CLICK TO PLAY', 52, 232);
-  tex.needsUpdate = true;
+  drawRally(rallyScr.ctx, rallyScr.cv, rst, 2, 'ATTRACT · REAL ENGINE · STEP UP TO PLAY');
+  rallyScr.tex.needsUpdate = true;
 }
-
-// ---------- FIRST SLAP attract ----------
+// ================= FIRST SLAP attract =================
 const ARROWS = ['⬆','⬅','➡','⬇']; let sTick = 0;
 function slapFrame(){
   const {ctx, cv, tex} = slapScr; sTick++;
@@ -148,19 +218,151 @@ function slapFrame(){
   if (phase < 34){ ctx.fillStyle = '#39d353'; ctx.fillText('✋', 160, 138); ctx.font='15px monospace'; ctx.fillStyle='#cfe8d4'; ctx.fillText('wait for it…', 160, 168); }
   else { ctx.fillStyle = '#ff5347'; ctx.fillText(ARROWS[hand % 4], 160, 140); ctx.font='15px monospace'; ctx.fillStyle='#ffd76a'; ctx.fillText('SLAP! (the deal changes every run)', 160, 168); }
   ctx.font = '11px monospace'; ctx.fillStyle = '#8fae97';
-  ctx.fillText('ATTRACT MODE · CLICK TO PLAY FOR PROOF', 160, 224);
-  ctx.textAlign = 'left';
+  ctx.fillText('ATTRACT MODE · STEP UP TO PLAY FOR PROOF', 160, 224);
+  ctx.textAlign = 'left'; tex.needsUpdate = true;
+}
+// ================= BIG SCREEN match + PREDICTION BOARD =================
+const patronsRep = [ ['REACTOR 🤖', 12], ['PREDICTOR 🤖', 9], ['GUEST-7 🤖', 6], ['GUEST-12 🤖', 5], ['GUEST-3 🤖', 4] ];
+let bst = KKRally.createMatch(777), bTick = 0, dingUntil = 0, lastResult = '— first match in progress —';
+function bigFrame(){
+  // both paddles self-play: player side tracks well (REACTOR), we render state only — engine drives opponent itself;
+  const center = bst.py + KKRally.PH/2;
+  const inp = bst.by > center + 2 ? 1 : (bst.by < center - 2 ? -1 : 0);
+  KKRally.stepMatch(bst, inp); bTick++;
+  if (bst.over){
+    const reactorWon = bst.pPts > bst.aPts;
+    patronsRep[0][1] += reactorWon ? 3 : 1; patronsRep[1][1] += reactorWon ? 1 : 3;
+    lastResult = (reactorWon ? 'REACTOR takes it ' : 'PREDICTOR takes it ') + bst.pPts + '–' + bst.aPts + ' · rep moved';
+    dingUntil = Date.now() + 2600;
+    bst = KKRally.createMatch((Math.random()*1e9)|0); bTick = 0;
+  }
+  drawRally(bigScr.ctx, bigScr.cv, bst, 3.2, null);
+  bigScr.ctx.font = 'bold 17px monospace'; bigScr.ctx.fillStyle = '#ffd76a';
+  bigScr.ctx.fillText('REACTOR vs PREDICTOR — LIVE', 108, 282);
+  bigScr.tex.needsUpdate = true;
+}
+function boardFrame(){
+  const {ctx, cv, tex} = boardScr;
+  const ding = Date.now() < dingUntil;
+  ctx.fillStyle = ding ? '#3a2c05' : '#0a1220'; ctx.fillRect(0,0,cv.width,cv.height);
+  ctx.strokeStyle = ding ? '#ffd76a' : '#27407a'; ctx.lineWidth = ding ? 8 : 3; ctx.strokeRect(4,4,cv.width-8,cv.height-8);
+  ctx.textAlign = 'center';
+  ctx.font = 'bold 25px Georgia'; ctx.fillStyle = '#7fd4ff'; ctx.fillText('PREDICTION BOARD', 192, 44);
+  ctx.font = '17px monospace'; ctx.fillStyle = '#e8e0c8';
+  ctx.fillText('REACTOR ' + bst.pPts + ' — ' + bst.aPts + ' PREDICTOR', 192, 84);
+  // win probability from the live sim state: score diff + ball side
+  let p = 50 + (bst.pPts - bst.aPts) * 9 + (bst.bx > 80 ? 4 : -4);
+  p = Math.max(3, Math.min(97, p));
+  ctx.fillStyle = '#27407a'; ctx.fillRect(42, 104, 300, 22);
+  ctx.fillStyle = '#7fd4ff'; ctx.fillRect(42, 104, 300 * p/100, 22);
+  ctx.font = '14px monospace'; ctx.fillStyle = '#cfc4a0';
+  ctx.fillText('REACTOR win prob ' + p + '% (from the live sim)', 192, 148);
+  if (ding){ ctx.font = 'bold 30px Georgia'; ctx.fillStyle = '#ffd76a'; ctx.fillText('🔔 DING!', 192, 196); }
+  ctx.font = '15px monospace'; ctx.fillStyle = '#9f95c9'; ctx.fillText(lastResult, 192, 224);
+  ctx.font = 'bold 16px Georgia'; ctx.fillStyle = '#ffd76a'; ctx.fillText('— REPUTATION —', 192, 262);
+  ctx.font = '16px monospace'; ctx.fillStyle = '#e8e0c8'; ctx.textAlign = 'left';
+  patronsRep.slice().sort((a,b)=> b[1]-a[1]).forEach((r,i)=> ctx.fillText('⭐ ' + r[1] + '  ' + r[0], 62, 292 + i*26));
+  ctx.font = '11.5px monospace'; ctx.fillStyle = '#7787a8'; ctx.textAlign = 'center';
+  ctx.fillText('reputation is the stake · demo board', 192, 462);
+  ctx.fillText('Polymarket socket: gated on David\'s word + legal', 192, 480);
   tex.needsUpdate = true;
 }
-setInterval(rallyFrame, 33); setInterval(slapFrame, 33);
+setInterval(rallyFrame, 33); setInterval(slapFrame, 33); setInterval(bigFrame, 33); setInterval(boardFrame, 400);
 
-// ---------- cabinet clicks ----------
-document.querySelectorAll('.cabinet').forEach(el=>{
-  el.style.cursor = 'pointer';
-  el.addEventListener('click', ()=>{ window.location.href = el.getAttribute('data-href'); });
-});
+// ================= movement (custom WASD; look-controls owns the eyes) =================
+const cam = document.getElementById('cam');
+const keys = {}; let inMachine = false, fly = null;
+document.addEventListener('keydown', e=> keys[e.key.toLowerCase()] = true);
+document.addEventListener('keyup',   e=> keys[e.key.toLowerCase()] = false);
+function flyTo(x, y, z, done){ fly = { x, y, z, done }; }
+setInterval(()=>{
+  const p = cam.getAttribute('position');
+  if (fly){
+    p.x += (fly.x - p.x) * 0.12; p.y += (fly.y - p.y) * 0.12; p.z += (fly.z - p.z) * 0.12;
+    if (Math.hypot(fly.x-p.x, fly.y-p.y, fly.z-p.z) < 0.05){ const d = fly.done; fly = null; cam.setAttribute('position', p); if(d) d(); return; }
+    cam.setAttribute('position', p); return;
+  }
+  if (inMachine) return;
+  const sp = 0.055;
+  const rot = cam.querySelector('a-camera').getAttribute('rotation') || {x:0,y:0,z:0};
+  const yaw = (rot.y || 0) * Math.PI/180;
+  const f = { x: -Math.sin(yaw), z: -Math.cos(yaw) }, r = { x: Math.cos(yaw), z: -Math.sin(yaw) };
+  if (keys['w'] || keys['arrowup'])   { p.x += f.x*sp; p.z += f.z*sp; }
+  if (keys['s'] || keys['arrowdown']) { p.x -= f.x*sp; p.z -= f.z*sp; }
+  if (keys['a']) { p.x -= r.x*sp; p.z -= r.z*sp; }
+  if (keys['d']) { p.x += r.x*sp; p.z += r.z*sp; }
+  p.x = Math.max(-6.4, Math.min(6.4, p.x)); p.z = Math.max(-5.0, Math.min(5.2, p.z)); p.y = 1.6;
+  cam.setAttribute('position', p);
+}, 30);
 
-// ---------- skins ----------
+// ================= proximity play: the circle =================
+const cabs = [
+  { el: document.getElementById('cab-rally'), ring: document.querySelector('[data-for="cab-rally"]'), x: -2.2, z: -2.25, inside: 0 },
+  { el: document.getElementById('cab-slap'),  ring: document.querySelector('[data-for="cab-slap"]'),  x: 0.6,  z: -2.45, inside: 0 }
+];
+setInterval(()=>{
+  if (inMachine || fly) return;
+  const p = cam.getAttribute('position'); const now = performance.now();
+  cabs.forEach(c=>{
+    const d = Math.hypot(p.x - c.x, p.z - c.z);
+    const label = c.el.querySelector('.standlabel');
+    const trim = c.el.querySelector('.cabtrim');
+    const trimCol = trim.getAttribute('color');
+    if (d < 1.0){
+      c.inside += 0.12;
+      c.ring.setAttribute('material', 'color:#ffd76a;transparent:true;shader:flat;opacity:' + (0.55 + 0.35*Math.sin(now/130)));
+      const left = Math.max(0, 3 - c.inside);
+      label.setAttribute('value', left > 0.15 ? 'STAND… ' + left.toFixed(1) : 'STEP UP!');
+      trim.setAttribute('material', 'emissive:' + trimCol + ';emissiveIntensity:1.6');
+      if (c.inside >= 3) enterMachine(c.el);
+    } else {
+      c.inside = 0;
+      c.ring.setAttribute('material', 'color:#ffd76a;transparent:true;shader:flat;opacity:0.18');
+      label.setAttribute('value', '');
+      trim.setAttribute('material', 'emissive:' + trimCol + ';emissiveIntensity:.7');
+    }
+  });
+}, 120);
+
+// ================= machine view =================
+const machineDiv = document.getElementById('machine'), mScreen = document.getElementById('mscreen');
+let savedPos = null;
+function enterMachine(cabEl){
+  if (inMachine) return; inMachine = true;
+  const p = cam.getAttribute('position'); savedPos = { x: p.x, y: p.y, z: p.z };
+  const cx = parseFloat(cabEl.getAttribute('position').x), cz = parseFloat(cabEl.getAttribute('position').z);
+  flyTo(cx, 1.38, cz + 1.02, ()=>{
+    document.getElementById('marquee').textContent = cabEl.getAttribute('data-title');
+    document.getElementById('fullpage').href = cabEl.getAttribute('data-href');
+    if (mScreen.getAttribute('src') !== cabEl.getAttribute('data-href')) mScreen.setAttribute('src', cabEl.getAttribute('data-href'));
+    machineDiv.style.display = 'flex';
+  });
+}
+function exitMachine(){
+  machineDiv.style.display = 'none'; inMachine = false;
+  if (savedPos) flyTo(savedPos.x, savedPos.y, savedPos.z);
+  cabs.forEach(c=> c.inside = 0);
+}
+document.getElementById('exitMachine').addEventListener('click', exitMachine);
+document.addEventListener('keydown', e=>{ if (e.key === 'Escape' && inMachine) exitMachine(); });
+// look left / right: peek around the machine while you play
+let peekBack = null;
+function peek(dx){
+  if (!inMachine) return;
+  const p = cam.getAttribute('position');
+  if (!peekBack) peekBack = { x: p.x, z: p.z };
+  flyTo(peekBack.x + dx, p.y, peekBack.z);
+}
+document.getElementById('lookL').addEventListener('mousedown', ()=> peek(-0.55));
+document.getElementById('lookR').addEventListener('mousedown', ()=> peek(0.55));
+['lookL','lookR'].forEach(id=> document.getElementById(id).addEventListener('mouseup', ()=>{ if (peekBack){ const p = cam.getAttribute('position'); flyTo(peekBack.x, p.y, peekBack.z); peekBack = null; } }));
+
+// clicks: cabinets step up; hall door walks out; courts door hot-jumps to the seats
+document.querySelectorAll('.cabinet').forEach(el=> el.addEventListener('click', ()=> enterMachine(el)));
+document.querySelectorAll('.doorlink').forEach(el=> el.addEventListener('click', ()=>{ window.location.href = el.getAttribute('data-href'); }));
+document.getElementById('courtsdoor').addEventListener('click', ()=> flyTo(3.4, 1.6, -1.5));
+
+// ================= skins =================
 const SKINS = {
   neon:  { floor:'#14101e', wall:'#1b1430', side:'#170f28', cab:['#2a1450','#123a2a'], trim:'#ff2d95', trim2:'#22d3ee', felt:'#0d6e3f' },
   wood:  { floor:'#241407', wall:'#33200f', side:'#2b1a0b', cab:['#4a2c14','#4a2c14'], trim:'#ffd76a', trim2:'#ffb347', felt:'#0d6e3f' },
@@ -178,7 +380,6 @@ function applySkin(name){
   document.querySelectorAll('.sbtn').forEach(b=> b.classList.toggle('on', b.dataset.skin === name));
 }
 document.querySelectorAll('.sbtn').forEach(b=> b.addEventListener('click', ()=> applySkin(b.dataset.skin)));
-document.addEventListener('keydown', e=>{ if(e.key==='1')applySkin('neon'); if(e.key==='2')applySkin('wood'); if(e.key==='3')applySkin('space'); });
 </script>
 </body>
 </html>
