@@ -106,7 +106,7 @@
 <canvas id="boardCanvas" class="attract" width="384" height="512"></canvas>
 
 <a-scene background="color:#0b0b10" vr-mode-ui="enabled:true">
-  <a-entity id="cam" position="0 1.6 4.6"><a-camera look-controls="pointerLockEnabled:false" cursor="rayOrigin:mouse;fuse:false" raycaster="objects:.cabinet,.doorlink,#courtsdoor,.playring;far:30"></a-camera></a-entity>
+  <a-camera id="cam" position="0 1.6 4.6" user-height="0" look-controls="pointerLockEnabled:false" cursor="rayOrigin:mouse;fuse:false" raycaster="objects:.cabinet,.doorlink,#courtsdoor,.playring;far:30"></a-camera>
 
   <!-- ROOM SHELL -->
   <a-plane id="floor" rotation="-90 0 0" width="14" height="11" color="#14101e"></a-plane>
@@ -323,7 +323,7 @@ setInterval(()=>{
   }
   if (inMachine) return;
   const sp = 0.055;
-  const rot = cam.querySelector('a-camera').getAttribute('rotation') || {x:0,y:0,z:0};
+  const rot = cam.getAttribute('rotation') || {x:0,y:0,z:0};
   const yaw = (rot.y || 0) * Math.PI/180;
   const f = { x: -Math.sin(yaw), z: -Math.cos(yaw) }, r = { x: Math.cos(yaw), z: -Math.sin(yaw) };
   if (keys['w'] || keys['arrowup'])   { p.x += f.x*sp; p.z += f.z*sp; }
@@ -430,7 +430,7 @@ const _oldTick = null;
 setInterval(()=>{
   if (inMachine || fly || (joyVec.x === 0 && joyVec.y === 0)) return;
   const p = cam.getAttribute('position');
-  const rot = cam.querySelector('a-camera').getAttribute('rotation') || {x:0,y:0,z:0};
+  const rot = cam.getAttribute('rotation') || {x:0,y:0,z:0};
   const yaw = (rot.y || 0) * Math.PI/180, sp = 0.06;
   const f = { x: -Math.sin(yaw), z: -Math.cos(yaw) }, r = { x: Math.cos(yaw), z: -Math.sin(yaw) };
   p.x += (f.x * -joyVec.y + r.x * joyVec.x) * sp * Math.max(Math.abs(joyVec.x), Math.abs(joyVec.y), 0.4);
