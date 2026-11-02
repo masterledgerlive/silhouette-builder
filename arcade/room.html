@@ -638,7 +638,7 @@ function makeWindow(startUrl, title){
     drag = { dx: e.clientX - w.offsetLeft, dy: e.clientY - w.offsetTop };
     bar.setPointerCapture(e.pointerId);
   });
-  bar.addEventListener('pointermove', e=>{ if (drag && !w.classList.contains('wall')){ w.style.left = (e.clientX - drag.dx) + 'px'; w.style.top = (e.clientY - drag.dy) + 'px'; } });
+  bar.addEventListener('pointermove', e=>{ if (drag && !w.classList.contains('wall')){ w.style.left = Math.max(-(w.offsetWidth-90), Math.min(window.innerWidth-70, e.clientX - drag.dx)) + 'px'; w.style.top = Math.max(0, Math.min(window.innerHeight-46, e.clientY - drag.dy)) + 'px'; } });
   bar.addEventListener('pointerup', ()=> drag = null);
   w.addEventListener('pointerdown', ()=>{ document.querySelectorAll('.win').forEach(x=> x.style.zIndex = 18); w.style.zIndex = 19; });
   const rz = w.querySelector('.wresize'); let rsz = null;
