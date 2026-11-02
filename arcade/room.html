@@ -84,6 +84,7 @@
     <button class="sbtn" id="grandBtn">🏛️ GRAND WALL</button>
     <button class="sbtn" id="finnBtn">🎙️ TALK TO FINN</button>
     <button class="sbtn" id="kickBtn">🟢 KICK LIVE</button>
+    <button class="sbtn" id="watchBtn">📺 WATCH</button>
     <button class="sbtn" id="sleeveBtn">⌚ SLEEVE</button><br/><small style="color:#8b93ad">SETUPS (tap load · alt-tap save):</small> <button class="sbtn setupBtn" data-n="1">S1</button> <button class="sbtn setupBtn" data-n="2">S2</button> <button class="sbtn setupBtn" data-n="3">S3</button>
     <button class="sbtn" id="homeBtn">⌂ RESET VIEW</button>
     <button class="sbtn" id="arrangeBtn">🪟 ARRANGE WINDOWS</button>
@@ -643,7 +644,7 @@ document.getElementById('winLaunch').addEventListener('click', ()=> makeWindow('
 // a window tile inside the phone's app grid too, plus a Google sign-in helper tile (opens the real tab)
 const extraApps = [
   { icon:'🔐', name:'Sign in to Google', act:()=>{ toggleFinn(true); finnSay('FINN','Google sign-in refuses to live inside any frame on any website — that is Google’s rule, not a broken button. This room keeps you in-screen: tell me what you were reaching for (a video? a game?) and I will pull up the in-screen version we do have.','#ffd76a'); } },
-  { icon:'▶️', name:'YouTube', act:()=> makeWindow('', 'YOUTUBE — paste a video link, then ▶ TAKE VIDEO') },
+  { icon:'▶️', name:'YouTube · WATCH', act:()=>{ const p=document.getElementById('phone'); if(p) p.style.display='block'; phoneShow('watch.html','WATCH — games inside'); } },
   { icon:'🔎', name:'Search Games', act:()=>{ toggleFinn(true); finnAsk('search games'); } }
 ];
 extraApps.forEach(a=>{
@@ -1083,7 +1084,8 @@ function finnAsk(raw){
     if(/builder/.test(t)){ enlargeScreen('builder'); return reply('BUILDER enlarged. Levels 0 to 4: law, objects, forge, spin-up.'); }
     return reply('Name the thing — rally, slap, hall, map, builder, markets, grand wall — and it is up.');
   }
-  if(/kick|stream|my show|watch live/.test(t)){ openKick(); return reply('Your show, in a window — WALL on its bar casts it huge. It rides the phone too (Kick tile). One channel, everywhere.'); }
+  if(/watch|youtube|stream the|live match|the game on/.test(t)){ const p=document.getElementById('phone'); if(p) p.style.display='block'; phoneShow('watch.html','WATCH — games inside'); return reply('WATCH is up in your phone — and it casts to the wall like everything else. Truth on the label: Polymarket’s own video player refuses framing, so the match stream rides Kick, Twitch or YouTube players (all in-screen legal), while Polymarket’s LIVE matches and odds run on the same page from their feed. You are not stuck with my snapshot view — the stage plays real video.'); }
+  if(/kick|my show/.test(t)){ openKick(); return reply('Your show, in a window — WALL on its bar casts it huge. It rides the phone too (Kick tile). One channel, everywhere.'); }
   if(/follow/.test(t)){ const sc=Object.values(G.screens).find(x=>x.state==='enlarged')||G.screens.hall; if(sc.state==='portrait') enlargeScreen(sc.key); if(!sc.follow) toggleFollow(sc); return reply(sc.name+' is following you now — walk, it keeps its place off your shoulder. Say "fix" and it locks where it hangs.'); }
   if(/^fix|fix it|lock it|stay there/.test(t)){ let n=0; Object.values(G.screens).forEach(sc=>{ if(sc.follow){ toggleFollow(sc); n++; } }); return reply(n? 'Fixed. Every following screen locked to its zone.' : 'Nothing is following right now — enlarge a painting and say "follow".'); }
   if(/save setup\s*([123])/.test(t)){ saveSetup(t.match(/save setup\s*([123])/)[1]); return reply('Setup saved. The room will remember this arrangement of paintings and focus.'); }
@@ -1181,12 +1183,13 @@ function toggleSleeve(side){
     if(side==='R'){ sl.style.left='auto'; sl.style.right='12px'; } else if(side==='L'){ sl.style.right='auto'; sl.style.left='12px'; }
     const ch=kickChannel(); const sv=document.getElementById('sleeveVid');
     if(sv && ch && !sv.src) sv.src='https://player.kick.com/'+ch;
-    if(sv && !ch && !sv.src) sv.src='markets.html';
+    if(sv && !ch && !sv.src) sv.src='watch.html';
   }
 }
 window.addEventListener('load', ()=>{
   setTimeout(renderChips, 3500);
   const kb=document.getElementById('kickBtn'); if(kb) kb.addEventListener('click', openKick);
+  const wb=document.getElementById('watchBtn'); if(wb) wb.addEventListener('click', ()=>{ const p=document.getElementById('phone'); if(p) p.style.display='block'; phoneShow('watch.html','WATCH — games inside'); });
   const sb=document.getElementById('sleeveBtn'); if(sb) sb.addEventListener('click', ()=>toggleSleeve());
   const hl=document.getElementById('handL'); if(hl) hl.addEventListener('click', ()=>toggleSleeve('L'));
   const hr=document.getElementById('handR'); if(hr) hr.addEventListener('click', ()=>toggleSleeve('R'));
