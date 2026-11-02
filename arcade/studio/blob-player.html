@@ -70,7 +70,7 @@ function mulberry32(a){ return function(){ a|=0; a=(a+0x6D2B79F5)|0; let t=Math.
 /* ================= the door ================= */
 const AGG="https://aggregator.walrus-testnet.walrus.space/v1/blobs/";
 const qs=new URLSearchParams(location.search);
-const GAME=qs.get("game")||"lqK7LG7vKK_CPnuts7TUkCwQL-HILNT7pvcXw41vXNw";
+const GAME=qs.get("game")||"lfvh4HeqyhYmiCFO97-K2X6JjzClLeNCJGHoe1gmF1A";
 const MODE=qs.get("mode")||"free";
 const logEl=document.getElementById("log"), verdictEl=document.getElementById("verdict");
 function log(msg, cls){ const d=document.createElement("div"); if(cls) d.className=cls; d.textContent=msg; logEl.appendChild(d); }
@@ -109,9 +109,6 @@ async function spinUp(){
   const mbuf=await (await fetch(AGG+GAME,{cache:"no-store"})).arrayBuffer();
   MAN=JSON.parse(new TextDecoder().decode(mbuf));
   log("🎮 "+MAN.title+" by "+MAN.creator);
-  if(MODE!=="free"){ /* deterministic harness: patch before the engine exists */
-    Math.random=mulberry32(MAN.run.seed); log("🧪 proof mode: Math.random seeded ("+MAN.run.seed+"), bot seed "+MAN.run.botSeed,"dim");
-  }
   const engBuf=await fetchBlob(MAN.engine.blob, MAN.engine.sha256, "engine ("+MAN.engine.name+")");
   const texts={};
   for(const f of MAN.project.files){
@@ -126,7 +123,10 @@ async function spinUp(){
   }catch(e){ log("font seed skipped (text may fall back) — "+e.message,"dim"); }
   /* globals, exactly as their exporter writes them */
   const images=MAN.project.files.filter(f=>f.info).map(f=>f.info);
-  const code=MAN.project.files.filter(f=>f.path.startsWith("ms/")).map(f=>{
+  const msFiles=MAN.project.files.filter(f=>f.path.startsWith("ms/"));
+  const ordered=msFiles.filter(f=>!f.proof).concat(MODE==="free"?[]:msFiles.filter(f=>f.proof));
+  if(MODE!=="free" && msFiles.some(f=>f.proof)) log("🧪 proof rig included (ms/proof.ms) — the bot lives inside the sim","dim");
+  const code=ordered.map(f=>{
     const name=f.path.split("/").pop(); const src=texts[f.path];
     return "\n// file: "+name+"\nfunction()\n"+src+"\nend()\n";
   }).join("");
@@ -156,58 +156,59 @@ async function spinUp(){
   document.body.appendChild(eng);
 }
 
-/* ================= the proof: bot plays, replay must match ================= */
+/* ================= the proof: the bot lives inside the game ================= */
+let echoCount=0;
+document.addEventListener("keydown", function(e){
+  if(echoCount>=10) return; echoCount++;
+  log("⌨️ key event — key=\""+e.key+"\" code=\""+e.code+"\"","dim");
+  setTimeout(()=>{
+    try{
+      const kb=window.player&&window.player.runtime&&window.player.runtime.keyboard&&window.player.runtime.keyboard.keyboard;
+      if(kb) log("   engine sees: LEFT="+kb.LEFT+" RIGHT="+kb.RIGHT+" ARROW_LEFT="+kb.ARROW_LEFT+" ARROW_RIGHT="+kb.ARROW_RIGHT,"dim");
+    }catch(err){}
+  }, 90);
+}, true);
+
 let proofStarted=false;
 function onStarted(){
   if(MODE==="free"||proofStarted) return; proofStarted=true;
-  const marks=MAN.run.marks, total=MAN.run.proofFrames;
-  const rng=mulberry32(MAN.run.botSeed);
-  const tape=[]; const chain=[];
-  let frame=-45, cur=null, left=0;   /* 45 warm-up frames: assets settle identically in both runs */
-  const keyName={left:"ArrowLeft", right:"ArrowRight"};
-  function press(dir){
-    if(cur===dir) return;
-    if(cur) document.dispatchEvent(new KeyboardEvent("keyup",{key:keyName[cur],code:keyName[cur],bubbles:true}));
-    cur=dir;
-    if(cur){ document.dispatchEvent(new KeyboardEvent("keydown",{key:keyName[cur],code:keyName[cur],bubbles:true})); tape.push([frame,"down",cur]); }
-    else tape.push([frame,"up","-"]);
-  }
-  log("🤖 bot at the controls — "+total+" frames, hash marks at "+marks.join("/")+"…");
-  function tick(){
-    requestAnimationFrame(tick);
-    if(frame<0){ frame++; return; }
-    if(frame>=total){ finish(); return; }
-    if(left--<=0){
-      const r=rng(); press(r<0.42?"left":(r<0.84?"right":null)); left=25+Math.floor(rng()*50);
-    }
-    if(marks.includes(frame)){
-      const cv=document.querySelector("#canvaswrapper canvas");
-      if(cv){ const h=fnv(cv.toDataURL()); chain.push(h); log("frame "+frame+" · screen hash "+h,"dim"); }
-    }
-    frame++;
-  }
-  requestAnimationFrame(tick);
-  function finish(){
-    press(null);
-    const storeKey="bbproof-"+GAME;
-    if(MODE==="live"){
-      localStorage.setItem(storeKey, JSON.stringify({tape:tape, chain:chain}));
-      log("live run chained: "+chain.join(" · ")+" — replaying the tape from a cold start…");
-      const u=new URL(location.href); u.searchParams.set("mode","replay");
-      setTimeout(()=>location.href=u, 600);
-    } else {
-      let live=null; try{ live=JSON.parse(localStorage.getItem(storeKey)); }catch(e){}
-      window.__proof={chain:chain, tape:tape, live:live};
-      if(!live){ verdictEl.className="fail"; verdictEl.textContent="REPLAY ran, but no live chain was stored — run the proof again from the top."; return; }
-      const same=live.chain.length===chain.length && live.chain.every((h,i)=>h===chain[i]);
-      const tapeSame=JSON.stringify(live.tape)===JSON.stringify(tape);
-      verdictEl.className=same?"pass":"fail";
-      verdictEl.textContent=same
-        ? "✅ PROOF PASS — the replay reproduced the live run exactly: "+chain.length+"/"+chain.length+" screen hashes match ("+chain.join(" · ")+"), tape "+tape.length+" inputs, identical in both runs: "+tapeSame+". A game played from blobs, proven by replay."
-        : "❌ PROOF FAIL — replay diverged. live: "+live.chain.join(" · ")+" vs replay: "+chain.join(" · ")+". Reported honestly; the determinism grade drops until this passes.";
-      log(same?"✅ replay chain identical — pure blob play, proven":"❌ replay diverged", same?"ok":"bad");
-    }
-  }
+  log("🤖 the proof rig is inside the game — a seeded bot steers, the sim hashes its own state at marks 180/360/540/720/900, then freezes. Polling for its report…");
+  const storeKey="bbproof-"+GAME;
+  let tries=0;
+  const iv=setInterval(()=>{
+    tries++;
+    if(!window.player||!window.player.runtime){ if(tries>150) clearInterval(iv); return; }
+    window.player.exec("proofdone", function(r){
+      if(String(r).trim()!=="1"){
+        if(tries>150){ clearInterval(iv); verdictEl.className="fail"; verdictEl.textContent="PROOF STALLED — the rig never reported done after ~2 minutes. Reported honestly."; }
+        return;
+      }
+      clearInterval(iv);
+      window.player.exec("proofchain", function(chain){
+        window.player.exec("prooftape", function(tape){
+          chain=String(chain); tape=String(tape);
+          log("⛓️ state chain: "+chain);
+          log("🎞️ tape: "+tape.slice(0,120)+(tape.length>120?"…":""),"dim");
+          if(MODE==="live"){
+            localStorage.setItem(storeKey, JSON.stringify({chain:chain, tape:tape}));
+            log("live run chained — replaying from a cold start…");
+            const u=new URL(location.href); u.searchParams.set("mode","replay");
+            setTimeout(()=>location.href=u, 700);
+          } else {
+            let live=null; try{ live=JSON.parse(localStorage.getItem(storeKey)); }catch(e){}
+            window.__proof={chain:chain, tape:tape, live:live};
+            if(!live){ verdictEl.className="fail"; verdictEl.textContent="REPLAY ran, but no live chain was stored — run the proof again from the top."; return; }
+            const same=live.chain===chain, tapeSame=live.tape===tape;
+            verdictEl.className=same?"pass":"fail";
+            verdictEl.textContent=same
+              ? "✅ PROOF PASS — pure blob play, proven by replay. The cold replay reproduced the live run hash-for-hash ("+chain+") on an identical tape ("+tape.trim().split(/\s+/).length+" bot decisions, identical: "+tapeSame+"). Engine, code and art all arrived as Walrus blobs, sha256-verified before boot."
+              : "❌ PROOF FAIL — replay diverged. live: "+live.chain+" vs replay: "+chain+". Reported honestly.";
+            log(same?"✅ replay chain identical":"❌ replay diverged", same?"ok":"bad");
+          }
+        });
+      });
+    });
+  }, 800);
 }
 spinUp().catch(e=>{ log("SPIN-UP FAILED — "+e.message,"bad"); });
 </script>
