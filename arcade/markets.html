@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>📊 MARKETS — live inside the arcade</title>
+<style>
+ body{margin:0;font-family:Georgia,serif;background:#0a0c14;color:#e8e0c8;padding:14px}
+ h1{font-size:19px;color:#ffd76a;margin:2px 0;letter-spacing:1px}
+ h2{font-size:15px;color:#7fd4ff;margin:18px 0 6px;letter-spacing:.5px}
+ .note{font-size:12.5px;color:#cfc4a0;line-height:1.5}
+ .row{display:flex;justify-content:space-between;gap:10px;padding:8px 10px;border:1px solid #2c3350;border-radius:8px;margin:6px 0;background:#10131f;cursor:pointer}
+ .row:hover{border-color:#ffd76a}
+ .q{font-size:13.5px;line-height:1.35}
+ .p{text-align:right;white-space:nowrap}
+ .yes{color:#6fe08a;font-weight:bold;font-size:15px}
+ .vol{color:#8b93ad;font-size:11.5px}
+ .err{color:#ff9a9a;font-size:13px;padding:8px 0}
+ a{color:#7fd4ff}
+</style></head><body>
+<h1>📊 MARKETS — LIVE, INSIDE THE ARCADE</h1>
+<p class="note">These are the real Polymarket and Kalshi markets, drawn by <b>our own page</b> from their official public data feeds — that's why it works in here while their sites refuse to be framed. Tap any market to open it in the real app (portal tab) where sign-in and trading live. Prices refresh every 60 s. Data only — no trading happens on this page.</p>
+<h2>📈 POLYMARKET — top by 24h volume</h2><div id="poly"><p class="note">loading…</p></div>
+<h2>🎾 KALSHI — open markets</h2><div id="kal"><p class="note">loading…</p></div>
+<script>
+function row(q, yes, vol, url){
+  const d=document.createElement('div'); d.className='row';
+  d.innerHTML='<div class="q"></div><div class="p"><div class="yes"></div><div class="vol"></div></div>';
+  d.querySelector('.q').textContent=q;
+  d.querySelector('.yes').textContent=(yes==null?'—':'YES '+Math.round(yes*100)+'¢');
+  d.querySelector('.vol').textContent=vol?('vol $'+Number(vol).toLocaleString(undefined,{maximumFractionDigits:0})):'';
+  d.addEventListener('click',()=>window.open(url,'_blank'));
+  return d;
+}
+async function loadPoly(){
+  const box=document.getElementById('poly');
+  try{
+    const r=await fetch('https://gamma-api.polymarket.com/markets?limit=12&active=true&order=volume24hr&ascending=false');
+    const ms=await r.json(); box.innerHTML='';
+    ms.forEach(m=>{
+      let p=null; try{ p=JSON.parse(m.outcomePrices||'[]')[0]; }catch(e){}
+      box.appendChild(row(m.question, p==null?null:Number(p), m.volume24hr, 'https://polymarket.com/market/'+m.slug));
+    });
+    if(!ms.length) box.innerHTML='<p class="err">No markets returned right now.</p>';
+  }catch(e){ box.innerHTML='<p class="err">Polymarket feed unreachable from this browser — <a href="https://polymarket.com" target="_blank">open the portal tab</a>.</p>'; }
+}
+async function loadKal(){
+  const box=document.getElementById('kal');
+  try{
+    const r=await fetch('https://api.elections.kalshi.com/trade-api/v2/markets?limit=12&status=open');
+    const j=await r.json(); box.innerHTML='';
+    (j.markets||[]).forEach(m=>{
+      const yes=(m.yes_ask!=null)? m.yes_ask/100 : (m.last_price!=null? m.last_price/100 : null);
+      box.appendChild(row(m.title||m.ticker, yes, m.volume, 'https://kalshi.com/markets/'+(m.event_ticker||'').toLowerCase()));
+    });
+    if(!j.markets || !j.markets.length) box.innerHTML='<p class="err">No markets returned right now.</p>';
+  }catch(e){ box.innerHTML='<p class="err">Kalshi feed blocked for in-page use — <a href="https://kalshi.com" target="_blank">open the portal tab</a>.</p>'; }
+}
+loadPoly(); loadKal(); setInterval(()=>{ loadPoly(); loadKal(); }, 60000);
+</script></body></html>
