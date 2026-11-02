@@ -70,7 +70,7 @@ function mulberry32(a){ return function(){ a|=0; a=(a+0x6D2B79F5)|0; let t=Math.
 /* ================= the door ================= */
 const AGG="https://aggregator.walrus-testnet.walrus.space/v1/blobs/";
 const qs=new URLSearchParams(location.search);
-const GAME=qs.get("game")||"sApCrzQicvrJJPm0PCfizyQO16-Pad8FqUyWOUAILAE";
+const GAME=qs.get("game")||"lqK7LG7vKK_CPnuts7TUkCwQL-HILNT7pvcXw41vXNw";
 const MODE=qs.get("mode")||"free";
 const logEl=document.getElementById("log"), verdictEl=document.getElementById("verdict");
 function log(msg, cls){ const d=document.createElement("div"); if(cls) d.className=cls; d.textContent=msg; logEl.appendChild(d); }
@@ -167,9 +167,9 @@ function onStarted(){
   const keyName={left:"ArrowLeft", right:"ArrowRight"};
   function press(dir){
     if(cur===dir) return;
-    if(cur) document.dispatchEvent(new KeyboardEvent("keyup",{key:keyName[cur],bubbles:true}));
+    if(cur) document.dispatchEvent(new KeyboardEvent("keyup",{key:keyName[cur],code:keyName[cur],bubbles:true}));
     cur=dir;
-    if(cur){ document.dispatchEvent(new KeyboardEvent("keydown",{key:keyName[cur],bubbles:true})); tape.push([frame,"down",cur]); }
+    if(cur){ document.dispatchEvent(new KeyboardEvent("keydown",{key:keyName[cur],code:keyName[cur],bubbles:true})); tape.push([frame,"down",cur]); }
     else tape.push([frame,"up","-"]);
   }
   log("🤖 bot at the controls — "+total+" frames, hash marks at "+marks.join("/")+"…");
