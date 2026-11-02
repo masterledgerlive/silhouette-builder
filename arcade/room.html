@@ -81,6 +81,7 @@
     <button class="sbtn" id="upSeats">🎾 COURTS SEATS</button>
     <button class="sbtn" id="ghostBtn">👻 GHOST VIEW</button>
     <button class="sbtn" id="worldWinBtn">🪟 WORLD WINDOW</button>
+    <button class="sbtn" id="grandBtn">🏛️ GRAND WALL</button>
     <button class="sbtn" id="homeBtn">⌂ RESET VIEW</button>
     <button class="sbtn" id="arrangeBtn">🪟 ARRANGE WINDOWS</button>
     <p id="worldStat" style="color:#c9a7ff;font-size:12px;margin:4px 0 0"></p>
@@ -782,6 +783,178 @@ function worldBtn(p,act){
     }
   }
 }
+
+</script>
+<script>
+// ================= GALLERY WALL (v0.6) =================
+// David's wall law: screens hang like paintings — portraits of every channel/game on
+// the walls; click one and it enlarges WITH its full chrome (MIN, SNAP, WALL>, GRAND);
+// WALL> moves it to another wall (the wall flashes; the size auto-shapes to the wall);
+// GRAND WALL tiles every screen across the back wall to watch everything at once.
+function spawnWorldPanel(){ enlargeScreen('hall'); }  // v0.5 buttons now walk to the gallery
+const G_SCREENS=[
+  {key:'hall',   name:'HALL OF SCORES', u:'blob-cinema/scores.html'},
+  {key:'rally',  name:'FIRST RALLY',    u:'games/first-rally/'},
+  {key:'slap',   name:'FIRST SLAP',     u:'games/first-slap/'},
+  {key:'map',    name:'SYSTEM MAP',     u:'system.html'},
+  {key:'builder',name:'BUILDER',        u:'builder.html'}
+];
+const G_WALLS={
+  back: {slots:[[-5.2,2.05,-5.44,0],[-2.6,2.05,-5.44,0],[0,2.05,-5.44,0],[2.6,2.05,-5.44,0],[5.2,2.05,-5.44,0]], pw:1.6, ph:1.2, ew:3.3, eh:2.48, el:'backwall'},
+  left: {slots:[[-6.94,2.05,-3.4,90],[-6.94,2.05,-1.2,90],[-6.94,2.05,1.0,90],[-6.94,2.05,3.2,90]], pw:1.35, ph:1.0, ew:2.6, eh:1.95, el:'leftwall'},
+  right:{slots:[[6.94,2.05,-4.3,-90],[6.94,2.05,2.7,-90],[6.94,2.05,4.3,-90]], pw:1.35, ph:1.0, ew:2.6, eh:1.95, el:'rightwall'}
+};
+const G_ORDER=['back','left','right'];
+const G_GRAND=[[-4.4,2.95],[0,2.95],[4.4,2.95],[-2.2,1.15],[2.2,1.15]];
+let G={screens:{}, grand:false, rr:0};
+function gPlace(sc, x,y,z,ry, w,h){
+  sc.root.setAttribute('position', x+' '+y+' '+z);
+  sc.root.setAttribute('rotation', '0 '+ry+' 0');
+  sc.plane.setAttribute('width', w); sc.plane.setAttribute('height', h);
+  sc.frame.setAttribute('width', w+0.09); sc.frame.setAttribute('height', h+0.09);
+  sc.chrome.setAttribute('position', '0 '+(h/2+0.10)+' 0.01');
+  sc.plate.setAttribute('position', '0 '+(-(h/2)-0.13)+' 0.01');
+}
+function gSlotPos(sc){
+  const W=G_WALLS[sc.wall]; const sl=W.slots[sc.slot];
+  return {x:sl[0], y:sl[1], z:sl[2], ry:sl[3], w:W.pw, h:W.ph};
+}
+function gToPortrait(sc){
+  const p=gSlotPos(sc); gPlace(sc, p.x,p.y,p.z,p.ry, p.w,p.h);
+  sc.chrome.setAttribute('visible','false'); sc.state='portrait';
+}
+function enlargeScreen(key){
+  const sc=G.screens[key]; if(!sc) return;
+  if(G.grand) exitGrand();
+  Object.values(G.screens).forEach(o=>{ if(o!==sc && o.state==='enlarged') gToPortrait(o); });
+  const W=G_WALLS[sc.wall]; const sl=W.slots[sc.slot];
+  const inw = sc.wall==='back' ? 0.10 : (sc.wall==='left' ? 0.10 : -0.10);
+  const x = sc.wall==='back' ? sl[0] : (sc.wall==='left' ? sl[0]+0.10 : sl[0]-0.10);
+  const z = sc.wall==='back' ? sl[2]+0.10 : sl[2];
+  gPlace(sc, x, 1.98, z, sl[3], W.ew, W.eh);
+  sc.chrome.setAttribute('visible','true'); sc.state='enlarged';
+  snapScreen(sc);
+  setStat('🖼️ '+sc.name+' enlarged — its buttons are live (click its face). MIN shrinks it back · WALL > moves it to another wall · GRAND tiles the whole wall.');
+}
+function gWallCycle(sc){
+  const others=Object.values(G.screens).filter(o=>o!==sc);
+  let ni=(G_ORDER.indexOf(sc.wall)+1)%G_ORDER.length, tries=0;
+  while(tries<3){
+    const wname=G_ORDER[ni], W=G_WALLS[wname];
+    const free=W.slots.findIndex((_,i)=>!others.some(o=>o.wall===wname && o.slot===i));
+    if(free>=0){
+      sc.wall=wname; sc.slot=free;
+      const wel=document.getElementById(W.el);
+      if(wel){ const old=wel.getAttribute('color'); wel.setAttribute('color','#4a3566'); setTimeout(()=>wel.setAttribute('color',old), 900); }
+      if(sc.state==='enlarged') enlargeScreen(sc.key); else gToPortrait(sc);
+      setStat('🧱 '+sc.name+' moved to the '+wname.toUpperCase()+' wall — size auto-shaped to fit it (watch it flash).');
+      return;
+    }
+    ni=(ni+1)%G_ORDER.length; tries++;
+  }
+  setStat('Every wall is full — that is a good problem. GRAND WALL instead?');
+}
+function enterGrand(){
+  if(G.grand) return; G.grand=true;
+  G_SCREENS.forEach((sdef,i)=>{
+    const sc=G.screens[sdef.key]; const g=G_GRAND[i];
+    gPlace(sc, g[0], g[1], -5.40, 0, 2.13, 1.6);
+    sc.chrome.setAttribute('visible','true'); sc.state='grand';
+    snapScreen(sc);
+  });
+  setStat('🏛️ GRAND WALL — everything you chose, up at once. Stare away. Any MIN (or GRAND WALL again) puts the paintings back.');
+}
+function exitGrand(){
+  G.grand=false;
+  Object.values(G.screens).forEach(sc=>gToPortrait(sc));
+  setStat('Paintings back on their walls.');
+}
+function snapScreen(sc){
+  if(sc.busy || typeof html2canvas==='undefined') return; sc.busy=true;
+  try{
+    const doc=sc.ifr.contentDocument;
+    if(doc && doc.body){
+      html2canvas(doc.body,{width:512,height:384,windowWidth:512,windowHeight:384,logging:false,backgroundColor:'#0a0c14'}).then(c=>{
+        sc.ctx.clearRect(0,0,512,384); sc.ctx.drawImage(c,0,0,512,384);
+        if(sc.tex) sc.tex.needsUpdate=true; sc.busy=false;
+      }).catch(()=>{ sc.busy=false; });
+      return;
+    }
+  }catch(e){}
+  sc.busy=false;
+}
+function gBtn(sc, act){
+  if(act==='min'){ if(G.grand){ exitGrand(); } else { gToPortrait(sc); setStat(sc.name+' back to painting size.'); } }
+  else if(act==='snap'){ snapScreen(sc); setStat(sc.name+' refreshed.'); }
+  else if(act==='wall'){ gWallCycle(sc); }
+  else if(act==='grand'){ enterGrand(); }
+}
+function buildGallery(){
+  const scene=document.querySelector('a-scene');
+  G_SCREENS.forEach((sdef,i)=>{
+    const host=document.createElement('div');
+    host.style.cssText='position:fixed;left:-10000px;top:0;width:512px;height:384px;overflow:hidden;background:#0a0c14';
+    const ifr=document.createElement('iframe'); ifr.src=sdef.u; ifr.style.cssText='width:512px;height:384px;border:0';
+    host.appendChild(ifr); document.body.appendChild(host);
+    const cv=document.createElement('canvas'); cv.width=512; cv.height=384;
+    const ctx=cv.getContext('2d'); ctx.fillStyle='#0a0c14'; ctx.fillRect(0,0,512,384);
+    ctx.fillStyle='#ffd76a'; ctx.font='22px monospace'; ctx.fillText(sdef.name, 26, 60); ctx.font='15px monospace'; ctx.fillText('hanging the painting…', 26, 92);
+    const root=document.createElement('a-entity');
+    const frame=document.createElement('a-plane');
+    frame.setAttribute('material','color:#8a6d2f; shader:flat'); frame.setAttribute('position','0 0 -0.004');
+    root.appendChild(frame);
+    const plane=document.createElement('a-plane');
+    plane.setAttribute('material','shader:flat'); plane.setAttribute('data-click','1'); plane.classList.add('clickable');
+    root.appendChild(plane);
+    const plate=document.createElement('a-text');
+    plate.setAttribute('value', sdef.name); plate.setAttribute('width','2.2'); plate.setAttribute('align','center');
+    plate.setAttribute('color','#ffd76a'); root.appendChild(plate);
+    const chrome=document.createElement('a-entity'); chrome.setAttribute('visible','false'); root.appendChild(chrome);
+    const sc={key:sdef.key, name:sdef.name, root, frame, plane, chrome, plate, ifr, cv, ctx, tex:null,
+              wall:'back', slot:i, state:'portrait', busy:false};
+    const mkB=(label,dx,act,color)=>{
+      const b=document.createElement('a-plane');
+      b.setAttribute('width','0.34'); b.setAttribute('height','0.15');
+      b.setAttribute('position', dx+' 0 0.004');
+      b.setAttribute('material','color:'+(color||'#232842')+'; shader:flat');
+      b.setAttribute('data-click','1'); b.setAttribute('data-gbtn',act); b.classList.add('clickable');
+      const t=document.createElement('a-text');
+      t.setAttribute('value',label); t.setAttribute('width','1.5'); t.setAttribute('align','center');
+      t.setAttribute('position','0 0 0.003'); t.setAttribute('color','#fff');
+      b.appendChild(t); chrome.appendChild(b);
+      b.addEventListener('click',()=>gBtn(sc,act));
+    };
+    mkB('— MIN', -0.56,'min'); mkB('SNAP', -0.19,'snap'); mkB('WALL >', 0.19,'wall','#3a2a5a'); mkB('GRAND', 0.57,'grand','#5a2432');
+    plane.addEventListener('loaded',()=>{
+      sc.tex=new THREE.CanvasTexture(cv);
+      const mesh=plane.getObject3D('mesh');
+      if(mesh){ mesh.material.map=sc.tex; mesh.material.needsUpdate=true; }
+      setTimeout(()=>snapScreen(sc), 1500+i*700);
+    });
+    plane.addEventListener('click',e=>{
+      if(sc.state==='portrait'){ enlargeScreen(sc.key); return; }
+      const uv=e.detail && e.detail.intersection && e.detail.intersection.uv;
+      if(!uv) return;
+      try{
+        const doc=ifr.contentDocument; if(!doc) return;
+        const el=doc.elementFromPoint(uv.x*512, (1-uv.y)*384);
+        if(el){ el.dispatchEvent(new ifr.contentWindow.MouseEvent('click',{bubbles:true,cancelable:true})); if(el.click) el.click(); }
+        setTimeout(()=>snapScreen(sc), 450);
+      }catch(err){ setStat('That page will not take clicks through the glass yet.'); }
+    });
+    scene.appendChild(root);
+    G.screens[sdef.key]=sc;
+    gToPortrait(sc);
+  });
+  setInterval(()=>{
+    const enlarged=Object.values(G.screens).find(x=>x.state==='enlarged'||x.state==='grand');
+    if(enlarged && Math.random()<0.7){ snapScreen(enlarged); return; }
+    const keys=Object.keys(G.screens); G.rr=(G.rr+1)%keys.length; snapScreen(G.screens[keys[G.rr]]);
+  }, 2800);
+  document.getElementById('grandBtn').addEventListener('click', ()=>{ G.grand ? exitGrand() : enterGrand(); });
+  setStat('🖼️ The gallery is hung: five paintings on the back wall — HALL, RALLY, SLAP, MAP, BUILDER. Click any painting to enlarge it.');
+}
+window.addEventListener('load', ()=> setTimeout(buildGallery, 2500));
 </script>
 </body>
 </html>
