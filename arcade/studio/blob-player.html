@@ -471,6 +471,84 @@ document.getElementById("klWalk").onclick=async()=>{
     🧑‍💻 <a href="https://github.com/masterledgerlive/microstudio" style="color:#7ee787">The engine fork</a> — microStudio (MIT), blob-driven ·
     🌊 Storage by <b>Walrus</b> on <b>Sui</b> (testnet for this demo — the design is chain-agnostic; the mother core never signs).
   </p>
+<div style="margin-top:14px;border-top:1px solid #23234a;padding-top:10px">
+  <h2 style="margin:2px 0 6px">8 · THE POCKET VAULT 🎒</h2>
+  <p class="small" style="margin:2px 0 8px">David's next move: an $80 retro handheld (Tekko One — thousands of preloaded games, fully offline) repurposed to run <i>this</i> chain on the device itself. His hardware, his purchase; their library stays theirs — our chain moves in as a guest, carrying only our own works. Why it fits in a pocket: the whole film vault is ~300&nbsp;MB of encrypted pieces, and <b>verification is local math</b> — a hash has never needed a network. That is <b>embedding</b>, in three plain sentences: <i>the envelope carries the pointers · the device carries the vault · the route carries the finding.</i></p>
+  <p class="small" style="margin:2px 0 8px"><b>THE PRINTED RECORD IS THE GATEWAY</b> (David's exhibit — a real entry, Big Buck Bunny §77, printed in every transaction):</p>
+  <pre class="mono" style="background:#0a0a18;border:1px solid #23234a;border-radius:8px;padding:8px 10px;font-size:11px;line-height:1.6;overflow-x:auto;margin:0 0 6px"> "n": 77,
+ "blob_id": "pn1JQeeAC_c6VlHHuIFOy19wLTwgOmqU6CWDPh3y964",   ← the NAME (where it lives)
+ "key_hex": "0751d766ebe2e9fb0fa5f5318005eaabbdf16e1e6c…",   ← the KEY (what opens it)
+ "media_sha256": "0bdb3a6d994d6a047620d407c737e7f497f28…",   ← the PROOF (what makes it true)
+ "bytes": 572302                                            ← the MEASURE (what it weighs)</pre>
+  <p class="small" style="margin:2px 0 8px">Four instruments in one printed line. Every reader takes a different one — the player takes the key, the auditor takes the proof, the route takes the name — so the record's <i>uses</i> multiply while its storage never does. Wherever the record travels, the gateway travels.</p>
+  <div class="row" style="gap:6px;flex-wrap:wrap;align-items:center">
+    <button class="btn" id="pvWarm">🌡️ WARM THE VAULT</button>
+    <button class="btn alt" id="pvSever" disabled>✂️ SEVER + RECALL OFF-GRID</button>
+    <span id="pvOut" class="small" style="line-height:1.6"></span>
+  </div>
+  <div id="pvLog" class="small mono" style="margin-top:6px;line-height:1.65;color:#9fb4c8"></div>
+  <p class="tiny" style="margin-top:6px">On this page the "card" is the browser's memory; on a phone or the handheld it's the same vault on device storage — the math doesn't care where the bytes sit. Honest limits, graded on air in the Pocket Vault podcast: offline you can verify and recall everything you hold; fetching what you never cached and renewing expiring storage still need a network window. Renewal is the one true leash.</p>
+</div>
+<script>
+(function(){
+const A1="https://aggregator.walrus-testnet.walrus.space/v1/blobs/";
+const A2="https://walrus-testnet.blockscope.net/v1/blobs/";
+const ROOT_ID="CE83KaGaen63XO_Uau0_SzZxkyN7MzfAr5ar6L2ge4Q";
+const BBB_MAN="RYVQA2RMGwT0sQgTz1ekjlhHeEC8cd0hCJbF4cxIRU8";
+let netCalls=0;
+const VAULT=new Map();
+const out=document.getElementById("pvOut"), log=document.getElementById("pvLog");
+function lg(t){ const d=document.createElement("div"); d.textContent=t; log.appendChild(d); }
+async function net(id){ netCalls++; try{ const r=await fetch(A1+id,{cache:"no-store"}); if(r.ok) return await r.arrayBuffer(); }catch(e){}
+  const r=await fetch(A2+id,{cache:"no-store"}); if(!r.ok) throw new Error("mirror fail "+id.slice(0,12)); return await r.arrayBuffer(); }
+function canon(o){ if(o===null||typeof o!=="object") return JSON.stringify(o);
+  if(Array.isArray(o)) return "["+o.map(canon).join(",")+"]";
+  return "{"+Object.keys(o).sort().map(k=>JSON.stringify(k)+":"+canon(o[k])).join(",")+"}"; }
+function canonLink(l){ const c={}; for(const k of Object.keys(l)) if(k!=="hash") c[k]=l[k]; return canon(c).replace(/[\u007f-\uffff]/g, ch=>"\\u"+ch.charCodeAt(0).toString(16).padStart(4,"0")); }
+document.getElementById("pvWarm").onclick=async()=>{
+  out.textContent="warming…"; log.innerHTML=""; VAULT.clear();
+  try{
+    const rootBuf=await net(ROOT_ID); VAULT.set(ROOT_ID, rootBuf);
+    const root=JSON.parse(new TextDecoder().decode(rootBuf));
+    const reelId=root.names.growing_reel_head;
+    VAULT.set(reelId, await net(reelId));
+    VAULT.set(BBB_MAN, await net(BBB_MAN));
+    const man=JSON.parse(new TextDecoder().decode(VAULT.get(BBB_MAN)));
+    const s77=man.sections[76];
+    VAULT.set(s77.blob_id, await net(s77.blob_id));
+    let bytes=0; VAULT.forEach(v=>bytes+=v.byteLength);
+    lg("warmed: Mother Reel root ("+rootBuf.byteLength+" B) · Growing Reel head "+reelId.slice(0,16)+"… · BBB manifest (78 sections) · §77 cipher ("+s77.bytes.toLocaleString()+" B media)");
+    out.innerHTML="VAULT WARM — "+VAULT.size+" pieces, "+bytes.toLocaleString()+" bytes held locally. Now sever it.";
+    document.getElementById("pvSever").disabled=false;
+  }catch(e){ out.innerHTML="⛔ warm failed: "+e.message; }
+};
+document.getElementById("pvSever").onclick=async()=>{
+  const before=netCalls; out.textContent="severed — recalling from the vault alone…";
+  try{
+    const root=JSON.parse(new TextDecoder().decode(VAULT.get(ROOT_ID)));
+    const reelId=root.names.growing_reel_head;
+    const reel=JSON.parse(new TextDecoder().decode(VAULT.get(reelId)));
+    let prev="GENESIS", okLinks=0;
+    for(const l of reel.links){ const h=sha256hex(new TextEncoder().encode(prev+"|"+canonLink(l))); if(h!==l.hash) break; prev=h; okLinks++; }
+    lg("root recalled from vault → names reel head "+reelId.slice(0,16)+"…");
+    lg("Growing Reel chain verified locally: "+okLinks+"/"+reel.links.length+" links, head "+(prev===reel.head?"MATCH":"MISMATCH"));
+    const man=JSON.parse(new TextDecoder().decode(VAULT.get(BBB_MAN)));
+    const s77=man.sections[76];
+    const cipher=new Uint8Array(VAULT.get(s77.blob_id));
+    const key=new Uint8Array(s77.key_hex.match(/../g).map(h=>parseInt(h,16)));
+    const plain=nacl.secretbox.open(cipher.slice(24),cipher.slice(0,24),key);
+    const pt=new Uint8Array(plain); const media=pt.slice(pt.indexOf(10)+1);
+    const mOk=sha256hex(media)===s77.media_sha256;
+    lg("§77 found by its printed record → decrypted with the record's own key → media sha "+(mOk?"MATCH ✔":"MISMATCH"));
+    const netUsed=netCalls-before;
+    out.innerHTML=(okLinks===reel.links.length && prev===reel.head && mOk && netUsed===0)
+      ? "✅ <b>OFF-GRID PROOF HOLDS</b> — root, reel ("+okLinks+" links) and a film piece recalled and proven true from the local vault alone · network calls during recall: <b>0</b>. The data found itself."
+      : "⛔ proof incomplete — links "+okLinks+"/"+reel.links.length+", §77 "+mOk+", net "+netUsed;
+  }catch(e){ out.innerHTML="⛔ recall failed: "+e.message; }
+};
+})();
+</script>
+
 </div>
 <script>
 "use strict";
