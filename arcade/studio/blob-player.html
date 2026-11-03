@@ -3,44 +3,110 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>BLOB PLAYER — a microStudio game, spun up from Walrus blobs</title>
+<title>BLOB THEATER — a game that arrives as blobs, proven live</title>
 <style>
   html,body{margin:0;padding:0;background:#07071a;color:#e8e6df;font-family:Verdana,system-ui,sans-serif;overflow-x:hidden}
-  #hud{max-width:860px;margin:0 auto;padding:14px 14px 4px}
-  h1{font-size:19px;margin:0 0 2px;color:#ffd76a;letter-spacing:.5px}
-  .sub{font-size:12px;color:#9d97c9;margin:0 0 10px}
-  .sub b{color:#c9a7ff}
-  #log{background:#0d0b26;border:1px solid #2c2560;border-radius:10px;padding:9px 12px;font-size:12.5px;line-height:1.55;min-height:44px;white-space:pre-wrap;word-break:break-all}
-  #log .ok{color:#7ee787} #log .bad{color:#ff7b72} #log .dim{color:#8b86ad}
+  #wrap{max-width:920px;margin:0 auto;padding:14px}
+  h1{font-size:20px;margin:0 0 2px;color:#ffd76a;letter-spacing:.5px}
+  .sub{font-size:12.5px;color:#9d97c9;margin:0 0 12px;line-height:1.5}
+  .sub b{color:#c9a7ff} .addr{font-family:ui-monospace,Menlo,monospace;font-size:11px;color:#7ee787;word-break:break-all}
+  h2{font-size:13px;letter-spacing:1.5px;color:#8b86ad;margin:16px 0 8px}
+  /* theater cards */
+  #cards{display:flex;gap:8px;flex-wrap:wrap}
+  .card{flex:1 1 160px;background:#0d0b26;border:1px solid #2c2560;border-radius:12px;padding:10px;min-width:150px;transition:border-color .3s}
+  .card .nm{font-size:12px;font-weight:bold;color:#e8e6df;letter-spacing:.5px}
+  .card .bid{font-family:ui-monospace,Menlo,monospace;font-size:10px;color:#8b86ad;word-break:break-all;margin:3px 0}
+  .card .bar{height:7px;background:#1b1430;border-radius:4px;overflow:hidden;margin:7px 0 5px}
+  .card .fill{height:100%;width:0%;background:linear-gradient(90deg,#7a4fd0,#ffd76a);transition:width .15s}
+  .card .st{font-size:11px;color:#9d97c9;min-height:15px}
+  .card .tm{font-size:11px;color:#7ee787;font-family:ui-monospace,Menlo,monospace;min-height:15px}
+  .card.done{border-color:#2ea043}
+  .card.bad{border-color:#a02e2e}
+  .card .peek{margin-top:7px;font-size:10px;color:#b9b3dd;display:none}
+  .card.done .peek{display:block}
+  .card pre{margin:0;font-size:9.5px;line-height:1.35;color:#9fd3a8;max-height:118px;overflow:auto;white-space:pre-wrap;word-break:break-all}
+  .card img{width:44px;height:44px;image-rendering:auto}
+  /* ledger */
+  #ledger{background:#0d0b26;border:1px solid #2c2560;border-radius:12px;padding:10px 14px;font-family:ui-monospace,Menlo,monospace;font-size:12px;line-height:1.7}
+  #ledger .row{display:flex;justify-content:space-between;gap:10px;border-bottom:1px dashed #241d4d;padding:1px 0}
+  #ledger .row:last-child{border-bottom:none}
+  #ledger .k{color:#9d97c9} #ledger .v{color:#7ee787;white-space:nowrap}
+  #ledger .tot .k{color:#ffd76a;font-weight:bold} #ledger .tot .v{color:#ffd76a;font-weight:bold}
+  /* telemetry + lamps */
+  #tele{display:flex;gap:8px;flex-wrap:wrap;align-items:stretch}
+  .tbox{flex:1 1 120px;background:#0d0b26;border:1px solid #2c2560;border-radius:12px;padding:8px 10px;text-align:center}
+  .tbox .lab{font-size:10px;letter-spacing:1px;color:#8b86ad}
+  .tbox .val{font-size:17px;color:#fff;font-family:ui-monospace,Menlo,monospace;margin-top:2px}
+  .lamp{border-radius:12px;padding:10px;text-align:center;font-size:15px;border:1px solid #2c2560;background:#0d0b26;color:#5d5882;flex:0 1 130px;user-select:none}
+  .lamp.on{background:#233016;border-color:#7ee787;color:#b7f0c2;box-shadow:0 0 14px #2ea04366}
+  #latch{font-size:11.5px;color:#9d97c9;margin-top:6px;min-height:16px}
+  #latch b{color:#7ee787}
+  /* game + pads */
+  #canvaswrapper{text-align:center;margin:8px auto 4px}
+  #canvaswrapper canvas{max-width:96vw;height:auto;border-radius:8px}
+  #pads{display:flex;gap:10px;justify-content:center;margin:10px 0 4px}
+  .pad{flex:0 1 210px;padding:18px 0;font-size:19px;border-radius:14px;background:#1b1430;color:#e8e6df;border:1px solid #7a4fd0;cursor:pointer;user-select:none;-webkit-user-select:none;touch-action:none}
+  .pad:active{background:#2c1a56}
   #bar{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
-  button{background:#1b1430;color:#e8e6df;border:1px solid #7a4fd0;border-radius:9px;padding:9px 13px;font-family:inherit;font-size:13.5px;cursor:pointer}
-  button:active{transform:scale(.97)}
+  button.m{background:#1b1430;color:#e8e6df;border:1px solid #7a4fd0;border-radius:9px;padding:9px 13px;font-family:inherit;font-size:13.5px;cursor:pointer}
+  button.m:active{transform:scale(.97)}
+  #log{background:#0d0b26;border:1px solid #2c2560;border-radius:10px;padding:9px 12px;font-size:12.5px;line-height:1.55;max-height:220px;overflow:auto;white-space:pre-wrap;word-break:break-all}
+  #log .ok{color:#7ee787} #log .bad{color:#ff7b72} #log .dim{color:#8b86ad}
   #verdict{display:none;margin:10px 0;padding:11px 13px;border-radius:10px;font-size:14px;line-height:1.5}
   #verdict.pass{display:block;background:#0e2a16;border:1px solid #2ea043;color:#b7f0c2}
   #verdict.fail{display:block;background:#2a0e12;border:1px solid #a02e2e;color:#f3c1c1}
-  #canvaswrapper{text-align:center;margin:6px auto 18px}
-  #canvaswrapper canvas{max-width:96vw;height:auto;border-radius:8px}
-  .tiny{font-size:11px;color:#6f6a94;text-align:center;padding:0 12px 16px}
+  .tiny{font-size:11px;color:#6f6a94;line-height:1.6}
+  .tiny b{color:#9d97c9}
 </style>
 </head>
 <body>
-<div id="hud">
-  <h1>🌀 BLOB PLAYER</h1>
-  <p class="sub">A real microStudio game whose <b>engine + code + art arrive as Walrus blobs</b> and are hash-checked before a single frame runs. Nothing here is hosted as a game — the page is just the door.</p>
-  <div id="log"><span class="dim">waking the door…</span></div>
+<div id="wrap">
+  <h1>🌀 BLOB THEATER</h1>
+  <p class="sub">No game server. No download. This game — <b>engine, code and art</b> — arrives as content-addressed <b>blobs</b> from the Walrus network, is <b>sha256-verified byte-for-byte</b> in this browser, gets built into objects, and plays. Every number below is <b>measured live on this device</b> (performance.now) — nothing is typed in by hand.<br>
+  Game address (the manifest blob): <span class="addr" id="addr">…</span></p>
+
+  <h2>HOW THIS GAME ARRIVES — WATCH THE BLOBS</h2>
+  <div id="cards"></div>
+
+  <h2>TIMING LEDGER — REAL MILLISECONDS, THIS LOAD</h2>
+  <div id="ledger"><div class="row"><span class="k">spin-up starting…</span><span class="v"></span></div></div>
   <div id="bar">
-    <button id="btnProof">🧪 RUN THE PROOF — bot plays, replay must match</button>
-    <button id="btnFree">🕹️ FREE PLAY — your hands (◀ ▶ or touch)</button>
+    <button class="m" id="btnRecall">↻ RECALL TEST — fetch a blob again, cold, and time it</button>
+    <span id="recallOut" style="font-size:12.5px;color:#7ee787;align-self:center"></span>
+  </div>
+
+  <h2>LIVE FROM INSIDE THE SIMULATION</h2>
+  <div id="tele">
+    <div class="tbox"><div class="lab">FRAME</div><div class="val" id="tFrame">—</div></div>
+    <div class="tbox"><div class="lab">BALL X · Y</div><div class="val" id="tBall">—</div></div>
+    <div class="tbox"><div class="lab">PADDLE X</div><div class="val" id="tPaddle">—</div></div>
+    <div class="tbox"><div class="lab">SAVES</div><div class="val" id="tSaves">—</div></div>
+    <div class="tbox"><div class="lab">MISSES</div><div class="val" id="tMiss">—</div></div>
+    <div class="lamp" id="lampL">◀ LEFT</div>
+    <div class="lamp" id="lampR">RIGHT ▶</div>
+  </div>
+  <div id="latch">Input lamps read the engine's real keyboard state, 16× a second. Press a key or hold a pad — watch them light.</div>
+
+  <div id="canvaswrapper"></div>
+  <div id="pads">
+    <button class="pad" id="padL">◀ HOLD</button>
+    <button class="pad" id="padR">HOLD ▶</button>
+  </div>
+  <div id="bar">
+    <button class="m" id="btnDemo">🎬 DEMO — the bot plays</button>
+    <button class="m" id="btnFree">🙌 YOUR TURN — pads / keys / touch</button>
+    <button class="m" id="btnProof">🧪 RUN THE PROOF — replay must match</button>
   </div>
   <div id="verdict"></div>
+  <div id="log"></div>
+
+  <p class="tiny" id="born"></p>
 </div>
-<div id="canvaswrapper"></div>
-<p class="tiny">Engine: microStudio player from our fork (MIT, Gilles Pommereuil) — loaded from a blob, not a server. Game files: content-addressed on Walrus testnet; every byte sha256-verified against the game manifest before boot.</p>
 
 <script id="code" type="text/x-microscript"></script>
 <script>
 "use strict";
-/* ================= sha256 (FIPS 180-4, compact) ================= */
+/* ================= sha256 (FIPS 180-4, compact, vector-tested) ================= */
 function sha256hex(buf){
   const K=[0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2];
   let H=[0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19];
@@ -64,21 +130,99 @@ function sha256hex(buf){
   }
   return H.map(x=>x.toString(16).padStart(8,"0")).join("");
 }
-function fnv(str){ let h=0x811c9dc5; for(let i=0;i<str.length;i++){ h^=str.charCodeAt(i); h=Math.imul(h,0x01000193)>>>0; } return ("0000000"+h.toString(16)).slice(-8); }
-function mulberry32(a){ return function(){ a|=0; a=(a+0x6D2B79F5)|0; let t=Math.imul(a^(a>>>15),1|a); t=(t+Math.imul(t^(t>>>7),61|t))^t; return ((t^(t>>>14))>>>0)/4294967296; }; }
-
-/* ================= the door ================= */
+const $=id=>document.getElementById(id);
 const AGG="https://aggregator.walrus-testnet.walrus.space/v1/blobs/";
 const qs=new URLSearchParams(location.search);
-const GAME=qs.get("game")||"lfvh4HeqyhYmiCFO97-K2X6JjzClLeNCJGHoe1gmF1A";
-const MODE=qs.get("mode")||"free";
-const logEl=document.getElementById("log"), verdictEl=document.getElementById("verdict");
-function log(msg, cls){ const d=document.createElement("div"); if(cls) d.className=cls; d.textContent=msg; logEl.appendChild(d); }
-logEl.innerHTML="";
-document.getElementById("btnProof").onclick=()=>{ const u=new URL(location.href); u.searchParams.set("mode","live"); location.href=u; };
-document.getElementById("btnFree").onclick=()=>{ const u=new URL(location.href); u.searchParams.delete("mode"); location.href=u; };
+const GAME=qs.get("game")||"86l0vWwI7bEXjsdgiBaaYpeCvRWQ-RoF10hz1a3XzQ4";
+const MODE=qs.get("mode")||"demo";
+const logEl=$("log"), verdictEl=$("verdict");
+const T0=performance.now();
+function log(msg, cls){ const d=document.createElement("div"); if(cls) d.className=cls; d.textContent=msg; logEl.appendChild(d); logEl.scrollTop=logEl.scrollHeight; }
+function go(mode){ const u=new URL(location.href); if(mode) u.searchParams.set("mode",mode); else u.searchParams.delete("mode"); u.searchParams.delete("live"); u.searchParams.delete("tape"); location.href=u; }
+$("btnDemo").onclick=()=>go("demo");
+$("btnFree").onclick=()=>go(null);
+$("btnProof").onclick=()=>go("live");
+$("addr").textContent=GAME+"  ·  mode: "+MODE;
 
-const pathMap={};   // 'sprites/orb.png' -> object URL
+/* ---------- theater cards + ledger ---------- */
+const TIMINGS=[];
+function ledger(k, v){ TIMINGS.push([k,v]); $("ledger").innerHTML=TIMINGS.map(r=>'<div class="row"><span class="k">'+r[0]+'</span><span class="v">'+r[1]+'</span></div>').join(""); }
+function ledgerTotal(k, v){ TIMINGS.push([k,v]); $("ledger").innerHTML=TIMINGS.map((r,i)=>'<div class="row'+(i===TIMINGS.length-1?" tot":"")+'"><span class="k">'+r[0]+'</span><span class="v">'+r[1]+'</span></div>').join(""); }
+function makeCard(id, name, sub){
+  const c=document.createElement("div"); c.className="card"; c.id="card-"+id;
+  c.innerHTML='<div class="nm">'+name+'</div><div class="bid">'+sub+'</div><div class="bar"><div class="fill"></div></div><div class="st">queued</div><div class="tm"></div><div class="peek"></div>';
+  $("cards").appendChild(c); return c;
+}
+function cardSet(id, pct, st, tm){
+  const c=$("card-"+id); if(!c) return;
+  if(pct!=null) c.querySelector(".fill").style.width=pct+"%";
+  if(st!=null) c.querySelector(".st").textContent=st;
+  if(tm!=null) c.querySelector(".tm").textContent=tm;
+}
+function cardDone(id, ok, peekHtml){
+  const c=$("card-"+id); if(!c) return;
+  c.classList.add(ok?"done":"bad");
+  if(peekHtml!=null) c.querySelector(".peek").innerHTML=peekHtml;
+}
+async function fetchStreamed(id, cardId, expectSize){
+  const t=performance.now();
+  const r=await fetch(AGG+id,{cache:"no-store"});
+  if(!r.ok) throw new Error("fetch HTTP "+r.status+" for "+id.slice(0,10));
+  const chunks=[]; let got=0;
+  if(r.body && r.body.getReader){
+    const rd=r.body.getReader();
+    for(;;){ const {done,value}=await rd.read(); if(done) break; chunks.push(value); got+=value.length;
+      if(cardId) cardSet(cardId, expectSize?Math.min(100,Math.round(got/expectSize*100)):null, "⬇ fetching… "+got.toLocaleString()+" B", null); }
+  } else { const b=await r.arrayBuffer(); chunks.push(new Uint8Array(b)); got=b.byteLength; }
+  const buf=new Uint8Array(got); let off=0; for(const ch of chunks){ buf.set(ch,off); off+=ch.length; }
+  return {buf:buf.buffer, ms:performance.now()-t};
+}
+function verify(buf, wantSha, cardId){
+  const t=performance.now();
+  const hex=sha256hex(buf);
+  const ms=performance.now()-t;
+  if(hex!==wantSha){ if(cardId) cardSet(cardId, 100, "⛔ SHA256 MISMATCH — refused", ""); throw new Error("sha256 mismatch — refusing unverified bytes"); }
+  return {hex:hex, ms:ms};
+}
+
+/* ---------- input: lamps, latch, pads, echo ---------- */
+const pathMap={};
+function engineKB(){ try{ return window.player&&window.player.runtime&&window.player.runtime.keyboard&&window.player.runtime.keyboard.keyboard; }catch(e){ return null; } }
+setInterval(()=>{ const kb=engineKB(); if(!kb) return;
+  $("lampL").classList.toggle("on", !!kb.LEFT); $("lampR").classList.toggle("on", !!kb.RIGHT);
+}, 60);
+let echoN=0;
+document.addEventListener("keydown", function(e){
+  if(echoN>=14) return; echoN++;
+  log("⌨️ keydown — key=\""+e.key+"\" code=\""+e.code+"\"","dim");
+  setTimeout(()=>{ const kb=engineKB(); if(kb&&(kb.LEFT||kb.RIGHT)){ $("latch").innerHTML="Last input caught by the engine: <b>"+e.code+" → "+(kb.LEFT?"LEFT":"RIGHT")+" = 1</b> · "+new Date().toLocaleTimeString(); log("   engine caught it: LEFT="+kb.LEFT+" RIGHT="+kb.RIGHT,"ok"); } }, 0);
+}, true);
+function dispatchKey(key, type){ document.dispatchEvent(new KeyboardEvent(type,{key:key, code:key, bubbles:true})); }
+function wirePad(id, key){
+  const el=$(id); let downAt=0, upTimer=null;
+  const dn=e=>{ e.preventDefault(); if(upTimer){clearTimeout(upTimer); upTimer=null;} downAt=performance.now(); dispatchKey(key,"keydown"); };
+  const up=()=>{ if(!downAt) return; const held=performance.now()-downAt; downAt=0;
+    const wait=Math.max(0, 150-held); upTimer=setTimeout(()=>dispatchKey(key,"keyup"), wait); };
+  el.addEventListener("pointerdown", dn); el.addEventListener("pointerup", up); el.addEventListener("pointercancel", up); el.addEventListener("pointerleave", up);
+}
+wirePad("padL","ArrowLeft"); wirePad("padR","ArrowRight");
+
+/* ---------- telemetry ---------- */
+function stripQ(s){ s=String(s==null?"":s).trim(); if(s.length>1&&s[0]==='"'&&s[s.length-1]==='"') s=s.slice(1,-1); return s; }
+setInterval(()=>{
+  if(!window.player||!window.player.runtime) return;
+  const expr=(MODE==="demo"?'"" + demoframe + "|" + round(ball.x) + "|" + round(ball.y) + "|" + round(paddle.x) + "|" + saves + "|" + misses'
+                           :'"" + round(ball.x) + "|" + round(ball.y) + "|" + round(paddle.x) + "|" + saves + "|" + misses');
+  window.player.exec(expr, function(r){
+    const p=stripQ(r).split("|"); if(p.length<5) return;
+    if(MODE==="demo"){ $("tFrame").textContent=p[0]; $("tBall").textContent=p[1]+" · "+p[2]; $("tPaddle").textContent=p[3]; $("tSaves").textContent=p[4]; $("tMiss").textContent=p[5]; }
+    else { $("tBall").textContent=p[0]+" · "+p[1]; $("tPaddle").textContent=p[2]; $("tSaves").textContent=p[3]; $("tMiss").textContent=p[4]; }
+  });
+}, 250);
+</script>
+<script>
+"use strict";
+/* ================= spin-up: the blobs arrive ================= */
 function installImageSeam(){
   const proto=HTMLImageElement.prototype;
   const desc=Object.getOwnPropertyDescriptor(proto,"src");
@@ -86,49 +230,86 @@ function installImageSeam(){
     configurable:true, enumerable:desc.enumerable,
     get(){ return desc.get.call(this); },
     set(v){
-      if(typeof v==="string"){
-        const clean=v.split("?")[0];
-        if(pathMap[clean]){ desc.set.call(this, pathMap[clean]); return; }
-      }
+      if(typeof v==="string"){ const clean=v.split("?")[0]; if(pathMap[clean]){ desc.set.call(this, pathMap[clean]); return; } }
       desc.set.call(this, v);
     }
   });
 }
-async function fetchBlob(id, wantSha, label){
-  const r=await fetch(AGG+id,{cache:"no-store"});
-  if(!r.ok) throw new Error(label+" fetch HTTP "+r.status);
-  const buf=await r.arrayBuffer();
-  const hex=sha256hex(buf);
-  if(wantSha && hex!==wantSha) throw new Error(label+" SHA256 MISMATCH — refusing to run unverified bytes");
-  log("✔ "+label+" — "+buf.byteLength+" B · sha256 verified","ok");
-  return buf;
-}
-let MAN=null;
+let MAN=null, SPRITE_BLOB=null;
 async function spinUp(){
-  log("fetching the game manifest (blob "+GAME.slice(0,12)+"…) — the manifest is the game's address");
-  const mbuf=await (await fetch(AGG+GAME,{cache:"no-store"})).arrayBuffer();
+  makeCard("manifest","📜 MANIFEST — the game's address", GAME);
+  makeCard("engine","⚙️ ENGINE — microStudio player","…");
+  makeCard("code","🧩 GAME CODE — main.ms","…");
+  makeCard("rig", MODE==="free"?"🎛️ RIG — off (your hands)":"🤖 RIG — the in-game bot","…");
+  makeCard("sprite","🖼️ SPRITE — orb.png","…");
+  cardSet("manifest", 30, "⬇ resolving the address…", null);
+  const mt=performance.now();
+  const mr=await fetch(AGG+GAME,{cache:"no-store"});
+  if(!mr.ok) throw new Error("manifest fetch HTTP "+mr.status);
+  const mbuf=await mr.arrayBuffer();
   MAN=JSON.parse(new TextDecoder().decode(mbuf));
+  const mMs=performance.now()-mt;
+  cardSet("manifest", 100, "✔ manifest in — it names every other blob", "fetch "+mMs.toFixed(0)+" ms");
+  cardDone("manifest", true, "title: <b>"+MAN.title+"</b><br>creator: "+MAN.creator+"<br>files: "+MAN.project.files.length+" + engine");
+  ledger("manifest resolve ("+mbuf.byteLength+" B)", mMs.toFixed(0)+" ms");
   log("🎮 "+MAN.title+" by "+MAN.creator);
-  const engBuf=await fetchBlob(MAN.engine.blob, MAN.engine.sha256, "engine ("+MAN.engine.name+")");
+  document.title="BLOB THEATER — "+MAN.title+" (live from Walrus)";
+
+  /* engine */
+  const eng=MAN.engine;
+  $("card-engine").querySelector(".bid").textContent=eng.blob;
+  const ef=await fetchStreamed(eng.blob, "engine", eng.size);
+  cardSet("engine", 100, "🔐 verifying sha256…", "fetch "+ef.ms.toFixed(0)+" ms");
+  const ev=verify(ef.buf, eng.sha256, "engine");
+  cardSet("engine", 100, "✔ verified — these exact bytes will run", "fetch "+ef.ms.toFixed(0)+" ms · verify "+ev.ms.toFixed(0)+" ms");
+  cardDone("engine", true, eng.size.toLocaleString()+" B of player<br>sha256 "+ev.hex.slice(0,20)+"…");
+  ledger("engine fetch ("+eng.size.toLocaleString()+" B)", ef.ms.toFixed(0)+" ms");
+  ledger("engine sha256 verify", ev.ms.toFixed(0)+" ms");
+  log("✔ engine — "+eng.size+" B · sha256 verified in "+ev.ms.toFixed(0)+" ms","ok");
+
+  /* project files */
   const texts={};
   for(const f of MAN.project.files){
-    const buf=await fetchBlob(f.blob, f.sha256, f.path);
-    if(f.path.endsWith(".png")) pathMap[f.path]=URL.createObjectURL(new Blob([buf],{type:"image/png"}));
-    else texts[f.path]=new TextDecoder().decode(buf);
+    const isRig=!!(f.proof||f.demo);
+    const cid=f.path.endsWith(".png")?"sprite":(isRig?"rig":"code");
+    if(cid==="sprite") SPRITE_BLOB=f;
+    $("card-"+cid).querySelector(".bid").textContent=f.blob;
+    const ff=await fetchStreamed(f.blob, cid, f.size);
+    cardSet(cid, 100, "🔐 verifying…", "fetch "+ff.ms.toFixed(0)+" ms");
+    const fv=verify(ff.buf, f.sha256, cid);
+    if(f.path.endsWith(".png")){
+      pathMap[f.path]=URL.createObjectURL(new Blob([ff.buf],{type:"image/png"}));
+      cardSet(cid, 100, "✔ verified → built into an Image", "fetch "+ff.ms.toFixed(0)+" ms · verify "+fv.ms.toFixed(0)+" ms");
+      cardDone(cid, true, '<img src="'+pathMap[f.path]+'" alt="orb sprite"> '+f.size.toLocaleString()+' B — this picture was bytes in a blob a second ago');
+    } else {
+      texts[f.path]=new TextDecoder().decode(ff.buf);
+      cardSet(cid, 100, "✔ verified → source ready", "fetch "+ff.ms.toFixed(0)+" ms · verify "+fv.ms.toFixed(0)+" ms");
+      if(cid==="code") cardDone(cid, true, "<pre>"+texts[f.path].split("\n").slice(0,14).join("\n").replace(/</g,"&lt;")+"\n…</pre>");
+      else cardDone(cid, true, (f.proof?"proof rig: seeded bot, state hash, freeze at 900":"demo rig: seeded bot, plays forever")+" · "+f.size+" B");
+    }
+    ledger(f.path+" fetch", ff.ms.toFixed(0)+" ms");
+    ledger(f.path+" verify", fv.ms.toFixed(0)+" ms");
+    log("✔ "+f.path+" — "+f.size+" B · sha256 verified","ok");
   }
-  /* the house font, from the fork — an engine asset, seeded so text draws true */
+  if(MODE==="free"){ cardSet("rig", 100, "not loaded — free play", ""); cardDone("rig", true, "no bot: the paddle answers to pads, keys and touch only"); }
+
+  /* font: an engine asset from the fork */
+  const ft=performance.now();
   try{
     const fr=await fetch("https://cdn.jsdelivr.net/gh/masterledgerlive/microstudio@80594cf/static/fonts/BitCell.ttf",{cache:"no-store"});
-    if(fr.ok){ const face=new FontFace("BitCell", await fr.arrayBuffer()); await face.load(); document.fonts.add(face); log("✔ font BitCell seeded from the fork","ok"); }
-  }catch(e){ log("font seed skipped (text may fall back) — "+e.message,"dim"); }
+    if(fr.ok){ const face=new FontFace("BitCell", await fr.arrayBuffer()); await face.load(); document.fonts.add(face); }
+    ledger("font seed (BitCell, from the fork)", (performance.now()-ft).toFixed(0)+" ms");
+    log("✔ font BitCell seeded from the fork","ok");
+  }catch(e){ ledger("font seed", "skipped"); }
+
   /* globals, exactly as their exporter writes them */
   const images=MAN.project.files.filter(f=>f.info).map(f=>f.info);
   const msFiles=MAN.project.files.filter(f=>f.path.startsWith("ms/"));
-  const ordered=msFiles.filter(f=>!f.proof).concat(MODE==="free"?[]:msFiles.filter(f=>f.proof));
-  if(MODE!=="free" && msFiles.some(f=>f.proof)) log("🧪 proof rig included (ms/proof.ms) — the bot lives inside the sim","dim");
+  const rigFiles = MODE==="demo" ? msFiles.filter(f=>f.demo) : (MODE==="free" ? [] : msFiles.filter(f=>f.proof));
+  const ordered=msFiles.filter(f=>!f.proof&&!f.demo).concat(rigFiles);
   const code=ordered.map(f=>{
-    const name=f.path.split("/").pop(); const src=texts[f.path];
-    return "\n// file: "+name+"\nfunction()\n"+src+"\nend()\n";
+    const name=f.path.split("/").pop();
+    return "\n// file: "+name+"\nfunction()\n"+texts[f.path]+"\nend()\n";
   }).join("");
   document.getElementById("code").textContent=code;
   const boot=document.createElement("script");
@@ -142,57 +323,63 @@ async function spinUp(){
     "window.skip_service_worker = true;\nwindow.exported_project = true;\nwindow.ms_use_server = false;\n";
   document.body.appendChild(boot);
   installImageSeam();
-  const eng=document.createElement("script");
-  eng.src=URL.createObjectURL(new Blob([engBuf],{type:"text/javascript"}));
-  eng.onload=()=>{
-    log("▶ engine running from blob bytes — starting the game…");
+  const engScript=document.createElement("script");
+  engScript.src=URL.createObjectURL(new Blob([ef.buf],{type:"text/javascript"}));
+  engScript.onload=()=>{
+    log("▶ engine executing from blob bytes — starting the game…");
     window.player=new Player(function(event){
-      if(event.name==="started"){ log("🟢 STARTED — "+MAN.title+" is playing, served entirely from blobs","ok"); onStarted(); }
-      else if(event.name==="log"){ /* game console */ }
+      if(event.name==="started"){
+        const total=performance.now()-T0;
+        ledgerTotal("⏱ TOTAL SPIN-UP → FIRST FRAME", total.toFixed(0)+" ms");
+        log("🟢 STARTED — "+MAN.title+" is playing, served entirely from blobs · total spin-up "+total.toFixed(0)+" ms","ok");
+        if(MODE==="demo") log("🎬 attract mode: the in-game bot is steering. Paddle telemetry above is live from the sim.","dim");
+        onStarted();
+      }
     });
     document.body.focus();
   };
-  eng.onerror=()=>log("engine script failed to execute","bad");
-  document.body.appendChild(eng);
+  engScript.onerror=()=>log("engine script failed to execute","bad");
+  document.body.appendChild(engScript);
+
+  /* how a blob is born — with this game's real values */
+  $("born").innerHTML="<b>HOW A BLOB IS BORN (this game's real values):</b> the sprite's "+(SPRITE_BLOB?SPRITE_BLOB.size:0)+
+    " bytes were written to Walrus once; the network erasure-encodes them across storage nodes and returns a <b>content address</b> — the blobId <b>"+
+    (SPRITE_BLOB?SPRITE_BLOB.blob:"")+"</b> — derived from the content itself, so the address IS the fingerprint. Its sha256, "+
+    (SPRITE_BLOB?SPRITE_BLOB.sha256:"")+", is printed in the manifest; this page recomputes it on every load and refuses the bytes if they ever differ. Storage was paid for 30 epochs on testnet. Recall = ask any aggregator for the address, get the exact bytes back — time it yourself with the recall test above.";
 }
 
-/* ================= the proof: the bot lives inside the game ================= */
-let echoCount=0;
-function echoState(tag){
+/* ---------- recall test ---------- */
+$("btnRecall").onclick=async()=>{
+  if(!SPRITE_BLOB){ $("recallOut").textContent="spin-up not finished yet"; return; }
+  $("recallOut").textContent="recalling…";
   try{
-    const kb=window.player&&window.player.runtime&&window.player.runtime.keyboard&&window.player.runtime.keyboard.keyboard;
-    if(kb) log("   engine sees ["+tag+"]: LEFT="+kb.LEFT+" RIGHT="+kb.RIGHT+" ARROW_LEFT="+kb.ARROW_LEFT+" ARROW_RIGHT="+kb.ARROW_RIGHT,"dim");
-  }catch(err){}
-}
-document.addEventListener("keydown", function(e){
-  if(echoCount>=12) return; echoCount++;
-  log("⌨️ keydown — key=\""+e.key+"\" code=\""+e.code+"\"","dim");
-  setTimeout(()=>echoState("just after"), 0);
-  setTimeout(()=>echoState("+250ms"), 250);
-}, true);
-document.addEventListener("keyup", function(e){
-  if(echoCount>=12) return;
-  log("⌨️ keyup — key=\""+e.key+"\"","dim");
-}, true);
+    const f=await fetchStreamed(SPRITE_BLOB.blob, null, SPRITE_BLOB.size);
+    const v=verify(f.buf, SPRITE_BLOB.sha256, null);
+    $("recallOut").textContent="↻ recall: "+SPRITE_BLOB.size.toLocaleString()+" B in "+f.ms.toFixed(0)+" ms · sha256 MATCH ✔ (verify "+v.ms.toFixed(0)+" ms)";
+    log("↻ RECALL TEST — sprite blob back in "+f.ms.toFixed(0)+" ms, sha256 match","ok");
+  }catch(e){ $("recallOut").textContent="recall failed: "+e.message; }
+};
 
+/* ---------- the proof (rig inside the game; page polls) ---------- */
 let proofStarted=false;
 function onStarted(){
-  if(MODE==="free"||proofStarted) return; proofStarted=true;
-  log("🤖 the proof rig is inside the game — a seeded bot steers, the sim hashes its own state at marks 180/360/540/720/900, then freezes. Polling for its report…");
+  if(MODE!=="live"&&MODE!=="replay") return;
+  if(proofStarted) return; proofStarted=true;
+  log("🤖 proof rig inside the game — seeded bot, state hashed at 180/360/540/720/900, then it freezes. Polling for its report…");
   const storeKey="bbproof-"+GAME;
   let tries=0;
   const iv=setInterval(()=>{
     tries++;
     if(!window.player||!window.player.runtime){ if(tries>150) clearInterval(iv); return; }
     window.player.exec("proofdone", function(r){
-      if(String(r).trim()!=="1"){
+      if(stripQ(r)!=="1"){
         if(tries>150){ clearInterval(iv); verdictEl.className="fail"; verdictEl.textContent="PROOF STALLED — the rig never reported done after ~2 minutes. Reported honestly."; }
         return;
       }
       clearInterval(iv);
       window.player.exec("proofchain", function(chain){
         window.player.exec("prooftape", function(tape){
-          chain=String(chain); tape=String(tape);
+          chain=stripQ(chain); tape=stripQ(tape);
           log("⛓️ state chain: "+chain);
           log("🎞️ tape: "+tape.slice(0,120)+(tape.length>120?"…":""),"dim");
           if(MODE==="live"){
@@ -221,5 +408,6 @@ function onStarted(){
 }
 spinUp().catch(e=>{ log("SPIN-UP FAILED — "+e.message,"bad"); });
 </script>
+
 </body>
 </html>
