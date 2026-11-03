@@ -121,6 +121,10 @@
 #mv-strip{display:flex;gap:2px;margin:12px 0 4px}
 #mv-strip .blk{flex:1;height:22px;border-radius:3px;background:#23233c;min-width:0;transition:background .25s}
 #mv-strip .blk.pull{background:#ffb020} #mv-strip .blk.dec{background:#4da3ff} #mv-strip .blk.ok{background:#00ffa3} #mv-strip .blk.bad{background:#ff5470}
+#mvMatrix{display:flex;flex-wrap:wrap;gap:2px;margin:8px 0 4px}
+#mvMatrix .mx{width:11px;height:11px;border-radius:2px;background:#14142a;transition:background .2s}
+#mvMatrix .mx.pull{background:#ffb020;box-shadow:0 0 6px #ffb020} #mvMatrix .mx.dec{background:#4da3ff;box-shadow:0 0 6px #4da3ff} #mvMatrix .mx.ok{background:#00ffa3;box-shadow:0 0 5px #00ffa388} #mvMatrix .mx.bad{background:#ff5470}
+#mvRain{font-family:ui-monospace,Menlo,monospace;font-size:11px;color:#00ffa3;line-height:1.5;min-height:18px;text-shadow:0 0 6px #00ffa366}
 .mv-stripkey{display:flex;gap:14px;font-size:.72rem;color:#9a9ac0;flex-wrap:wrap}
 .mv-dot{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:baseline}
 #mv-now{background:#05050f;border:1px solid #2c2c5e;border-left:4px solid #00ffa3;border-radius:8px;padding:10px 12px;margin:10px 0;font-size:.85rem;min-height:40px}
@@ -189,6 +193,11 @@
   <h2 style="margin:2px 0 4px" id="mv-stageTitle">THE STAGE</h2>
   <video id="mv-v" controls playsinline></video>
   <div id="mv-strip"></div>
+  <div id="mvMatrixWrap">
+    <div class="small" style="color:#9a9ac0;margin-top:6px">▦ <b style="color:#e8e8f2">THE MATRIX</b> — the film as data: one cell per section. Watch the network hand us the movie, piece by piece, code of light as it lands.</div>
+    <div id="mvMatrix"></div>
+    <div id="mvRain"></div>
+  </div>
   <div class="mv-stripkey">
     <span><span class="mv-dot" style="background:#ffb020"></span>fetching from Walrus</span>
     <span><span class="mv-dot" style="background:#4da3ff"></span>decrypting + hash check</span>
@@ -233,6 +242,14 @@
     <button class="btn alt" id="rd-game">🔎 THE READER — REASSEMBLE THE GAME</button>
     <button class="btn alt" id="rd-film">🎞️ THE READER — ONE FILM PIECE, COLD (MIRROR 2 ONLY)</button>
   </div>
+  <div class="row" style="flex-wrap:wrap;gap:6px;margin-top:8px;align-items:center">
+    <span class="small">🔑 <b>TRACK KEY</b> — an off-chain key made from data already laid down:</span>
+    <select id="tkTrack" style="background:#0d0d1f;color:#e8e8f2;border:1px solid #23234a;border-radius:6px;padding:4px 6px">
+      <option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option>
+    </select>
+    <button class="btn alt" id="tkGo">DERIVE + SEAL + OPEN</button>
+  </div>
+  <div id="tkOut" class="small" style="margin-top:6px;line-height:1.65"></div>
   <p class="small" style="margin:8px 0 0">🪪 <b>ENVELOPE CHAIN:</b> the previous edition of this very page lives on Walrus as blob <a class="mono" href="https://aggregator.walrus-testnet.walrus.space/v1/blobs/dz-EOpATjFyOhf2Cw3pxApK6ltUww6zYWGIrN8vtoIk" target="_blank" rel="noopener" style="color:#7ee787">dz-EOpATjFyOhf2… ↗</a> — each edition names the last. GitHub only delivers the letter; everything the letter <i>uses</i> — engine, code, art, font, manifests, films, the crypto library (<span id="naclSrc">loading…</span>), the reel, the root — is a Walrus blob.</p>
   <div id="csOut" class="small" style="margin-top:8px;line-height:1.65"></div>
 </div>
@@ -332,6 +349,29 @@ document.getElementById("rd-film").onclick=async()=>{
     line(sha256hex(media)===sec.media_sha256 ? "✅ <b>KEY CONTINUUM HOLDS</b> — the section key opened a cipher the finder pulled cold from a second mirror, and the media hash MATCHES the manifest. The finder needed an address and a key — never a place." : "⛔ media hash mismatch");
   }catch(e){ line("⛔ "+e.message); }
 };
+
+document.getElementById("tkGo").onclick=async()=>{
+  const tkOut=document.getElementById("tkOut"); const track=parseInt(document.getElementById("tkTrack").value,10);
+  tkOut.innerHTML="deriving from the Mother Reel — data this house already holds…";
+  try{ const f=await ladder(ROOT_ID); const bytes=new Uint8Array(f.buf);
+    const derive=(t)=>{ const pos=[]; const sample=[]; for(let i=0;i<32;i++){ const p=(t*131 + i*257 + 17) % bytes.length; pos.push(p); sample.push(bytes[p]); }
+      return {pos, key:new Uint8Array(sample)}; };
+    const d1=derive(track), d2=derive(track%8+1);
+    const keyHash=sha256hex(d1.key), key2Hash=sha256hex(d2.key);
+    const msg=new TextEncoder().encode("the matrix remembers — track "+track);
+    const nonce=new Uint8Array(sha256hexBytes(keyHash+"|nonce").slice(0,24));
+    const box=nacl.secretbox(msg, nonce, d1.key);
+    const opened=nacl.secretbox.open(box, nonce, d1.key);
+    const wrong=nacl.secretbox.open(box, nonce, d2.key);
+    const okTxt=opened && new TextDecoder().decode(opened)===new TextDecoder().decode(msg);
+    tkOut.innerHTML="laid path (track "+track+"): positions "+d1.pos.slice(0,8).join(" · ")+" · … (32 samples of "+bytes.length.toLocaleString()+" held bytes)<br>"+
+      "derived key fingerprint: <span class='mono'>"+keyHash.slice(0,24)+"…</span> — this key is stored <b>nowhere</b>; it is recomputed from held data + the track number<br>"+
+      "sealed a message with it → opened it back: "+(okTxt?"✅ <b>ROUNDTRIP HOLDS</b> — “the matrix remembers — track "+track+"”":"⛔ failed")+"<br>"+
+      "track "+(track%8+1)+" (same matrix, different path) derives <span class='mono'>"+key2Hash.slice(0,16)+"…</span> → opens it: "+(wrong?"⚠️ unexpectedly yes":"<b>NO</b> — the wrong track is the wrong key")+". The data is the vault; the track is the secret.";
+  }catch(e){ tkOut.innerHTML="⛔ "+e.message; }
+};
+function sha256hexBytes(str){ const h=sha256hex(new TextEncoder().encode(str)); const out=[]; for(let i=0;i<h.length;i+=2) out.push(parseInt(h.substr(i,2),16)); return out; }
+
 setInterval(()=>{ const el=document.getElementById("naclSrc"); if(el && window.__naclFrom && window.__naclFrom!=="pending") el.textContent="crypto library loaded from: "+window.__naclFrom; }, 600);
 })();
 </script>
@@ -505,6 +545,12 @@ async function showFilm(key){
   mq("mv-stage").scrollIntoView({behavior:"smooth"});
   const strip=mq("mv-strip"); strip.innerHTML="";
   const blocks=m.sections.map(()=>{ const d=document.createElement("div"); d.className="blk"; strip.appendChild(d); return d; });
+  const mxWrap=mq("mvMatrix"); mxWrap.innerHTML=""; const mxRain=mq("mvRain"); mxRain.innerHTML="";
+  const mxCells=m.sections.map((ss)=>{ const c=document.createElement("div"); c.className="mx"; c.title="section "+ss.n; mxWrap.appendChild(c); return c; });
+  window.__mxSet=(i,st,cipher,media,fms)=>{ const c=mxCells[i]; if(!c) return; c.className="mx "+st;
+    if(st==="ok" && cipher){ const hx=[...cipher.slice(0,8)].map(x=>x.toString(16).padStart(2,"0")).join(" ");
+      const line=document.createElement("div"); line.textContent="§"+(i+1)+" ▸ "+hx+" ▸ sha "+(media?sha256hex(media).slice(0,10):"")+"… ▸ "+Math.round(fms||0)+" ms — data, arriving as light";
+      mxRain.prepend(line); while(mxRain.children.length>9) mxRain.lastChild.remove(); } };
   const v=mq("mv-v");
   const ms=new (window.MediaSource||window.ManagedMediaSource)();
   v.src=URL.createObjectURL(ms);
@@ -523,25 +569,25 @@ async function showFilm(key){
     };
     for(let i=0;i<m.sections.length;i++){
       const s=m.sections[i];
-      blocks[i].className="blk pull";
+      blocks[i].className="blk pull"; window.__mxSet(i,"pull");
       mvNow("FETCHING","section "+s.n+"/"+m.sections.length+" · blob "+s.blob_id.slice(0,20)+"…");
       const t=performance.now();
       let cipher;
       try{
         const fb=await fetchBlobL(s.blob_id);
         cipher=new Uint8Array(fb.buf);
-      }catch(e){ blocks[i].className="blk bad"; mvLog("section "+s.n+" — FETCH FAILED: "+e.message,"bad"); break; }
+      }catch(e){ blocks[i].className="blk bad"; window.__mxSet(i,"bad"); mvLog("section "+s.n+" — FETCH FAILED: "+e.message,"bad"); break; }
       const fms=performance.now()-t; fetchMs+=fms; bytes+=cipher.length;
-      blocks[i].className="blk dec";
+      blocks[i].className="blk dec"; window.__mxSet(i,"dec");
       const plain=nacl.secretbox.open(cipher.slice(24), cipher.slice(0,24), bhex(s.key_hex));
-      if(!plain){ blocks[i].className="blk bad"; mvLog("section "+s.n+" — DECRYPT FAILED","bad"); break; }
+      if(!plain){ blocks[i].className="blk bad"; window.__mxSet(i,"bad"); mvLog("section "+s.n+" — DECRYPT FAILED","bad"); break; }
       const pt=new Uint8Array(plain);
       const media=pt.slice(pt.indexOf(10)+1);
       const t2=performance.now();
       const hashOk=sha256hex(media)===s.media_sha256;
       const vms=performance.now()-t2;
-      if(!hashOk){ blocks[i].className="blk bad"; mvLog("section "+s.n+" — SHA256 MISMATCH → REFUSED","bad"); break; }
-      blocks[i].className="blk ok"; done++;
+      if(!hashOk){ blocks[i].className="blk bad"; window.__mxSet(i,"bad"); mvLog("section "+s.n+" — SHA256 MISMATCH → REFUSED","bad"); break; }
+      blocks[i].className="blk ok"; done++; window.__mxSet(i,"ok",cipher,media,fms);
       queue.push(media); pump();
       if(done===1){ firstFrameAt=performance.now()-T0; v.play().catch(()=>{}); }
       mvNow("PLAYING FROM BLOBS","section "+s.n+" ✔ · fetched in "+fms.toFixed(0)+" ms · sha256 verified in "+vms.toFixed(0)+" ms · "+done+"/"+m.sections.length+" sections on screen");
