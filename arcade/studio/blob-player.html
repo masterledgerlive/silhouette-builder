@@ -229,6 +229,11 @@
     <button class="btn alt" id="cs-cascade">🌊 CASCADE RECALL TEST</button>
     <button class="btn alt" id="cs-heal">♻️ HEAL DEMO — RE-ANCHOR A BLOB</button>
   </div>
+  <div class="row" style="flex-wrap:wrap;gap:6px;margin-top:6px">
+    <button class="btn alt" id="rd-game">🔎 THE READER — REASSEMBLE THE GAME</button>
+    <button class="btn alt" id="rd-film">🎞️ THE READER — ONE FILM PIECE, COLD (MIRROR 2 ONLY)</button>
+  </div>
+  <p class="small" style="margin:8px 0 0">🪪 <b>ENVELOPE CHAIN:</b> the previous edition of this very page lives on Walrus as blob <a class="mono" href="https://aggregator.walrus-testnet.walrus.space/v1/blobs/dz-EOpATjFyOhf2Cw3pxApK6ltUww6zYWGIrN8vtoIk" target="_blank" rel="noopener" style="color:#7ee787">dz-EOpATjFyOhf2… ↗</a> — each edition names the last. GitHub only delivers the letter; everything the letter <i>uses</i> — engine, code, art, font, manifests, films, the crypto library (<span id="naclSrc">loading…</span>), the reel, the root — is a Walrus blob.</p>
   <div id="csOut" class="small" style="margin-top:8px;line-height:1.65"></div>
 </div>
 <script>
@@ -255,7 +260,7 @@ async function getRoot(){
 document.getElementById("cs-root").onclick=async()=>{
   out.innerHTML=""; line("🌳 fetching the MOTHER REEL <span class='mono'>"+ROOT_ID.slice(0,20)+"…</span>");
   try{ const f=await getRoot(); line("✅ root recalled in <b>"+Math.round(f.ms)+" ms</b> via "+f.via+" — it names:");
-    for(const k in ROOT.names) line("&nbsp;&nbsp;· "+k+" → <span class='mono'>"+ROOT.names[k].slice(0,24)+"…</span>");
+    for(const k in ROOT.names) line("&nbsp;&nbsp;· "+k+" → <a class='mono' href='"+AGG1+ROOT.names[k]+"' target='_blank' rel='noopener' style='color:#7ee787'>"+ROOT.names[k].slice(0,24)+"… ↗</a>");
     line("Lose a manifest? The root names its address and the vault holds its bytes. Lose the root? It is mirrored — vault, keeper record, originals archive.");
   }catch(e){ line("⛔ "+e.message); }
 };
@@ -298,6 +303,36 @@ document.getElementById("cs-heal").onclick=async()=>{
     line(id===REELHEAD ? "✅ <b>HEALED / RE-ANCHORED — the network returned the identical address</b> <span class='mono'>"+String(id).slice(0,20)+"…</span> in "+Math.round(performance.now()-t)+" ms. This is how a lost blob comes back: same bytes, same name, no new identity." : "returned a different address: <span class='mono'>"+String(id)+"</span>");
   }catch(e){ line("⛔ "+e.message+" (browser re-upload may be refused by the publisher — the keeper performs the same PUT from the vault.)"); }
 };
+
+/* ---------- THE READER: sparse pieces, fetched + verified in the open ---------- */
+const MANIFEST_ID="LqEvFDt3kGo-IqQUVoHnlWJBLJj67DHiJ0VZD1Oyw_E";
+async function fetchVia(base, id){ const t=performance.now(); const r=await fetch(base+id,{cache:"no-store"}); if(!r.ok) throw new Error("HTTP "+r.status); return {buf:await r.arrayBuffer(), ms:performance.now()-t}; }
+document.getElementById("rd-game").onclick=async()=>{
+  out.innerHTML=""; line("🔎 THE READER — the game is sparse pieces on a network. Watch it find and verify every one:");
+  try{ const mf=await ladder(MANIFEST_ID); const man=JSON.parse(new TextDecoder().decode(mf.buf));
+    const pieces=[{path:"engine (microengine.js)",blob:man.engine.blob,sha256:man.engine.sha256}].concat(man.project.files);
+    let ok=0;
+    for(let i=0;i<pieces.length;i++){ const p=pieces[i]; const base=i%2? AGG2:AGG1, via=i%2?"mirror 2 (blockscope)":"mirror 1 (walrus.space)";
+      const f=await fetchVia(base,p.blob); const good=sha256hex(f.buf)===p.sha256; if(good) ok++;
+      line("&nbsp;&nbsp;"+(i+1)+"/"+pieces.length+" <b>"+p.path+"</b> — "+f.buf.byteLength.toLocaleString()+" B in "+Math.round(f.ms)+" ms via "+via+" · sha256 "+(good?"<b style='color:#7ee787'>MATCH ✔</b>":"<b style='color:#ff5470'>MISMATCH</b>")+" · <a href='"+AGG1+p.blob+"' target='_blank' rel='noopener' style='color:#7ee787'>↗ raw on Walrus</a>"); }
+    line("🧩 <b>ASSEMBLED — "+ok+"/"+pieces.length+" pieces verified.</b> That is all spin-up ever does; the reader is the spin-up, slowed down for your eyes. No piece came from this page's server.");
+  }catch(e){ line("⛔ "+e.message); }
+};
+document.getElementById("rd-film").onclick=async()=>{
+  out.innerHTML=""; line("🎞️ THE READER — one film piece, cold, through MIRROR 2 ONLY (a finder that never heard of mirror 1):");
+  try{ if(!ROOT) await getRoot();
+    const mf=await fetchVia(AGG2, ROOT.names.bbb_revived_manifest); const man=JSON.parse(new TextDecoder().decode(mf.buf));
+    const sec=man.sections[Math.floor(Math.random()*man.sections.length)];
+    const f=await fetchVia(AGG2, sec.blob_id);
+    line("&nbsp;&nbsp;manifest via mirror 2 — "+Math.round(mf.ms)+" ms · piece §"+sec.n+" cipher — "+f.buf.byteLength.toLocaleString()+" B in "+Math.round(f.ms)+" ms via mirror 2 · <a href='"+AGG2+sec.blob_id+"' target='_blank' rel='noopener' style='color:#7ee787'>↗ the raw cipher on Walrus</a>");
+    const key=new Uint8Array(sec.key_hex.match(/../g).map(h=>parseInt(h,16))); const cipher=new Uint8Array(f.buf);
+    const plain=nacl.secretbox.open(cipher.slice(24),cipher.slice(0,24),key);
+    if(!plain) throw new Error("piece would not open — key continuum broken");
+    const media=plain.slice(plain.indexOf(10)+1);
+    line(sha256hex(media)===sec.media_sha256 ? "✅ <b>KEY CONTINUUM HOLDS</b> — the section key opened a cipher the finder pulled cold from a second mirror, and the media hash MATCHES the manifest. The finder needed an address and a key — never a place." : "⛔ media hash mismatch");
+  }catch(e){ line("⛔ "+e.message); }
+};
+setInterval(()=>{ const el=document.getElementById("naclSrc"); if(el && window.__naclFrom && window.__naclFrom!=="pending") el.textContent="crypto library loaded from: "+window.__naclFrom; }, 600);
 })();
 </script>
   <h2 style="margin:2px 0 6px">6 · THE REST OF THE BUILDING</h2>
@@ -324,7 +359,7 @@ document.getElementById("cs-heal").onclick=async()=>{
   }
   function show(it){
     det.innerHTML="<b>"+it.icon+" "+it.name+"</b> — "+it.role+"<br>"+
-      "address: <span class='mono' style='word-break:break-all'>"+it.blob+"</span><br>"+
+      "address: <span class='mono' style='word-break:break-all'>"+it.blob+"</span> · <a href='"+AGG+it.blob+"' target='_blank' rel='noopener' style='color:#7ee787'>↗ SEE THE RAW DATA ON WALRUS</a><br>"+
       (it.size?"size: <b>"+it.size.toLocaleString()+" B</b> · ":"")+
       (it.sha?"sha256: <span class='mono'>"+it.sha.slice(0,32)+"…</span><br>":"")+
       "<button class='m' id='chipFetch' style='margin-top:6px'>↻ FETCH IT NOW — cold, timed</button> <span id='chipOut'></span>";
@@ -363,7 +398,17 @@ document.getElementById("cs-heal").onclick=async()=>{
   build();
 })();
 </script>
-<script src="../blob-cinema/nacl-min.js"></script>
+<script>
+/* CLOSED LOOP: the crypto library itself is a Walrus blob (hO-AGd4-x…). GitHub serves it ONLY if both mirrors fail, and says so. */
+window.__naclFrom="pending";
+(async()=>{ const B="hO-AGd4-xHzU0ku090GxW1FjkV5zZOKBOHZzWzO3H-Q";
+  const AGGS=["https://aggregator.walrus-testnet.walrus.space/v1/blobs/","https://walrus-testnet.blockscope.net/v1/blobs/"];
+  for(const A of AGGS){ try{ const t=performance.now(); const r=await fetch(A+B,{cache:"no-store"}); if(!r.ok) continue;
+    const txt=await r.text(); const sc=document.createElement("script"); sc.textContent=txt; document.head.appendChild(sc);
+    window.__naclFrom="walrus blob · "+Math.round(performance.now()-t)+" ms"; return; }catch(e){} }
+  const sc=document.createElement("script"); sc.src="../blob-cinema/nacl-min.js"; document.head.appendChild(sc);
+  window.__naclFrom="github fallback (both mirrors failed)"; })();
+</script>
 <script>
 (function(){
 "use strict";
