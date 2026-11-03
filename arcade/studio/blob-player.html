@@ -349,8 +349,7 @@ setInterval(()=>{ const el=document.getElementById("naclSrc"); if(el && window._
 "use strict";
 /* ---------- BEHIND THE CURTAIN: clickable blob explorer ---------- */
 (function(){
-  const AGG="https://aggregator.walrus-testnet.walrus.space/v1/blobs/";
-  const chipsEl=document.getElementById("chips"), det=document.getElementById("chipDetail");
+  const AGG="https://aggregator.walrus-testnet.walrus.space/v1/blobs/";  const chipsEl=document.getElementById("chips"), det=document.getElementById("chipDetail");
   const items=[];
   function chip(it){
     const b=document.createElement("button"); b.className="m"; b.style.fontSize="12px";
@@ -415,6 +414,11 @@ window.__naclFrom="pending";
 const AGG="https://aggregator.walrus-testnet.walrus.space/v1/blobs/";
 const MAN_DIR="../blob-cinema/";
 const mq=id=>document.getElementById(id);
+const AGG2M="https://walrus-testnet.blockscope.net/v1/blobs/";
+async function fetchBlobL(id){
+  try{ const r=await fetch(AGG+id,{cache:"no-store"}); if(r.ok) return {buf:await r.arrayBuffer(), via:"mirror 1"}; if(r.status===404) throw new Error("Walrus HTTP 404"); }catch(e){ if(/404/.test(e.message)) throw e; }
+  const r=await fetch(AGG2M+id,{cache:"no-store"}); if(!r.ok) throw new Error("Walrus HTTP "+r.status+" (both mirrors)");
+  return {buf:await r.arrayBuffer(), via:"mirror 2"}; }
 const FILMS={
   bbb:{title:"🐰 BIG BUCK BUNNY", manifest:AGG+"RYVQA2RMGwT0sQgTz1ekjlhHeEC8cd0hCJbF4cxIRU8", mime:'video/mp4; codecs="avc1.64001f, mp4a.40.2"', stat:"mv-stat-bbb"},
   rh:{title:"🏹 ROBIN HOOD (1986 VHS)", manifest:AGG+"GTB6k1jJgEt4IZyAee4EKzvRVkihUWW1WjEPecLFs1o", mime:'video/mp4; codecs="avc1.640028, mp4a.40.2"', stat:"mv-stat-rh"}
@@ -492,9 +496,8 @@ async function showFilm(key){
       const t=performance.now();
       let cipher;
       try{
-        const r=await fetch(AGG+s.blob_id,{cache:"no-store"});
-        if(!r.ok) throw new Error("Walrus HTTP "+r.status);
-        cipher=new Uint8Array(await r.arrayBuffer());
+        const fb=await fetchBlobL(s.blob_id);
+        cipher=new Uint8Array(fb.buf);
       }catch(e){ blocks[i].className="blk bad"; mvLog("section "+s.n+" — FETCH FAILED: "+e.message,"bad"); break; }
       const fms=performance.now()-t; fetchMs+=fms; bytes+=cipher.length;
       blocks[i].className="blk dec";
@@ -553,9 +556,8 @@ mq("mv-btn-spot").onclick=async()=>{
   for(const i of picks){
     const s=m.sections[i];
     try{
-      const r=await fetch(AGG+s.blob_id,{cache:"no-store"});
-      if(!r.ok) throw new Error("HTTP "+r.status);
-      const cipher=new Uint8Array(await r.arrayBuffer());
+      const fb=await fetchBlobL(s.blob_id);
+      const cipher=new Uint8Array(fb.buf);
       const plain=nacl.secretbox.open(cipher.slice(24), cipher.slice(0,24), bhex(s.key_hex));
       const pt=new Uint8Array(plain);
       const media=pt.slice(pt.indexOf(10)+1);
