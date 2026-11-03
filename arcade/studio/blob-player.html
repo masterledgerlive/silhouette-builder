@@ -269,11 +269,11 @@
     for(const f of MAN.project.files){
       items.push({icon: f.path.endsWith(".png")?"🖼️":(f.proof?"🧪":(f.demo?"🤖":"🧩")), name:f.path.split("/").pop().toUpperCase(), role: f.path.endsWith(".png")?"the game's art":(f.proof?"the proof rig — bot + hash chain inside the game":(f.demo?"the attract bot — plays until you take the wheel":"the game code itself")), blob:f.blob, size:f.size, sha:f.sha256});
     }
-    fetch("../blob-cinema/bbb-revived-manifest.json",{cache:"no-store"}).then(r=>r.json()).then(b=>{
+    fetch("https://aggregator.walrus-testnet.walrus.space/v1/blobs/RYVQA2RMGwT0sQgTz1ekjlhHeEC8cd0hCJbF4cxIRU8",{cache:"no-store"}).then(r=>r.json()).then(b=>{
       items.push({icon:"🐰", name:"BUNNY §1", role:"Big Buck Bunny, section 1 of 78 — the film's first encrypted piece (its header points to section 2)", blob:b.sections[0].blob_id, size:null, sha:null});
       items.push({icon:"🐰", name:"BUNNY §78", role:"the last section — the chain's tail", blob:b.sections[77].blob_id, size:null, sha:null});
     }).catch(()=>{});
-    fetch("../blob-cinema/rh-manifest.json",{cache:"no-store"}).then(r=>r.json()).then(b=>{
+    fetch("https://aggregator.walrus-testnet.walrus.space/v1/blobs/GTB6k1jJgEt4IZyAee4EKzvRVkihUWW1WjEPecLFs1o",{cache:"no-store"}).then(r=>r.json()).then(b=>{
       items.push({icon:"🏹", name:"ROBIN HOOD §1", role:"Robin Hood, section 1 of 222 — two hours of film start here", blob:b.sections[0].blob_id, size:null, sha:null});
       items.push({icon:"🏹", name:"ROBIN HOOD §222", role:"the last of 222 — kept alive by the keeper since October", blob:b.sections[221].blob_id, size:null, sha:null});
     }).catch(()=>{});
@@ -291,8 +291,8 @@ const AGG="https://aggregator.walrus-testnet.walrus.space/v1/blobs/";
 const MAN_DIR="../blob-cinema/";
 const mq=id=>document.getElementById(id);
 const FILMS={
-  bbb:{title:"🐰 BIG BUCK BUNNY", manifest:MAN_DIR+"bbb-revived-manifest.json", mime:'video/mp4; codecs="avc1.64001f, mp4a.40.2"', stat:"mv-stat-bbb"},
-  rh:{title:"🏹 ROBIN HOOD (1986 VHS)", manifest:MAN_DIR+"rh-manifest.json", mime:'video/mp4; codecs="avc1.640028, mp4a.40.2"', stat:"mv-stat-rh"}
+  bbb:{title:"🐰 BIG BUCK BUNNY", manifest:AGG+"RYVQA2RMGwT0sQgTz1ekjlhHeEC8cd0hCJbF4cxIRU8", mime:'video/mp4; codecs="avc1.64001f, mp4a.40.2"', stat:"mv-stat-bbb"},
+  rh:{title:"🏹 ROBIN HOOD (1986 VHS)", manifest:AGG+"GTB6k1jJgEt4IZyAee4EKzvRVkihUWW1WjEPecLFs1o", mime:'video/mp4; codecs="avc1.640028, mp4a.40.2"', stat:"mv-stat-rh"}
 };
 let MANIFESTS={}, RUNNING=false;
 function sha256hex(data){
@@ -397,7 +397,7 @@ async function showFilm(key){
 }
 mq("mv-btn-dead").onclick=async()=>{
   mq("mv-stage").style.display="block";
-  const orig=await (await fetch(MAN_DIR+"bbb-orig-manifest.json",{cache:"no-store"})).json();
+  const orig=await (await fetch(AGG+"gzjnBYOVGXMVB4Pi4iHE-UiR0zmVxS09x6hUm-CbCJo",{cache:"no-store"})).json();
   const head=orig.sections[0].blob_id;
   mvNow("TESTING THE DEAD","asking Walrus for the ORIGINAL October head blob "+head.slice(0,24)+"…");
   mvLog("☠️ dead-chain test: original BBB head blob "+head);
@@ -443,8 +443,8 @@ mq("mv-btn-spot").onclick=async()=>{
 };
 (async()=>{
   try{
-    const orig=await (await fetch(MAN_DIR+"bbb-orig-manifest.json",{cache:"no-store"})).json();
-    const rev=await (await fetch(MAN_DIR+"bbb-revived-manifest.json",{cache:"no-store"})).json();
+    const orig=await (await fetch(AGG+"gzjnBYOVGXMVB4Pi4iHE-UiR0zmVxS09x6hUm-CbCJo",{cache:"no-store"})).json();
+    const rev=await (await fetch(AGG+"RYVQA2RMGwT0sQgTz1ekjlhHeEC8cd0hCJbF4cxIRU8",{cache:"no-store"})).json();
     let hashEq=0, keyEq=0, addrSame=0;
     for(let i=0;i<orig.sections.length;i++){
       if(orig.sections[i].media_sha256===rev.sections[i].media_sha256) hashEq++;
@@ -691,9 +691,9 @@ async function spinUp(){
   /* font: an engine asset from the fork */
   const ft=performance.now();
   try{
-    const fr=await fetch("https://cdn.jsdelivr.net/gh/masterledgerlive/microstudio@80594cf/static/fonts/BitCell.ttf",{cache:"no-store"});
+    let fr=await fetch(AGG+"UVOZQxe_ZX35nvdSskMn5_HPRWUHMjW0HqE2F_Qk2vo",{cache:"no-store"}); if(!fr.ok) fr=await fetch("https://cdn.jsdelivr.net/gh/masterledgerlive/microstudio@80594cf/static/fonts/BitCell.ttf",{cache:"no-store"});
     if(fr.ok){ const face=new FontFace("BitCell", await fr.arrayBuffer()); await face.load(); document.fonts.add(face); }
-    ledger("font seed (BitCell, from the fork)", (performance.now()-ft).toFixed(0)+" ms");
+    ledger("font seed (BitCell, from its blob)", (performance.now()-ft).toFixed(0)+" ms");
     log("✔ font BitCell seeded from the fork","ok");
   }catch(e){ ledger("font seed", "skipped"); }
 
