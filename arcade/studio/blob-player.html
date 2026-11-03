@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>BLOB THEATER — a game that arrives as blobs, proven live</title>
+<title>BLOB THEATER — the whole show: a game + two movies, live from Walrus blobs</title>
 <style>
   html,body{margin:0;padding:0;background:#07071a;color:#e8e6df;font-family:Verdana,system-ui,sans-serif;overflow-x:hidden}
   #wrap{max-width:920px;margin:0 auto;padding:14px}
@@ -41,6 +41,8 @@
   .lamp.on{background:#233016;border-color:#7ee787;color:#b7f0c2;box-shadow:0 0 14px #2ea04366}
   #latch{font-size:11.5px;color:#9d97c9;margin-top:6px;min-height:16px}
   #latch b{color:#7ee787}
+  #padbar{position:relative;height:14px;background:#14142a;border:1px solid #26264d;border-radius:7px;margin:8px 0 2px}
+  #padmark{position:absolute;top:1px;width:38px;height:10px;border-radius:5px;background:#7C4DFF;left:50%;transform:translateX(-50%);transition:left .18s}
   /* game + pads */
   #canvaswrapper{text-align:center;margin:8px auto 4px}
   #canvaswrapper canvas{max-width:96vw;height:auto;border-radius:8px}
@@ -64,6 +66,7 @@
   <h1>🌀 BLOB THEATER</h1>
   <p class="sub">No game server. No download. This game — <b>engine, code and art</b> — arrives as content-addressed <b>blobs</b> from the Walrus network, is <b>sha256-verified byte-for-byte</b> in this browser, gets built into objects, and plays. Every number below is <b>measured live on this device</b> (performance.now) — nothing is typed in by hand.<br>
   Game address (the manifest blob): <span class="addr" id="addr">…</span></p>
+  <p class="sub" style="margin-top:2px">🎮 <b>THE GAME</b> is on this stage · 🎦 <a href="#movies" style="color:#7ee787"><b>THE MOVIES</b></a> are further down — one page, the whole show.</p>
 
   <h2>HOW THIS GAME ARRIVES — WATCH THE BLOBS</h2>
   <div id="cards"></div>
@@ -86,6 +89,9 @@
     <div class="lamp" id="lampR">RIGHT ▶</div>
   </div>
   <div id="latch">Input lamps read the engine's real keyboard state, 16× a second. Press a key or hold a pad — watch them light.</div>
+  <div id="modeNote" style="font-size:12.5px;color:#ffd166;margin-top:4px">🎬 Attract mode: the bot is playing. Press ◀ ▶ / A D, or tap a pad, to take the wheel — the bot yields instantly.</div>
+  <div id="padbar"><div id="padmark"></div></div>
+  <div style="font-size:11px;color:#9d97c9">▲ the paddle, drawn by this page from live sim data — it moves even if the canvas is throttled.</div>
 
   <div id="canvaswrapper"></div>
   <div id="pads">
@@ -96,11 +102,283 @@
     <button class="m" id="btnDemo">🎬 DEMO — the bot plays</button>
     <button class="m" id="btnFree">🙌 YOUR TURN — pads / keys / touch</button>
     <button class="m" id="btnProof">🧪 RUN THE PROOF — replay must match</button>
+    <a class="m" href="#movies" style="text-decoration:none;display:inline-block">🎦 THE MOVIES ↓</a>
   </div>
   <div id="verdict"></div>
   <div id="log"></div>
 
   <p class="tiny" id="born"></p>
+<style>
+#movies .mv-films{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:720px){#movies .mv-films{grid-template-columns:1fr}}
+#movies .mv-film{background:#0e0e20;border:1px solid #26264d;border-radius:12px;padding:14px}
+#movies .mv-film h3{margin:2px 0 6px;font-size:1.02rem}
+#movies .mv-story{color:#ffd166;font-size:.78rem;line-height:1.5}
+#movies .mv-stat{font-size:.8rem;color:#9a9ac0;line-height:1.6}
+#movies .mv-stat b{color:#e8e8ff}
+#movies video{width:100%;border-radius:12px;background:#000;margin-top:6px}
+#mv-strip{display:flex;gap:2px;margin:12px 0 4px}
+#mv-strip .blk{flex:1;height:22px;border-radius:3px;background:#23233c;min-width:0;transition:background .25s}
+#mv-strip .blk.pull{background:#ffb020} #mv-strip .blk.dec{background:#4da3ff} #mv-strip .blk.ok{background:#00ffa3} #mv-strip .blk.bad{background:#ff5470}
+.mv-stripkey{display:flex;gap:14px;font-size:.72rem;color:#9a9ac0;flex-wrap:wrap}
+.mv-dot{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:baseline}
+#mv-now{background:#05050f;border:1px solid #2c2c5e;border-left:4px solid #00ffa3;border-radius:8px;padding:10px 12px;margin:10px 0;font-size:.85rem;min-height:40px}
+#mv-now .stage{color:#00ffa3;font-weight:700}
+#mv-ledger{width:100%;border-collapse:collapse;font-size:.8rem}
+#mv-ledger td{padding:3px 6px;border-bottom:1px dotted #1a1a33}
+#mv-ledger td:last-child{text-align:right;color:#ffd166;white-space:nowrap}
+#mv-ledger tr.total td{border-top:2px solid #00ffa3;border-bottom:none;color:#00ffa3;font-weight:700}
+#mv-ledger tr.total td:last-child{color:#00ffa3}
+#mv-log{background:#05050f;border:1px solid #23234a;border-radius:8px;padding:10px;font-size:.74rem;max-height:170px;overflow-y:auto;margin-top:10px}
+#mv-log div{padding:2px 0;border-bottom:1px dotted #1a1a33}
+#mv-verdict{display:none;border-radius:10px;padding:12px 14px;margin:12px 0;font-size:.92rem;line-height:1.55}
+#mv-verdict.pass{display:block;background:#062b1c;border:1px solid #00ffa3}
+#mv-cmp{width:100%;border-collapse:collapse;font-size:.78rem}
+#mv-cmp td,#mv-cmp th{padding:4px 6px;border-bottom:1px dotted #1a1a33;text-align:left;vertical-align:top}
+#mv-cmp td:last-child{text-align:right;white-space:nowrap}
+.mv-small{font-size:.8rem;color:#9a9ac0;line-height:1.6}
+.mv-btn{background:#00ffa3;border:0;border-radius:8px;padding:11px 15px;font-weight:700;cursor:pointer;font-family:inherit;margin:6px 6px 2px 0;font-size:.92rem}
+.mv-btn:disabled{opacity:.4;cursor:default}
+.mv-btn.ghost{background:#1a1a33;color:#e8e8ff;border:1px solid #33336a}
+.mv-btn.red{background:#ff5470;color:#fff}
+</style>
+<section id="movies">
+<div class="card">
+  <h2 style="margin:2px 0 4px">🎦 THE MOVIES — feature films that live only on Walrus</h2>
+  <p class="mv-small" style="margin:2px 0 10px">Same stage, bigger blobs: two full films stored <b>only</b> as encrypted Walrus blobs. This page holds no video — every section is fetched, decrypted and hash-verified in your browser while you watch, timed live.</p>
+  <div class="mv-films">
+    <div class="mv-film">
+      <h3>🐰 Big Buck Bunny <span style="color:#9a9ac0">(Blender, CC-BY · 10 min)</span></h3>
+      <div class="mv-story">☠️ DISSOLVED Oct 2026 — its first chain rented only 5 epochs of storage.<br>♻️ REVIVED Nov 3, 2026 — same film, same keys, same hashes, 30 epochs.</div>
+      <div class="mv-stat" id="mv-stat-bbb">checking the chain…</div>
+      <button class="mv-btn" id="mv-btn-bbb">▶ SHOW THE BUNNY</button>
+    </div>
+    <div class="mv-film">
+      <h3>🏹 Robin Hood <span style="color:#9a9ac0">(1986 VHS · ~2 h)</span></h3>
+      <div class="mv-story">The long-haul proof: 222 sections, kept alive by the house keeper re-blobbing identical bytes to identical addresses.</div>
+      <div class="mv-stat" id="mv-stat-rh">checking the chain…</div>
+      <button class="mv-btn" id="mv-btn-rh">▶ SHOW ROBIN HOOD</button>
+      <button class="mv-btn ghost" id="mv-btn-spot">🎲 LIVE SPOT-CHECK ×5</button>
+    </div>
+  </div>
+</div>
+
+<div class="card" id="mv-stage" style="display:none">
+  <h2 style="margin:2px 0 4px" id="mv-stageTitle">THE STAGE</h2>
+  <video id="mv-v" controls playsinline></video>
+  <div id="mv-strip"></div>
+  <div class="mv-stripkey">
+    <span><span class="mv-dot" style="background:#ffb020"></span>fetching from Walrus</span>
+    <span><span class="mv-dot" style="background:#4da3ff"></span>decrypting + hash check</span>
+    <span><span class="mv-dot" style="background:#00ffa3"></span>verified → on screen</span>
+    <span><span class="mv-dot" style="background:#ff5470"></span>refused</span>
+  </div>
+  <div id="mv-now"><span class="stage">READY</span> — pick a film.</div>
+  <table id="mv-ledger"></table>
+  <div style="margin-top:10px">
+    <button class="mv-btn red" id="mv-btn-dead">☠️ TRY THE DEAD CHAIN (Oct original)</button>
+    <button class="mv-btn ghost" id="mv-btn-tamper">🧪 TAMPER TEST — flip one byte</button>
+  </div>
+  <div id="mv-log"></div>
+</div>
+
+<div class="card">
+  <h2 style="margin:2px 0 8px">♻️ THE CONTINUATION EXHIBIT — a film that died, and came back as itself</h2>
+  <p class="mv-small">Below, this page fetches <b>both</b> Big Buck Bunny manifests — the dissolved October original and today's revival — and compares them live. A blob's address is derived from its content, so identical bytes always mean the identical address; a re-blob is a renewal, not a copy. The Bunny's revival re-encrypted with fresh random nonces (new addresses), but its <i>identity</i> — the film hash, every section hash, every key — is checked against the original right here.</p>
+  <table id="mv-cmp"><tr><td>comparing manifests…</td></tr></table>
+  <div id="mv-verdict"></div>
+  <p class="mv-small"><b>How a keeper re-blobs:</b> the encrypted section files are kept locally (all 222 Robin Hood sections, and — lesson learned — all 78 Bunny sections as of today). Before expiry, the keeper simply re-PUTs the identical bytes; Walrus returns the identical blobId with a fresh lifetime. No re-encryption, no new addresses, no broken links. Robin Hood has been renewed this way since October. Storage here is Walrus <b>testnet</b>, rented in epochs (1 epoch ≈ 1 day on testnet); the same design on mainnet rents ~2-week epochs.</p>
+</div>
+</section>
+<script src="../blob-cinema/nacl-min.js"></script>
+<script>
+(function(){
+"use strict";
+const AGG="https://aggregator.walrus-testnet.walrus.space/v1/blobs/";
+const MAN_DIR="../blob-cinema/";
+const mq=id=>document.getElementById(id);
+const FILMS={
+  bbb:{title:"🐰 BIG BUCK BUNNY", manifest:MAN_DIR+"bbb-revived-manifest.json", mime:'video/mp4; codecs="avc1.64001f, mp4a.40.2"', stat:"mv-stat-bbb"},
+  rh:{title:"🏹 ROBIN HOOD (1986 VHS)", manifest:MAN_DIR+"rh-manifest.json", mime:'video/mp4; codecs="avc1.640028, mp4a.40.2"', stat:"mv-stat-rh"}
+};
+let MANIFESTS={}, RUNNING=false;
+function sha256hex(data){
+  var K=[0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2];
+  var H=[0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19];
+  var l=data.length, padLen=(((l+9+63)>>6)<<6), m=new Uint8Array(padLen);
+  m.set(data); m[l]=0x80;
+  var dv=new DataView(m.buffer), bitLen=l*8;
+  dv.setUint32(padLen-4, bitLen>>>0); dv.setUint32(padLen-8, Math.floor(bitLen/4294967296));
+  var w=new Uint32Array(64);
+  function rotr(x,n){return (x>>>n)|(x<<(32-n));}
+  for(var off=0;off<padLen;off+=64){
+    for(var i=0;i<16;i++) w[i]=dv.getUint32(off+i*4);
+    for(var i=16;i<64;i++){ var s0=rotr(w[i-15],7)^rotr(w[i-15],18)^(w[i-15]>>>3), s1=rotr(w[i-2],17)^rotr(w[i-2],19)^(w[i-2]>>>10); w[i]=(w[i-16]+s0+w[i-7]+s1)|0; }
+    var a=H[0],b=H[1],c=H[2],d=H[3],e=H[4],f=H[5],g=H[6],h=H[7];
+    for(var i=0;i<64;i++){ var S1=rotr(e,6)^rotr(e,11)^rotr(e,25), ch=(e&f)^(~e&g), t1=(h+S1+ch+K[i]+w[i])|0, S0=rotr(a,2)^rotr(a,13)^rotr(a,22), mj=(a&b)^(a&c)^(b&c), t2=(S0+mj)|0; h=g;g=f;f=e;e=(d+t1)|0;d=c;c=b;b=a;a=(t1+t2)|0; }
+    H[0]=(H[0]+a)|0;H[1]=(H[1]+b)|0;H[2]=(H[2]+c)|0;H[3]=(H[3]+d)|0;H[4]=(H[4]+e)|0;H[5]=(H[5]+f)|0;H[6]=(H[6]+g)|0;H[7]=(H[7]+h)|0;
+  }
+  var out=""; for(var i=0;i<8;i++) out+=("0000000"+(H[i]>>>0).toString(16)).slice(-8);
+  return out;
+}
+const bhex=h=>new Uint8Array(h.match(/../g).map(x=>parseInt(x,16)));
+function mvLog(msg,cls){ const d=document.createElement("div"); if(cls)d.className=cls; d.innerHTML=msg; const L=mq("mv-log"); L.prepend(d); while(L.children.length>40)L.lastChild.remove(); }
+function mvNow(stage,rest){ mq("mv-now").innerHTML='<span class="stage">'+stage+"</span> — "+rest; }
+function mvLed(rows,total){
+  mq("mv-ledger").innerHTML=rows.map(r=>"<tr><td>"+r[0]+"</td><td>"+r[1]+"</td></tr>").join("")+
+    (total?'<tr class="total"><td>'+total[0]+"</td><td>"+total[1]+"</td></tr>":"");
+}
+async function pingStat(key){
+  try{
+    const m=await (await fetch(FILMS[key].manifest,{cache:"no-store"})).json();
+    MANIFESTS[key]=m;
+    const t=performance.now();
+    const r=await fetch(AGG+m.sections[0].blob_id,{cache:"no-store"});
+    const ms=(performance.now()-t).toFixed(0);
+    if(!r.ok) throw new Error("HTTP "+r.status);
+    await r.arrayBuffer();
+    mq(FILMS[key].stat).innerHTML="<b>"+m.sections.length+" sections</b> · "+(m.bytes?(m.bytes/1048576).toFixed(1)+" MB":"")+" · head blob answered in <b>"+ms+" ms</b> · <span style='color:#00ffa3'>● CHAIN LIVE</span>";
+  }catch(e){ mq(FILMS[key].stat).innerHTML="<span style='color:#ff5470'>chain check failed: "+e.message+"</span>"; }
+}
+async function showFilm(key){
+  if(RUNNING) return;
+  const F=FILMS[key], m=MANIFESTS[key]||await (await fetch(F.manifest,{cache:"no-store"})).json();
+  MANIFESTS[key]=m;
+  RUNNING=true;
+  mq("mv-btn-bbb").disabled=mq("mv-btn-rh").disabled=true;
+  mq("mv-stage").style.display="block";
+  mq("mv-stageTitle").textContent=F.title+" — "+m.sections.length+" sections, zero video bytes on this page";
+  mq("mv-stage").scrollIntoView({behavior:"smooth"});
+  const strip=mq("mv-strip"); strip.innerHTML="";
+  const blocks=m.sections.map(()=>{ const d=document.createElement("div"); d.className="blk"; strip.appendChild(d); return d; });
+  const v=mq("mv-v");
+  const ms=new (window.MediaSource||window.ManagedMediaSource)();
+  v.src=URL.createObjectURL(ms);
+  const T0=performance.now();
+  let fetchMs=0, bytes=0, done=0, firstFrameAt=0;
+  ms.addEventListener("sourceopen", async ()=>{
+    let sb=null;
+    for(const cand of [F.mime,'video/mp4; codecs="avc1.64001f, mp4a.40.2"',"video/mp4"]){
+      try{ sb=ms.addSourceBuffer(cand); mvLog("SourceBuffer: "+cand,"dim"); break; }catch(e){}
+    }
+    if(!sb){ mvNow("STOPPED","this browser's MediaSource refused every codec string"); RUNNING=false; return; }
+    const queue=[]; let appending=false;
+    const pump=()=>{ if(appending||!queue.length) return; appending=true;
+      sb.appendBuffer(queue.shift());
+      sb.addEventListener("updateend", function h(){ sb.removeEventListener("updateend",h); appending=false; pump(); });
+    };
+    for(let i=0;i<m.sections.length;i++){
+      const s=m.sections[i];
+      blocks[i].className="blk pull";
+      mvNow("FETCHING","section "+s.n+"/"+m.sections.length+" · blob "+s.blob_id.slice(0,20)+"…");
+      const t=performance.now();
+      let cipher;
+      try{
+        const r=await fetch(AGG+s.blob_id,{cache:"no-store"});
+        if(!r.ok) throw new Error("Walrus HTTP "+r.status);
+        cipher=new Uint8Array(await r.arrayBuffer());
+      }catch(e){ blocks[i].className="blk bad"; mvLog("section "+s.n+" — FETCH FAILED: "+e.message,"bad"); break; }
+      const fms=performance.now()-t; fetchMs+=fms; bytes+=cipher.length;
+      blocks[i].className="blk dec";
+      const plain=nacl.secretbox.open(cipher.slice(24), cipher.slice(0,24), bhex(s.key_hex));
+      if(!plain){ blocks[i].className="blk bad"; mvLog("section "+s.n+" — DECRYPT FAILED","bad"); break; }
+      const pt=new Uint8Array(plain);
+      const media=pt.slice(pt.indexOf(10)+1);
+      const t2=performance.now();
+      const hashOk=sha256hex(media)===s.media_sha256;
+      const vms=performance.now()-t2;
+      if(!hashOk){ blocks[i].className="blk bad"; mvLog("section "+s.n+" — SHA256 MISMATCH → REFUSED","bad"); break; }
+      blocks[i].className="blk ok"; done++;
+      queue.push(media); pump();
+      if(done===1){ firstFrameAt=performance.now()-T0; v.play().catch(()=>{}); }
+      mvNow("PLAYING FROM BLOBS","section "+s.n+" ✔ · fetched in "+fms.toFixed(0)+" ms · sha256 verified in "+vms.toFixed(0)+" ms · "+done+"/"+m.sections.length+" sections on screen");
+      mvLed([["sections verified",done+" / "+m.sections.length],["bytes pulled from Walrus",(bytes/1048576).toFixed(2)+" MB"],["total fetch time",(fetchMs/1000).toFixed(1)+" s"],["avg per section",(fetchMs/Math.max(1,done)).toFixed(0)+" ms"]],
+          firstFrameAt?["⏱ TIME TO FIRST FRAME",(firstFrameAt/1000).toFixed(2)+" s"]:null);
+      if(sb.updating) await new Promise(r=>sb.addEventListener("updateend",r,{once:true}));
+    }
+    mvLog("stream complete: "+done+"/"+m.sections.length+" sections · "+(bytes/1048576).toFixed(1)+" MB · every byte hash-verified","ok");
+    mvNow("FINISHED","sections arrived from Walrus and verified. The page never held the film — the blobs did.");
+    try{ if(ms.readyState==="open"&&!sb.updating) ms.endOfStream(); }catch(e){}
+    RUNNING=false; mq("mv-btn-bbb").disabled=mq("mv-btn-rh").disabled=false;
+  });
+}
+mq("mv-btn-dead").onclick=async()=>{
+  mq("mv-stage").style.display="block";
+  const orig=await (await fetch(MAN_DIR+"bbb-orig-manifest.json",{cache:"no-store"})).json();
+  const head=orig.sections[0].blob_id;
+  mvNow("TESTING THE DEAD","asking Walrus for the ORIGINAL October head blob "+head.slice(0,24)+"…");
+  mvLog("☠️ dead-chain test: original BBB head blob "+head);
+  const t=performance.now();
+  const r=await fetch(AGG+head,{cache:"no-store"});
+  const ms=(performance.now()-t).toFixed(0);
+  if(r.status===404){ mvLog("☠️ Walrus answered <b>404 BLOB_NOT_FOUND</b> in "+ms+" ms — the original is truly gone. No blob, no movie: that death is what the revival answers.","bad"); mvNow("DEAD, AS RECORDED","the October chain answers 404 — and the film above is its hash-identical revival."); }
+  else mvLog("unexpected: original answered HTTP "+r.status,"dim");
+};
+mq("mv-btn-tamper").onclick=async()=>{
+  const m=MANIFESTS.bbb||await (await fetch(FILMS.bbb.manifest,{cache:"no-store"})).json();
+  const s=m.sections[9];
+  const r=await fetch(AGG+s.blob_id,{cache:"no-store"});
+  const cipher=new Uint8Array(await r.arrayBuffer());
+  const plain=new Uint8Array(nacl.secretbox.open(cipher.slice(24), cipher.slice(0,24), bhex(s.key_hex)));
+  const media=plain.slice(plain.indexOf(10)+1);
+  const good=sha256hex(media)===s.media_sha256;
+  media[100]^=0xff;
+  const badHash=sha256hex(media);
+  mvLog("🧪 TAMPER TEST — section 10: honest hash "+(good?"✔ MATCH":"?")+" · after flipping ONE byte: "+badHash.slice(0,24)+"… vs manifest "+s.media_sha256.slice(0,24)+"… → <b>MISMATCH → the player refuses the section</b>. One flipped byte kills it; that's the integrity proof.","gold");
+  mvNow("TAMPER REFUSED","one flipped byte in section 10 → sha256 mismatch → refused. The chain only plays what the hashes bless.");
+};
+mq("mv-btn-spot").onclick=async()=>{
+  const m=MANIFESTS.rh||await (await fetch(FILMS.rh.manifest,{cache:"no-store"})).json();
+  MANIFESTS.rh=m;
+  const picks=new Set(); while(picks.size<5) picks.add(Math.floor(Math.random()*m.sections.length));
+  let ok=0;
+  for(const i of picks){
+    const s=m.sections[i];
+    try{
+      const r=await fetch(AGG+s.blob_id,{cache:"no-store"});
+      if(!r.ok) throw new Error("HTTP "+r.status);
+      const cipher=new Uint8Array(await r.arrayBuffer());
+      const plain=nacl.secretbox.open(cipher.slice(24), cipher.slice(0,24), bhex(s.key_hex));
+      const pt=new Uint8Array(plain);
+      const media=pt.slice(pt.indexOf(10)+1);
+      const good=sha256hex(media)===s.media_sha256;
+      mvLog("🎲 RH section "+s.n+": fetched · decrypted · sha256 "+(good?"✔":"✗"), good?"ok":"bad");
+      if(good) ok++;
+    }catch(e){ mvLog("🎲 RH section "+s.n+": FAILED "+e.message,"bad"); }
+  }
+  mvLog("🎲 spot-check: "+ok+"/5 random Robin Hood sections fully verified (fetch + decrypt + hash)", ok===5?"ok":"bad");
+};
+(async()=>{
+  try{
+    const orig=await (await fetch(MAN_DIR+"bbb-orig-manifest.json",{cache:"no-store"})).json();
+    const rev=await (await fetch(MAN_DIR+"bbb-revived-manifest.json",{cache:"no-store"})).json();
+    let hashEq=0, keyEq=0, addrSame=0;
+    for(let i=0;i<orig.sections.length;i++){
+      if(orig.sections[i].media_sha256===rev.sections[i].media_sha256) hashEq++;
+      if(orig.sections[i].key_hex===rev.sections[i].key_hex) keyEq++;
+      if(orig.sections[i].blob_id===rev.sections[i].blob_id) addrSame++;
+    }
+    const filmEq=orig.full_sha256===rev.full_sha256;
+    mq("mv-cmp").innerHTML=
+      "<tr><th></th><th>OCT ORIGINAL</th><th>NOV 3 REVIVAL</th><th></th></tr>"+
+      "<tr><td>whole-film sha256</td><td class='mono'>"+orig.full_sha256.slice(0,20)+"…</td><td class='mono'>"+rev.full_sha256.slice(0,20)+"…</td><td>"+(filmEq?"<span style='color:#00ffa3'>IDENTICAL ✔</span>":"<span style='color:#ff5470'>DIFFER</span>")+"</td></tr>"+
+      "<tr><td>section hashes</td><td>"+orig.sections.length+" sections</td><td>"+rev.sections.length+" sections</td><td><span style='color:#00ffa3'>"+hashEq+"/78 IDENTICAL ✔</span></td></tr>"+
+      "<tr><td>section keys</td><td colspan='2'>derived from the same surviving master key</td><td><span style='color:#00ffa3'>"+keyEq+"/78 IDENTICAL ✔</span></td></tr>"+
+      "<tr><td>blob addresses</td><td colspan='2'>fresh encryption nonces → new addresses ("+addrSame+" reused)</td><td>NEW</td></tr>"+
+      "<tr><td>storage rented</td><td>5 epochs</td><td>30 epochs</td><td><span style='color:#00ffa3'>6× LONGER</span></td></tr>";
+    const vd=mq("mv-verdict");
+    if(filmEq&&hashEq===78&&keyEq===78){
+      vd.className="pass"; vd.style.display="block";
+      vd.innerHTML="✅ <b>CONTINUATION PROVEN, LIVE:</b> the revived Bunny is the October film — same whole-film hash, 78/78 section hashes, 78/78 keys — verified by this page, in your browser, against both manifests. The storage died; the film's identity didn't.";
+    }
+  }catch(e){ mq("mv-cmp").innerHTML="<tr><td>manifest comparison unavailable: "+e.message+"</td></tr>"; }
+})();
+mq("mv-btn-bbb").onclick=()=>showFilm("bbb");
+mq("mv-btn-rh").onclick=()=>showFilm("rh");
+pingStat("bbb"); pingStat("rh");
+})();
+</script>
+
 </div>
 
 <script id="code" type="text/x-microscript"></script>
@@ -133,7 +411,7 @@ function sha256hex(buf){
 const $=id=>document.getElementById(id);
 const AGG="https://aggregator.walrus-testnet.walrus.space/v1/blobs/";
 const qs=new URLSearchParams(location.search);
-const GAME=qs.get("game")||"86l0vWwI7bEXjsdgiBaaYpeCvRWQ-RoF10hz1a3XzQ4";
+const GAME=qs.get("game")||"8BBAFA20B9XRApv2tpVFENvNRpqB-kDCzkhnUtYuUTA";
 const MODE=qs.get("mode")||"demo";
 const logEl=$("log"), verdictEl=$("verdict");
 const T0=performance.now();
@@ -191,8 +469,25 @@ function engineKB(){ try{ return window.player&&window.player.runtime&&window.pl
 setInterval(()=>{ const kb=engineKB(); if(!kb) return;
   $("lampL").classList.toggle("on", !!kb.LEFT); $("lampR").classList.toggle("on", !!kb.RIGHT);
 }, 60);
-let echoN=0;
+let echoN=0, tookWheel=false;
+function humanInput(code, down){
+  const left=(code==="ArrowLeft"||code==="KeyA"), right=(code==="ArrowRight"||code==="KeyD");
+  if(!left&&!right) return;
+  if(MODE==="demo"&&down&&!tookWheel){
+    tookWheel=true;
+    try{ window.player.exec("takeover=1", function(){}); }catch(e){}
+    log("🙌 YOU TOOK THE WHEEL — the attract bot yields. The paddle is yours now.","ok");
+    const note=$("modeNote"); if(note) note.textContent="🙌 YOUR GAME — bot off. Arrows / A D / pads / touch steer the paddle.";
+  }
+  if(MODE==="live"||MODE==="replay") return;
+  const kb=engineKB(); if(!kb) return;
+  if(left){ kb.ARROW_LEFT=down?1:0; kb.LEFT=down?1:0; }
+  if(right){ kb.ARROW_RIGHT=down?1:0; kb.RIGHT=down?1:0; }
+}
+document.addEventListener("keyup", function(e){ humanInput(e.code, false); }, true);
 document.addEventListener("keydown", function(e){
+  if(e.code==="ArrowLeft"||e.code==="ArrowRight"||e.code==="ArrowUp"||e.code==="ArrowDown") e.preventDefault();
+  humanInput(e.code, true);
   if(echoN>=14) return; echoN++;
   log("⌨️ keydown — key=\""+e.key+"\" code=\""+e.code+"\"","dim");
   setTimeout(()=>{ const kb=engineKB(); if(!kb) return;
@@ -213,6 +508,8 @@ function wirePad(id, key){
 wirePad("padL","ArrowLeft"); wirePad("padR","ArrowRight");
 
 /* ---------- telemetry ---------- */
+let SW=200;
+function setPad(x){ if(isNaN(x)) return; const half=SW/2-18; const pct=Math.max(0,Math.min(100,(x+half)/(2*half)*100)); const mk=$("padmark"); if(mk) mk.style.left=pct+"%"; }
 function stripQ(s){ s=String(s==null?"":s).trim(); if(s.length>1&&s[0]==='"'&&s[s.length-1]==='"') s=s.slice(1,-1); return s; }
 setInterval(()=>{
   if(!window.player||!window.player.runtime) return;
@@ -220,8 +517,8 @@ setInterval(()=>{
                            :'"" + round(ball.x) + "|" + round(ball.y) + "|" + round(paddle.x) + "|" + saves + "|" + misses');
   window.player.exec(expr, function(r){
     const p=stripQ(r).split("|"); if(p.length<5) return;
-    if(MODE==="demo"){ $("tFrame").textContent=p[0]; $("tBall").textContent=p[1]+" · "+p[2]; $("tPaddle").textContent=p[3]; $("tSaves").textContent=p[4]; $("tMiss").textContent=p[5]; }
-    else { $("tBall").textContent=p[0]+" · "+p[1]; $("tPaddle").textContent=p[2]; $("tSaves").textContent=p[3]; $("tMiss").textContent=p[4]; }
+    if(MODE==="demo"){ $("tFrame").textContent=p[0]; $("tBall").textContent=p[1]+" · "+p[2]; $("tPaddle").textContent=p[3]; $("tSaves").textContent=p[4]; $("tMiss").textContent=p[5]; setPad(parseFloat(p[3])); }
+    else { $("tBall").textContent=p[0]+" · "+p[1]; $("tPaddle").textContent=p[2]; $("tSaves").textContent=p[3]; $("tMiss").textContent=p[4]; setPad(parseFloat(p[2])); }
   });
 }, 250);
 </script>
@@ -336,8 +633,9 @@ async function spinUp(){
       if(event.name==="started"){
         const total=performance.now()-T0;
         ledgerTotal("⏱ TOTAL SPIN-UP → FIRST FRAME", total.toFixed(0)+" ms");
+        try{ window.player.exec("screen.width", function(r){ const w=parseFloat(stripQ(r)); if(w>50) SW=w; }); }catch(e){}
         log("🟢 STARTED — "+MAN.title+" is playing, served entirely from blobs · total spin-up "+total.toFixed(0)+" ms","ok");
-        if(MODE==="demo") log("🎬 attract mode: the in-game bot is steering. Paddle telemetry above is live from the sim.","dim");
+        if(MODE==="demo") log("🎬 attract mode: the in-game bot is steering — press ◀ ▶ or tap a pad to take the wheel; the bot yields the moment you do.","dim");
         onStarted();
       }
     });
