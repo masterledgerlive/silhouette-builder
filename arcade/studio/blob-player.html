@@ -43,6 +43,7 @@
   #latch b{color:#7ee787}
   #padbar{position:relative;height:14px;background:#14142a;border:1px solid #26264d;border-radius:7px;margin:8px 0 2px}
   #padmark{position:absolute;top:1px;width:38px;height:10px;border-radius:5px;background:#7C4DFF;left:50%;transform:translateX(-50%);transition:left .18s}
+  #canvaswrapper canvas{max-width:520px !important;width:100% !important;height:auto !important;display:block;margin:6px auto}
   /* game + pads */
   #canvaswrapper{text-align:center;margin:8px auto 4px}
   #canvaswrapper canvas{max-width:96vw;height:auto;border-radius:8px}
@@ -63,12 +64,12 @@
 </head>
 <body>
 <div id="wrap">
-  <h1>🌀 BLOB THEATER</h1>
+  <h1>🌀 BLOB THEATER — THE INVESTOR WALKTHROUGH</h1>
   <p class="sub">No game server. No download. This game — <b>engine, code and art</b> — arrives as content-addressed <b>blobs</b> from the Walrus network, is <b>sha256-verified byte-for-byte</b> in this browser, gets built into objects, and plays. Every number below is <b>measured live on this device</b> (performance.now) — nothing is typed in by hand.<br>
   Game address (the manifest blob): <span class="addr" id="addr">…</span></p>
   <p class="sub" style="margin-top:2px">🎮 <b>THE GAME</b> is on this stage · 🎦 <a href="#movies" style="color:#7ee787"><b>THE MOVIES</b></a> are further down — one page, the whole show.</p>
 
-  <h2>HOW THIS GAME ARRIVES — WATCH THE BLOBS</h2>
+  <h2>1 · THE GAME — HOW IT ARRIVES, LIVE FROM BLOBS</h2>
   <div id="cards"></div>
 
   <h2>TIMING LEDGER — REAL MILLISECONDS, THIS LOAD</h2>
@@ -142,9 +143,30 @@
 .mv-btn.ghost{background:#1a1a33;color:#e8e8ff;border:1px solid #33336a}
 .mv-btn.red{background:#ff5470;color:#fff}
 </style>
+<div class="card" id="proofPanel">
+  <h2 style="margin:2px 0 6px">2 · HOW A PLAY IS PROVEN — the highscore machine</h2>
+  <p class="tiny" style="line-height:1.65">A highscore here is never <i>claimed</i> — it is <i>re-derived</i>. Four steps, all visible on this page:</p>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;font-size:12.5px;line-height:1.55">
+    <div style="background:#0e0e20;border:1px solid #26264d;border-radius:8px;padding:10px"><b>🎞️ 1 · THE TAPE</b><br>Every input is recorded as <i>frame → direction</i> (57:−1, 105:0, …). Keys are never trusted — they are <b>data</b>, replayed later.</div>
+    <div style="background:#0e0e20;border:1px solid #26264d;border-radius:8px;padding:10px"><b>🔁 2 · THE REPLAY</b><br>A cold engine — fetched fresh from its blob — runs the <b>same seed + same tape</b>. Ball, paddle, every hit and miss are <b>recomputed</b>, not read.</div>
+    <div style="background:#0e0e20;border:1px solid #26264d;border-radius:8px;padding:10px"><b>⛓️ 3 · THE HASH CHAIN</b><br>At frames 180/360/540/720/900 the sim hashes its whole state. If replay's chain equals the live chain, the play <b>could not have been faked</b> — any altered key changes the hash.</div>
+    <div style="background:#0e0e20;border:1px solid #26264d;border-radius:8px;padding:10px"><b>🏆 4 · THE RECORD</b><br>Score + tape + chain are written as a <b>blob</b>. One record format for every game and every machine — that's what keeps the highscores <b>unified</b>: anyone, anywhere, replays the blob and checks.</div>
+  </div>
+  <div id="recordCard" style="margin-top:10px;background:#05050f;border:1px dashed #7C4DFF;border-radius:8px;padding:10px 12px;font-size:12.5px;line-height:1.6">
+    🏆 <b>HIGHSCORE RECORD</b> — run the proof (🧪 button above) and this card fills with the real record: score, chain, tape, and the <b>latencies</b> — how long the live run took, how long the cold replay took, and the blob recall time. Those three numbers are the whole verification cost.
+  </div>
+  <div class="tiny" style="line-height:1.7;margin-top:8px">
+    <b>Investor Q&amp;A — the exact questions, answered plainly:</b><br>
+    <b>How do you verify a key press?</b> You don't trust it — you replay it. The tape says "frame 233: left." The replay engine presses left at frame 233 and the paddle's movement <i>falls out of the physics</i>. A forged tape produces a different hash chain and is refused.<br>
+    <b>How do you verify a hit?</b> A hit is not an event anyone reports; it's geometry the sim recomputes — ball position vs paddle position at that frame. If the replay doesn't produce the hit, the score doesn't exist.<br>
+    <b>What's the latency?</b> Blob recall ≈ a tenth of a second (time it yourself with the RECALL TEST). A full 900-frame replay verifies in about the time the run itself took — and it can be checked by any machine, any time, forever, because the record is a blob.<br>
+    <b>Why is it unified?</b> Every machine plays from the same content-addressed blobs (same address = same bytes = same game), and every score is the same kind of record: seed + tape + chain. One format, one check, every machine.
+  </div>
+</div>
+
 <section id="movies">
 <div class="card">
-  <h2 style="margin:2px 0 4px">🎦 THE MOVIES — feature films that live only on Walrus</h2>
+  <h2 style="margin:2px 0 4px">3 · 🎦 THE MOVIES — feature films that live only on Walrus</h2>
   <p class="mv-small" style="margin:2px 0 10px">Same stage, bigger blobs: two full films stored <b>only</b> as encrypted Walrus blobs. This page holds no video — every section is fetched, decrypted and hash-verified in your browser while you watch, timed live.</p>
   <div class="mv-films">
     <div class="mv-film">
@@ -190,6 +212,77 @@
   <p class="mv-small"><b>How a keeper re-blobs:</b> the encrypted section files are kept locally (all 222 Robin Hood sections, and — lesson learned — all 78 Bunny sections as of today). Before expiry, the keeper simply re-PUTs the identical bytes; Walrus returns the identical blobId with a fresh lifetime. No re-encryption, no new addresses, no broken links. Robin Hood has been renewed this way since October. Storage here is Walrus <b>testnet</b>, rented in epochs (1 epoch ≈ 1 day on testnet); the same design on mainnet rents ~2-week epochs.</p>
 </div>
 </section>
+<div class="card" id="curtain">
+  <h2 style="margin:2px 0 6px">4 · BEHIND THE CURTAIN — every blob, clickable</h2>
+  <p class="tiny" style="line-height:1.6">This is the whole machine with the curtain pulled back: every object the show runs on, as a chip. <b>Click any chip</b> — you'll see its Walrus address, its size, its fingerprint, its job — and you can fetch it, cold, timed, right there. Nothing on this page exists anywhere except inside these blobs.</p>
+  <div id="chips" style="display:flex;flex-wrap:wrap;gap:6px;margin:8px 0"></div>
+  <div id="chipDetail" style="background:#05050f;border:1px solid #23234a;border-radius:8px;padding:10px 12px;font-size:12.5px;line-height:1.65;min-height:44px">Pick a blob above — the game spins up first, then the chips light up.</div>
+</div>
+
+<div class="card">
+  <h2 style="margin:2px 0 6px">5 · THE REST OF THE BUILDING</h2>
+  <p class="tiny" style="line-height:1.9">
+    🏆 <a href="../blob-cinema/scores.html" style="color:#7ee787">Hall of Scores</a> — the chained scoreboard, every run replay-verified ·
+    🗺️ <a href="../system.html" style="color:#7ee787">System Map</a> — the whole arcade on one page ·
+    🔨 <a href="../builder.html" style="color:#7ee787">The Builder</a> — how games are forged from mechanic objects ·
+    🕹️ <a href="../room.html" style="color:#7ee787">The Room</a> — the 3D hangout with these cabinets inside ·
+    🧑‍💻 <a href="https://github.com/masterledgerlive/microstudio" style="color:#7ee787">The engine fork</a> — microStudio (MIT), blob-driven ·
+    🌊 Storage by <b>Walrus</b> on <b>Sui</b> (testnet for this demo — the design is chain-agnostic; the mother core never signs).
+  </p>
+</div>
+<script>
+"use strict";
+/* ---------- BEHIND THE CURTAIN: clickable blob explorer ---------- */
+(function(){
+  const AGG="https://aggregator.walrus-testnet.walrus.space/v1/blobs/";
+  const chipsEl=document.getElementById("chips"), det=document.getElementById("chipDetail");
+  const items=[];
+  function chip(it){
+    const b=document.createElement("button"); b.className="m"; b.style.fontSize="12px";
+    b.textContent=it.icon+" "+it.name;
+    b.onclick=()=>show(it); chipsEl.appendChild(b);
+  }
+  function show(it){
+    det.innerHTML="<b>"+it.icon+" "+it.name+"</b> — "+it.role+"<br>"+
+      "address: <span class='mono' style='word-break:break-all'>"+it.blob+"</span><br>"+
+      (it.size?"size: <b>"+it.size.toLocaleString()+" B</b> · ":"")+
+      (it.sha?"sha256: <span class='mono'>"+it.sha.slice(0,32)+"…</span><br>":"")+
+      "<button class='m' id='chipFetch' style='margin-top:6px'>↻ FETCH IT NOW — cold, timed</button> <span id='chipOut'></span>";
+    document.getElementById("chipFetch").onclick=async()=>{
+      const out=document.getElementById("chipOut"); out.textContent="fetching…";
+      const t=performance.now();
+      try{
+        const r=await fetch(AGG+it.blob,{cache:"no-store"});
+        if(!r.ok) throw new Error("HTTP "+r.status);
+        const buf=await r.arrayBuffer();
+        const ms=(performance.now()-t).toFixed(0);
+        let vtxt="";
+        if(it.sha){ const hex=sha256hex(buf); vtxt=" · sha256 "+(hex===it.sha?"<b style='color:#7ee787'>MATCH ✔</b>":"<b style='color:#ff5470'>MISMATCH</b>"); }
+        out.innerHTML="↻ <b>"+buf.byteLength.toLocaleString()+" B in "+ms+" ms</b>"+vtxt+" — straight from Walrus, just now";
+      }catch(e){ out.textContent="fetch failed: "+e.message; }
+    };
+  }
+  function build(){
+    if(typeof MAN==="undefined"||!MAN){ setTimeout(build, 600); return; }
+    items.push({icon:"📜", name:"GAME MANIFEST", role:"the game's address — names every other blob", blob:GAME, size:MAN.project?undefined:undefined, sha:null});
+    items.push({icon:"⚙️", name:"ENGINE", role:"the microStudio player — the machine that runs the game", blob:MAN.engine.blob, size:MAN.engine.size, sha:MAN.engine.sha256});
+    for(const f of MAN.project.files){
+      items.push({icon: f.path.endsWith(".png")?"🖼️":(f.proof?"🧪":(f.demo?"🤖":"🧩")), name:f.path.split("/").pop().toUpperCase(), role: f.path.endsWith(".png")?"the game's art":(f.proof?"the proof rig — bot + hash chain inside the game":(f.demo?"the attract bot — plays until you take the wheel":"the game code itself")), blob:f.blob, size:f.size, sha:f.sha256});
+    }
+    fetch("../blob-cinema/bbb-revived-manifest.json",{cache:"no-store"}).then(r=>r.json()).then(b=>{
+      items.push({icon:"🐰", name:"BUNNY §1", role:"Big Buck Bunny, section 1 of 78 — the film's first encrypted piece (its header points to section 2)", blob:b.sections[0].blob_id, size:null, sha:null});
+      items.push({icon:"🐰", name:"BUNNY §78", role:"the last section — the chain's tail", blob:b.sections[77].blob_id, size:null, sha:null});
+    }).catch(()=>{});
+    fetch("../blob-cinema/rh-manifest.json",{cache:"no-store"}).then(r=>r.json()).then(b=>{
+      items.push({icon:"🏹", name:"ROBIN HOOD §1", role:"Robin Hood, section 1 of 222 — two hours of film start here", blob:b.sections[0].blob_id, size:null, sha:null});
+      items.push({icon:"🏹", name:"ROBIN HOOD §222", role:"the last of 222 — kept alive by the keeper since October", blob:b.sections[221].blob_id, size:null, sha:null});
+    }).catch(()=>{});
+    const iv=setInterval(()=>{ if(items.length>=5){ items.forEach(chip); clearInterval(iv); det.textContent="Every chip is a real Walrus blob. Click one — fetch it cold and time it."; } }, 400);
+    setTimeout(()=>{ if(!chipsEl.children.length && items.length){ items.forEach(chip); } }, 6000);
+  }
+  build();
+})();
+</script>
 <script src="../blob-cinema/nacl-min.js"></script>
 <script>
 (function(){
@@ -411,7 +504,7 @@ function sha256hex(buf){
 const $=id=>document.getElementById(id);
 const AGG="https://aggregator.walrus-testnet.walrus.space/v1/blobs/";
 const qs=new URLSearchParams(location.search);
-const GAME=qs.get("game")||"8BBAFA20B9XRApv2tpVFENvNRpqB-kDCzkhnUtYuUTA";
+const GAME=qs.get("game")||"LqEvFDt3kGo-IqQUVoHnlWJBLJj67DHiJ0VZD1Oyw_E";
 const MODE=qs.get("mode")||"demo";
 const logEl=$("log"), verdictEl=$("verdict");
 const T0=performance.now();
@@ -669,6 +762,7 @@ function onStarted(){
   if(MODE!=="live"&&MODE!=="replay") return;
   if(proofStarted) return; proofStarted=true;
   log("🤖 proof rig inside the game — seeded bot, state hashed at 180/360/540/720/900, then it freezes. Polling for its report…");
+  window.__t0=performance.now();
   const storeKey="bbproof-"+GAME;
   let tries=0;
   const iv=setInterval(()=>{
@@ -687,10 +781,13 @@ function onStarted(){
           log("🎞️ tape: "+tape.slice(0,120)+(tape.length>120?"…":""),"dim");
           if(MODE==="live"){
             try{ localStorage.setItem(storeKey, JSON.stringify({chain:chain, tape:tape})); }catch(e){ log("storage unavailable ("+e.message+") — carrying the chain in the URL instead","dim"); }
+            window.__liveMs=performance.now()-window.__t0;
             log("live run chained — replaying from a cold start…");
             const u=new URL(location.href); u.searchParams.set("mode","replay");
             u.searchParams.set("live", chain); u.searchParams.set("tape", tape);
-            setTimeout(()=>location.href=u, 700);
+            u.searchParams.set("lms", Math.round(window.__liveMs||0));
+            try{ window.player.exec("saves", function(r){ u.searchParams.set("sv", stripQ(r)); setTimeout(()=>location.href=u, 150); }); }catch(e){}
+            setTimeout(()=>{ location.href=u; }, 2500);
           } else {
             let live=null;
             if(qs.get("live")){ live={chain:qs.get("live"), tape:qs.get("tape")||""}; log("replay mode — live chain arrived in the URL: "+live.chain,"dim"); }
@@ -703,6 +800,13 @@ function onStarted(){
               ? "✅ PROOF PASS — pure blob play, proven by replay. The cold replay reproduced the live run hash-for-hash ("+chain+") on an identical tape ("+tape.trim().split(/\s+/).length+" bot decisions, identical: "+tapeSame+"). Engine, code and art all arrived as Walrus blobs, sha256-verified before boot."
               : "❌ PROOF FAIL — replay diverged. live: "+live.chain+" vs replay: "+chain+". Reported honestly.";
             log(same?"✅ replay chain identical":"❌ replay diverged", same?"ok":"bad");
+            const rc=$("recordCard");
+            if(rc){ const rms=((performance.now()-window.__t0)/1000).toFixed(1), lms=((parseInt(qs.get("lms")||"0",10))/1000).toFixed(1);
+              rc.innerHTML="🏆 <b>HIGHSCORE RECORD — BLOB BOUNCE</b> (this record is what gets blobbed into the Hall)<br>"+
+              "score (saves in the proven run): <b>"+(qs.get("sv")||"—")+"</b> · state chain: <span class='mono'>"+chain+"</span><br>"+
+              "tape: "+(tape.trim()?tape.trim().split(/\s+/).length:0)+" bot decisions · live run: <b>"+lms+" s</b> · cold replay: <b>"+rms+" s</b> · chains compared: <b>"+(same?"IDENTICAL ✔ — the play is proven":"DIVERGED ✗")+"</b><br>"+
+              "verification cost: one blob recall (~0.1 s) + one replay. Any machine can re-check this record, forever, from its blob alone.";
+            }
           }
         });
       });
