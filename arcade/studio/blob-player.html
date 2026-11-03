@@ -443,6 +443,94 @@ document.getElementById("klWalk").onclick=async()=>{
 };
 })();
 </script>
+<div style="margin-top:10px">
+  <div class="small">🖊️ <b>THE LINE KEY</b> — the same route as ONE LINE: a picture that is also a key. The line never lifts: nine anchors, one stroke, arrows showing which way to read each hop, a new color per hop. Anyone holding this picture holds the route; the route plus the manifest rebuilds the key — the page proves it by reading the key back <i>from the picture alone</i>.</div>
+  <svg id="lkSvg" viewBox="0 0 390 186" style="width:100%;max-width:560px;background:#0a0a18;border:1px solid #23234a;border-radius:8px;margin-top:6px" xmlns="http://www.w3.org/2000/svg"></svg>
+  <div id="lkText" class="small mono" style="margin-top:4px;color:#7ee787;word-break:break-all"></div>
+  <div class="row" style="gap:6px;flex-wrap:wrap;margin-top:6px;align-items:center">
+    <button class="btn alt" id="lkRead">⌖ READ THE LINE BACK</button>
+    <button class="btn alt" id="lkWalkLocal" disabled>⚡ WALK IT FROM THE POCKET (0 network)</button>
+    <span id="lkOut" class="small" style="line-height:1.6"></span>
+  </div>
+  <div class="tiny" style="margin-top:4px">Read: ▶ start at §1 · follow the arrows · each color is one hop · forward along the line is the only direction the data opens. The network walk (WALK IT LIVE, above) primes the pocket; the pocket walk then reads with <b>zero network latency</b> — local math only, timed honestly.</div>
+</div>
+<script>
+(function(){
+const A1="https://aggregator.walrus-testnet.walrus.space/v1/blobs/";
+const A2="https://walrus-testnet.blockscope.net/v1/blobs/";
+const ROOTM="RYVQA2RMGwT0sQgTz1ekjlhHeEC8cd0hCJbF4cxIRU8";
+const HEAD="3b7f4f84646f4d7c3a87121ea29ec7408608c93699da2ac5aed67228e4c5de85";
+const FIB=[1,2,3,5,8,13,21,34,55];
+const svg=document.getElementById("lkSvg"), out=document.getElementById("lkOut");
+const NS="http://www.w3.org/2000/svg";
+const COLS=13, CW=30, CH=30;
+const ctr=p=>{ const i=p-1; return [ (i%COLS)*CW+CW/2, Math.floor(i/COLS)*CH+CH/2 ]; };
+/* faint full matrix */
+for(let p=1;p<=78;p++){ const [x,y]=ctr(p); const r=document.createElementNS(NS,"rect");
+  r.setAttribute("x",x-11); r.setAttribute("y",y-11); r.setAttribute("width",22); r.setAttribute("height",22);
+  r.setAttribute("rx",4); r.setAttribute("fill", FIB.includes(p)?"#3a2f00":"#14142a"); r.setAttribute("stroke", FIB.includes(p)?"#ffb020":"#23234a");
+  svg.appendChild(r); }
+/* arrowhead marker */
+const defs=document.createElementNS(NS,"defs");
+defs.innerHTML='<marker id="lkArrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="context-stroke"/></marker>';
+svg.appendChild(defs);
+/* the one line */
+const pts=FIB.map(ctr);
+for(let i=0;i<pts.length-1;i++){ const [x1,y1]=pts[i], [x2,y2]=pts[i+1];
+  const ln=document.createElementNS(NS,"line");
+  ln.setAttribute("x1",x1); ln.setAttribute("y1",y1); ln.setAttribute("x2",x2); ln.setAttribute("y2",y2);
+  const col="hsl("+(150+i*26)+",85%,62%)";
+  ln.setAttribute("stroke",col); ln.setAttribute("stroke-width",3.5); ln.setAttribute("marker-end","url(#lkArrow)");
+  ln.setAttribute("stroke-linecap","round"); svg.appendChild(ln); }
+FIB.forEach((p,i)=>{ const [x,y]=ctr(p); const c=document.createElementNS(NS,"circle");
+  c.setAttribute("cx",x); c.setAttribute("cy",y); c.setAttribute("r",9);
+  c.setAttribute("fill","#ffb020"); c.setAttribute("stroke","#0a0a18"); c.setAttribute("stroke-width",2); svg.appendChild(c);
+  const t=document.createElementNS(NS,"text"); t.setAttribute("x",x); t.setAttribute("y",y+3.5);
+  t.setAttribute("text-anchor","middle"); t.setAttribute("font-size","9"); t.setAttribute("font-weight","bold"); t.setAttribute("fill","#0a0a18");
+  t.textContent=String(i+1); svg.appendChild(t);
+  const s=document.createElementNS(NS,"text"); s.setAttribute("x",x); s.setAttribute("y",y+22);
+  s.setAttribute("text-anchor","middle"); s.setAttribute("font-size","8"); s.setAttribute("fill","#9a9ac0");
+  s.textContent="§"+p; svg.appendChild(s); });
+svg.dataset.route=JSON.stringify(FIB);
+document.getElementById("lkText").textContent="LINEKEY · BBB/TRACK3 · "+FIB.join("→")+" · head "+HEAD.slice(0,12)+"… — one line of text, one line of picture, same key";
+let netN=0; const POCKET=new Map();
+async function lad(id,localOnly){ if(localOnly){ if(POCKET.has(id)) return POCKET.get(id); throw new Error("not in pocket"); }
+  netN++; try{ const r=await fetch(A1+id,{cache:"no-store"}); if(r.ok){ const b=await r.arrayBuffer(); POCKET.set(id,b); return b; } }catch(e){}
+  const r=await fetch(A2+id,{cache:"no-store"}); if(!r.ok) throw new Error("mirrors failed"); const b=await r.arrayBuffer(); POCKET.set(id,b); return b; }
+async function walk(localOnly){
+  const route=JSON.parse(svg.dataset.route); /* the route comes FROM THE PICTURE */
+  const man=JSON.parse(new TextDecoder().decode(await lad(ROOTM,localOnly)));
+  const t0=performance.now(); let ok=0;
+  for(const pos of route){ const sec=man.sections[pos-1];
+    const buf=await lad(sec.blob_id,localOnly); const cipher=new Uint8Array(buf);
+    const key=new Uint8Array(sec.key_hex.match(/../g).map(h=>parseInt(h,16)));
+    const plain=nacl.secretbox.open(cipher.slice(24),cipher.slice(0,24),key);
+    const pt=new Uint8Array(plain); const media=pt.slice(pt.indexOf(10)+1);
+    if(sha256hex(media)===sec.media_sha256) ok++; }
+  return {ok, ms:Math.round(performance.now()-t0), route};
+}
+document.getElementById("lkRead").onclick=async()=>{
+  out.innerHTML="reading the key back from the picture…";
+  try{ const route=JSON.parse(svg.dataset.route);
+    const man=JSON.parse(new TextDecoder().decode(await lad(ROOTM,false)));
+    let head=sha256hex(new TextEncoder().encode(ROOTM));
+    for(const pos of route){ const bh=sha256hex(new TextEncoder().encode(man.sections[pos-1].blob_id));
+      head=sha256hex(new TextEncoder().encode(head+"|"+pos+"|"+bh)); }
+    out.innerHTML="picture → route ("+route.join("→")+") → squash head <span class='mono'>"+head.slice(0,16)+"…</span> vs stored "+HEAD.slice(0,16)+"… → "+(head===HEAD?"<b>IDENTICAL ✔ — the picture alone rebuilt the key.</b>":"<b style='color:#ff5470'>DIFFERS</b>")+" Priming the pocket with a network walk…";
+    const w=await walk(false);
+    out.innerHTML+=" Network walk: "+w.ok+"/9 anchors verified in "+w.ms+" ms. Pocket primed — now walk it with the network cut.";
+    document.getElementById("lkWalkLocal").disabled=false;
+  }catch(e){ out.innerHTML="⛔ "+e.message; }
+};
+document.getElementById("lkWalkLocal").onclick=async()=>{
+  const before=netN;
+  try{ const w=await walk(true);
+    out.innerHTML="⚡ <b>POCKET WALK: "+w.ok+"/9 anchors decrypted + verified in "+w.ms+" ms · network calls: "+(netN-before)+"</b> — zero network latency; the line found its data in the dark.";
+  }catch(e){ out.innerHTML="⛔ "+e.message; }
+};
+})();
+</script>
+
 
 </div>
 <script>
