@@ -388,6 +388,62 @@ setInterval(()=>{ const el=document.getElementById("naclSrc"); if(el && window._
     🌳 <b>MOTHER REEL</b> — <span id="okRoot" class="mono" style="color:#7ee787">…</span> · the root that names all of the above<br>
     🧠 <b>IKN BRAIN</b> — <span class="mono">seal 33ec6604…</span> · "one truth, one key" (peer desk) — sealed locally; its ledger broadcast awaits David's press, so no network link is claimed here
   </div>
+<div style="margin-top:10px;border-top:1px solid #23234a;padding-top:8px">
+  <div class="small">🗝️ <b>KEYLINE — BIG BUCK BUNNY, TRACK 3</b> (IKN desk's build of David's sequence-key, re-skinned here with their blessing; their file stays unpublished — this page is the public walk). Store a <i>route</i>, not the data: anchors at Fibonacci positions <b>1 · 2 · 3 · 5 · 8 · 13 · 21 · 34 · 55</b> across the film's 78 sections, hash-chained into one key line. The sequence is the map, never the lock — the lock is the master key + the track choice, held off-chain. Proving route-possession without revealing the track is the reserved SNARK slot: still reserved, not claimed.</div>
+  <div id="klMatrix" style="display:flex;flex-wrap:wrap;gap:2px;margin:8px 0 4px"></div>
+  <div class="row" style="gap:6px;align-items:center;flex-wrap:wrap">
+    <button class="btn alt" id="klWalk">🚶 WALK IT LIVE</button>
+    <span id="klOut" class="small" style="line-height:1.6"></span>
+  </div>
+  <div id="klLine" class="small mono" style="margin-top:4px;color:#9fb4c8;word-break:break-all"></div>
+</div>
+<style>
+#klMatrix .mx{width:11px;height:11px;border-radius:2px;background:#14142a;transition:background .2s}
+#klMatrix .mx.anchor{background:#3a2f00;border:1px solid #ffb020}
+#klMatrix .mx.pull{background:#ffb020;box-shadow:0 0 6px #ffb020}
+#klMatrix .mx.ok{background:#00ffa3;box-shadow:0 0 5px #00ffa388}
+#klMatrix .mx.bad{background:#ff5470}
+</style>
+<script>
+(function(){
+const A1="https://aggregator.walrus-testnet.walrus.space/v1/blobs/";
+const A2="https://walrus-testnet.blockscope.net/v1/blobs/";
+const ROOTM="RYVQA2RMGwT0sQgTz1ekjlhHeEC8cd0hCJbF4cxIRU8";
+const DESK_HEAD="3b7f4f84646f4d7c3a87121ea29ec7408608c93699da2ac5aed67228e4c5de85";
+const FIB=[1,2,3,5,8,13,21,34,55];
+async function lad(id){ try{ const r=await fetch(A1+id,{cache:"no-store"}); if(r.ok) return await r.arrayBuffer(); }catch(e){}
+  const r=await fetch(A2+id,{cache:"no-store"}); if(!r.ok) throw new Error("both mirrors failed"); return await r.arrayBuffer(); }
+const grid=document.getElementById("klMatrix"), out=document.getElementById("klOut"), lineEl=document.getElementById("klLine");
+let cells=[];
+function buildGrid(n){ grid.innerHTML=""; cells=[]; for(let i=1;i<=n;i++){ const c=document.createElement("div"); c.className="mx"+(FIB.includes(i)?" anchor":""); c.title="section "+i+(FIB.includes(i)?" — anchor":""); grid.appendChild(c); cells.push(c); } }
+buildGrid(78);
+document.getElementById("klWalk").onclick=async()=>{
+  out.innerHTML="walking the route…"; lineEl.textContent="";
+  try{
+    const man=JSON.parse(new TextDecoder().decode(await lad(ROOTM)));
+    buildGrid(man.sections.length);
+    /* recompute the squash head from the manifest alone — two implementations, one head */
+    let head=sha256hex(new TextEncoder().encode(ROOTM));
+    for(const pos of FIB){ const sec=man.sections[pos-1]; const bh=sha256hex(new TextEncoder().encode(sec.blob_id));
+      head=sha256hex(new TextEncoder().encode(head+"|"+pos+"|"+bh)); }
+    lineEl.innerHTML="KEYLINE · root="+ROOTM.slice(0,16)+"… · rule=fib-anchors/1 · head=<b style='color:#7ee787'>"+head.slice(0,16)+"…</b> — recomputed here from the manifest; the IKN desk's independent build published "+DESK_HEAD.slice(0,16)+"… → "+(head===DESK_HEAD?"<b style='color:#7ee787'>IDENTICAL ✔</b>":"<b style='color:#ff5470'>DIFFERS</b>");
+    /* walk: pull each anchor in sequence, decrypt, verify */
+    let ok=0;
+    for(const pos of FIB){ const sec=man.sections[pos-1]; const cell=cells[pos-1]; cell.className="mx pull";
+      const t=performance.now(); const buf=await lad(sec.blob_id); const ms=Math.round(performance.now()-t);
+      const key=new Uint8Array(sec.key_hex.match(/../g).map(h=>parseInt(h,16))); const cipher=new Uint8Array(buf);
+      const plain=nacl.secretbox.open(cipher.slice(24),cipher.slice(0,24),key);
+      const media=plain? new Uint8Array(plain).slice(new Uint8Array(plain).indexOf(10)+1) : null;
+      const good=media && sha256hex(media)===sec.media_sha256;
+      cell.className="mx "+(good?"ok":"bad"); if(good) ok++;
+      out.innerHTML="anchor §"+pos+" — "+buf.byteLength.toLocaleString()+" B in "+ms+" ms · decrypted · media sha "+(good?"✔":"✗")+" ("+ok+"/9)";
+    }
+    out.innerHTML+=" · <b>ROUTE WALKED — "+ok+"/9 anchors proven in sequence.</b> The route is all we stored; the film was already there.";
+  }catch(e){ out.innerHTML="⛔ "+e.message; }
+};
+})();
+</script>
+
 </div>
 <script>
 (function(){
@@ -562,10 +618,13 @@ async function showFilm(key){
       try{ sb=ms.addSourceBuffer(cand); mvLog("SourceBuffer: "+cand,"dim"); break; }catch(e){}
     }
     if(!sb){ mvNow("STOPPED","this browser's MediaSource refused every codec string"); RUNNING=false; return; }
-    const queue=[]; let appending=false;
+    const queue=[]; let appending=false, appendDrops=0;
     const pump=()=>{ if(appending||!queue.length) return; appending=true;
-      sb.appendBuffer(queue.shift());
-      sb.addEventListener("updateend", function h(){ sb.removeEventListener("updateend",h); appending=false; pump(); });
+      const h=()=>{ sb.removeEventListener("updateend",h); appending=false; pump(); };
+      sb.addEventListener("updateend",h);
+      try{ sb.appendBuffer(queue.shift()); }
+      catch(e){ sb.removeEventListener("updateend",h); appending=false; appendDrops++;
+        mvLog("playback append dropped ("+e.name+") — data proof continues; drops: "+appendDrops,"dim"); pump(); }
     };
     for(let i=0;i<m.sections.length;i++){
       const s=m.sections[i];
@@ -593,7 +652,9 @@ async function showFilm(key){
       mvNow("PLAYING FROM BLOBS","section "+s.n+" ✔ · fetched in "+fms.toFixed(0)+" ms · sha256 verified in "+vms.toFixed(0)+" ms · "+done+"/"+m.sections.length+" sections on screen");
       mvLed([["sections verified",done+" / "+m.sections.length],["bytes pulled from Walrus",(bytes/1048576).toFixed(2)+" MB"],["total fetch time",(fetchMs/1000).toFixed(1)+" s"],["avg per section",(fetchMs/Math.max(1,done)).toFixed(0)+" ms"]],
           firstFrameAt?["⏱ TIME TO FIRST FRAME",(firstFrameAt/1000).toFixed(2)+" s"]:null);
-      if(sb.updating) await new Promise(r=>sb.addEventListener("updateend",r,{once:true}));
+      if(sb.updating) await Promise.race([ new Promise(r=>sb.addEventListener("updateend",r,{once:true})),
+        new Promise(r=>setTimeout(r,3000)) ]);
+      if(appendDrops) mvNow("PLAYING FROM BLOBS","section "+s.n+" ✔ · "+done+"/"+m.sections.length+" verified · playback appends dropped: "+appendDrops+" (player buffer) — the data still arrives and verifies");
     }
     mvLog("stream complete: "+done+"/"+m.sections.length+" sections · "+(bytes/1048576).toFixed(1)+" MB · every byte hash-verified","ok");
     mvNow("FINISHED","sections arrived from Walrus and verified. The page never held the film — the blobs did.");
