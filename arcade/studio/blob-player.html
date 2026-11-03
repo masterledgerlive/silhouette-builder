@@ -140,7 +140,7 @@ const T0=performance.now();
 function log(msg, cls){ const d=document.createElement("div"); if(cls) d.className=cls; d.textContent=msg; logEl.appendChild(d); logEl.scrollTop=logEl.scrollHeight; }
 function go(mode){ const u=new URL(location.href); if(mode) u.searchParams.set("mode",mode); else u.searchParams.delete("mode"); u.searchParams.delete("live"); u.searchParams.delete("tape"); location.href=u; }
 $("btnDemo").onclick=()=>go("demo");
-$("btnFree").onclick=()=>go(null);
+$("btnFree").onclick=()=>go("free");
 $("btnProof").onclick=()=>go("live");
 $("addr").textContent=GAME+"  ·  mode: "+MODE;
 
@@ -195,7 +195,12 @@ let echoN=0;
 document.addEventListener("keydown", function(e){
   if(echoN>=14) return; echoN++;
   log("⌨️ keydown — key=\""+e.key+"\" code=\""+e.code+"\"","dim");
-  setTimeout(()=>{ const kb=engineKB(); if(kb&&(kb.LEFT||kb.RIGHT)){ $("latch").innerHTML="Last input caught by the engine: <b>"+e.code+" → "+(kb.LEFT?"LEFT":"RIGHT")+" = 1</b> · "+new Date().toLocaleTimeString(); log("   engine caught it: LEFT="+kb.LEFT+" RIGHT="+kb.RIGHT,"ok"); } }, 0);
+  setTimeout(()=>{ const kb=engineKB(); if(!kb) return;
+    const wantLeft=(e.code==="ArrowLeft"||e.code==="KeyA");
+    const caught=wantLeft?kb.LEFT:kb.RIGHT;
+    if(caught){ $("latch").innerHTML="Last input caught by the engine: <b>"+e.code+" → "+(wantLeft?"LEFT":"RIGHT")+" = 1</b> · "+new Date().toLocaleTimeString(); log("   engine caught it: "+e.code+" → "+(wantLeft?"LEFT":"RIGHT")+"=1","ok"); }
+    else log("   engine state after "+e.code+": LEFT="+kb.LEFT+" RIGHT="+kb.RIGHT+" (this key not held at read time)","dim");
+  }, 0);
 }, true);
 function dispatchKey(key, type){ document.dispatchEvent(new KeyboardEvent(type,{key:key, code:key, bubbles:true})); }
 function wirePad(id, key){
