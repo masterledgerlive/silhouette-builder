@@ -241,7 +241,7 @@
 const AGG1="https://aggregator.walrus-testnet.walrus.space/v1/blobs/";
 const AGG2="https://walrus-testnet.blockscope.net/v1/blobs/";
 const PUB="https://publisher.walrus-testnet.walrus.space/v1/blobs?epochs=30";
-const ROOT_ID="RW6U3GWmddPiOL4hc061qFg2vx7yCeSr1HZ77DaK2-w";
+const ROOT_ID="Ggf-izrfVIq0nDYiXTZ5xlsh1YwvgpOiusamZLW6_pc";
 const out=document.getElementById("csOut");
 function line(h){ out.innerHTML+=h+"<br>"; }
 async function ladder(id){
@@ -335,7 +335,31 @@ document.getElementById("rd-film").onclick=async()=>{
 setInterval(()=>{ const el=document.getElementById("naclSrc"); if(el && window.__naclFrom && window.__naclFrom!=="pending") el.textContent="crypto library loaded from: "+window.__naclFrom; }, 600);
 })();
 </script>
-  <h2 style="margin:2px 0 6px">6 · THE REST OF THE BUILDING</h2>
+<div class="panel" id="oneKeyPanel">
+  <h2 style="margin:2px 0 6px">6 · EVERY WORK, ONE KEY 🔑</h2>
+  <p class="small" style="margin:2px 0 8px">Every work in this house is named by one key — a content address, where the name <i>is</i> the proof. Click any key to see the raw data on the Walrus network itself. Keys prove a thing exists and is identical — never that it is "true"; that word is earned elsewhere. And forever is a habit, not a purchase: Walrus storage is rented in epochs (a testnet epoch is a day), the keeper renews, and the Growing Reel's renewal links are the receipts of that habit.</p>
+  <div class="small" style="line-height:2">
+    🎮 <b>BLOB BOUNCE</b> — <a class="mono" href="https://aggregator.walrus-testnet.walrus.space/v1/blobs/LqEvFDt3kGo-IqQUVoHnlWJBLJj67DHiJ0VZD1Oyw_E" target="_blank" rel="noopener" style="color:#7ee787">LqEvFDt3kGo-IqQUVoH… ↗</a> · proven by replay (§2)<br>
+    🏆 <b>FIRST SLAP</b> — <a class="mono" href="https://aggregator.walrus-testnet.walrus.space/v1/blobs/vZBl7rJUyrg1wdeDMNn4lXlXHulWm1Hm7oBQMEntjIY" target="_blank" rel="noopener" style="color:#7ee787">vZBl7rJUyrg1wdeDMN… ↗</a> · container blob; David's 3,461 chained in the Hall<br>
+    🏁 <b>FIRST RALLY</b> — <a class="mono" href="https://aggregator.walrus-testnet.walrus.space/v1/blobs/aBp60KJfgq_A9GvjQn60U76pftG88s6lq_X7CN1Ldsk" target="_blank" rel="noopener" style="color:#7ee787">aBp60KJfgq_A9GvjQn… ↗</a> · container blob; awaiting its first human run, honestly<br>
+    🐰 <b>BIG BUCK BUNNY</b> — <a class="mono" href="https://aggregator.walrus-testnet.walrus.space/v1/blobs/RYVQA2RMGwT0sQgTz1ekjlhHeEC8cd0hCJbF4cxIRU8" target="_blank" rel="noopener" style="color:#7ee787">RYVQA2RMGwT0sQgTz1… ↗</a> · revived manifest; 78/78 proven identical (§3)<br>
+    🏹 <b>ROBIN HOOD</b> — <a class="mono" href="https://aggregator.walrus-testnet.walrus.space/v1/blobs/GTB6k1jJgEt4IZyAee4EKzvRVkihUWW1WjEPecLFs1o" target="_blank" rel="noopener" style="color:#7ee787">GTB6k1jJgEt4IZyAee… ↗</a> · 222 sections, keeper-audited<br>
+    🎞️ <b>GROWING REEL</b> — <span id="okReel" class="mono" style="color:#7ee787">…</span> · the proof batch; every link seals the last<br>
+    🌳 <b>MOTHER REEL</b> — <span id="okRoot" class="mono" style="color:#7ee787">…</span> · the root that names all of the above<br>
+    🧠 <b>IKN BRAIN</b> — <span class="mono">seal 33ec6604…</span> · "one truth, one key" (peer desk) — sealed locally; its ledger broadcast awaits David's press, so no network link is claimed here
+  </div>
+</div>
+<script>
+(function(){
+  const A="https://aggregator.walrus-testnet.walrus.space/v1/blobs/";
+  fetch(A+"Ggf-izrfVIq0nDYiXTZ5xlsh1YwvgpOiusamZLW6_pc",{cache:"no-store"}).then(r=>r.json()).then(root=>{
+    const rh=root.names.growing_reel_head;
+    document.getElementById("okReel").innerHTML="<a class='mono' href='"+A+rh+"' target='_blank' rel='noopener' style='color:#7ee787'>"+rh.slice(0,20)+"… ↗</a>";
+    document.getElementById("okRoot").innerHTML="<a class='mono' href='"+A+"Ggf-izrfVIq0nDYiXTZ5xlsh1YwvgpOiusamZLW6_pc"+"' target='_blank' rel='noopener' style='color:#7ee787'>"+"Ggf-izrfVIq0nDYiXTZ5xlsh1YwvgpOiusamZLW6_pc".slice(0,20)+"… ↗</a>";
+  }).catch(()=>{});
+})();
+</script>
+  <h2 style="margin:2px 0 6px">7 · THE REST OF THE BUILDING</h2>
   <p class="tiny" style="line-height:1.9">
     🏆 <a href="../blob-cinema/scores.html" style="color:#7ee787">Hall of Scores</a> — the chained scoreboard, every run replay-verified ·
     🗺️ <a href="../system.html" style="color:#7ee787">System Map</a> — the whole arcade on one page ·
