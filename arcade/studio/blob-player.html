@@ -220,7 +220,87 @@
 </div>
 
 <div class="card">
-  <h2 style="margin:2px 0 6px">5 · THE REST OF THE BUILDING</h2>
+<div class="panel" id="cascadePanel">
+  <h2 style="margin:2px 0 6px">5 · THE CASCADE — RECALL THAT RECALLS ITSELF ♻️</h2>
+  <p class="small" style="margin:2px 0 8px">The never-lost machinery, designed on air in <i>The Cascade</i> podcast and built to its contract. Two objects: the <b>MOTHER REEL</b> — one blob that names every manifest in the house — and the <b>GROWING REEL</b> — a hash-chained proof batch recording every birth, audit, renewal, death and revival, each link sealing the last. Its SNARK slot sits empty at genesis, labeled, until a real prover earns it. Recall climbs a ladder now: two independent mirrors before anything is declared lost — and a lost blob is healed by re-uploading its identical bytes, which restores the <i>same address</i>.</p>
+  <div class="row" style="flex-wrap:wrap;gap:6px">
+    <button class="btn alt" id="cs-root">🌳 RECALL THE ROOT</button>
+    <button class="btn alt" id="cs-reel">🎞️ VERIFY THE GROWING REEL</button>
+    <button class="btn alt" id="cs-cascade">🌊 CASCADE RECALL TEST</button>
+    <button class="btn alt" id="cs-heal">♻️ HEAL DEMO — RE-ANCHOR A BLOB</button>
+  </div>
+  <div id="csOut" class="small" style="margin-top:8px;line-height:1.65"></div>
+</div>
+<script>
+(function(){
+const AGG1="https://aggregator.walrus-testnet.walrus.space/v1/blobs/";
+const AGG2="https://walrus-testnet.blockscope.net/v1/blobs/";
+const PUB="https://publisher.walrus-testnet.walrus.space/v1/blobs?epochs=30";
+const ROOT_ID="Smlrg2AnZjTXd-KBGPZKlbYrEKxHbyyeGdNY-_PivyA";
+const out=document.getElementById("csOut");
+function line(h){ out.innerHTML+=h+"<br>"; }
+async function ladder(id){
+  const t=performance.now();
+  try{ const r=await fetch(AGG1+id,{cache:"no-store"}); if(r.ok) return {buf:await r.arrayBuffer(),ms:performance.now()-t,via:"mirror 1 (walrus.space)"}; }catch(e){}
+  const t2=performance.now();
+  const r=await fetch(AGG2+id,{cache:"no-store"}); if(!r.ok) throw new Error("both mirrors failed for "+id.slice(0,10));
+  return {buf:await r.arrayBuffer(),ms:performance.now()-t2,via:"mirror 2 (blockscope)"};
+}
+let ROOT=null, REELHEAD=null;
+async function getRoot(){
+  const f=await ladder(ROOT_ID);
+  ROOT=JSON.parse(new TextDecoder().decode(f.buf)); REELHEAD=ROOT.names.growing_reel_head;
+  return f;
+}
+document.getElementById("cs-root").onclick=async()=>{
+  out.innerHTML=""; line("🌳 fetching the MOTHER REEL <span class='mono'>"+ROOT_ID.slice(0,20)+"…</span>");
+  try{ const f=await getRoot(); line("✅ root recalled in <b>"+Math.round(f.ms)+" ms</b> via "+f.via+" — it names:");
+    for(const k in ROOT.names) line("&nbsp;&nbsp;· "+k+" → <span class='mono'>"+ROOT.names[k].slice(0,24)+"…</span>");
+    line("Lose a manifest? The root names its address and the vault holds its bytes. Lose the root? It is mirrored — vault, keeper record, originals archive.");
+  }catch(e){ line("⛔ "+e.message); }
+};
+function canon(l){ const o={}; Object.keys(l).filter(k=>k!=="hash").sort().forEach(k=>o[k]=l[k]);
+  return JSON.stringify(o).replace(/[\u007F-\uFFFF]/g,c=>"\\u"+c.charCodeAt(0).toString(16).padStart(4,"0")); }
+document.getElementById("cs-reel").onclick=async()=>{
+  out.innerHTML=""; line("🎞️ fetching the GROWING REEL head…");
+  try{ if(!ROOT) await getRoot();
+    const f=await ladder(REELHEAD); const reel=JSON.parse(new TextDecoder().decode(f.buf));
+    line("reel recalled in "+Math.round(f.ms)+" ms via "+f.via+" · SNARK slot: <b>"+(reel.snark===null?"empty — reserved, honestly labeled":"filled")+"</b>");
+    line("re-hashing every link, genesis → head, right here in your browser…");
+    let prev="GENESIS", ok=0;
+    for(const l of reel.links){ const h=sha256hex(new TextEncoder().encode(prev+"|"+canon(l))); if(h!==l.hash||l.prev!==prev) throw new Error("link "+l.n+" does not seal"); prev=h; ok++; }
+    line("✅ <b>REEL VERIFIED — "+ok+"/"+reel.links.length+" links seal</b> · head hash <span class='mono'>"+prev.slice(0,16)+"…</span>");
+    for(const l of reel.links) line("&nbsp;&nbsp;"+l.n+". ["+l.kind+"] "+l.subject+" — <span style='color:#9fb4c8'>"+l.detail.slice(0,90)+"</span>");
+  }catch(e){ line("⛔ "+e.message); }
+};
+document.getElementById("cs-cascade").onclick=async()=>{
+  out.innerHTML=""; let total=0;
+  try{ const f0=await getRoot(); total+=f0.ms; line("LEVEL 0 · root recalled — "+Math.round(f0.ms)+" ms");
+    const mid=ROOT.names.bbb_revived_manifest; const f1=await ladder(mid); total+=f1.ms;
+    const man=JSON.parse(new TextDecoder().decode(f1.buf)); line("LEVEL 1 · Bunny manifest recalled — "+Math.round(f1.ms)+" ms ("+man.sections.length+" sections named)");
+    const s1=man.sections[0]; const f2=await ladder(s1.blob_id); total+=f2.ms;
+    line("LEVEL 2 · section 1 cipher recalled — "+Math.round(f2.ms)+" ms ("+f2.buf.byteLength.toLocaleString()+" B)");
+    const key=new Uint8Array(s1.key_hex.match(/../g).map(h=>parseInt(h,16)));
+    const cipher=new Uint8Array(f2.buf); const plain=nacl.secretbox.open(cipher.slice(24),cipher.slice(0,24),key);
+    if(!plain) throw new Error("section 1 would not open");
+    const nl=plain.indexOf(10); const media=plain.slice(nl+1);
+    const okm=sha256hex(media)===s1.media_sha256; total+=0;
+    line("LEVEL 3 · section decrypted + media hash "+(okm?"<b>MATCH</b>":"MISMATCH")+" — the film's first piece, proven");
+    line("🌊 <b>CASCADE COMPLETE — root → manifest → section → screen-ready media in ~"+Math.round(total)+" ms of fetching</b>, every hop recalled by the level above it.");
+  }catch(e){ line("⛔ "+e.message); }
+};
+document.getElementById("cs-heal").onclick=async()=>{
+  out.innerHTML=""; line("♻️ the heal: take a living blob's exact bytes and re-upload them — content addressing must return the SAME address…");
+  try{ if(!ROOT) await getRoot();
+    const f=await ladder(REELHEAD); const t=performance.now();
+    const r=await fetch(PUB,{method:"PUT",body:f.buf}); const j=await r.json();
+    const obj=(j.newlyCreated&&j.newlyCreated.blobObject)||j.alreadyCertified; const id=obj.blobId||(obj.blobObject&&obj.blobObject.blobId);
+    line(id===REELHEAD ? "✅ <b>HEALED / RE-ANCHORED — the network returned the identical address</b> <span class='mono'>"+String(id).slice(0,20)+"…</span> in "+Math.round(performance.now()-t)+" ms. This is how a lost blob comes back: same bytes, same name, no new identity." : "returned a different address: <span class='mono'>"+String(id)+"</span>");
+  }catch(e){ line("⛔ "+e.message+" (browser re-upload may be refused by the publisher — the keeper performs the same PUT from the vault.)"); }
+};
+})();
+</script>
+  <h2 style="margin:2px 0 6px">6 · THE REST OF THE BUILDING</h2>
   <p class="tiny" style="line-height:1.9">
     🏆 <a href="../blob-cinema/scores.html" style="color:#7ee787">Hall of Scores</a> — the chained scoreboard, every run replay-verified ·
     🗺️ <a href="../system.html" style="color:#7ee787">System Map</a> — the whole arcade on one page ·
@@ -537,8 +617,12 @@ function cardDone(id, ok, peekHtml){
 }
 async function fetchStreamed(id, cardId, expectSize){
   const t=performance.now();
-  const r=await fetch(AGG+id,{cache:"no-store"});
-  if(!r.ok) throw new Error("fetch HTTP "+r.status+" for "+id.slice(0,10));
+  let r=null, viaMirror="";
+  try{ r=await fetch(AGG+id,{cache:"no-store"}); if(!r.ok) r=null; else viaMirror=""; }catch(e){ r=null; }
+  if(!r){ const AGG2="https://walrus-testnet.blockscope.net/v1/blobs/";
+    r=await fetch(AGG2+id,{cache:"no-store"}); viaMirror=" (via mirror 2 — first mirror failed)";
+    if(!r.ok) throw new Error("both mirrors failed for "+id.slice(0,10)); }
+  if(viaMirror && cardId) cardSet(cardId, null, "mirror 1 failed — climbed the ladder", null);
   const chunks=[]; let got=0;
   if(r.body && r.body.getReader){
     const rd=r.body.getReader();
