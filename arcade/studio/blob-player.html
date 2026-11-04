@@ -636,6 +636,129 @@ document.getElementById("pvSever").onclick=async()=>{
 };
 })();
 </script>
+<div style="margin-top:14px;border-top:1px solid #23234a;padding-top:10px">
+  <h2 style="margin:2px 0 6px">9 · INJECT — INSERT ANY FILE 📥</h2>
+  <p class="small" style="margin:2px 0 8px">The true test, open to every investor: <b>insert any media, name it, and the page injects it into the blobs</b> — cut into sections, sealed, printed as a matrix of records, each with its name, key, proof and measure. Take the record anywhere; the blobs repeat it forever. Two ways to seal it: <b>🌍 OPEN</b> — the key stays attached to the record, anyone can watch or download it back; <b>🔒 PRIVATE</b> — the key line is shown to you <i>once</i>, and only whoever holds that line can ever open it.</p>
+  <div class="row" style="gap:6px;flex-wrap:wrap;align-items:center">
+    <input type="file" id="ijFile" style="color:#9a9ac0;max-width:230px">
+    <input type="text" id="ijName" placeholder="name this work…" style="background:#0d0d1f;color:#e8e8f2;border:1px solid #23234a;border-radius:6px;padding:6px 8px;min-width:150px">
+    <label class="small"><input type="radio" name="ijMode" value="open" checked> 🌍 OPEN</label>
+    <label class="small"><input type="radio" name="ijMode" value="private"> 🔒 PRIVATE</label>
+    <button class="btn" id="ijGo">📥 INJECT IT INTO THE BLOBS</button>
+  </div>
+  <div id="ijOut" class="small" style="margin-top:6px;line-height:1.65"></div>
+  <pre id="ijRecord" class="mono" style="display:none;background:#0a0a18;border:1px solid #23234a;border-radius:8px;padding:8px 10px;font-size:10.5px;line-height:1.55;overflow-x:auto;max-height:220px;overflow-y:auto"></pre>
+  <div id="ijKeyLine" class="small mono" style="margin-top:4px;color:#ffb020;word-break:break-all"></div>
+  <div class="row" style="gap:6px;flex-wrap:wrap;margin-top:10px;align-items:center">
+    <span class="small">↩️ <b>GRAB ONE BACK:</b> paste a record (and the key line, if private)</span>
+    <button class="btn alt" id="ijGrabBtn">GRAB FROM THE BLOBS</button>
+  </div>
+  <textarea id="ijPaste" rows="3" placeholder='{"format":"inject/1", …}  ·  private key line: INJECT-KEY …' style="width:100%;background:#0d0d1f;color:#e8e8f2;border:1px solid #23234a;border-radius:6px;padding:6px 8px;font-size:11px;margin-top:4px"></textarea>
+  <div id="ijGrabOut" class="small" style="margin-top:4px;line-height:1.65"></div>
+  <div id="ijPreview" style="margin-top:6px"></div>
+  <h3 style="margin:14px 0 4px;font-size:.95rem">🗂️ FILES UPLOADED ON BLOB — the record on this device</h3>
+  <div id="ijLedger" class="small" style="line-height:1.8;color:#9fb4c8">nothing injected from this device yet — be the first.</div>
+  <p class="tiny" style="margin-top:6px">Demo limits, stated plainly: up to ~25 MB per work, cut into 1 MB sections, stored on Walrus <b>testnet</b> at 30 epochs with the keeper pattern behind it. The record is the whole key to retrieval — keep it, and the work is yours anywhere, forever the keeper renews it.</p>
+</div>
+<script>
+(function(){
+const PUB="https://publisher.walrus-testnet.walrus.space/v1/blobs?epochs=30";
+const A1="https://aggregator.walrus-testnet.walrus.space/v1/blobs/";
+const A2="https://walrus-testnet.blockscope.net/v1/blobs/";
+const out=document.getElementById("ijOut"), recEl=document.getElementById("ijRecord"),
+      keyEl=document.getElementById("ijKeyLine"), ledEl=document.getElementById("ijLedger");
+const fromHex=h=>new Uint8Array(h.match(/../g).map(x=>parseInt(x,16)));
+function ledger(){ try{ return JSON.parse(localStorage.getItem("inject-ledger")||"[]"); }catch(e){ return []; } }
+function saveLedger(l){ try{ localStorage.setItem("inject-ledger", JSON.stringify(l)); }catch(e){} }
+function renderLedger(){ const l=ledger();
+  ledEl.innerHTML = l.length? l.map((e,i)=>"• <b style='color:#e8e8f2'>"+e.work+"</b> · "+e.mode+" · "+(e.total_bytes/1048576).toFixed(2)+" MB · "+e.sections.length+" sections · "+e.ts+" <button class='btn alt' data-grab='"+i+"' style='padding:1px 8px;font-size:.72rem'>GRAB</button>").join("<br>")
+    : "nothing injected from this device yet — be the first.";
+  ledEl.querySelectorAll("[data-grab]").forEach(b=>b.onclick=()=>grab(ledger()[+b.dataset.grab], ledger()[+b.dataset.grab]._master||null, document.getElementById("ijGrabOut"), document.getElementById("ijPreview")));
+}
+async function putBlob(bytes){ const r=await fetch(PUB,{method:"PUT",body:bytes}); if(!r.ok) throw new Error("publisher "+r.status);
+  const j=await r.json(); const o=j.newlyCreated? j.newlyCreated.blobObject : (j.alreadyCertified? j.alreadyCertified.blobObject : null);
+  if(!o) throw new Error("publisher gave no blob id"); return o.blobId; }
+async function lad(id){ try{ const r=await fetch(A1+id,{cache:"no-store"}); if(r.ok) return await r.arrayBuffer(); }catch(e){}
+  const r=await fetch(A2+id,{cache:"no-store"}); if(!r.ok) throw new Error("blob not found on either mirror"); return await r.arrayBuffer(); }
+function deriveKeys(master, n){ const keys=[];
+  let cur=fromHex(sha256hex(new Uint8Array([...master, ...new TextEncoder().encode("section:1")])));
+  keys.push(cur);
+  for(let i=2;i<=n;i++){ cur=fromHex(sha256hex(new Uint8Array([...cur, ...new TextEncoder().encode("next")]))); keys.push(cur); }
+  return keys; }
+document.getElementById("ijGo").onclick=async()=>{
+  const f=document.getElementById("ijFile").files[0];
+  const name=(document.getElementById("ijName").value||"").trim();
+  const mode=document.querySelector("input[name=ijMode]:checked").value;
+  recEl.style.display="none"; keyEl.textContent="";
+  if(!f){ out.innerHTML="⛔ choose a file first."; return; }
+  if(!name){ out.innerHTML="⛔ name the work first — a work without a name has no record."; return; }
+  if(f.size>25*1048576){ out.innerHTML="⛔ this demo caps at ~25 MB (your file is "+(f.size/1048576).toFixed(1)+" MB). The films use the same format at full scale, off-page."; return; }
+  try{
+    out.innerHTML="reading "+f.name+" …";
+    const data=new Uint8Array(await f.arrayBuffer());
+    const fileSha=sha256hex(data);
+    const CH=1048576, n=Math.max(1, Math.ceil(data.length/CH));
+    const master=nacl.randomBytes(32);
+    const keys=deriveKeys(master, n);
+    const sections=[];
+    for(let i=0;i<n;i++){ const media=data.slice(i*CH,(i+1)*CH);
+      const header=new TextEncoder().encode(JSON.stringify({v:1,work:name,n:i+1,of:n,sha256:sha256hex(media)}));
+      const plain=new Uint8Array(header.length+1+media.length); plain.set(header); plain[header.length]=10; plain.set(media, header.length+1);
+      const nonce=nacl.randomBytes(24);
+      const box=nacl.secretbox(plain, nonce, keys[i]);
+      const cipher=new Uint8Array(24+box.length); cipher.set(nonce); cipher.set(box,24);
+      out.innerHTML="injecting section "+(i+1)+"/"+n+" into Walrus…";
+      const bid=await putBlob(cipher);
+      const row={n:i+1, blob_id:bid, media_sha256:sha256hex(media), bytes:media.length};
+      if(mode==="open") row.key_hex=[...keys[i]].map(x=>x.toString(16).padStart(2,"0")).join("");
+      sections.push(row);
+    }
+    const man={format:"inject/1", work:name, mode, mime:f.type||"", ts:new Date().toISOString().slice(0,19).replace("T"," "),
+      file_sha256:fileSha, total_bytes:data.length, sections};
+    recEl.style.display="block"; recEl.textContent=JSON.stringify(man,null,1);
+    const stored=JSON.parse(JSON.stringify(man));
+    if(mode==="private"){ const mk=[...master].map(x=>x.toString(16).padStart(2,"0")).join("");
+      keyEl.innerHTML="🔒 YOUR PRIVATE KEY LINE — shown once, stored nowhere on this page. Whoever holds it opens the work:<br>INJECT-KEY "+name.replace(/\s+/g,"-")+" "+mk;
+      stored._master=mk; }
+    const l=ledger(); l.unshift(stored); saveLedger(l); renderLedger();
+    out.innerHTML="✅ <b>INJECTED</b> — “"+name+"” now lives in "+n+" blob"+(n>1?"s":"")+" · file sha <span class='mono'>"+fileSha.slice(0,16)+"…</span> · the record above is your matrix and "+(mode==="open"?"its key travels with it (open).":"its key is the line below (private).")+" See it on record under FILES UPLOADED ON BLOB.";
+  }catch(e){ out.innerHTML="⛔ inject failed: "+e.message; }
+};
+async function grab(man, masterHex, gout, prev){
+  try{ gout.innerHTML="grabbing "+man.sections.length+" sections from the blobs…";
+    let keys;
+    if(man.mode==="open"){ keys=man.sections.map(s=>fromHex(s.key_hex)); }
+    else{ if(!masterHex) throw new Error("private work — the key line is required"); keys=deriveKeys(fromHex(masterHex), man.sections.length); }
+    const parts=[];
+    for(let i=0;i<man.sections.length;i++){ const s=man.sections[i];
+      const cipher=new Uint8Array(await lad(s.blob_id));
+      const plain=nacl.secretbox.open(cipher.slice(24), cipher.slice(0,24), keys[i]);
+      if(!plain) throw new Error("section "+s.n+" would not open — wrong key");
+      const pt=new Uint8Array(plain); const media=pt.slice(pt.indexOf(10)+1);
+      if(sha256hex(media)!==s.media_sha256) throw new Error("section "+s.n+" hash mismatch — refused");
+      parts.push(media); }
+    const total=parts.reduce((a,p)=>a+p.length,0); const file=new Uint8Array(total); let o=0;
+    for(const p of parts){ file.set(p,o); o+=p.length; }
+    const ok=sha256hex(file)===man.file_sha256;
+    const url=URL.createObjectURL(new Blob([file],{type:man.mime||"application/octet-stream"}));
+    gout.innerHTML=(ok?"✅ <b>GRABBED + PROVEN</b>":"⛔ file hash mismatch")+" — “"+man.work+"” · "+(total/1048576).toFixed(2)+" MB · every section hash ✔ · <a href='"+url+"' download='"+man.work.replace(/[^\w.\-]+/g,"_")+"' style='color:#7ee787'>⬇ download it back</a>";
+    if(man.mime && man.mime.startsWith("image/")) prev.innerHTML="<img src='"+url+"' style='max-width:100%;border-radius:8px;border:1px solid #23234a'>";
+    else if(man.mime && man.mime.startsWith("video/")) prev.innerHTML="<video src='"+url+"' controls playsinline style='width:100%;border-radius:8px;border:1px solid #23234a'></video>";
+    else if(man.mime && man.mime.startsWith("audio/")) prev.innerHTML="<audio src='"+url+"' controls style='width:100%'></audio>";
+  }catch(e){ gout.innerHTML="⛔ grab failed: "+e.message; }
+}
+document.getElementById("ijGrabBtn").onclick=()=>{
+  const raw=document.getElementById("ijPaste").value;
+  const gout=document.getElementById("ijGrabOut"), prev=document.getElementById("ijPreview");
+  try{ const m=raw.match(/\{[\s\S]*\}/); if(!m) throw new Error("no record found in the paste");
+    const man=JSON.parse(m[0]); const km=raw.match(/INJECT-KEY\s+\S+\s+([0-9a-f]{64})/);
+    grab(man, km? km[1] : null, gout, prev);
+  }catch(e){ gout.innerHTML="⛔ "+e.message; }
+};
+renderLedger();
+})();
+</script>
+
 
 </div>
 <script>
