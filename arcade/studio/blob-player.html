@@ -668,8 +668,10 @@ const A2="https://walrus-testnet.blockscope.net/v1/blobs/";
 const out=document.getElementById("ijOut"), recEl=document.getElementById("ijRecord"),
       keyEl=document.getElementById("ijKeyLine"), ledEl=document.getElementById("ijLedger");
 const fromHex=h=>new Uint8Array(h.match(/../g).map(x=>parseInt(x,16)));
-function ledger(){ try{ return JSON.parse(localStorage.getItem("inject-ledger")||"[]"); }catch(e){ return []; } }
-function saveLedger(l){ try{ localStorage.setItem("inject-ledger", JSON.stringify(l)); }catch(e){} }
+window.__ijMem=window.__ijMem||null;
+function ledger(){ if(window.__ijMem) return window.__ijMem;
+  try{ window.__ijMem=JSON.parse(localStorage.getItem("inject-ledger")||"[]"); }catch(e){ window.__ijMem=[]; } return window.__ijMem; }
+function saveLedger(l){ window.__ijMem=l; try{ localStorage.setItem("inject-ledger", JSON.stringify(l)); }catch(e){} }
 function renderLedger(){ const l=ledger();
   ledEl.innerHTML = l.length? l.map((e,i)=>"• <b style='color:#e8e8f2'>"+e.work+"</b> · "+e.mode+" · "+(e.total_bytes/1048576).toFixed(2)+" MB · "+e.sections.length+" sections · "+e.ts+" <button class='btn alt' data-grab='"+i+"' style='padding:1px 8px;font-size:.72rem'>GRAB</button>").join("<br>")
     : "nothing injected from this device yet — be the first.";
@@ -721,7 +723,8 @@ document.getElementById("ijGo").onclick=async()=>{
       keyEl.innerHTML="🔒 YOUR PRIVATE KEY LINE — shown once, stored nowhere on this page. Whoever holds it opens the work:<br>INJECT-KEY "+name.replace(/\s+/g,"-")+" "+mk;
       stored._master=mk; }
     const l=ledger(); l.unshift(stored); saveLedger(l); renderLedger();
-    out.innerHTML="✅ <b>INJECTED</b> — “"+name+"” now lives in "+n+" blob"+(n>1?"s":"")+" · file sha <span class='mono'>"+fileSha.slice(0,16)+"…</span> · the record above is your matrix and "+(mode==="open"?"its key travels with it (open).":"its key is the line below (private).")+" See it on record under FILES UPLOADED ON BLOB.";
+    out.innerHTML="✅ <b>INJECTED</b> — “"+name+"” now lives in "+n+" blob"+(n>1?"s":"")+" · file sha <span class='mono'>"+fileSha.slice(0,16)+"…</span> · the record above is your matrix and "+(mode==="open"?"its key travels with it (open).":"its key is the line below (private).")+" See it on record under FILES UPLOADED ON BLOB. <button class='btn' id='ijGrabNow' style='margin-left:6px'>⬇ GRAB IT BACK NOW</button>";
+    document.getElementById("ijGrabNow").onclick=()=>grab(man, mode==="private"? [...master].map(x=>x.toString(16).padStart(2,"0")).join("") : null, document.getElementById("ijGrabOut"), document.getElementById("ijPreview"));
   }catch(e){ out.innerHTML="⛔ inject failed: "+e.message; }
 };
 async function grab(man, masterHex, gout, prev){
