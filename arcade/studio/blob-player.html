@@ -918,7 +918,11 @@ async function showFilm(key){
     }
     if(!sb){ mvNow("STOPPED","this browser's MediaSource refused every codec string"); RUNNING=false; return; }
     const queue=[]; let appending=false, appendDrops=0;
-    const pump=()=>{ if(appending||!queue.length) return; appending=true;
+    const leadSec=()=>{ try{ if(!v.buffered||!v.buffered.length) return 0;
+      return v.buffered.end(v.buffered.length-1)-v.currentTime; }catch(e){ return 0; } };
+    const pump=()=>{ if(appending||!queue.length) return;
+      if(leadSec()>30){ setTimeout(pump,400); return; }   // pace appends to the playhead — never flood the player buffer
+      appending=true;
       const h=()=>{ sb.removeEventListener("updateend",h); appending=false; pump(); };
       sb.addEventListener("updateend",h);
       try{ sb.appendBuffer(queue.shift()); }
@@ -926,6 +930,7 @@ async function showFilm(key){
         mvLog("playback append dropped ("+e.name+") — data proof continues; drops: "+appendDrops,"dim"); pump(); }
     };
     for(let i=0;i<m.sections.length;i++){
+      while(queue.length>=10) await new Promise(r=>setTimeout(r,250));   // backpressure: bounded memory, gentler on the mirrors
       const s=m.sections[i];
       blocks[i].className="blk pull"; window.__mxSet(i,"pull");
       mvNow("FETCHING","section "+s.n+"/"+m.sections.length+" · blob "+s.blob_id.slice(0,20)+"…");
@@ -957,7 +962,9 @@ async function showFilm(key){
     }
     mvLog("stream complete: "+done+"/"+m.sections.length+" sections · "+(bytes/1048576).toFixed(1)+" MB · every byte hash-verified","ok");
     mvNow("FINISHED","sections arrived from Walrus and verified. The page never held the film — the blobs did.");
-    try{ if(ms.readyState==="open"&&!sb.updating) ms.endOfStream(); }catch(e){}
+    const myRun=(window.__mvRun=(window.__mvRun||0)+1);
+    (async()=>{ while(queue.length||appending) await new Promise(r=>setTimeout(r,300));
+      try{ if(window.__mvRun===myRun&&ms.readyState==="open") ms.endOfStream(); }catch(e){} })();
     RUNNING=false; mq("mv-btn-bbb").disabled=mq("mv-btn-rh").disabled=false;
   });
 }
