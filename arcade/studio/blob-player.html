@@ -171,7 +171,7 @@
 <section id="movies">
 <div class="card">
   <h2 style="margin:2px 0 4px">3 · 🎦 THE MOVIES — feature films that live only on Walrus</h2>
-  <p class="mv-small" style="margin:2px 0 10px">Same stage, bigger blobs: two full films stored <b>only</b> as encrypted Walrus blobs. This page holds no video — every section is fetched, decrypted and hash-verified in your browser while you watch, timed live.</p>
+  <p class="mv-small" style="margin:2px 0 10px">Same stage, bigger blobs: three full films stored <b>only</b> as encrypted Walrus blobs. This page holds no video — every section is fetched, decrypted and hash-verified in your browser while you watch, timed live.</p>
   <div class="mv-films">
     <div class="mv-film">
       <h3>🐰 Big Buck Bunny <span style="color:#9a9ac0">(Blender, CC-BY · 10 min)</span></h3>
@@ -185,6 +185,12 @@
       <div class="mv-stat" id="mv-stat-rh">checking the chain…</div>
       <button class="mv-btn" id="mv-btn-rh">▶ SHOW ROBIN HOOD</button>
       <button class="mv-btn ghost" id="mv-btn-spot">🎲 LIVE SPOT-CHECK ×5</button>
+    </div>
+    <div class="mv-film">
+      <h3>🧟 Night of the Living Dead <span style="color:#9a9ac0">(1968 · public domain · 96 min)</span></h3>
+      <div class="mv-story">Romero's original, in the public domain since its release night. Blobbed Nov 5, 2026 in the same encrypted chain: 222 sections, keeper ciphers held locally, and proven revivable — a full local reassembly matched the film's hash before it ever shipped.</div>
+      <div class="mv-stat" id="mv-stat-notld">checking the chain…</div>
+      <button class="mv-btn" id="mv-btn-notld">▶ SHOW THE LIVING DEAD</button>
     </div>
   </div>
 </div>
@@ -258,7 +264,7 @@
 const AGG1="https://aggregator.walrus-testnet.walrus.space/v1/blobs/";
 const AGG2="https://walrus-testnet.blockscope.net/v1/blobs/";
 const PUB="https://publisher.walrus-testnet.walrus.space/v1/blobs?epochs=30";
-const ROOT_ID="4mdnzse1G606o7WxPSIxN-eg-smwhp6S90aiCYcPYbE";
+const ROOT_ID="HFn6ieACjJn2CIeH8Vkb1oP8of5fP740HWP_GrLXUY4";
 const out=document.getElementById("csOut");
 function line(h){ out.innerHTML+=h+"<br>"; }
 async function ladder(id){
@@ -385,6 +391,7 @@ setInterval(()=>{ const el=document.getElementById("naclSrc"); if(el && window._
     🏁 <b>FIRST RALLY</b> — <a class="mono" href="https://aggregator.walrus-testnet.walrus.space/v1/blobs/aBp60KJfgq_A9GvjQn60U76pftG88s6lq_X7CN1Ldsk" target="_blank" rel="noopener" style="color:#7ee787">aBp60KJfgq_A9GvjQn… ↗</a> · container blob; awaiting its first human run, honestly<br>
     🐰 <b>BIG BUCK BUNNY</b> — <a class="mono" href="https://aggregator.walrus-testnet.walrus.space/v1/blobs/RYVQA2RMGwT0sQgTz1ekjlhHeEC8cd0hCJbF4cxIRU8" target="_blank" rel="noopener" style="color:#7ee787">RYVQA2RMGwT0sQgTz1… ↗</a> · revived manifest; 78/78 proven identical (§3)<br>
     🏹 <b>ROBIN HOOD</b> — <a class="mono" href="https://aggregator.walrus-testnet.walrus.space/v1/blobs/GTB6k1jJgEt4IZyAee4EKzvRVkihUWW1WjEPecLFs1o" target="_blank" rel="noopener" style="color:#7ee787">GTB6k1jJgEt4IZyAee… ↗</a> · 222 sections, keeper-audited<br>
+    🧟 <b>NIGHT OF THE LIVING DEAD</b> — <a class="mono" href="https://aggregator.walrus-testnet.walrus.space/v1/blobs/oielZhUzK1QIHGzK_UfMNwzNsdrH1fAcexjrAGYNWd8" target="_blank" rel="noopener" style="color:#7ee787">oielZhUzK1QIH… ↗</a> · 222 sections, public domain, revival-proven (§3)<br>
     🎞️ <b>GROWING REEL</b> — <span id="okReel" class="mono" style="color:#7ee787">…</span> · the proof batch; every link seals the last<br>
     🌳 <b>MOTHER REEL</b> — <span id="okRoot" class="mono" style="color:#7ee787">…</span> · the root that names all of the above<br>
     🧠 <b>IKN BRAIN</b> — <span class="mono">seal 33ec6604…</span> · "one truth, one key" (peer desk) — sealed locally; its ledger broadcast awaits David's press, so no network link is claimed here
@@ -582,7 +589,7 @@ document.getElementById("lkWalkLocal").onclick=async()=>{
 (function(){
 const A1="https://aggregator.walrus-testnet.walrus.space/v1/blobs/";
 const A2="https://walrus-testnet.blockscope.net/v1/blobs/";
-const ROOT_ID="4mdnzse1G606o7WxPSIxN-eg-smwhp6S90aiCYcPYbE";
+const ROOT_ID="HFn6ieACjJn2CIeH8Vkb1oP8of5fP740HWP_GrLXUY4";
 const BBB_MAN="RYVQA2RMGwT0sQgTz1ekjlhHeEC8cd0hCJbF4cxIRU8";
 let netCalls=0;
 const VAULT=new Map();
@@ -849,7 +856,8 @@ async function fetchBlobL(id){
   throw new Error("both mirrors timed out or failed (2 passes)"); }
 const FILMS={
   bbb:{title:"🐰 BIG BUCK BUNNY", manifest:AGG+"RYVQA2RMGwT0sQgTz1ekjlhHeEC8cd0hCJbF4cxIRU8", mime:'video/mp4; codecs="avc1.64001f, mp4a.40.2"', stat:"mv-stat-bbb"},
-  rh:{title:"🏹 ROBIN HOOD (1986 VHS)", manifest:AGG+"GTB6k1jJgEt4IZyAee4EKzvRVkihUWW1WjEPecLFs1o", mime:'video/mp4; codecs="avc1.640028, mp4a.40.2"', stat:"mv-stat-rh"}
+  rh:{title:"🏹 ROBIN HOOD (1986 VHS)", manifest:AGG+"GTB6k1jJgEt4IZyAee4EKzvRVkihUWW1WjEPecLFs1o", mime:'video/mp4; codecs="avc1.640028, mp4a.40.2"', stat:"mv-stat-rh"},
+  notld:{title:"🧟 NIGHT OF THE LIVING DEAD (1968)", manifest:AGG+"oielZhUzK1QIHGzK_UfMNwzNsdrH1fAcexjrAGYNWd8", mime:'video/mp4; codecs="avc1.64001e, mp4a.40.2"', stat:"mv-stat-notld"}
 };
 let MANIFESTS={}, RUNNING=false;
 function sha256hex(data){
@@ -895,7 +903,7 @@ async function showFilm(key){
   const F=FILMS[key], m=MANIFESTS[key]||await (await fetch(F.manifest,{cache:"no-store"})).json();
   MANIFESTS[key]=m;
   RUNNING=true;
-  mq("mv-btn-bbb").disabled=mq("mv-btn-rh").disabled=true;
+  mq("mv-btn-bbb").disabled=mq("mv-btn-rh").disabled=mq("mv-btn-notld").disabled=true;
   mq("mv-stage").style.display="block";
   mq("mv-stageTitle").textContent=F.title+" — "+m.sections.length+" sections, zero video bytes on this page";
   mq("mv-stage").scrollIntoView({behavior:"smooth"});
@@ -966,7 +974,7 @@ async function showFilm(key){
     const myRun=(window.__mvRun=(window.__mvRun||0)+1);
     (async()=>{ while(queue.length||appending) await new Promise(r=>setTimeout(r,300));
       try{ if(window.__mvRun===myRun&&ms.readyState==="open") ms.endOfStream(); }catch(e){} })();
-    RUNNING=false; mq("mv-btn-bbb").disabled=mq("mv-btn-rh").disabled=false;
+    RUNNING=false; mq("mv-btn-bbb").disabled=mq("mv-btn-rh").disabled=mq("mv-btn-notld").disabled=false;
   });
 }
 mq("mv-btn-dead").onclick=async()=>{
@@ -1041,7 +1049,8 @@ mq("mv-btn-spot").onclick=async()=>{
 })();
 mq("mv-btn-bbb").onclick=()=>showFilm("bbb");
 mq("mv-btn-rh").onclick=()=>showFilm("rh");
-pingStat("bbb"); pingStat("rh");
+mq("mv-btn-notld").onclick=()=>showFilm("notld");
+pingStat("bbb"); pingStat("rh"); pingStat("notld");
 })();
 </script>
 
@@ -1393,7 +1402,7 @@ function onStarted(){
 spinUp().catch(e=>{ log("SPIN-UP FAILED — "+e.message,"bad"); });
 </script>
 
-<!-- MG-V18 -->
+<!-- MG-V18 --><!-- NOTLD-V19 -->
 <div class="panel" id="movieGamesPanel">
   <h2 style="margin:2px 0 6px">10 · 🎬 MOVIE-GAMES — the film is the design document</h2>
   <p class="small" style="margin:2px 0 8px">A movie already contains a game: its sets are the world, its cast are the roles, its beats are the levels, its lines are the dialogue at the checkpoints. What was missing was a way to <i>deal</i> a film into a game without re-making any of it. The missing piece is the printed record's fifth use — beside name, key, proof and measure, a manifest entry can now be a <b>script</b> (format <span class="mono">script/1</span>): a beat table that sits beside a film's cinema manifest and references it. Nothing is re-stored; the uses multiply and the storage doesn't.</p>
@@ -1406,7 +1415,7 @@ spinUp().catch(e=>{ log("SPIN-UP FAILED — "+e.message,"bad"); });
   </div>
   <iframe src="bbb-player.html" title="BBB — Beat 2: The Bullies cabinet" style="width:100%;height:700px;border:1px solid #33334f;border-radius:10px;background:#07070f" loading="lazy"></iframe>
   <p class="small" style="margin:8px 0 2px">▶ <a href="bbb-player.html" target="_blank" rel="noopener">Open the cabinet full-screen</a> — attract mode plays itself; PLAY puts you in Bunny's paws; RUN THE PROOF re-derives the genesis chain on your own machine. Finish a run and you can chain your score onto the game's chain as a blob, under the machine's genesis, exactly as the Stones do it.</p>
-  <p class="small" style="margin:6px 0 0">🧟 Next in the factory: <b>Night of the Living Dead</b> (1968) — public domain, already becoming a film on Walrus beside the other two; its game is Grade B, dealt from the ghouls' own frames. "They're coming to get you, Barbara" is the first checkpoint.</p>
+  <p class="small" style="margin:6px 0 0">🧟 Next in the factory: <b>Night of the Living Dead</b> (1968) — public domain, now a film on Walrus beside the other two — 222/222 sections alive (§3); its game is Grade B, dealt from the ghouls' own frames. "They're coming to get you, Barbara" is the first checkpoint.</p>
 </div>
 
 </body>
