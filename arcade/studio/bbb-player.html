@@ -130,12 +130,12 @@ async function spinUp(){
   MAN=JSON.parse(new TextDecoder().decode(mf.buf));
   log("📜 manifest in ("+mf.via+") — <b>"+MAN.title+"</b> · "+MAN.project.files.length+" files + engine, every one a blob");
   const ef=await ladder(MAN.engine.blob);
-  if(sha256hex(ef.buf)!==MAN.engine.sha256) throw new Error("engine sha256 mismatch — refused");
+  if(sha256hex(new Uint8Array(ef.buf))!==MAN.engine.sha256) throw new Error("engine sha256 mismatch — refused");
   log("⚙️ engine verified — "+MAN.engine.size.toLocaleString()+" B, sha256 ✔","ok");
   const texts={};
   for(const f of MAN.project.files){
     const ff=await ladder(f.blob);
-    if(sha256hex(ff.buf)!==f.sha256) throw new Error("sha256 mismatch on "+f.path+" — refused");
+    if(sha256hex(new Uint8Array(ff.buf))!==f.sha256) throw new Error("sha256 mismatch on "+f.path+" — refused");
     if(f.info){ const mime=f.path.endsWith(".jpg")?"image/jpeg":"image/png"; pathMap[f.path]=URL.createObjectURL(new Blob([ff.buf],{type:mime})); }
     else texts[f.path]=new TextDecoder().decode(ff.buf);
     log("✔ "+f.path+" — "+f.size.toLocaleString()+" B · sha256 verified","ok");
