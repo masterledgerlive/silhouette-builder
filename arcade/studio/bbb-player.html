@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BBB — BEAT 2: THE BULLIES · the first movie-game (live from Walrus)</title>
+<style>
+  body{background:#07070f;color:#e8e8f2;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;margin:0;padding:14px;line-height:1.45}
+  .wrap{max-width:820px;margin:0 auto}
+  h1{font-size:21px;margin:4px 0 2px}
+  h2{font-size:15px;margin:0 0 6px;color:#ffd76a}
+  .sub{color:#9fb4c8;font-size:13px;margin:0 0 10px}
+  .panel{background:#101020;border:1px solid #26263e;border-radius:10px;padding:12px 14px;margin:12px 0}
+  .mono{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;word-break:break-all}
+  a{color:#7ee787}
+  .modes{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+  .modes a,.btn{background:#1b1b30;border:1px solid #3a3a5e;color:#e8e8f2;border-radius:8px;padding:8px 14px;text-decoration:none;font-size:14px;cursor:pointer}
+  .modes a.on{background:#3d2b00;border-color:#ffd76a;color:#ffd76a}
+  .btn{background:#14351c;border-color:#2f7d43}
+  #log{font-size:12.5px;color:#c9d4e2;white-space:pre-wrap;min-height:44px}
+  #log .ok{color:#7ee787} #log .bad{color:#ff8f8f} #log .dim{color:#7787a0}
+  #stage canvas{width:min(96vw,760px);height:auto;display:block;margin:6px auto;border-radius:8px;background:#000}
+  .verdict{font-size:14.5px;padding:10px 12px;border-radius:8px;background:#0d1a10;border:1px solid #2f7d43;display:none}
+  .verdict.fail{background:#220d0d;border-color:#a03a3a}
+  .row{border-top:1px dashed #2c2c48;padding:7px 0;font-size:13px}
+  .row:first-of-type{border-top:none}
+  .small{font-size:12.5px;color:#9fb4c8}
+  .chip{display:inline-block;background:#141428;border:1px solid #33334f;border-radius:14px;padding:2px 10px;margin:2px 2px;font-size:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>🐰 BBB — BEAT 2: THE BULLIES</h1>
+<p class="sub">The first movie-game: a playable scene of <b>Big Buck Bunny</b>, dealt entirely from blobs. The backdrop is a frame of the film; Bunny and the apple were rendered from the film's own 2008 production rigs; the engine, the code and the art all arrive from Walrus and are sha256-verified before a single frame runs. Nothing here is hosted — it is <i>recalled</i>.</p>
+
+<div class="modes">
+  <a id="mAttract" href="?mode=attract">🎬 ATTRACT</a>
+  <a id="mPlay" href="?mode=play">🕹️ PLAY</a>
+  <a id="mProof" href="?mode=proof">⛓️ RUN THE PROOF</a>
+  <a href="https://arcade.highscores.live/arcade/studio/blob-player.html">← THE WALKTHROUGH (§10)</a>
+</div>
+<p class="small" id="modeNote"></p>
+
+<div class="panel" id="stage">
+  <div id="log">spinning up from the blobs…</div>
+</div>
+
+<div class="panel" id="proofPanel">
+  <h2>HOW THIS PLAY IS PROVEN</h2>
+  <p class="small" style="margin:0">The simulation is deterministic: a seeded heart, no wall clock, no trust. A run is recorded as a <b>tape</b> (your steering, one mark per frame) plus a <b>state chain</b> (hashes of the sim at fixed marks). Anyone can cold-replay the tape from the blobs and must land on the same chain — that is the whole proof, and it is why a high score here carries its replay. In PROOF mode the page re-runs the machine's genesis run and compares chains.</p>
+  <div class="verdict" id="verdict"></div>
+  <div id="runCard" style="margin-top:8px"></div>
+</div>
+
+<div class="panel">
+  <h2>🏆 THE SCORE CHAIN — every score carries its replay</h2>
+  <p class="small" style="margin:0 0 4px">Run records are blobs, hash-chained: each names the one before it. The machine's genesis run sits at the root — machine birth time has superiority. This panel walks the chain back from the head this device last recorded.</p>
+  <div id="chainRows"><div class="row">walking the chain…</div></div>
+</div>
+
+<div class="panel">
+  <h2>🔗 CHAIN OF CUSTODY — game → script → film</h2>
+  <div class="small" style="line-height:2.1">
+    🎮 game manifest <a class="mono" href="https://aggregator.walrus-testnet.walrus.space/v1/blobs/qU499g-VBvDuTjdcXzZfvyGgE8Jy1aSkjSuTk90ucyg" target="_blank" rel="noopener">qU499g-VBvDuTjdcXzZfvyGgE8Jy1aSkjSuTk90ucyg ↗</a><br>
+    📜 script manifest <a class="mono" href="https://aggregator.walrus-testnet.walrus.space/v1/blobs/F0zUT9xS-PsQNUCkaVlRAHtOx-EAgRI35AfCvVWjPzU" target="_blank" rel="noopener">F0zUT9xS-PsQN… ↗</a> — the film's beats as a design document (script/1)<br>
+    🎞️ film manifest <a class="mono" href="https://aggregator.walrus-testnet.walrus.space/v1/blobs/RYVQA2RMGwT0sQgTz1ekjlhHeEC8cd0hCJbF4cxIRU8" target="_blank" rel="noopener">RYVQA2RMGwT0… ↗</a> — Big Buck Bunny, 78 sections on Walrus<br>
+    🐰 Bunny's rig (artifact) <a class="mono" href="https://aggregator.walrus-testnet.walrus.space/v1/blobs/d8d1zHvSqrTXeX6jbknLT4oHdmXG8w_nTlPnk1CGa7s" target="_blank" rel="noopener">d8d1zHvSqrTX… ↗</a> · 🍎 the apple prop (artifact) <a class="mono" href="https://aggregator.walrus-testnet.walrus.space/v1/blobs/jGEunh2NEkZG1RhlPzIiTbnpmMwHDPbtkM6iZ0lkd78" target="_blank" rel="noopener">jGEunh2NEkZG… ↗</a><br>
+    <span class="chip">film © Blender Foundation · CC-BY 3.0</span> <span class="chip">engine: microStudio (MIT), house fork</span> <span class="chip">Walrus testnet · 30 epochs · the keeper renews</span>
+  </div>
+</div>
+</div>
+
+<script id="code" type="text/x-microscript"></script>
+<script>
+"use strict";
+const $=id=>document.getElementById(id);
+const qs=new URLSearchParams(location.search);
+const MODE=qs.get("mode")||"attract";
+const GAME="qU499g-VBvDuTjdcXzZfvyGgE8Jy1aSkjSuTk90ucyg";
+const GENESIS_HEAD="7iYiWQ-yxWntY8tqUaAkoJ-PF_ylh3RFReikX-Mdv0U";
+const GENESIS_CHAIN="109274966.68236447.108008790.88992671.71096179.";
+const AGG="https://aggregator.walrus-testnet.walrus.space/v1/blobs/";
+const AGG2="https://walrus-testnet.blockscope.net/v1/blobs/";
+const PUB="https://publisher.walrus-testnet.walrus.space/v1/blobs?epochs=30";
+const T0=performance.now();
+function sha256hex(data){
+  var K=[0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2];
+  var H=[0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19];
+  var l=data.length, padLen=(((l+9+63)>>6)<<6), m=new Uint8Array(padLen);
+  m.set(data); m[l]=0x80;
+  var dv=new DataView(m.buffer), bitLen=l*8;
+  dv.setUint32(padLen-4, bitLen>>>0); dv.setUint32(padLen-8, Math.floor(bitLen/4294967296));
+  var w=new Uint32Array(64);
+  function rotr(x,n){return (x>>>n)|(x<<(32-n));}
+  for(var off=0;off<padLen;off+=64){
+    for(var i=0;i<16;i++) w[i]=dv.getUint32(off+i*4);
+    for(var i=16;i<64;i++){ var s0=rotr(w[i-15],7)^rotr(w[i-15],18)^(w[i-15]>>>3), s1=rotr(w[i-2],17)^rotr(w[i-2],19)^(w[i-2]>>>10); w[i]=(w[i-16]+s0+w[i-7]+s1)|0; }
+    var a=H[0],b=H[1],c=H[2],d=H[3],e=H[4],f=H[5],g=H[6],h=H[7];
+    for(var i=0;i<64;i++){ var S1=rotr(e,6)^rotr(e,11)^rotr(e,25), ch=(e&f)^(~e&g), t1=(h+S1+ch+K[i]+w[i])|0, S0=rotr(a,2)^rotr(a,13)^rotr(a,22), mj=(a&b)^(a&c)^(b&c), t2=(S0+mj)|0; h=g;g=f;f=e;e=(d+t1)|0;d=c;c=b;b=a;a=(t1+t2)|0; }
+    H[0]=(H[0]+a)|0;H[1]=(H[1]+b)|0;H[2]=(H[2]+c)|0;H[3]=(H[3]+d)|0;H[4]=(H[4]+e)|0;H[5]=(H[5]+f)|0;H[6]=(H[6]+g)|0;H[7]=(H[7]+h)|0;
+  }
+  var out=""; for(var i=0;i<8;i++) out+=("0000000"+(H[i]>>>0).toString(16)).slice(-8);
+  return out;
+}
+function log(msg, cls){ const el=$("log"); const d=document.createElement("div"); if(cls) d.className=cls; d.innerHTML=msg; el.appendChild(d); }
+$("log").innerHTML="";
+$("mAttract").className=MODE==="attract"?"on":""; $("mPlay").className=MODE==="play"?"on":""; $("mProof").className=MODE==="proof"?"on":"";
+$("modeNote").textContent = MODE==="attract" ? "🎬 attract mode: the bot plays Beat 2 forever. Press PLAY when you're ready to be Bunny."
+  : MODE==="play" ? "🕹️ your game: ◀ ▶ arrow keys, or touch and drag on the stage — Bunny follows your finger. Dodge the fruit; three hits ends the scene."
+  : "⛓️ proof mode: the machine replays its genesis run inside the sim and the page compares the state chain, hash for hash.";
+const pathMap={};
+function installImageSeam(){
+  const proto=HTMLImageElement.prototype;
+  const desc=Object.getOwnPropertyDescriptor(proto,"src");
+  Object.defineProperty(proto,"src",{ configurable:true, enumerable:desc.enumerable,
+    get(){ return desc.get.call(this); },
+    set(v){ if(typeof v==="string"){ const clean=v.split("?")[0]; if(pathMap[clean]){ desc.set.call(this, pathMap[clean]); return; } } desc.set.call(this, v); }
+  });
+}
+async function ladder(id){
+  try{ const r=await fetch(AGG+id,{cache:"no-store"}); if(r.ok) return {buf:await r.arrayBuffer(), via:"mirror 1"}; }catch(e){}
+  const r=await fetch(AGG2+id,{cache:"no-store"});
+  if(!r.ok) throw new Error("both mirrors failed for "+id.slice(0,12));
+  return {buf:await r.arrayBuffer(), via:"mirror 2"};
+}
+function stripQ(s){ s=String(s==null?"":s).trim(); if(s.length>1&&s[0]==='"'&&s[s.length-1]==='"') s=s.slice(1,-1); return s; }
+let MAN=null;
+async function spinUp(){
+  const mf=await ladder(GAME);
+  MAN=JSON.parse(new TextDecoder().decode(mf.buf));
+  log("📜 manifest in ("+mf.via+") — <b>"+MAN.title+"</b> · "+MAN.project.files.length+" files + engine, every one a blob");
+  const ef=await ladder(MAN.engine.blob);
+  if(sha256hex(ef.buf)!==MAN.engine.sha256) throw new Error("engine sha256 mismatch — refused");
+  log("⚙️ engine verified — "+MAN.engine.size.toLocaleString()+" B, sha256 ✔","ok");
+  const texts={};
+  for(const f of MAN.project.files){
+    const ff=await ladder(f.blob);
+    if(sha256hex(ff.buf)!==f.sha256) throw new Error("sha256 mismatch on "+f.path+" — refused");
+    if(f.info){ const mime=f.path.endsWith(".jpg")?"image/jpeg":"image/png"; pathMap[f.path]=URL.createObjectURL(new Blob([ff.buf],{type:mime})); }
+    else texts[f.path]=new TextDecoder().decode(ff.buf);
+    log("✔ "+f.path+" — "+f.size.toLocaleString()+" B · sha256 verified","ok");
+  }
+  try{
+    let fr=await fetch(AGG+"UVOZQxe_ZX35nvdSskMn5_HPRWUHMjW0HqE2F_Qk2vo",{cache:"no-store"});
+    if(!fr.ok) fr=await fetch("https://cdn.jsdelivr.net/gh/masterledgerlive/microstudio@80594cf/static/fonts/BitCell.ttf",{cache:"no-store"});
+    if(fr.ok){ const face=new FontFace("BitCell", await fr.arrayBuffer()); await face.load(); document.fonts.add(face); }
+  }catch(e){}
+  const images=MAN.project.files.filter(f=>f.info).map(f=>f.info);
+  const msFiles=MAN.project.files.filter(f=>f.path.startsWith("ms/"));
+  const rig = MODE==="attract" ? msFiles.filter(f=>f.demo) : MODE==="play" ? msFiles.filter(f=>f.live) : msFiles.filter(f=>f.proof);
+  const ordered=msFiles.filter(f=>!f.proof&&!f.demo&&!f.live).concat(rig);
+  const code=ordered.map(f=>"\n// file: "+f.path.split("/").pop()+"\nfunction()\n"+texts[f.path]+"\nend()\n").join("");
+  document.getElementById("code").textContent=code;
+  const boot=document.createElement("script");
+  boot.textContent=
+    "var resources = "+JSON.stringify({images:images,assets:[],maps:{},sounds:[],music:[]}).replace(/<\//g,"<\\/")+";\n"+
+    "var graphics = "+JSON.stringify(MAN.engine.graphics)+";\n"+
+    "var orientation = "+JSON.stringify(MAN.project.orientation)+";\n"+
+    "var aspect = "+JSON.stringify(MAN.project.aspect)+";\n"+
+    "var ms_libs = "+JSON.stringify(MAN.project.libs)+";\n"+
+    "window.fonts = "+JSON.stringify(MAN.project.fonts)+";\n"+
+    "window.skip_service_worker = true;\nwindow.exported_project = true;\nwindow.ms_use_server = false;\n";
+  document.body.appendChild(boot);
+  installImageSeam();
+  const engScript=document.createElement("script");
+  engScript.src=URL.createObjectURL(new Blob([ef.buf],{type:"text/javascript"}));
+  engScript.onload=()=>{
+    window.player=new Player(function(event){
+      if(event.name==="started"){
+        const c=document.querySelector("canvas"); if(c) $("stage").appendChild(c);
+        log("🟢 STARTED — playing entirely from blobs · spin-up "+(performance.now()-T0).toFixed(0)+" ms","ok");
+        if(MODE==="proof") pollProof();
+        if(MODE==="play") pollLive();
+      }
+    });
+    document.body.focus();
+  };
+  document.body.appendChild(engScript);
+}
+function pollProof(){
+  let tries=0;
+  const iv=setInterval(()=>{
+    tries++;
+    if(!window.player||!window.player.runtime){ if(tries>150) clearInterval(iv); return; }
+    window.player.exec("proofdone", function(r){
+      if(stripQ(r)!=="1"){ if(tries>150){ clearInterval(iv); const v=$("verdict"); v.style.display="block"; v.className="verdict fail"; v.textContent="PROOF STALLED — the rig never reported. Reported honestly."; } return; }
+      clearInterval(iv);
+      window.player.exec("proofchain", function(chain){
+        chain=stripQ(chain);
+        const v=$("verdict"); v.style.display="block";
+        const same=chain===GENESIS_CHAIN;
+        v.className="verdict"+(same?"":" fail");
+        v.innerHTML=same
+          ? "✅ <b>PROOF PASS</b> — this page just cold-replayed the machine's genesis run from the blobs and landed on the identical state chain:<br><span class='mono'>"+chain+"</span><br>The game you are looking at is the proof: engine, code, Bunny, apple and backdrop all arrived as Walrus blobs, sha256-verified before boot."
+          : "❌ <b>PROOF FAIL</b> — replay diverged. genesis: "+GENESIS_CHAIN+" vs here: "+chain+". Reported honestly.";
+        log(same?"⛓️ chain identical to genesis":"⛓️ CHAIN DIVERGED", same?"ok":"bad");
+      });
+    });
+  }, 800);
+}
+let recorded=false;
+function pollLive(){
+  let tries=0;
+  const iv=setInterval(()=>{
+    tries++;
+    if(!window.player||!window.player.runtime){ if(tries>400) clearInterval(iv); return; }
+    window.player.exec("livedone", function(r){
+      if(stripQ(r)!=="1"){ if(tries>400) clearInterval(iv); return; }
+      clearInterval(iv);
+      window.player.exec("result", function(result){
+        window.player.exec("dodges", function(dod){
+          window.player.exec("livechain", function(chain){
+            window.player.exec("livetape", function(tape){
+              const rec={format:"run/1", game:GAME, title:MAN.title, runner:"a human at the cabinet", mode:"human",
+                seed:20261105, result:stripQ(result), score_dodges:parseInt(stripQ(dod),10),
+                chain:stripQ(chain), tape:stripQ(tape), prev:headId(), ts:new Date().toISOString()};
+              $("runCard").innerHTML="🏁 <b>RUN FINISHED</b> — "+rec.result+"<br><span class='small'>state chain: <span class='mono'>"+rec.chain+"</span> · tape: "+rec.tape.length+" frames of steering</span><br><br>"+
+                "<button class='btn' id='btnRecord'>⛓️ RECORD THIS RUN ON BLOB — chain it under your score</button> <span class='small'>writes one small blob to Walrus testnet (free, ~2 KB) and links it to the run before it</span>";
+              $("btnRecord").onclick=async()=>{
+                if(recorded) return; recorded=true;
+                $("btnRecord").textContent="writing to Walrus…";
+                try{
+                  const resp=await fetch(PUB,{method:"PUT",body:JSON.stringify(rec,null,1)});
+                  if(!resp.ok) throw new Error("publisher HTTP "+resp.status);
+                  const info=await resp.json();
+                  const o=info.newlyCreated||info.alreadyCertified||{};
+                  const bid=(o.blobObject&&o.blobObject.blobId)||"";
+                  if(!bid) throw new Error("publisher returned no blob id");
+                  try{ localStorage.setItem("bbb-scorehead", bid); }catch(e){}
+                  $("btnRecord").textContent="✔ CHAINED — run record "+bid.slice(0,16)+"…";
+                  log("⛓️ your run is a blob now: "+bid,"ok");
+                  walkChain();
+                }catch(e){ recorded=false; $("btnRecord").textContent="⛓️ RECORD THIS RUN ON BLOB"; log("record failed: "+e.message,"bad"); }
+              };
+            });
+          });
+        });
+      });
+    });
+  }, 800);
+}
+function headId(){ try{ return localStorage.getItem("bbb-scorehead")||GENESIS_HEAD; }catch(e){ return GENESIS_HEAD; } }
+async function walkChain(){
+  const rows=[]; let id=headId(); let n=0;
+  try{
+    while(id && n<12){
+      const f=await ladder(id);
+      const rec=JSON.parse(new TextDecoder().decode(f.buf));
+      const score=rec.mode==="machine-proof" ? "13 dodges · 0 hits at the proof marks (full-scene bot: 52)" : (rec.result||"");
+      rows.push("<div class='row'>"+(rec.mode==="machine-proof"?"🌱 <b>GENESIS</b> — ":"")+"<b>"+(rec.runner||"run")+"</b> · "+score+
+        "<br><span class='small'>chain <span class='mono'>"+(rec.chain||"")+"</span> · <a href='"+AGG+id+"' target='_blank' rel='noopener'>record blob ↗</a></span></div>");
+      id=rec.prev; n++;
+    }
+  }catch(e){ rows.push("<div class='row'>chain walk paused: "+e.message+" — the blobs themselves are unaffected.</div>"); }
+  $("chainRows").innerHTML=rows.join("")||"<div class='row'>no records yet</div>";
+}
+spinUp().catch(e=>log("SPIN-UP FAILED — "+e.message,"bad"));
+walkChain();
+</script>
+</body>
+</html>
