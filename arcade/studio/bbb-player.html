@@ -42,6 +42,7 @@
 <p class="small" id="modeNote"></p>
 
 <div class="panel" id="stage">
+  <div id="canvaswrapper"></div>
   <div id="log">spinning up from the blobs…</div>
 </div>
 
@@ -167,7 +168,6 @@ async function spinUp(){
   engScript.onload=()=>{
     window.player=new Player(function(event){
       if(event.name==="started"){
-        const c=document.querySelector("canvas"); if(c) $("stage").appendChild(c);
         log("🟢 STARTED — playing entirely from blobs · spin-up "+(performance.now()-T0).toFixed(0)+" ms","ok");
         if(MODE==="proof") pollProof();
         if(MODE==="play") pollLive();
