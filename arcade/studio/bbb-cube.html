@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>BUNNY CUBE v1.4 — BONK THE BULLIES (a 3D world from Walrus blobs)</title>
+<title>BUNNY CUBE v1.5 — BONK THE BULLIES (a 3D world from Walrus blobs)</title>
 <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
 <style>
   body{background:#07070f;color:#e8e8f2;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;margin:0;padding:14px;line-height:1.45}
@@ -56,6 +56,30 @@
   #pad .pip{position:absolute;color:rgba(255,255,255,.75);font-size:15px;pointer-events:none}
   #pad .pU{left:50%;top:5px;transform:translateX(-50%)} #pad .pD{left:50%;bottom:5px;transform:translateX(-50%)}
   #pad .pL{left:7px;top:50%;transform:translateY(-50%)} #pad .pR{right:7px;top:50%;transform:translateY(-50%)}
+  #mapBox{position:absolute;right:14px;top:60px;z-index:6;display:none;width:148px}
+  #mapCv{width:148px;height:148px;border-radius:14px;border:2px solid rgba(255,255,255,.55);
+       background:#1d3319;box-shadow:0 4px 16px rgba(0,0,0,.45)}
+  #mapCap{text-align:center;color:#eaf4ff;font-size:11px;font-weight:700;letter-spacing:.12em;margin-top:3px;
+       text-shadow:0 1px 4px #000}
+  #objective{margin-top:3px;color:#ffd76a;font-weight:700}
+  #objArrow{display:inline-block;transition:transform .18s linear;color:#ffd76a}
+  #startScreen{position:absolute;inset:0;z-index:9;display:none;
+       background:linear-gradient(180deg, rgba(0,0,0,.86) 0%, rgba(0,0,0,.28) 38%, rgba(0,0,0,.22) 58%, rgba(0,0,0,.9) 100%)}
+  .ssTitle{position:absolute;top:26px;left:0;right:0;text-align:center;font-family:Georgia,'Times New Roman',serif;
+       font-size:44px;font-weight:700;letter-spacing:.14em;color:#fff;text-shadow:0 3px 14px #000}
+  .ssTitle .red{color:#e03a2f}
+  .ssSub{position:absolute;top:82px;left:0;right:0;text-align:center;color:#f3e9d2;font-size:15px;
+       letter-spacing:.34em;text-shadow:0 2px 8px #000}
+  .ssMenu{position:absolute;left:20px;bottom:20px;text-align:left}
+  .ssBtn{display:block;background:none;border:none;cursor:pointer;color:#fff;font-family:Georgia,serif;
+       font-size:27px;font-weight:700;letter-spacing:.06em;padding:9px 6px;text-shadow:0 2px 8px #000;text-align:left}
+  .ssBtn .tri{color:#e03a2f}
+  .ssBtn:active{transform:scale(.97)}
+  .ssBtn.small{font-size:19px;color:#d8dee8}
+  .ssNote{color:#c8cfda;font-size:13px;margin-top:6px;text-shadow:0 1px 6px #000;max-width:300px}
+  #howPanel{position:absolute;left:20px;bottom:158px;max-width:330px;display:none;background:rgba(5,8,14,.88);
+       border:1px solid rgba(255,255,255,.3);border-radius:12px;padding:12px 14px;color:#e8eef7;font-size:14px;line-height:1.55}
+  .ssFoot{position:absolute;right:16px;bottom:16px;color:#9fb4c8;font-size:12px;text-shadow:0 1px 6px #000;text-align:right}
   .small{font-size:12.5px;color:#9fb4c8}
 </style>
 </head>
@@ -74,16 +98,29 @@ grab apples, bonk them back. First to the banner takes the round.</p>
     <div id="hud">
       <div id="story">🍎 THE BULLIES are pelting Bunny — bonk them back!</div>
       <div id="counts">🍎 <b id="hudCarry">0</b> carried · 🎯 <b id="hudBonk">0</b>/10 bonks · 💥 <b id="hudBonked">0</b>/3 bonked · 🏁 ROUND <b id="hudRound">1</b></div>
+      <div id="objective">🎯 <b id="objName">—</b> · <span id="objDist">–</span>m <span id="objArrow">▲</span> <span style="color:#9fb4c8;font-weight:400">nearest bully — the map knows</span></div>
     </div>
     <div id="hint">📱 Control pad (bottom-left): hold + push up = hop forward, slide left/right = steer · right thumb drag on the meadow = look around · 🧭 TILT = pivot by tilting your phone · 🍎 button = throw.<br>Desktop: WASD / arrows + mouse drag to look · SPACE or the apple button to throw.</div>
     <div id="flash"></div>
     <div id="banner"><div id="bannerMain"></div><div id="bannerSub"></div></div>
     <div id="pop"></div>
-    <div id="verTag">🧊 CUBE v1.4 · BONK THE BULLIES</div>
+    <div id="verTag">🧊 CUBE v1.5 · BONK THE BULLIES</div>
     <button id="tiltBtn">🧭 TILT</button>
     <div id="joy"><div id="joyKnob"></div></div>
     <div id="pad"><span class="pip pU">▲</span><span class="pip pD">▼</span><span class="pip pL">◀</span><span class="pip pR">▶</span><div id="padKnob"></div></div>
     <button id="throwBtn">🍎<br>THROW</button>
+    <div id="mapBox"><canvas id="mapCv" width="148" height="148"></canvas><div id="mapCap">🗺️ THE MEADOW · N ↑</div></div>
+    <div id="startScreen">
+      <div class="ssTitle">BUNNY <span class="red">CUBE</span></div>
+      <div class="ssSub">— BONK THE BULLIES —</div>
+      <div id="howPanel">🕹️ <b>Pad</b> (bottom-left): push up = hop forward, slide = steer.<br>👀 Drag the meadow to look · 🍎 button throws.<br>🗺️ <b>The map</b> (top-right): ⚪ you · 🟠 <b>F</b>rank <b>R</b>inky <b>G</b>amera · 🔴 apples · 🌳 tree · 🟡 THE DOOR.<br>🎯 The gold line under your counts points at the nearest bully, with the distance.</div>
+      <div class="ssMenu">
+        <button class="ssBtn" id="playBtn"><span class="tri">▶</span> PLAY</button>
+        <button class="ssBtn small" id="howBtn">? HOW TO PLAY</button>
+        <div class="ssNote">First to the banner takes the round · your 10 bonks win the meadow · their 3 bonks on you win it back.</div>
+      </div>
+      <div class="ssFoot">the film's own world, rebuilt from blobs<br>every object hash-verified in your browser</div>
+    </div>
   </div>
 </div>
 
@@ -105,7 +142,11 @@ grab apples, bonk them back. First to the banner takes the round.</p>
   as the active one, rendering from inside the hill, while our camera sat aimed and unused. The page now claims
   the lens for its house camera at boot and prints the proof (the 🎥 line) in the log below.<br>
   New in v1.4: a fixed control pad (bottom-left) — David asked for a pad his thumb can find on the phone; it drives
-  the same stick channel, with the gesture defended so iOS can't steal the hold as a scroll.</p>
+  the same stick channel, with the gesture defended so iOS can't steal the hold as a scroll.<br>
+  New in v1.5: a front door like the pictures he sent (The Shining / Stand By Me concept menus, with a Red Dead
+  black-and-red heart): a start screen over the living meadow with a big PLAY button — the round waits for the
+  press — plus a live map of the meadow (top-right) so you can find the players: bullies initialed, apples,
+  the tree, THE DOOR, and a gold objective line that names the nearest bully, its distance, and which way to turn.</p>
   <div class="small" style="line-height:2.1;margin-top:6px">
     🎞️ the film — <i>Big Buck Bunny</i> (2008) · 🐰 cast &amp; set © Blender Foundation · CC-BY 3.0<br>
     <span class="chip">Walrus testnet · 30 epochs · the keeper renews</span>
@@ -155,7 +196,7 @@ function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a
 <script>
 "use strict";
 let MAN=null; const URLS={}, BUFFERS={};
-const state={ready:false, carried:0, round:1, bonks:0, bonked:0,
+const state={ready:false, started:false, carried:0, round:1, bonks:0, bonked:0,
              camYaw:0, camDist:8, camPitch:0.42, camSnap:true,
              keys:{}, stick:{x:0,y:0,active:false,id:null},
              bunnyPos:new THREE.Vector3(0,0,10.5), bunnyRotY:Math.PI, hopPhase:0,
@@ -165,6 +206,7 @@ const PLAY_R=23, TREE_POS={x:7,z:-9}, TREE_R=2.6, GRAV=15.5;
 let sceneEl, worldEl, bunnyEl, camEl, terrainMesh=null;
 let camObj=null, _camLeveled=false;                       // the PerspectiveCamera child of camEl (v1.2)
 let _guardTick=0, _guardLiftLogged=false, _guardMissLogged=false;  // camera self-healing guard (v1.2)
+let _mapTick=0;   // minimap redraw throttle (v1.5)
 const _cwV=new THREE.Vector3(), _gwV=new THREE.Vector3();
 const apples=[];       // {el, st:'ground'|'carried'|'flying'|'spare', kind:'throw'|'lob', p, vel, bounces}
 const labels=[];       // static a-text els to billboard (door)
@@ -452,8 +494,9 @@ function placeWorld(){
   log("🌳 <b>THE CUBE IS OPEN — and it's a game now.</b> The meadow stands on its own proven geometry (door ground "+groundY(0,10.5).toFixed(1)+" up). Frank, Rinky and Gamera are already plotting. Grab a 🍎!","ok");
   $("hud").style.display="block"; $("hint").style.display="block"; $("throwBtn").style.display="block";
   $("tiltBtn").style.display="block"; $("verTag").style.display="block"; $("pad").style.display="block";
+  $("mapBox").style.display="block"; $("startScreen").style.display="block";
   syncHUD();
-  setTimeout(()=>popText("Grab a 🍎 — then bonk a bully!", 2800), 700);
+  // v1.5: the grab-a-🍎 pop fires on the PLAY press, not over the start menu
 }
 </script>
 
@@ -522,6 +565,7 @@ function launchApple(a, from, vel, kind){
 }
 function throwApple(){
   if(!state.ready) return;
+  if(!state.started) return;
   if(state.throwCd>0) return;
   if(state.carried<=0){ popText("No apples! Hop onto a 🍎 to pick one up", 1600); return; }
   state.throwCd=0.22;
@@ -604,6 +648,7 @@ function stageRect(){ return $("stage").getBoundingClientRect(); }
 function onDown(e){
   if(e.target.closest("button")) return;
   if(e.target.closest("#pad")) return;
+  if(e.target.closest("#startScreen")) return;
   const r=stageRect(), lx=e.clientX-r.left, ly=e.clientY-r.top;
   if(e.pointerType==="touch" && lx<r.width*0.5 && state.stick.id===null){
     pointers[e.pointerId]={mode:"stick"};
@@ -674,6 +719,61 @@ function padRelease(e){
 }
 padEl.addEventListener("pointerup",padRelease);
 padEl.addEventListener("pointercancel",padRelease);
+
+// ---------- v1.5: the start screen + the meadow map (David's ask, Nov 6) ----------
+// A real front door, like the pictures he sent: black menu over the living
+// world, a PLAY button, and a map so he can FIND the players.
+$("playBtn").addEventListener("click",()=>{
+  if(state.started) return;
+  state.started=true;
+  $("startScreen").style.display="none";
+  popText("🎬 ROUND "+state.round+" — grab a 🍎, bonk a bully!", 2600);
+});
+$("howBtn").addEventListener("click",()=>{
+  const hp=$("howPanel");
+  hp.style.display=(hp.style.display==="block")?"none":"block";
+});
+function drawMap(){
+  const cv=$("mapCv"); if(!cv) return;
+  const box=$("mapBox"); if(!box||box.style.display==="none") return;
+  const g=cv.getContext("2d"), W=cv.width, H=cv.height;
+  const px=x=>(x+26)/52*W, pz=z=>(z+26)/52*H;
+  g.fillStyle="#1d3319"; g.fillRect(0,0,W,H);
+  g.strokeStyle="rgba(255,255,255,.09)"; g.lineWidth=1;
+  for(let i=1;i<4;i++){ g.beginPath(); g.moveTo(W*i/4,0); g.lineTo(W*i/4,H); g.stroke(); g.beginPath(); g.moveTo(0,H*i/4); g.lineTo(W,H*i/4); g.stroke(); }
+  g.strokeStyle="rgba(255,255,255,.35)"; g.beginPath(); g.arc(px(0),pz(0),23/52*W,0,Math.PI*2); g.stroke();
+  // the tree + THE DOOR
+  g.fillStyle="#3f9e4d"; g.beginPath(); g.arc(px(TREE_POS.x),pz(TREE_POS.z),6,0,Math.PI*2); g.fill();
+  g.strokeStyle="#ffd76a"; g.lineWidth=2.5; g.beginPath(); g.arc(px(0),pz(13),4.5,0,Math.PI*2); g.stroke();
+  // apples on the ground
+  g.fillStyle="#ff5147";
+  for(const a of apples){ if(a.st!=="ground") continue; g.beginPath(); g.arc(px(a.p.x),pz(a.p.z),2.2,0,Math.PI*2); g.fill(); }
+  // the bullies — the players you are hunting
+  let near=null, nearD=1e9;
+  for(const b of bullies){
+    const d=Math.hypot(b.x-state.bunnyPos.x, b.z-state.bunnyPos.z);
+    if(d<nearD){ nearD=d; near=b; }
+    g.fillStyle="#ff9435"; g.beginPath(); g.arc(px(b.x),pz(b.z),6,0,Math.PI*2); g.fill();
+    g.fillStyle="#fff"; g.font="700 8px system-ui"; g.textAlign="center"; g.textBaseline="middle";
+    g.fillText(b.name[0], px(b.x), pz(b.z)+0.5);
+  }
+  // Bunny — white dot + facing tick
+  const bx=px(state.bunnyPos.x), bz=pz(state.bunnyPos.z);
+  g.strokeStyle="#123"; g.fillStyle="#fff"; g.lineWidth=2;
+  g.beginPath(); g.arc(bx,bz,5.5,0,Math.PI*2); g.fill(); g.stroke();
+  g.strokeStyle="#fff"; g.beginPath(); g.moveTo(bx,bz);
+  g.lineTo(bx+Math.sin(state.bunnyRotY)*9, bz+Math.cos(state.bunnyRotY)*9); g.stroke();
+  // the objective line: nearest bully, distance, and a compass arrow that
+  // turns with your camera (rotation = facing bearing - target bearing)
+  if(near){
+    $("objName").textContent=near.name.toUpperCase();
+    $("objDist").textContent=nearD.toFixed(0);
+    const targetAng=Math.atan2(near.x-state.bunnyPos.x, near.z-state.bunnyPos.z);
+    let rel=(state.camYaw+Math.PI)-targetAng;
+    while(rel>Math.PI) rel-=Math.PI*2; while(rel<-Math.PI) rel+=Math.PI*2;
+    $("objArrow").style.transform="rotate("+(rel*180/Math.PI).toFixed(0)+"deg)";
+  }
+}
 window.addEventListener("wheel",e=>{ if(e.target.closest("#stage")){ state.camDist=Math.min(13,Math.max(4.5,state.camDist+e.deltaY*0.01)); } },{passive:true});
 // ---------- bullies ----------
 function angleLerp(a,b,t){
@@ -744,7 +844,8 @@ function tickLoop(now){
   }
   // ---- movement: thumb-stick drives Bunny-relative; keys drive camera-relative
   let mx=0, mz=0, moving=false;
-  if(state.stick.active){
+  if(!state.started){ /* the start menu is up — Bunny waits at the door, camera live */ }
+  else if(state.stick.active){
     const sx=state.stick.x, sy=state.stick.y;
     const fwdAmt=Math.max(-1,Math.min(1,-sy));
     if(Math.abs(sx)>0.08) state.bunnyRotY-=sx*2.3*dt;      // steer left/right
@@ -845,6 +946,7 @@ function tickLoop(now){
     if(vis) _dyn.carriedEl.setAttribute("position",state.bunnyPos.x+" "+(gy+hop+2.62+Math.sin(t*2.2)*0.05)+" "+state.bunnyPos.z),
             _dyn.carriedEl.setAttribute("rotation","0 "+(t*40)+" 0");
   }
+  if(state.started){
   // the bullies wander, celebrate, spin…
   for(const b of bullies) updateBully(b, dt);
   // …and pelt Bunny on a timer that tightens each round
@@ -896,6 +998,7 @@ function tickLoop(now){
       }
     }
   }
+  }
   // star bursts
   for(let i=sparks.length-1;i>=0;i--){
     const s=sparks[i]; s.life-=dt;
@@ -929,6 +1032,7 @@ function tickLoop(now){
   // door ring slow spin + clouds drift
   if(_dyn.doorRing) _dyn.doorRing.rotation.z+=dt*0.5;
   if(_dyn.clouds) _dyn.clouds.forEach((c,i)=>{ const o=c.object3D; o.position.x+=Math.sin(t*0.05+i)*0.0015; });
+  if((_mapTick++ % 5)===0) drawMap();
   // labels face the camera (bully labels ride in the same list, positions already updated)
   const cp=camEl.object3D.position;
   for(const l of labels){ if(l.object3D) l.object3D.lookAt(cp.x, l.object3D.position.y, cp.z); }
