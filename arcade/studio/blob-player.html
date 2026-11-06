@@ -917,21 +917,82 @@ async function showFilm(key){
       const line=document.createElement("div"); line.textContent="§"+(i+1)+" ▸ "+hx+" ▸ sha "+(media?sha256hex(media).slice(0,10):"")+"… ▸ "+Math.round(fms||0)+" ms — data, arriving as light";
       mxRain.prepend(line); while(mxRain.children.length>9) mxRain.lastChild.remove(); } };
   const v=mq("mv-v");
-  const ms=new (window.MediaSource||window.ManagedMediaSource)();
-  v.src=URL.createObjectURL(ms);
   const T0=performance.now();
-  let fetchMs=0, bytes=0, done=0, firstFrameAt=0;
+  const unlock=()=>{ RUNNING=false; mq("mv-btn-bbb").disabled=mq("mv-btn-rh").disabled=mq("mv-btn-notld").disabled=false; };
+  const S={fetchMs:0,bytes:0,done:0,failed:false};
+  async function pullSection(i){
+    const s=m.sections[i];
+    blocks[i].className="blk pull"; window.__mxSet(i,"pull");
+    mvNow("FETCHING","section "+s.n+"/"+m.sections.length+" · blob "+s.blob_id.slice(0,20)+"…");
+    const t=performance.now();
+    let cipher;
+    try{ const fb=await fetchBlobL(s.blob_id); cipher=new Uint8Array(fb.buf); }
+    catch(e){ blocks[i].className="blk bad"; window.__mxSet(i,"bad"); mvLog("section "+s.n+" — FETCH FAILED: "+e.message,"bad"); S.failed=true; return null; }
+    const fms=performance.now()-t; S.fetchMs+=fms; S.bytes+=cipher.length;
+    blocks[i].className="blk dec"; window.__mxSet(i,"dec");
+    const plain=nacl.secretbox.open(cipher.slice(24), cipher.slice(0,24), bhex(s.key_hex));
+    if(!plain){ blocks[i].className="blk bad"; window.__mxSet(i,"bad"); mvLog("section "+s.n+" — DECRYPT FAILED","bad"); S.failed=true; return null; }
+    const pt=new Uint8Array(plain);
+    const media=pt.slice(pt.indexOf(10)+1);
+    const t2=performance.now();
+    const hashOk=sha256hex(media)===s.media_sha256;
+    const vms=performance.now()-t2;
+    if(!hashOk){ blocks[i].className="blk bad"; window.__mxSet(i,"bad"); mvLog("section "+s.n+" — SHA256 MISMATCH → REFUSED","bad"); S.failed=true; return null; }
+    blocks[i].className="blk ok"; S.done++; window.__mxSet(i,"ok",cipher,media,fms);
+    mvNow("PLAYING FROM BLOBS","section "+s.n+" ✔ · fetched in "+fms.toFixed(0)+" ms · sha256 verified in "+vms.toFixed(0)+" ms · "+S.done+"/"+m.sections.length+" sections on screen");
+    mvLed([["sections verified",S.done+" / "+m.sections.length],["bytes pulled from Walrus",(S.bytes/1048576).toFixed(2)+" MB"],["total fetch time",(S.fetchMs/1000).toFixed(1)+" s"],["avg per section",(S.fetchMs/Math.max(1,S.done)).toFixed(0)+" ms"]],null);
+    return media;
+  }
+  async function phonePath(reason){
+    mvLog("📱 PHONE PATH — "+reason+". This browser cannot stream from blobs, so the film is fetched, decrypted and hash-verified whole, then played natively. Same blobs, same proofs — different plumbing (the house phone mode, Oct 2026).","dim");
+    const parts=[];
+    for(let i=0;i<m.sections.length;i++){
+      if(MV_STOP) break;
+      const media=await pullSection(i);
+      if(media===null) break;
+      parts.push(media);
+    }
+    if(MV_STOP){
+      mvLog("⏹ stopped by the viewer — "+S.done+"/"+m.sections.length+" sections had arrived and verified","dim");
+      mvNow("STOPPED","you halted the assembly. The blobs wait — pick any film to start again.");
+      unlock(); return;
+    }
+    if(S.failed||S.done<m.sections.length){
+      mvNow("STOPPED","assembly halted at section "+(S.done+1)+" of "+m.sections.length+" — the log line above says why. Buttons are free; you can try again.");
+      unlock(); return;
+    }
+    const blob=new Blob(parts,{type:"video/mp4"});
+    v.src=URL.createObjectURL(blob);
+    v.controls=true;
+    mvLog("📱 assembled "+(blob.size/1048576).toFixed(1)+" MB from "+S.done+" verified sections — native playback","ok");
+    mvLed([["sections verified",S.done+" / "+m.sections.length],["bytes pulled from Walrus",(S.bytes/1048576).toFixed(2)+" MB"],["total fetch time",(S.fetchMs/1000).toFixed(1)+" s"],["avg per section",(S.fetchMs/Math.max(1,S.done)).toFixed(0)+" ms"]],["⏱ TIME TO PLAYABLE FILM",((performance.now()-T0)/1000).toFixed(2)+" s"]);
+    mvNow("PLAYING FROM BLOBS — PHONE MODE","whole film assembled from "+S.done+" verified blob sections. If it doesn't start by itself, tap the film once — iPhones want a fresh tap after a long fetch.");
+    v.play().catch(()=>{});
+    unlock();
+  }
+  let phoneStarted=false;
+  const goPhone=(r)=>{ if(phoneStarted) return; phoneStarted=true; phonePath(r); };
+  const FORCE_PHONE=/[?&]mvforce=phone/.test(location.search);
+  const Ctor=window.MediaSource||window.ManagedMediaSource;
+  let ms=null;
+  if(Ctor&&!FORCE_PHONE){ try{ ms=new Ctor(); }catch(e){ ms=null; } }
+  if(!ms){ goPhone(FORCE_PHONE?"phone path forced for testing":"this browser exposes no MediaSource at all (iPhone)"); return; }
+  v.src=URL.createObjectURL(ms);
+  let sourceOpened=false;
+  setTimeout(()=>{ if(!sourceOpened) goPhone("MediaSource never opened"); },6000);
   ms.addEventListener("sourceopen", async ()=>{
+    sourceOpened=true;
+    if(phoneStarted) return;
     let sb=null;
     for(const cand of [F.mime,'video/mp4; codecs="avc1.64001f, mp4a.40.2"',"video/mp4"]){
       try{ sb=ms.addSourceBuffer(cand); mvLog("SourceBuffer: "+cand,"dim"); break; }catch(e){}
     }
-    if(!sb){ mvNow("STOPPED","this browser's MediaSource refused every codec string"); RUNNING=false; return; }
-    const queue=[]; let appending=false, appendDrops=0;
+    if(!sb){ goPhone("MediaSource refused every codec string"); return; }
+    const queue=[]; let appending=false, appendDrops=0, firstFrameAt=0;
     const leadSec=()=>{ try{ if(!v.buffered||!v.buffered.length) return 0;
       return v.buffered.end(v.buffered.length-1)-v.currentTime; }catch(e){ return 0; } };
     const pump=()=>{ if(appending||!queue.length) return;
-      if(leadSec()>30){ setTimeout(pump,400); return; }   // pace appends to the playhead — never flood the player buffer
+      if(leadSec()>30){ setTimeout(pump,400); return; }
       appending=true;
       const h=()=>{ sb.removeEventListener("updateend",h); appending=false; pump(); };
       sb.addEventListener("updateend",h);
@@ -941,48 +1002,30 @@ async function showFilm(key){
     };
     for(let i=0;i<m.sections.length;i++){
       if(MV_STOP) break;
-      while(queue.length>=10 && !MV_STOP) await new Promise(r=>setTimeout(r,250));   // backpressure: bounded memory, gentler on the mirrors
-      const s=m.sections[i];
-      blocks[i].className="blk pull"; window.__mxSet(i,"pull");
-      mvNow("FETCHING","section "+s.n+"/"+m.sections.length+" · blob "+s.blob_id.slice(0,20)+"…");
-      const t=performance.now();
-      let cipher;
-      try{
-        const fb=await fetchBlobL(s.blob_id);
-        cipher=new Uint8Array(fb.buf);
-      }catch(e){ blocks[i].className="blk bad"; window.__mxSet(i,"bad"); mvLog("section "+s.n+" — FETCH FAILED: "+e.message,"bad"); break; }
-      const fms=performance.now()-t; fetchMs+=fms; bytes+=cipher.length;
-      blocks[i].className="blk dec"; window.__mxSet(i,"dec");
-      const plain=nacl.secretbox.open(cipher.slice(24), cipher.slice(0,24), bhex(s.key_hex));
-      if(!plain){ blocks[i].className="blk bad"; window.__mxSet(i,"bad"); mvLog("section "+s.n+" — DECRYPT FAILED","bad"); break; }
-      const pt=new Uint8Array(plain);
-      const media=pt.slice(pt.indexOf(10)+1);
-      const t2=performance.now();
-      const hashOk=sha256hex(media)===s.media_sha256;
-      const vms=performance.now()-t2;
-      if(!hashOk){ blocks[i].className="blk bad"; window.__mxSet(i,"bad"); mvLog("section "+s.n+" — SHA256 MISMATCH → REFUSED","bad"); break; }
-      blocks[i].className="blk ok"; done++; window.__mxSet(i,"ok",cipher,media,fms);
+      while(queue.length>=10 && !MV_STOP) await new Promise(r=>setTimeout(r,250));
+      const media=await pullSection(i);
+      if(media===null) break;
       queue.push(media); pump();
-      if(done===1){ firstFrameAt=performance.now()-T0; v.play().catch(()=>{}); }
-      mvNow("PLAYING FROM BLOBS","section "+s.n+" ✔ · fetched in "+fms.toFixed(0)+" ms · sha256 verified in "+vms.toFixed(0)+" ms · "+done+"/"+m.sections.length+" sections on screen");
-      mvLed([["sections verified",done+" / "+m.sections.length],["bytes pulled from Walrus",(bytes/1048576).toFixed(2)+" MB"],["total fetch time",(fetchMs/1000).toFixed(1)+" s"],["avg per section",(fetchMs/Math.max(1,done)).toFixed(0)+" ms"]],
-          firstFrameAt?["⏱ TIME TO FIRST FRAME",(firstFrameAt/1000).toFixed(2)+" s"]:null);
+      if(S.done===1){ firstFrameAt=performance.now()-T0; v.play().catch(()=>{});
+        mvLed([["sections verified",S.done+" / "+m.sections.length],["bytes pulled from Walrus",(S.bytes/1048576).toFixed(2)+" MB"],["total fetch time",(S.fetchMs/1000).toFixed(1)+" s"],["avg per section",(S.fetchMs/Math.max(1,S.done)).toFixed(0)+" ms"]],["⏱ TIME TO FIRST FRAME",(firstFrameAt/1000).toFixed(2)+" s"]); }
       if(sb.updating) await Promise.race([ new Promise(r=>sb.addEventListener("updateend",r,{once:true})),
         new Promise(r=>setTimeout(r,3000)) ]);
-      if(appendDrops) mvNow("PLAYING FROM BLOBS","section "+s.n+" ✔ · "+done+"/"+m.sections.length+" verified · playback appends dropped: "+appendDrops+" (player buffer) — the data still arrives and verifies");
+      if(appendDrops) mvNow("PLAYING FROM BLOBS","section "+m.sections[i].n+" ✔ · "+S.done+"/"+m.sections.length+" verified · playback appends dropped: "+appendDrops+" (player buffer) — the data still arrives and verifies");
     }
     if(MV_STOP){
-      mvLog("⏹ stopped by the viewer — "+done+"/"+m.sections.length+" sections had arrived and verified","dim");
+      mvLog("⏹ stopped by the viewer — "+S.done+"/"+m.sections.length+" sections had arrived and verified","dim");
       mvNow("STOPPED","you halted the stream. The blobs wait — pick any film to start again.");
       try{ v.pause(); }catch(e){}
+    } else if(S.failed){
+      mvNow("HALTED","the stream stopped at section "+(S.done+1)+" — the log line above says why. Buttons are free; you can try again.");
     } else {
-      mvLog("stream complete: "+done+"/"+m.sections.length+" sections · "+(bytes/1048576).toFixed(1)+" MB · every byte hash-verified","ok");
+      mvLog("stream complete: "+S.done+"/"+m.sections.length+" sections · "+(S.bytes/1048576).toFixed(1)+" MB · every byte hash-verified","ok");
       mvNow("FINISHED","sections arrived from Walrus and verified. The page never held the film — the blobs did.");
     }
     const myRun=(window.__mvRun=(window.__mvRun||0)+1);
     (async()=>{ while(queue.length||appending) await new Promise(r=>setTimeout(r,300));
       try{ if(window.__mvRun===myRun&&ms.readyState==="open") ms.endOfStream(); }catch(e){} })();
-    RUNNING=false; mq("mv-btn-bbb").disabled=mq("mv-btn-rh").disabled=mq("mv-btn-notld").disabled=false;
+    unlock();
   });
 }
 mq("mv-btn-dead").onclick=async()=>{
@@ -1411,7 +1454,7 @@ function onStarted(){
 spinUp().catch(e=>{ log("SPIN-UP FAILED — "+e.message,"bad"); });
 </script>
 
-<!-- MG-V18 --><!-- NOTLD-V19 --><!-- STOP-V21 --><!-- GAME2-V23 --><!-- ROOTV8-V24 -->
+<!-- MG-V18 --><!-- NOTLD-V19 --><!-- STOP-V21 --><!-- GAME2-V23 --><!-- ROOTV8-V24 --><!-- PHONE-V25 -->
 <div class="panel" id="movieGamesPanel">
   <h2 style="margin:2px 0 6px">10 · 🎬 MOVIE-GAMES — the film is the design document</h2>
   <p class="small" style="margin:2px 0 8px">A movie already contains a game: its sets are the world, its cast are the roles, its beats are the levels, its lines are the dialogue at the checkpoints. What was missing was a way to <i>deal</i> a film into a game without re-making any of it. The missing piece is the printed record's fifth use — beside name, key, proof and measure, a manifest entry can now be a <b>script</b> (format <span class="mono">script/1</span>): a beat table that sits beside a film's cinema manifest and references it. Nothing is re-stored; the uses multiply and the storage doesn't.</p>
