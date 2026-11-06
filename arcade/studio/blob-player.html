@@ -171,7 +171,7 @@
 <section id="movies">
 <div class="card">
   <h2 style="margin:2px 0 4px">3 · 🎦 THE MOVIES — feature films that live only on Walrus</h2>
-  <p class="mv-small" style="margin:2px 0 10px">Same stage, bigger blobs: three full films stored <b>only</b> as encrypted Walrus blobs. This page holds no video — every section is fetched, decrypted and hash-verified in your browser while you watch, timed live.</p>
+  <p class="mv-small" style="margin:2px 0 10px">Same stage, bigger blobs: four full films stored <b>only</b> as encrypted Walrus blobs. This page holds no video — every section is fetched, decrypted and hash-verified in your browser while you watch, timed live.</p>
   <div class="mv-films">
     <div class="mv-film">
       <h3>🐰 Big Buck Bunny <span style="color:#9a9ac0">(Blender, CC-BY · 10 min)</span></h3>
@@ -191,6 +191,12 @@
       <div class="mv-story">Romero's original, in the public domain since its release night. Blobbed Nov 5, 2026 in the same encrypted chain: 222 sections, keeper ciphers held locally, and proven revivable — a full local reassembly matched the film's hash before it ever shipped.</div>
       <div class="mv-stat" id="mv-stat-notld">checking the chain…</div>
       <button class="mv-btn" id="mv-btn-notld">▶ SHOW THE LIVING DEAD</button>
+    </div>
+    <div class="mv-film">
+      <h3>💎 Charade <span style="color:#9a9ac0">(1963 · public domain · 114 min)</span></h3>
+      <div class="mv-story">Audrey Hepburn &amp; Cary Grant — the glamorous thriller that fell into the public domain through a defective copyright notice; 231 proven sections.</div>
+      <div class="mv-stat" id="mv-stat-charade">checking the chain…</div>
+      <button class="mv-btn" id="mv-btn-charade">▶ SHOW CHARADE</button>
     </div>
   </div>
 </div>
@@ -275,7 +281,7 @@
 const AGG1="https://aggregator.walrus-testnet.walrus.space/v1/blobs/";
 const AGG2="https://walrus-testnet.blockscope.net/v1/blobs/";
 const PUB="https://publisher.walrus-testnet.walrus.space/v1/blobs?epochs=30";
-const ROOT_ID="Ken_LjnVpnwAc2X4sjHMlHDS4KzdznnXU9Ly_LJiw6Y";
+const ROOT_ID="-Pf5lfueNjU59iWgxkMoUW6GkOwUpPTb5ngLbfAngIo";
 const out=document.getElementById("csOut");
 function line(h){ out.innerHTML+=h+"<br>"; }
 async function ladder(id){
@@ -600,7 +606,7 @@ document.getElementById("lkWalkLocal").onclick=async()=>{
 (function(){
 const A1="https://aggregator.walrus-testnet.walrus.space/v1/blobs/";
 const A2="https://walrus-testnet.blockscope.net/v1/blobs/";
-const ROOT_ID="Ken_LjnVpnwAc2X4sjHMlHDS4KzdznnXU9Ly_LJiw6Y";
+const ROOT_ID="-Pf5lfueNjU59iWgxkMoUW6GkOwUpPTb5ngLbfAngIo";
 const BBB_MAN="RYVQA2RMGwT0sQgTz1ekjlhHeEC8cd0hCJbF4cxIRU8";
 let netCalls=0;
 const VAULT=new Map();
@@ -868,7 +874,8 @@ async function fetchBlobL(id){
 const FILMS={
   bbb:{title:"🐰 BIG BUCK BUNNY", manifest:AGG+"RYVQA2RMGwT0sQgTz1ekjlhHeEC8cd0hCJbF4cxIRU8", mime:'video/mp4; codecs="avc1.64001f, mp4a.40.2"', stat:"mv-stat-bbb"},
   rh:{title:"🏹 ROBIN HOOD (1986 VHS)", manifest:AGG+"GTB6k1jJgEt4IZyAee4EKzvRVkihUWW1WjEPecLFs1o", mime:'video/mp4; codecs="avc1.640028, mp4a.40.2"', stat:"mv-stat-rh"},
-  notld:{title:"🧟 NIGHT OF THE LIVING DEAD (1968)", manifest:AGG+"oielZhUzK1QIHGzK_UfMNwzNsdrH1fAcexjrAGYNWd8", mime:'video/mp4; codecs="avc1.64001e, mp4a.40.2"', stat:"mv-stat-notld"}
+  notld:{title:"🧟 NIGHT OF THE LIVING DEAD (1968)", manifest:AGG+"oielZhUzK1QIHGzK_UfMNwzNsdrH1fAcexjrAGYNWd8", mime:'video/mp4; codecs="avc1.64001e, mp4a.40.2"', stat:"mv-stat-notld"},
+  charade:{title:"💎 CHARADE (1963)", manifest:AGG+"uFAie0VjGUFehT8spv80tWFBKD2Ae4byw-4EI2QQQjE", mime:'video/mp4; codecs="avc1.64001f, mp4a.40.2"', stat:"mv-stat-charade"}
 };
 let MANIFESTS={}, RUNNING=false, MV_STOP=false;
 function sha256hex(data){
@@ -914,7 +921,7 @@ async function showFilm(key){
   const F=FILMS[key], m=MANIFESTS[key]||await (await fetch(F.manifest,{cache:"no-store"})).json();
   MANIFESTS[key]=m;
   RUNNING=true; MV_STOP=false;
-  mq("mv-btn-bbb").disabled=mq("mv-btn-rh").disabled=mq("mv-btn-notld").disabled=true;
+  mq("mv-btn-bbb").disabled=mq("mv-btn-rh").disabled=mq("mv-btn-notld").disabled=mq("mv-btn-charade").disabled=true;
   mq("mv-stage").style.display="block";
   mq("mv-stageTitle").textContent=F.title+" — "+m.sections.length+" sections, zero video bytes on this page";
   mq("mv-stage").scrollIntoView({behavior:"smooth"});
@@ -928,7 +935,7 @@ async function showFilm(key){
       mxRain.prepend(line); while(mxRain.children.length>9) mxRain.lastChild.remove(); } };
   const v=mq("mv-v");
   const T0=performance.now();
-  const unlock=()=>{ RUNNING=false; mq("mv-btn-bbb").disabled=mq("mv-btn-rh").disabled=mq("mv-btn-notld").disabled=false; };
+  const unlock=()=>{ RUNNING=false; mq("mv-btn-bbb").disabled=mq("mv-btn-rh").disabled=mq("mv-btn-notld").disabled=mq("mv-btn-charade").disabled=false; };
   const S={fetchMs:0,bytes:0,done:0,failed:false};
   const showLoad=()=>{ const e=mq("mv-load"); if(e) e.style.display="flex"; const b=mq("mv-loadBar"); if(b) b.style.width="0%"; };
   const loadTick=()=>{ const t=mq("mv-loadTxt"); if(t) t.textContent="fetching & verifying — section "+S.done+" of "+m.sections.length+" · "+(S.bytes/1048576).toFixed(1)+" MB proven so far"; const b=mq("mv-loadBar"); if(b) b.style.width=Math.round(S.done/m.sections.length*100)+"%"; };
@@ -1117,11 +1124,12 @@ mq("mv-btn-spot").onclick=async()=>{
 mq("mv-btn-bbb").onclick=()=>showFilm("bbb");
 mq("mv-btn-rh").onclick=()=>showFilm("rh");
 mq("mv-btn-notld").onclick=()=>showFilm("notld");
+mq("mv-btn-charade").onclick=()=>showFilm("charade");
 mq("mv-btn-stop").onclick=()=>{ MV_STOP=true;
   if(!RUNNING){ const v=mq("mv-v"); try{ v.pause(); }catch(e){}
     const le=mq("mv-load"); if(le) le.style.display="none";
     mvNow("STOPPED","you halted the film. The blobs wait — pick any film to start again."); } };
-pingStat("bbb"); pingStat("rh"); pingStat("notld");
+pingStat("bbb"); pingStat("rh"); pingStat("notld"); pingStat("charade");
 })();
 </script>
 
@@ -1473,7 +1481,7 @@ function onStarted(){
 spinUp().catch(e=>{ log("SPIN-UP FAILED — "+e.message,"bad"); });
 </script>
 
-<!-- MG-V18 --><!-- NOTLD-V19 --><!-- STOP-V21 --><!-- GAME2-V23 --><!-- ROOTV8-V24 --><!-- PHONE-V25 --><!-- LOAD-V26 -->
+<!-- MG-V18 --><!-- NOTLD-V19 --><!-- STOP-V21 --><!-- GAME2-V23 --><!-- ROOTV8-V24 --><!-- PHONE-V25 --><!-- LOAD-V26 --><!-- ROOTV9-V27 --><!-- CHARADE-V27 -->
 <div class="panel" id="movieGamesPanel">
   <h2 style="margin:2px 0 6px">10 · 🎬 MOVIE-GAMES — the film is the design document</h2>
   <p class="small" style="margin:2px 0 8px">A movie already contains a game: its sets are the world, its cast are the roles, its beats are the levels, its lines are the dialogue at the checkpoints. What was missing was a way to <i>deal</i> a film into a game without re-making any of it. The missing piece is the printed record's fifth use — beside name, key, proof and measure, a manifest entry can now be a <b>script</b> (format <span class="mono">script/1</span>): a beat table that sits beside a film's cinema manifest and references it. Nothing is re-stored; the uses multiply and the storage doesn't.</p>
