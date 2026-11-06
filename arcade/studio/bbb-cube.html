@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>BUNNY CUBE — the meadow, alive (a 3D world from Walrus blobs)</title>
+<script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
+<style>
+  body{background:#07070f;color:#e8e8f2;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;margin:0;padding:14px;line-height:1.45}
+  .wrap{max-width:900px;margin:0 auto}
+  h1{font-size:21px;margin:4px 0 2px}
+  h2{font-size:15px;margin:0 0 6px;color:#ffd76a}
+  .sub{color:#9fb4c8;font-size:13px;margin:0 0 10px}
+  .panel{background:#101020;border:1px solid #26263e;border-radius:10px;padding:12px 14px;margin:12px 0}
+  .mono{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;word-break:break-all}
+  a{color:#7ee787}
+  .chip{display:inline-block;background:#141428;border:1px solid #33334f;border-radius:14px;padding:2px 10px;margin:2px 2px;font-size:12px}
+  #log{font-size:12.5px;color:#c9d4e2;white-space:pre-wrap;min-height:44px}
+  #log .ok{color:#7ee787} #log .bad{color:#ff8f8f} #log .dim{color:#7787a0}
+  #stage{position:relative;height:min(72vh,620px);border-radius:10px;overflow:hidden;background:#87bfe8;border:1px solid #26263e}
+  #stage a-scene{position:absolute;inset:0}
+  #hud{position:absolute;top:10px;left:10px;z-index:5;display:none;background:rgba(7,10,16,.55);border:1px solid rgba(255,255,255,.18);
+       border-radius:10px;padding:8px 12px;font-size:15px;color:#fff;pointer-events:none}
+  #hint{position:absolute;left:10px;bottom:10px;z-index:5;display:none;background:rgba(7,10,16,.45);border-radius:8px;
+        padding:6px 10px;font-size:12px;color:#dfe9f5;pointer-events:none;max-width:62%}
+  #throwBtn{position:absolute;right:14px;bottom:14px;z-index:6;display:none;width:86px;height:86px;border-radius:50%;
+        background:radial-gradient(circle at 35% 30%, #ff7a6b, #c22e1f);border:3px solid #ffd76a;color:#fff;
+        font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 4px 18px rgba(0,0,0,.45);touch-action:none}
+  #throwBtn:active{transform:scale(.94)}
+  .small{font-size:12.5px;color:#9fb4c8}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>🧊🐰 BUNNY CUBE — the meadow, alive</h1>
+<p class="sub">A whole new Bunny game, and a different species from the 2D cabinet (which stays frozen as a first attempt, per the versioning law).
+This is a <b>3D open world</b>: the film's own 2008 production models — Bunny, Frank, Rinky, Gamera, the apple tree, even the
+meadow terrain — converted once from the original <span class="mono">.blend</span> artifacts into game objects, blobbed to Walrus,
+sha256-verified in your browser, and assembled into the cube. You enter through <b>THE DOOR</b>, run around as Bunny,
+pick up apples and throw them. Sandbox play — no scores, just the meadow.</p>
+
+<div class="panel" style="padding:0;border:none;background:none;margin:0">
+  <div id="stage">
+    <div id="hud">🍎 carrying <b id="hudCarry">0</b> · thrown <b id="hudThrown">0</b></div>
+    <div id="hint">WASD / arrows to hop around · drag right side to look · SPACE or the apple button to throw.<br>Touch: left-half drag = hop-stick, right-half drag = look.</div>
+    <button id="throwBtn">🍎<br>THROW</button>
+  </div>
+</div>
+
+<div class="panel"><div id="log">warming the cube — recalling the meadow from the blobs…</div></div>
+
+<div class="panel">
+  <h2>🌳 WHAT YOU'RE STANDING IN</h2>
+  <p class="small" style="margin:0">Every object in this world is a Walrus blob with a printed record — name (blob id), key, proof
+  (sha256), measure (bytes). The cast and the set were <i>already rendered in 2008</i> for the film <i>Big Buck Bunny</i>
+  (Blender Foundation, CC-BY 3.0): this desk's one conversion pass — Blender, headless, at the artifact→object boundary —
+  baked the rigs at game weight (subsurf 1, widgets and cages excluded) into glTF objects. The game was then
+  <i>injected into the cube</i>: one manifest names every object, and this page proves each one before it appears.
+  The 12 apples hanging in the tree sit at the exact points the 2008 layout artists marked with empties in the tree file.</p>
+  <div class="small" style="line-height:2.1;margin-top:6px">
+    🎞️ the film — <i>Big Buck Bunny</i> (2008) · 🐰 cast &amp; set © Blender Foundation · CC-BY 3.0<br>
+    <span class="chip">Walrus testnet · 30 epochs · the keeper renews</span>
+    <span class="chip">3D: A-Frame 1.6 (three.js)</span>
+    <span class="chip">v1: procedural hop — the 2008 rigs' skeletal actions stay in the artifacts</span>
+  </div>
+  <div id="custody" class="small mono" style="margin-top:8px"></div>
+</div>
+</div>
+
+<script>
+"use strict";
+const $=id=>document.getElementById(id);
+const CUBE_MANIFEST="hul119v83vpAVM60pXnhIRgEmM7YYPTjevG5S0EU5e8";
+const AGG="https://aggregator.walrus-testnet.walrus.space/v1/blobs/";
+const AGG2="https://walrus-testnet.blockscope.net/v1/blobs/";
+function sha256hex(data){
+  var K=[0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2];
+  var H=[0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19];
+  var l=data.length, padLen=(((l+9+63)>>6)<<6), m=new Uint8Array(padLen);
+  m.set(data); m[l]=0x80;
+  var dv=new DataView(m.buffer), bitLen=l*8;
+  dv.setUint32(padLen-4, bitLen>>>0); dv.setUint32(padLen-8, Math.floor(bitLen/4294967296));
+  var w=new Uint32Array(64);
+  function rotr(x,n){return (x>>>n)|(x<<(32-n));}
+  for(var off=0;off<padLen;off+=64){
+    for(var i=0;i<16;i++) w[i]=dv.getUint32(off+i*4);
+    for(var i=16;i<64;i++){ var s0=rotr(w[i-15],7)^rotr(w[i-15],18)^(w[i-15]>>>3), s1=rotr(w[i-2],17)^rotr(w[i-2],19)^(w[i-2]>>>10); w[i]=(w[i-16]+s0+w[i-7]+s1)|0; }
+    var a=H[0],b=H[1],c=H[2],d=H[3],e=H[4],f=H[5],g=H[6],h=H[7];
+    for(var i=0;i<64;i++){ var S1=rotr(e,6)^rotr(e,11)^rotr(e,25), ch=(e&f)^(~e&g), t1=(h+S1+ch+K[i]+w[i])|0, S0=rotr(a,2)^rotr(a,13)^rotr(a,22), mj=(a&b)^(a&c)^(b&c), t2=(S0+mj)|0; h=g;g=f;f=e;e=(d+t1)|0;d=c;c=b;b=a;a=(t1+t2)|0; }
+    H[0]=(H[0]+a)|0;H[1]=(H[1]+b)|0;H[2]=(H[2]+c)|0;H[3]=(H[3]+d)|0;H[4]=(H[4]+e)|0;H[5]=(H[5]+f)|0;H[6]=(H[6]+g)|0;H[7]=(H[7]+h)|0;
+  }
+  var out=""; for(var i=0;i<8;i++) out+=("0000000"+(H[i]>>>0).toString(16)).slice(-8);
+  return out;
+}
+function log(msg, cls){ const el=$("log"); const d=document.createElement("div"); if(cls) d.className=cls; d.innerHTML=msg; el.appendChild(d); }
+$("log").innerHTML="";
+async function ladder(id){
+  try{ const r=await fetch(AGG+id,{cache:"no-store"}); if(r.ok) return {buf:await r.arrayBuffer(), via:"mirror 1"}; }catch(e){}
+  const r=await fetch(AGG2+id,{cache:"no-store"});
+  if(!r.ok) throw new Error("both mirrors failed for blob "+id.slice(0,16)+"…");
+  return {buf:await r.arrayBuffer(), via:"mirror 2"};
+}
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;}}
+</script>
+
+<script>
+"use strict";
+let MAN=null; const URLS={};
+const state={ready:false, carried:0, thrown:0, camYaw:Math.PI, camDist:8, camPitch:0.42,
+             keys:{}, stick:{x:0,y:0,active:false}, bunnyPos:new THREE.Vector3(0,0,10.5),
+             bunnyRotY:Math.PI, hopPhase:0, birdA:0, t:0};
+const PLAY_R=23, TREE_POS={x:7,z:-9}, TREE_R=2.6;
+let sceneEl, worldEl, bunnyEl, camEl, terrainMesh=null, rayc=null;
+const apples=[];       // {el, st:'ground'|'carried'|'flying', vel, bounces}
+const labels=[];       // a-text els to billboard
+const critters={};     // bird, butterflies
+
+function groundY(x,z){
+  if(!terrainMesh) return 0;
+  const o=new THREE.Vector3(x,60,z), d=new THREE.Vector3(0,-1,0);
+  rayc.set(o,d);
+  const hits=rayc.intersectObject(terrainMesh,true);
+  return hits.length?hits[0].point.y:0;
+}
+function mkEntity(parent, url, scale){
+  const el=document.createElement("a-entity");
+  if(url) el.setAttribute("gltf-model","url("+url+")");
+  if(scale) el.setAttribute("scale",scale+" "+scale+" "+scale);
+  parent.appendChild(el);
+  return el;
+}
+function buildScene(){
+  sceneEl=document.createElement("a-scene");
+  sceneEl.setAttribute("embedded","");
+  sceneEl.setAttribute("background","color: #87bfe8");
+  sceneEl.setAttribute("fog","type: linear; color: #a8cdea; near: 36; far: 115");
+  sceneEl.setAttribute("shadow","type: pcfsoft");
+  sceneEl.setAttribute("renderer","antialias: true");
+  sceneEl.setAttribute("vr-mode-ui","enabled: false");
+  $("stage").appendChild(sceneEl);
+  const hemi=document.createElement("a-entity");
+  hemi.setAttribute("light","type: hemisphere; skyColor: #bfe3ff; groundColor: #4a7c43; intensity: 0.95");
+  sceneEl.appendChild(hemi);
+  const sun=document.createElement("a-entity");
+  sun.setAttribute("light","type: directional; intensity: 1.35; castShadow: true; shadow.camera.left: -34; shadow.camera.right: 34; shadow.camera.top: 34; shadow.camera.bottom: -34; shadow.camera.far: 90; shadow.mapSize.width: 2048; shadow.mapSize.height: 2048");
+  sun.setAttribute("position","20 30 14");
+  sceneEl.appendChild(sun);
+  worldEl=document.createElement("a-entity"); worldEl.id="world"; sceneEl.appendChild(worldEl);
+  camEl=document.createElement("a-entity"); camEl.setAttribute("camera","active: true; fov: 58; near: 0.1; far: 300");
+  sceneEl.appendChild(camEl);
+  rayc=new THREE.Raycaster();
+
+  // terrain (positions everything else once loaded)
+  const terr=mkEntity(worldEl, URLS.terrain, 1);
+  terr.setAttribute("shadow","receive: true");
+  terr.addEventListener("model-loaded", ()=>{ terrainMesh=terr.getObject3D("mesh"); placeWorld(); });
+
+  // hero tree + cast receive models as they stream in; positions set in placeWorld()
+  window._dyn={};
+  _dyn.tree=mkEntity(worldEl, URLS.tree, 1); _dyn.tree.setAttribute("shadow","cast: true; receive: false");
+  bunnyEl=mkEntity(worldEl, URLS.bunny, 1); bunnyEl.setAttribute("shadow","cast: true");
+  _dyn.frank=mkEntity(worldEl, URLS.frank, 1.6);
+  _dyn.rinky=mkEntity(worldEl, URLS.rinky, 1.8);
+  _dyn.gamera=mkEntity(worldEl, URLS.gamera, 1.8);
+  critters.bird=mkEntity(worldEl, URLS.bird, 2.4);
+  critters.bf1=mkEntity(worldEl, URLS.butterfly, 5);
+  critters.bf2=mkEntity(worldEl, URLS.butterfly, 4.2);
+  // the door
+  _dyn.door=new THREE.Group();
+  const doorEl=document.createElement("a-entity"); worldEl.appendChild(doorEl);
+  doorEl.addEventListener("loaded", ()=>{
+    const ring=new THREE.Mesh(new THREE.TorusGeometry(1.7,0.09,12,40),
+      new THREE.MeshStandardMaterial({color:0xffc93c, emissive:0xff9d00, emissiveIntensity:0.9, roughness:0.35, metalness:0.4}));
+    ring.position.y=1.75; doorEl.object3D.add(ring); _dyn.doorRing=ring;
+    const disc=new THREE.Mesh(new THREE.CircleGeometry(1.95,32),
+      new THREE.MeshBasicMaterial({color:0xffd76a, transparent:true, opacity:0.30}));
+    disc.rotation.x=-Math.PI/2; disc.position.y=0.03; doorEl.object3D.add(disc);
+  });
+  _dyn.doorEl=doorEl;
+  const doorLabel=document.createElement("a-text");
+  doorLabel.setAttribute("value","THE DOOR"); doorLabel.setAttribute("align","center");
+  doorLabel.setAttribute("color","#ffd76a"); doorLabel.setAttribute("width","9");
+  worldEl.appendChild(doorLabel); _dyn.doorLabel=doorLabel; labels.push(doorLabel);
+  // clouds: soft flattened sphere clusters
+  const cloudMat="color: #ffffff; roughness: 1; flatShading: true; transparent: true; opacity: 0.92";
+  _dyn.clouds=[];
+  [[-24,26,-30],[16,30,-38],[30,27,18],[-30,29,22]].forEach(p=>{
+    const c=document.createElement("a-entity"); c.setAttribute("position",p.join(" "));
+    [[0,0,0,3.4],[2.8,-0.3,0.6,2.4],[-2.7,-0.2,-0.4,2.6],[0.8,0.7,-0.8,2.0]].forEach(s=>{
+      const sEl=document.createElement("a-sphere");
+      sEl.setAttribute("position",s[0]+" "+s[1]+" "+s[2]); sEl.setAttribute("radius",s[3]);
+      sEl.setAttribute("scale","1 0.55 1"); sEl.setAttribute("material",cloudMat); c.appendChild(sEl);
+    });
+    worldEl.appendChild(c); _dyn.clouds.push(c);
+  });
+  requestAnimationFrame(tickLoop);
+}
+function scatterPos(rng, rMin, rMax){
+  const a=rng()*Math.PI*2, r=rMin+rng()*(rMax-rMin);
+  return {x:Math.cos(a)*r, z:Math.sin(a)*r};
+}
+function placeWorld(){
+  const rng=mulberry32(MAN.seed||20080429);
+  const P=(el,x,z,rotY)=>{ el.setAttribute("position",x+" "+groundY(x,z)+" "+z); if(rotY!==undefined) el.setAttribute("rotation","0 "+rotY+" 0"); };
+  // tree + its production apple hang-points
+  const tg=groundY(TREE_POS.x,TREE_POS.z);
+  _dyn.tree.setAttribute("position",TREE_POS.x+" "+tg+" "+TREE_POS.z);
+  (MAN.treePoints||[]).forEach(pt=>{
+    const a=mkEntity(worldEl, URLS.apple, 1.35);
+    a.setAttribute("position",(TREE_POS.x+pt[0])+" "+(tg+pt[1])+" "+(TREE_POS.z+pt[2]));
+  });
+  // the door at spawn
+  P(_dyn.doorEl, 0, 13); _dyn.doorEl.setAttribute("rotation","0 0 0");
+  _dyn.doorLabel.setAttribute("position","0 "+(groundY(0,13)+4.1)+" 13");
+  // residents
+  P(_dyn.frank,-9,-3, 115); addLabel("FRANK",-9,-3,1.9);
+  P(_dyn.rinky, 11, 5, -50); addLabel("RINKY",11,5,1.8);
+  P(_dyn.gamera,-5,-15, 30); addLabel("GAMERA",-5,-15,1.8);
+  // scatter: grass, flowers, rocks, acorns
+  for(let i=0;i<16;i++){ const p=scatterPos(rng,2,22), g=mkEntity(worldEl,URLS.grass,1.6+rng()*1.3); P(g,p.x,p.z,rng()*180); }
+  for(let i=0;i<8;i++){ const p=scatterPos(rng,2,19), f=mkEntity(worldEl,URLS.flower1,1.5+rng()*0.6); P(f,p.x,p.z,rng()*180); }
+  for(let i=0;i<6;i++){ const p=scatterPos(rng,2,19), f=mkEntity(worldEl,URLS.flower2,1.5+rng()*0.6); P(f,p.x,p.z,rng()*180); }
+  for(let i=0;i<6;i++){ const p=scatterPos(rng,6,21), r=mkEntity(worldEl,URLS.rock,0.8+rng()*0.7); P(r,p.x,p.z,rng()*180); }
+  for(let i=0;i<8;i++){ const p=scatterPos(rng,2,20), a=mkEntity(worldEl,URLS.acorn,1.6); P(a,p.x,p.z,rng()*180); }
+  // pickable apples: 12 on the ground
+  for(let i=0;i<12;i++){
+    const p=scatterPos(rng,3,20), el=mkEntity(worldEl,URLS.apple,1.15);
+    el.setAttribute("position",p.x+" "+(groundY(p.x,p.z)+0.16)+" "+p.z);
+    apples.push({el, st:"ground", vel:new THREE.Vector3(), bounces:0});
+  }
+  // flight pool: 3 apples for throwing
+  for(let i=0;i<3;i++){
+    const el=mkEntity(worldEl,URLS.apple,1.15); el.setAttribute("visible","false");
+    apples.push({el, st:"spare", vel:new THREE.Vector3(), bounces:0});
+  }
+  // the carried apple that rides over Bunny's head
+  _dyn.carriedEl=mkEntity(worldEl, URLS.apple, 1.15); _dyn.carriedEl.setAttribute("visible","false");
+  state.ready=true;
+  log("🌳 <b>THE CUBE IS OPEN.</b> The meadow is assembled and every object in it was proven from its blob. Come in through the door.","ok");
+  $("hud").style.display="block"; $("hint").style.display="block"; $("throwBtn").style.display="block";
+}
+function addLabel(text,x,z,h){
+  const l=document.createElement("a-text");
+  l.setAttribute("value",text); l.setAttribute("align","center");
+  l.setAttribute("color","#ffffff"); l.setAttribute("width","5.5");
+  l.setAttribute("position",x+" "+(groundY(x,z)+h)+" "+z);
+  worldEl.appendChild(l); labels.push(l);
+}
+// ---------- input ----------
+window.addEventListener("keydown",e=>{ state.keys[e.code]=true; if(e.code==="Space"){ e.preventDefault(); throwApple(); } });
+window.addEventListener("keyup",e=>{ state.keys[e.code]=false; });
+$("throwBtn").addEventListener("click",()=>throwApple());
+function throwApple(){
+  if(!state.ready||state.carried<=0) return;
+  const slot=apples.find(a=>a.st==="spare")||apples.find(a=>a.st==="flying");
+  if(!slot) return;
+  state.carried--; state.thrown++;
+  $("hudCarry").textContent=state.carried; $("hudThrown").textContent=state.thrown;
+  const bp=state.bunnyPos, fwd=new THREE.Vector3(Math.sin(state.bunnyRotY),0,Math.cos(state.bunnyRotY));
+  slot.el.setAttribute("visible","true");
+  slot.el.setAttribute("position",bp.x+" "+(bp.y+2.6)+" "+bp.z);
+  slot.vel.copy(fwd.multiplyScalar(8.5)); slot.vel.y=4.4; slot.bounces=0; slot.st="flying";
+  slot.p=new THREE.Vector3(bp.x,bp.y+2.6,bp.z);
+}
+// pointer: touch left half = stick, any other drag = orbit
+const pointers={};
+function stageEl(){ return $("stage"); }
+function onDown(e){
+  const r=stageEl().getBoundingClientRect(), x=e.clientX-r.left;
+  pointers[e.pointerId]={x0:e.clientX,y0:e.clientY,x:e.clientX,y:e.clientY,
+    mode:(e.pointerType==="touch"&&x<r.width*0.5)?"stick":"orbit"};
+  if(pointers[e.pointerId].mode==="stick"){ state.stick.active=true; }
+}
+function onMove(e){
+  const p=pointers[e.pointerId]; if(!p) return;
+  const dx=e.clientX-p.x, dy=e.clientY-p.y; p.x=e.clientX; p.y=e.clientY;
+  if(p.mode==="orbit"){ state.camYaw-=dx*0.005; state.camPitch=Math.min(1.2,Math.max(0.08,state.camPitch+dy*0.004)); }
+  else { const r=stageEl().getBoundingClientRect();
+    state.stick.x=Math.max(-1,Math.min(1,(e.clientX-p.x0)/60));
+    state.stick.y=Math.max(-1,Math.min(1,(e.clientY-p.y0)/60)); }
+}
+function onUp(e){ const p=pointers[e.pointerId]; if(p&&p.mode==="stick"){ state.stick.active=false; state.stick.x=0; state.stick.y=0; } delete pointers[e.pointerId]; }
+window.addEventListener("pointerdown",e=>{ if(e.target.closest("#stage")&&e.target.id!=="throwBtn") onDown(e); });
+window.addEventListener("pointermove",onMove);
+window.addEventListener("pointerup",onUp); window.addEventListener("pointercancel",onUp);
+window.addEventListener("wheel",e=>{ if(e.target.closest("#stage")){ state.camDist=Math.min(13,Math.max(4.5,state.camDist+e.deltaY*0.01)); } },{passive:true});
+// ---------- the living loop ----------
+let lastT=performance.now();
+function tickLoop(now){
+  requestAnimationFrame(tickLoop);
+  const dt=Math.min(0.05,(now-lastT)/1000); lastT=now;
+  if(!state.ready||!bunnyEl) return;
+  state.t+=dt; const t=state.t;
+  // input vector (camera-relative)
+  let ix=0, iz=0;
+  if(state.keys["KeyW"]||state.keys["ArrowUp"]) iz-=1;
+  if(state.keys["KeyS"]||state.keys["ArrowDown"]) iz+=1;
+  if(state.keys["KeyA"]||state.keys["ArrowLeft"]) ix-=1;
+  if(state.keys["KeyD"]||state.keys["ArrowRight"]) ix+=1;
+  if(state.stick.active){ ix+=state.stick.x; iz+=state.stick.y; }
+  const mag=Math.hypot(ix,iz); if(mag>1){ ix/=mag; iz/=mag; }
+  const sy=Math.sin(state.camYaw), cy=Math.cos(state.camYaw);
+  // camera forward on the ground plane points from camera toward bunny: (-sin yaw, -cos yaw) when cam sits at +sin/+cos offset
+  const fwd={x:-sy, z:-cy}, rgt={x:cy, z:-sy};
+  const mx=fwd.x*(-iz)+rgt.x*ix, mz=fwd.z*(-iz)+rgt.z*ix;
+  const moving=Math.hypot(mx,mz)>0.08;
+  const speed=6.2;
+  if(moving){
+    state.bunnyPos.x+=mx*speed*dt; state.bunnyPos.z+=mz*speed*dt;
+    const targetRot=Math.atan2(mx,mz);
+    let d=targetRot-state.bunnyRotY; while(d>Math.PI)d-=2*Math.PI; while(d<-Math.PI)d+=2*Math.PI;
+    state.bunnyRotY+=d*Math.min(1,dt*10);
+    state.hopPhase+=dt*9.5;
+  }
+  // soft boundary + tree collision
+  const rr=Math.hypot(state.bunnyPos.x,state.bunnyPos.z);
+  if(rr>PLAY_R){ state.bunnyPos.x*=PLAY_R/rr; state.bunnyPos.z*=PLAY_R/rr; }
+  const td=Math.hypot(state.bunnyPos.x-TREE_POS.x, state.bunnyPos.z-TREE_POS.z);
+  if(td<TREE_R&&td>0.001){ const push=(TREE_R-td); state.bunnyPos.x+=(state.bunnyPos.x-TREE_POS.x)/td*push; state.bunnyPos.z+=(state.bunnyPos.z-TREE_POS.z)/td*push; }
+  const gy=groundY(state.bunnyPos.x,state.bunnyPos.z);
+  const hop=moving?Math.abs(Math.sin(state.hopPhase))*0.30:Math.sin(t*1.8)*0.03;
+  state.bunnyPos.y=gy;
+  bunnyEl.setAttribute("position",state.bunnyPos.x+" "+(gy+hop)+" "+state.bunnyPos.z);
+  bunnyEl.setAttribute("rotation",(moving?Math.sin(state.hopPhase)*4:0)+" "+(state.bunnyRotY*180/Math.PI)+" 0");
+  // camera follow
+  const camTarget=new THREE.Vector3(
+    state.bunnyPos.x+Math.sin(state.camYaw)*state.camDist*Math.cos(state.camPitch),
+    gy+1.9+Math.sin(state.camPitch)*state.camDist,
+    state.bunnyPos.z+Math.cos(state.camYaw)*state.camDist*Math.cos(state.camPitch));
+  const co=camEl.object3D.position; co.lerp(camTarget,Math.min(1,dt*6));
+  camEl.object3D.lookAt(state.bunnyPos.x, gy+1.8, state.bunnyPos.z);
+  // carried apple rides overhead, spinning slowly
+  if(_dyn.carriedEl){
+    const vis=state.carried>0;
+    _dyn.carriedEl.setAttribute("visible",vis?"true":"false");
+    if(vis) _dyn.carriedEl.setAttribute("position",state.bunnyPos.x+" "+(gy+hop+2.62+Math.sin(t*2.2)*0.05)+" "+state.bunnyPos.z),
+            _dyn.carriedEl.setAttribute("rotation","0 "+(t*40)+" 0");
+  }
+  // apples: pickup + flight physics
+  for(const a of apples){
+    if(a.st==="ground"){
+      const p=a.el.getAttribute("position");
+      const dd=Math.hypot(p.x-state.bunnyPos.x, p.z-state.bunnyPos.z);
+      if(dd<1.15){ a.st="carried"; a.el.setAttribute("visible","false"); state.carried++;
+        $("hudCarry").textContent=state.carried; }
+    } else if(a.st==="flying"){
+      a.vel.y-=15.5*dt;
+      a.p.addScaledVector(a.vel,dt);
+      const g=groundY(a.p.x,a.p.z)+0.16;
+      if(a.p.y<=g){ a.p.y=g;
+        if(a.bounces<1&&Math.abs(a.vel.y)>2.2){ a.vel.y*=-0.38; a.vel.x*=0.7; a.vel.z*=0.7; a.bounces++; }
+        else { a.st="ground"; }
+      }
+      a.el.setAttribute("position",a.p.x+" "+a.p.y+" "+a.p.z);
+      a.el.setAttribute("rotation",(t*260)%360+" "+(t*190)%360+" 0");
+    }
+  }
+  // residents idle life
+  if(_dyn.frank) _dyn.frank.setAttribute("rotation","0 115 "+Math.sin(t*1.1)*1.6);
+  if(_dyn.rinky) _dyn.rinky.setAttribute("rotation","0 -50 "+Math.sin(t*1.4+2)*1.6);
+  if(_dyn.gamera) _dyn.gamera.setAttribute("rotation","0 30 "+Math.sin(t*0.9+4)*1.6);
+  // bird circles the meadow
+  if(critters.bird){
+    state.birdA+=dt*0.105; const a=state.birdA;
+    const bx=Math.cos(a)*19, bz=Math.sin(a)*19, by=15.5+Math.sin(t*0.6)*1.3;
+    const vx=-Math.sin(a), vz=Math.cos(a);
+    critters.bird.setAttribute("position",bx+" "+by+" "+bz);
+    critters.bird.setAttribute("rotation","0 "+(Math.atan2(vx,vz)*180/Math.PI)+" 18");
+  }
+  // butterflies flutter around the flowers
+  [["bf1",-6,2,0],["bf2",12,-4,2.4]].forEach(cfg=>{
+    const b=critters[cfg[0]]; if(!b) return;
+    const cx=cfg[1], cz=cfg[2], ph=cfg[3];
+    const x=cx+Math.sin(t*0.23+ph)*3.4, z=cz+Math.cos(t*0.31+ph)*2.8;
+    const y=groundY(x,z)+1.6+Math.sin(t*0.9+ph)*0.45+Math.sin(t*7.3+ph)*0.05;
+    const vx=Math.cos(t*0.23+ph)*0.78, vz=-Math.sin(t*0.31+ph)*0.87;
+    b.setAttribute("position",x+" "+y+" "+z);
+    b.setAttribute("rotation",Math.sin(t*8.1+ph)*7+" "+(Math.atan2(vx,vz)*180/Math.PI)+" "+Math.sin(t*9.2+ph)*16);
+  });
+  // door ring slow spin + clouds drift
+  if(_dyn.doorRing) _dyn.doorRing.rotation.z+=dt*0.5;
+  if(_dyn.clouds) _dyn.clouds.forEach((c,i)=>{ const o=c.object3D; o.position.x+=Math.sin(t*0.05+i)*0.0015; });
+  // labels face the camera
+  const cp=camEl.object3D.position;
+  for(const l of labels){ if(l.object3D) l.object3D.lookAt(cp.x, l.object3D.position.y, cp.z); }
+}
+// ---------- boot ----------
+async function boot(){
+  const mf=await ladder(CUBE_MANIFEST);
+  MAN=JSON.parse(new TextDecoder().decode(mf.buf));
+  log("📜 cube manifest in ("+mf.via+") — <b>"+MAN.title+"</b> · "+MAN.assets.length+" objects, every one a blob","ok");
+  let total=0;
+  for(const a of MAN.assets){
+    const f=await ladder(a.blob);
+    if(sha256hex(new Uint8Array(f.buf))!==a.sha256) throw new Error("sha256 mismatch on "+a.name+" — refused");
+    URLS[a.name]=URL.createObjectURL(new Blob([f.buf],{type:"model/gltf-binary"}));
+    total+=a.bytes;
+    log("✔ "+a.name+" ("+a.role+") — "+a.bytes.toLocaleString()+" B · sha256 verified · via "+f.via,"ok");
+  }
+  log("🧊 "+MAN.assets.length+" objects proven, "+(total/1048576).toFixed(1)+" MB recalled from Walrus. Assembling the cube…","dim");
+  $("custody").innerHTML="cube manifest <a href=\""+AGG+CUBE_MANIFEST+"\" target=\"_blank\" rel=\"noopener\">"+CUBE_MANIFEST+" ↗</a> · seed "+MAN.seed+" · artifacts: the 2008 production .blend files (blobbed Oct–Nov 2026) → objects: this manifest";
+  buildScene();
+}
+boot().catch(e=>{ log("⛔ THE CUBE COULD NOT BE ASSEMBLED — "+e.message,"bad"); });
+</script>
+</body>
+</html>
