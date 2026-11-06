@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>BUNNY CUBE — the meadow, alive (a 3D world from Walrus blobs)</title>
+<title>BUNNY CUBE v1.1 — BONK THE BULLIES (a 3D world from Walrus blobs)</title>
 <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
 <style>
   body{background:#07070f;color:#e8e8f2;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;margin:0;padding:14px;line-height:1.45}
@@ -17,16 +17,36 @@
   .chip{display:inline-block;background:#141428;border:1px solid #33334f;border-radius:14px;padding:2px 10px;margin:2px 2px;font-size:12px}
   #log{font-size:12.5px;color:#c9d4e2;white-space:pre-wrap;min-height:44px}
   #log .ok{color:#7ee787} #log .bad{color:#ff8f8f} #log .dim{color:#7787a0}
-  #stage{position:relative;height:min(72vh,620px);border-radius:10px;overflow:hidden;background:#87bfe8;border:1px solid #26263e}
+  #stage{position:relative;height:min(72vh,620px);border-radius:10px;overflow:hidden;background:#9fd0f2;border:1px solid #26263e;touch-action:none}
   #stage a-scene{position:absolute;inset:0}
+  #stage canvas{touch-action:none}
   #hud{position:absolute;top:10px;left:10px;z-index:5;display:none;background:rgba(7,10,16,.55);border:1px solid rgba(255,255,255,.18);
-       border-radius:10px;padding:8px 12px;font-size:15px;color:#fff;pointer-events:none}
+       border-radius:10px;padding:8px 12px;font-size:15px;color:#fff;pointer-events:none;max-width:78%}
+  #hud #story{font-weight:700;font-size:14.5px;margin-bottom:2px}
+  #hud #counts{font-size:14px;color:#eaf3ff}
   #hint{position:absolute;left:10px;bottom:10px;z-index:5;display:none;background:rgba(7,10,16,.45);border-radius:8px;
-        padding:6px 10px;font-size:12px;color:#dfe9f5;pointer-events:none;max-width:62%}
-  #throwBtn{position:absolute;right:14px;bottom:14px;z-index:6;display:none;width:86px;height:86px;border-radius:50%;
+        padding:6px 10px;font-size:12px;color:#dfe9f5;pointer-events:none;max-width:58%}
+  #flash{position:absolute;inset:0;z-index:4;pointer-events:none;opacity:0;
+         box-shadow:inset 0 0 90px 30px rgba(255,45,30,.85)}
+  #banner{position:absolute;left:50%;top:34%;transform:translate(-50%,-50%);z-index:8;display:none;text-align:center;
+          pointer-events:none;width:92%}
+  #bannerMain{font-size:34px;font-weight:800;color:#fff;text-shadow:0 2px 0 #7a4b00,0 4px 22px rgba(0,0,0,.65);letter-spacing:.5px}
+  #bannerSub{font-size:16px;color:#ffe9a8;text-shadow:0 1px 8px rgba(0,0,0,.8);margin-top:4px;font-weight:600}
+  #pop{position:absolute;left:50%;top:56%;transform:translate(-50%,-50%);z-index:8;display:none;text-align:center;
+       pointer-events:none;font-size:21px;font-weight:800;color:#ffd76a;text-shadow:0 2px 10px rgba(0,0,0,.75)}
+  #verTag{position:absolute;right:10px;top:64px;z-index:5;display:none;background:rgba(7,10,16,.5);border:1px solid rgba(255,215,106,.4);
+          color:#ffd76a;border-radius:8px;padding:3px 9px;font-size:12px;font-weight:700;pointer-events:none}
+  #tiltBtn{position:absolute;right:14px;top:12px;z-index:6;display:none;padding:10px 14px;border-radius:22px;
+        background:rgba(10,16,28,.72);border:2px solid #7ec3f2;color:#dff2ff;font-size:14px;font-weight:700;cursor:pointer;touch-action:none}
+  #tiltBtn.on{border-color:#ffd76a;color:#ffd76a;background:rgba(40,30,4,.8)}
+  #throwBtn{position:absolute;right:14px;bottom:14px;z-index:6;display:none;width:92px;height:92px;border-radius:50%;
         background:radial-gradient(circle at 35% 30%, #ff7a6b, #c22e1f);border:3px solid #ffd76a;color:#fff;
         font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 4px 18px rgba(0,0,0,.45);touch-action:none}
   #throwBtn:active{transform:scale(.94)}
+  #joy{position:absolute;z-index:6;display:none;width:118px;height:118px;border-radius:50%;pointer-events:none;
+       background:rgba(255,255,255,.10);border:2px solid rgba(255,255,255,.45)}
+  #joyKnob{position:absolute;left:50%;top:50%;width:54px;height:54px;border-radius:50%;margin:-27px 0 0 -27px;
+       background:rgba(255,255,255,.35);border:2px solid rgba(255,255,255,.7)}
   .small{font-size:12.5px;color:#9fb4c8}
 </style>
 </head>
@@ -36,13 +56,23 @@
 <p class="sub">A whole new Bunny game, and a different species from the 2D cabinet (which stays frozen as a first attempt, per the versioning law).
 This is a <b>3D open world</b>: the film's own 2008 production models — Bunny, Frank, Rinky, Gamera, the apple tree, even the
 meadow terrain — converted once from the original <span class="mono">.blend</span> artifacts into game objects, blobbed to Walrus,
-sha256-verified in your browser, and assembled into the cube. You enter through <b>THE DOOR</b>, run around as Bunny,
-pick up apples and throw them. Sandbox play — no scores, just the meadow.</p>
+sha256-verified in your browser, and assembled into the cube. You enter through <b>THE DOOR</b> — and this time the meadow
+fights back: <b>v1.1 is BONK THE BULLIES</b>, the film's own story. Frank, Rinky and Gamera pelt Bunny with apples;
+grab apples, bonk them back. First to the banner takes the round.</p>
 
 <div class="panel" style="padding:0;border:none;background:none;margin:0">
   <div id="stage">
-    <div id="hud">🍎 carrying <b id="hudCarry">0</b> · thrown <b id="hudThrown">0</b></div>
-    <div id="hint">WASD / arrows to hop around · drag right side to look · SPACE or the apple button to throw.<br>Touch: left-half drag = hop-stick, right-half drag = look.</div>
+    <div id="hud">
+      <div id="story">🍎 THE BULLIES are pelting Bunny — bonk them back!</div>
+      <div id="counts">🍎 <b id="hudCarry">0</b> carried · 🎯 <b id="hudBonk">0</b>/10 bonks · 💥 <b id="hudBonked">0</b>/3 bonked · 🏁 ROUND <b id="hudRound">1</b></div>
+    </div>
+    <div id="hint">📱 Left thumb: push up = hop forward, left/right = steer · right thumb drag = look around · 🧭 TILT = pivot by tilting your phone · 🍎 button = throw.<br>Desktop: WASD / arrows + mouse drag to look · SPACE or the apple button to throw.</div>
+    <div id="flash"></div>
+    <div id="banner"><div id="bannerMain"></div><div id="bannerSub"></div></div>
+    <div id="pop"></div>
+    <div id="verTag">🧊 CUBE v1.1 · BONK THE BULLIES</div>
+    <button id="tiltBtn">🧭 TILT</button>
+    <div id="joy"><div id="joyKnob"></div></div>
     <button id="throwBtn">🍎<br>THROW</button>
   </div>
 </div>
@@ -56,12 +86,14 @@ pick up apples and throw them. Sandbox play — no scores, just the meadow.</p>
   (Blender Foundation, CC-BY 3.0): this desk's one conversion pass — Blender, headless, at the artifact→object boundary —
   baked the rigs at game weight (subsurf 1, widgets and cages excluded) into glTF objects. The game was then
   <i>injected into the cube</i>: one manifest names every object, and this page proves each one before it appears.
-  The 12 apples hanging in the tree sit at the exact points the 2008 layout artists marked with empties in the tree file.</p>
+  The 12 apples hanging in the tree sit at the exact points the 2008 layout artists marked with empties in the tree file.
+  New in v1.1: the ground under your feet is sampled from the terrain blob's own verified geometry — the meadow is a
+  high plateau (the film's relief runs about 11 units), and the page now stands on the real numbers.</p>
   <div class="small" style="line-height:2.1;margin-top:6px">
     🎞️ the film — <i>Big Buck Bunny</i> (2008) · 🐰 cast &amp; set © Blender Foundation · CC-BY 3.0<br>
     <span class="chip">Walrus testnet · 30 epochs · the keeper renews</span>
     <span class="chip">3D: A-Frame 1.6 (three.js)</span>
-    <span class="chip">v1: procedural hop — the 2008 rigs' skeletal actions stay in the artifacts</span>
+    <span class="chip">v1.1: BONK THE BULLIES · thumb-stick + tilt pivot · geometry-sampled ground</span>
   </div>
   <div id="custody" class="small mono" style="margin-top:8px"></div>
 </div>
@@ -105,22 +137,116 @@ function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a
 
 <script>
 "use strict";
-let MAN=null; const URLS={};
-const state={ready:false, carried:0, thrown:0, camYaw:0, camDist:8, camPitch:0.42,
-             keys:{}, stick:{x:0,y:0,active:false}, bunnyPos:new THREE.Vector3(0,0,10.5),
-             bunnyRotY:Math.PI, hopPhase:0, birdA:0, t:0};
-const PLAY_R=23, TREE_POS={x:7,z:-9}, TREE_R=2.6;
-let sceneEl, worldEl, bunnyEl, camEl, terrainMesh=null, rayc=null;
-const apples=[];       // {el, st:'ground'|'carried'|'flying', vel, bounces}
-const labels=[];       // a-text els to billboard
+let MAN=null; const URLS={}, BUFFERS={};
+const state={ready:false, carried:0, round:1, bonks:0, bonked:0,
+             camYaw:0, camDist:8, camPitch:0.42, camSnap:true,
+             keys:{}, stick:{x:0,y:0,active:false,id:null},
+             bunnyPos:new THREE.Vector3(0,0,10.5), bunnyRotY:Math.PI, hopPhase:0,
+             wobbleT:0, celebT:0, flashT:0, birdA:0, t:0,
+             tiltOn:false, tiltGamma:0, throwCd:0, lobTimer:2.4, looseTimer:1.2};
+const PLAY_R=23, TREE_POS={x:7,z:-9}, TREE_R=2.6, GRAV=15.5;
+let sceneEl, worldEl, bunnyEl, camEl, terrainMesh=null;
+const apples=[];       // {el, st:'ground'|'carried'|'flying'|'spare', kind:'throw'|'lob', p, vel, bounces}
+const labels=[];       // static a-text els to billboard (door)
 const critters={};     // bird, butterflies
+const bullies=[];      // {key,name,el,label,shadow,x,z,rotY,scale,h,speed,target,pauseT,hop,spinT,celebT}
+const sparks=[];       // {el, vel, life}
+let bunnyShadow=null, _xchecked=false;
 
+// ---------- the ground, sampled from the verified terrain blob itself ----------
+// v1.0 stood the world on a three.js raycast and a silent y=0 fallback; the film's
+// terrain is a plateau ~7-9 units up, so one missed sample buried Bunny and the
+// camera under the mesh. v1.1 parses the sha256-verified terrain glb in-page and
+// answers height queries from its exact triangles — no renderer state involved.
+let HF=null;
+function buildHeightfield(buf){
+  const dv=new DataView(buf);
+  if(dv.getUint32(0,true)!==0x46546C67) throw new Error("terrain blob is not glTF binary");
+  const jlen=dv.getUint32(12,true);
+  const js=JSON.parse(new TextDecoder().decode(new Uint8Array(buf,20,jlen)));
+  let binOff=20+jlen; const blen=dv.getUint32(binOff,true); binOff+=8;
+  const bin=new DataView(buf,binOff,blen);
+  const ESZ={5126:4,5125:4,5123:2,5122:2,5121:1,5120:1};
+  function accData(idx){
+    const acc=js.accessors[idx], bv=js.bufferViews[acc.bufferView];
+    const off=(bv.byteOffset||0)+(acc.byteOffset||0), n=acc.count, ct=acc.componentType;
+    const nc={SCALAR:1,VEC2:2,VEC3:3,VEC4:4}[acc.type], esz=ESZ[ct];
+    const stride=bv.byteStride||nc*esz;
+    const rd=ct===5126?(o)=>bin.getFloat32(o,true):ct===5125?(o)=>bin.getUint32(o,true)
+           :ct===5123?(o)=>bin.getUint16(o,true):ct===5122?(o)=>bin.getInt16(o,true)
+           :ct===5121?(o)=>bin.getUint8(o):(o)=>bin.getInt8(o);
+    const out=new Float64Array(n*nc);
+    for(let i=0;i<n;i++) for(let c=0;c<nc;c++) out[i*nc+c]=rd(off+i*stride+c*esz);
+    return out;
+  }
+  function nodeM(nd){
+    if(nd.matrix) return nd.matrix.slice();
+    const t=nd.translation||[0,0,0], q=nd.rotation||[0,0,0,1], s=nd.scale||[1,1,1];
+    const x=q[0],y=q[1],z=q[2],w=q[3];
+    const R=[1-2*(y*y+z*z),2*(x*y-z*w),2*(x*z+y*w), 2*(x*y+z*w),1-2*(x*x+z*z),2*(y*z-x*w), 2*(x*z-y*w),2*(y*z+x*w),1-2*(x*x+y*y)];
+    return [R[0]*s[0],R[1]*s[0],R[2]*s[0],0, R[3]*s[1],R[4]*s[1],R[5]*s[1],0, R[6]*s[2],R[7]*s[2],R[8]*s[2],0, t[0],t[1],t[2],1];
+  }
+  function mulM(a,b){ const o=new Array(16); for(let c=0;c<4;c++) for(let r=0;r<4;r++){ let s=0; for(let k=0;k<4;k++) s+=a[k*4+r]*b[c*4+k]; o[c*4+r]=s; } return o; }
+  function applyM(m,p){ return [m[0]*p[0]+m[4]*p[1]+m[8]*p[2]+m[12], m[1]*p[0]+m[5]*p[1]+m[9]*p[2]+m[13], m[2]*p[0]+m[6]*p[1]+m[10]*p[2]+m[14]]; }
+  const tris=[];
+  function walk(ni,parent){
+    const nd=js.nodes[ni]; if(!nd) return;
+    const M=mulM(parent,nodeM(nd));
+    if(nd.mesh!==undefined){
+      for(const prim of js.meshes[nd.mesh].primitives){
+        const pos=accData(prim.attributes.POSITION);
+        const idx=prim.indices!==undefined?accData(prim.indices):null;
+        const cnt=idx?idx.length:pos.length/3, wp=[];
+        for(let i=0;i<pos.length/3;i++) wp.push(applyM(M,[pos[i*3],pos[i*3+1],pos[i*3+2]]));
+        for(let k=0;k+2<cnt;k+=3){
+          const a=wp[idx?idx[k]:k], b=wp[idx?idx[k+1]:k+1], c=wp[idx?idx[k+2]:k+2];
+          tris.push(a[0],a[1],a[2], b[0],b[1],b[2], c[0],c[1],c[2]);
+        }
+      }
+    }
+    (nd.children||[]).forEach(ch=>walk(ch,M));
+  }
+  const I=[1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1];
+  ((js.scenes[js.scene||0]||{}).nodes||[]).forEach(ni=>walk(ni,I));
+  HF={tris:new Float64Array(tris)};
+  return tris.length/9;
+}
+function groundCPU(x,z){
+  if(!HF) return 0;
+  const T=HF.tris; let best=null;
+  for(let i=0;i<T.length;i+=9){
+    const ax=T[i],ay=T[i+1],az=T[i+2], bx=T[i+3],by=T[i+4],bz=T[i+5], cx=T[i+6],cy=T[i+7],cz=T[i+8];
+    const den=(bz-cz)*(ax-cx)+(cx-bx)*(az-cz);
+    if(Math.abs(den)<1e-12) continue;
+    const l1=((bz-cz)*(x-cx)+(cx-bx)*(z-cz))/den;
+    const l2=((cz-az)*(x-cx)+(ax-cx)*(z-cz))/den;
+    const l3=1-l1-l2;
+    if(l1>=-1e-9&&l2>=-1e-9&&l3>=-1e-9){ const y=l1*ay+l2*by+l3*cy; if(best===null||y>best) best=y; }
+  }
+  return best===null?0:best;
+}
+const _gc=new Map();
 function groundY(x,z){
-  if(!terrainMesh) return 0;
-  const o=new THREE.Vector3(x,60,z), d=new THREE.Vector3(0,-1,0);
-  rayc.set(o,d);
-  const hits=rayc.intersectObject(terrainMesh,true);
-  return hits.length?hits[0].point.y:0;
+  const k=Math.round(x*4)+":"+Math.round(z*4);
+  let v=_gc.get(k); if(v!==undefined) return v;
+  v=groundCPU(x,z);
+  if(_gc.size>8000) _gc.clear();
+  _gc.set(k,v); return v;
+}
+// one-time honesty check: does the renderer's own raycast agree with the blob geometry?
+function crossCheckGround(){
+  if(_xchecked||!terrainMesh||!sceneEl) return; _xchecked=true;
+  try{
+    sceneEl.object3D.updateMatrixWorld(true);
+    const rc=new THREE.Raycaster();
+    rc.set(new THREE.Vector3(0,80,10.5), new THREE.Vector3(0,-1,0)); rc.far=200;
+    const hits=rc.intersectObject(terrainMesh,true);
+    const ry=hits.length?hits[0].point.y:null, gy=groundCPU(0,10.5);
+    if(ry!==null&&Math.abs(ry-gy)<0.6)
+      log("🔍 ground cross-check ✓ — the render raycast agrees with the blob geometry at the door ("+gy.toFixed(2)+")","dim");
+    else
+      log("🔍 ground sampler: the blob's own geometry is the authority (door ground "+gy.toFixed(2)+"); the render raycast "+(ry===null?"missed entirely":"read "+ry.toFixed(2))+" — v1.0 trusted that raycast and its y=0 fallback, which is how the camera ended up under the plateau","dim");
+  }catch(e){ /* the geometry sampler stands on its own */ }
 }
 function mkEntity(parent, url, scale){
   const el=document.createElement("a-entity");
@@ -129,35 +255,73 @@ function mkEntity(parent, url, scale){
   parent.appendChild(el);
   return el;
 }
+function attachMesh(el, mesh){
+  const add=()=>{ try{ el.object3D.add(mesh); }catch(e){} };
+  add(); el.addEventListener("loaded", add);
+}
+function mkShadow(r, op){
+  const el=document.createElement("a-entity"); worldEl.appendChild(el);
+  const m=new THREE.Mesh(new THREE.CircleGeometry(r,26),
+    new THREE.MeshBasicMaterial({color:0x14300f, transparent:true, opacity:op, depthWrite:false}));
+  m.rotation.x=-Math.PI/2; m.renderOrder=1;
+  attachMesh(el,m);
+  return el;
+}
 function buildScene(){
   sceneEl=document.createElement("a-scene");
   sceneEl.setAttribute("embedded","");
-  sceneEl.setAttribute("background","color: #87bfe8");
-  sceneEl.setAttribute("fog","type: linear; color: #a8cdea; near: 36; far: 115");
+  sceneEl.setAttribute("background","color: #9fd0f2");
+  sceneEl.setAttribute("fog","type: linear; color: #b5d9f2; near: 38; far: 120");
   sceneEl.setAttribute("shadow","type: pcfsoft");
   sceneEl.setAttribute("renderer","antialias: true");
   sceneEl.setAttribute("vr-mode-ui","enabled: false");
   $("stage").appendChild(sceneEl);
   const hemi=document.createElement("a-entity");
-  hemi.setAttribute("light","type: hemisphere; skyColor: #bfe3ff; groundColor: #4a7c43; intensity: 0.95");
+  hemi.setAttribute("light","type: hemisphere; skyColor: #d6f0ff; groundColor: #55803f; intensity: 1.1");
   sceneEl.appendChild(hemi);
   const sun=document.createElement("a-entity");
-  sun.setAttribute("light","type: directional; intensity: 1.35; castShadow: true; shadow.mapSize.width: 2048; shadow.mapSize.height: 2048");
-  sun.setAttribute("position","20 30 14");
+  sun.setAttribute("light","type: directional; color: #ffedd0; intensity: 1.5; castShadow: true; shadow.mapSize.width: 2048; shadow.mapSize.height: 2048");
+  sun.setAttribute("position","20 34 14");
   sceneEl.appendChild(sun);
   sun.addEventListener("loaded", ()=>{
     const L=sun.components.light.light;
-    if(L&&L.shadow){ const c=L.shadow.camera; c.left=-36; c.right=36; c.top=36; c.bottom=-36; c.near=1; c.far=95; c.updateProjectionMatrix(); }
+    if(L&&L.shadow){ const c=L.shadow.camera; c.left=-40; c.right=40; c.top=40; c.bottom=-40; c.near=1; c.far=110; c.updateProjectionMatrix(); }
   });
   worldEl=document.createElement("a-entity"); worldEl.id="world"; sceneEl.appendChild(worldEl);
-  camEl=document.createElement("a-entity"); camEl.setAttribute("camera","active: true; fov: 58; near: 0.1; far: 300");
+  camEl=document.createElement("a-entity"); camEl.setAttribute("camera","active: true; fov: 58; near: 0.1; far: 400");
   sceneEl.appendChild(camEl);
-  rayc=new THREE.Raycaster();
+  // gentle sky gradient dome (a canvas ramp on an inside-out sphere — no new blobs)
+  sceneEl.addEventListener("loaded", ()=>{
+    try{
+      const cv=document.createElement("canvas"); cv.width=4; cv.height=512;
+      const g2=cv.getContext("2d"), gr=g2.createLinearGradient(0,0,0,512);
+      gr.addColorStop(0,"#eafbe7"); gr.addColorStop(0.24,"#dff3ff");
+      gr.addColorStop(0.5,"#9fd0f2"); gr.addColorStop(1,"#5ea9dd");
+      g2.fillStyle=gr; g2.fillRect(0,0,4,512);
+      const dome=new THREE.Mesh(new THREE.SphereGeometry(240,24,16),
+        new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(cv), side:THREE.BackSide, fog:false}));
+      sceneEl.object3D.add(dome);
+    }catch(e){ /* flat sky colour remains */ }
+  });
 
   // terrain (positions everything else once loaded)
   const terr=mkEntity(worldEl, URLS.terrain, 1);
   terr.setAttribute("shadow","receive: true");
-  terr.addEventListener("model-loaded", ()=>{ terrainMesh=terr.getObject3D("mesh"); placeWorld(); });
+  terr.addEventListener("model-loaded", ()=>{
+    terrainMesh=terr.getObject3D("mesh");
+    // cheap saturation lift on the terrain's flat production greens (no new assets)
+    if(terrainMesh) terrainMesh.traverse(o=>{
+      if(o.isMesh&&o.material&&o.material.color){
+        const mats=Array.isArray(o.material)?o.material:[o.material];
+        mats.forEach(mt=>{
+          if(mt.map){ mt.color.multiply(new THREE.Color(1.03,1.07,1.02)); }
+          else { const hsl={}; mt.color.getHSL(hsl); mt.color.setHSL(hsl.h, Math.min(1,hsl.s*1.3), hsl.l*0.97); }
+        });
+      }
+    });
+    placeWorld();
+    setTimeout(crossCheckGround, 600);
+  });
 
   // hero tree + cast receive models as they stream in; positions set in placeWorld()
   window._dyn={};
@@ -203,6 +367,20 @@ function scatterPos(rng, rMin, rMax){
   const a=rng()*Math.PI*2, r=rMin+rng()*(rMax-rMin);
   return {x:Math.cos(a)*r, z:Math.sin(a)*r};
 }
+function addLabel(text,x,z,h){
+  const l=document.createElement("a-text");
+  l.setAttribute("value",text); l.setAttribute("align","center");
+  l.setAttribute("color","#ffffff"); l.setAttribute("width","5.5");
+  l.setAttribute("position",x+" "+(groundY(x,z)+h)+" "+z);
+  worldEl.appendChild(l); labels.push(l);
+  return l;
+}
+function addGroundApple(x, z, seeded){
+  const el=mkEntity(worldEl, URLS.apple, 1.15);
+  el.setAttribute("position",x+" "+(groundY(x,z)+0.16)+" "+z);
+  const a={el, st:"ground", kind:null, vel:new THREE.Vector3(), p:new THREE.Vector3(x,groundY(x,z)+0.16,z), bounces:0};
+  apples.push(a); return a;
+}
 function placeWorld(){
   const rng=mulberry32(MAN.seed||20080429);
   const P=(el,x,z,rotY)=>{ el.setAttribute("position",x+" "+groundY(x,z)+" "+z); if(rotY!==undefined) el.setAttribute("rotation","0 "+rotY+" 0"); };
@@ -213,81 +391,292 @@ function placeWorld(){
     const a=mkEntity(worldEl, URLS.apple, 1.35);
     a.setAttribute("position",(TREE_POS.x+pt[0])+" "+(tg+pt[1])+" "+(TREE_POS.z+pt[2]));
   });
-  // the door at spawn
+  const treeShadow=mkShadow(3.6, 0.20);
+  treeShadow.setAttribute("position",TREE_POS.x+" "+(tg+0.04)+" "+TREE_POS.z);
+  // the door at spawn — Bunny stands ON the sampled surface, just inside it
   P(_dyn.doorEl, 0, 13); _dyn.doorEl.setAttribute("rotation","0 0 0");
   _dyn.doorLabel.setAttribute("position","0 "+(groundY(0,13)+4.1)+" 13");
-  // residents
-  P(_dyn.frank,-9,-3, 115); addLabel("FRANK",-9,-3,1.9);
-  P(_dyn.rinky, 11, 5, -50); addLabel("RINKY",11,5,1.8);
-  P(_dyn.gamera,-5,-15, 30); addLabel("GAMERA",-5,-15,1.8);
+  state.bunnyPos.set(0, groundY(0,10.5), 10.5);
+  bunnyShadow=mkShadow(1.15, 0.24);
+  // THE BULLIES take their places (film canon: these three tormented Bunny)
+  const defs=[
+    {key:"frank",  name:"FRANK",  el:_dyn.frank,  x:-9, z:-3,  rotY:115*Math.PI/180, scale:1.6, h:1.35},
+    {key:"rinky",  name:"RINKY",  el:_dyn.rinky,  x:11, z:5,   rotY:-50*Math.PI/180, scale:1.8, h:1.15},
+    {key:"gamera", name:"GAMERA", el:_dyn.gamera, x:-5, z:-15, rotY:30*Math.PI/180,  scale:1.8, h:1.10}
+  ];
+  defs.forEach((d,i)=>{
+    P(d.el, d.x, d.z, d.rotY*180/Math.PI);
+    const b={key:d.key, name:d.name, el:d.el, x:d.x, z:d.z, rotY:d.rotY, scale:d.scale, h:d.h,
+             speed:1.5, target:null, pauseT:0.6+i*0.7, hop:Math.random()*6, spinT:0, celebT:0,
+             label:addLabel(d.name, d.x, d.z, d.h+0.75), shadow:mkShadow(0.95, 0.24)};
+    b.shadow.setAttribute("position",d.x+" "+(groundY(d.x,d.z)+0.04)+" "+d.z);
+    bullies.push(b);
+  });
   // scatter: grass, flowers, rocks, acorns
   for(let i=0;i<16;i++){ const p=scatterPos(rng,2,22), g=mkEntity(worldEl,URLS.grass,1.6+rng()*1.3); P(g,p.x,p.z,rng()*180); }
   for(let i=0;i<8;i++){ const p=scatterPos(rng,2,19), f=mkEntity(worldEl,URLS.flower1,1.5+rng()*0.6); P(f,p.x,p.z,rng()*180); }
   for(let i=0;i<6;i++){ const p=scatterPos(rng,2,19), f=mkEntity(worldEl,URLS.flower2,1.5+rng()*0.6); P(f,p.x,p.z,rng()*180); }
   for(let i=0;i<6;i++){ const p=scatterPos(rng,6,21), r=mkEntity(worldEl,URLS.rock,0.8+rng()*0.7); P(r,p.x,p.z,rng()*180); }
   for(let i=0;i<8;i++){ const p=scatterPos(rng,2,20), a=mkEntity(worldEl,URLS.acorn,1.6); P(a,p.x,p.z,rng()*180); }
-  // pickable apples: 12 on the ground
-  for(let i=0;i<12;i++){
-    const p=scatterPos(rng,3,20), el=mkEntity(worldEl,URLS.apple,1.15);
-    el.setAttribute("position",p.x+" "+(groundY(p.x,p.z)+0.16)+" "+p.z);
-    apples.push({el, st:"ground", vel:new THREE.Vector3(), bounces:0});
-  }
-  // flight pool: 3 apples for throwing
+  // pickable apples: 12 scattered + a welcoming 3 by the door
+  for(let i=0;i<12;i++){ const p=scatterPos(rng,3,20); addGroundApple(p.x,p.z,true); }
+  [[2.6,7.6],[-2.8,8.4],[0.6,5.4]].forEach(p=>addGroundApple(p[0],p[1],true));
+  // flight pool: 3 hidden apples ready for throws and lobs
   for(let i=0;i<3;i++){
     const el=mkEntity(worldEl,URLS.apple,1.15); el.setAttribute("visible","false");
-    apples.push({el, st:"spare", vel:new THREE.Vector3(), bounces:0});
+    apples.push({el, st:"spare", kind:null, vel:new THREE.Vector3(), p:new THREE.Vector3(), bounces:0});
   }
   // the carried apple that rides over Bunny's head
   _dyn.carriedEl=mkEntity(worldEl, URLS.apple, 1.15); _dyn.carriedEl.setAttribute("visible","false");
   state.ready=true;
-  log("🌳 <b>THE CUBE IS OPEN.</b> The meadow is assembled and every object in it was proven from its blob. Come in through the door.","ok");
+  log("🌳 <b>THE CUBE IS OPEN — and it's a game now.</b> The meadow stands on its own proven geometry (door ground "+groundY(0,10.5).toFixed(1)+" up). Frank, Rinky and Gamera are already plotting. Grab a 🍎!","ok");
   $("hud").style.display="block"; $("hint").style.display="block"; $("throwBtn").style.display="block";
+  $("tiltBtn").style.display="block"; $("verTag").style.display="block";
+  syncHUD();
+  setTimeout(()=>popText("Grab a 🍎 — then bonk a bully!", 2800), 700);
 }
-function addLabel(text,x,z,h){
-  const l=document.createElement("a-text");
-  l.setAttribute("value",text); l.setAttribute("align","center");
-  l.setAttribute("color","#ffffff"); l.setAttribute("width","5.5");
-  l.setAttribute("position",x+" "+(groundY(x,z)+h)+" "+z);
-  worldEl.appendChild(l); labels.push(l);
+</script>
+
+<script>
+"use strict";
+// ---------- HUD & fanfare ----------
+function syncHUD(){
+  $("hudCarry").textContent=state.carried;
+  $("hudBonk").textContent=state.bonks;
+  $("hudBonked").textContent=state.bonked;
+  $("hudRound").textContent=state.round;
 }
-// ---------- input ----------
-window.addEventListener("keydown",e=>{ state.keys[e.code]=true; if(e.code==="Space"){ e.preventDefault(); throwApple(); } });
-window.addEventListener("keyup",e=>{ state.keys[e.code]=false; });
-$("throwBtn").addEventListener("click",()=>throwApple());
+let bannerTO=null, popTO=null;
+function showBanner(main, sub, ms){
+  $("bannerMain").textContent=main; $("bannerSub").textContent=sub||"";
+  $("banner").style.display="block";
+  clearTimeout(bannerTO); bannerTO=setTimeout(()=>{ $("banner").style.display="none"; }, ms||3600);
+}
+function popText(txt, ms){
+  const p=$("pop"); p.textContent=txt; p.style.display="block";
+  clearTimeout(popTO); popTO=setTimeout(()=>{ p.style.display="none"; }, ms||1500);
+}
+function burst(x,y,z){
+  for(let i=0;i<7;i++){
+    if(sparks.length>42){ const old=sparks.shift(); if(old.el.parentNode) old.el.parentNode.removeChild(old.el); }
+    const el=document.createElement("a-octahedron");
+    el.setAttribute("radius",(0.09+(i%3)*0.045).toFixed(2));
+    el.setAttribute("material","color: #ffd76a; emissive: #ff9d00; emissiveIntensity: 1; roughness: 0.4");
+    el.setAttribute("position",x+" "+y+" "+z);
+    worldEl.appendChild(el);
+    const a=Math.random()*Math.PI*2, sp=1.8+Math.random()*1.9;
+    sparks.push({el, vel:new THREE.Vector3(Math.cos(a)*sp, 2.4+Math.random()*1.6, Math.sin(a)*sp), life:0.55});
+  }
+}
+// ---------- apples & the great apple war ----------
+function getFlyer(){
+  let s=apples.find(a=>a.st==="spare");
+  if(s) return s;
+  const flying=apples.filter(a=>a.st==="flying");
+  if(flying.length<6){
+    const el=mkEntity(worldEl, URLS.apple, 1.15); el.setAttribute("visible","false");
+    s={el, st:"spare", kind:null, vel:new THREE.Vector3(), p:new THREE.Vector3(), bounces:0};
+    apples.push(s); return s;
+  }
+  return flying[0]; // recycle the oldest flyer
+}
+function dropFromTree(){
+  const pts=MAN.treePoints||[];
+  if(!pts.length) return;
+  const pt=pts[Math.floor(Math.random()*pts.length)];
+  const x=TREE_POS.x+pt[0], z=TREE_POS.z+pt[2];
+  if(apples.length<44){ addGroundApple(x,z,false); }
+  else { // recycle the farthest loose apple instead of growing forever
+    let far=null, fd=-1;
+    for(const a of apples){ if(a.st!=="ground") continue;
+      const p=a.el.getAttribute("position"), d=Math.hypot(p.x-state.bunnyPos.x,p.z-state.bunnyPos.z);
+      if(d>fd){ fd=d; far=a; } }
+    if(far){ far.el.setAttribute("position",x+" "+(groundY(x,z)+0.16)+" "+z);
+             far.p.set(x,groundY(x,z)+0.16,z); }
+  }
+}
+function launchApple(a, from, vel, kind){
+  a.el.setAttribute("visible","true");
+  a.p.copy(from); a.vel.copy(vel); a.bounces=0; a.kind=kind; a.st="flying";
+  a.el.setAttribute("position",from.x+" "+from.y+" "+from.z);
+}
 function throwApple(){
-  if(!state.ready||state.carried<=0) return;
-  const slot=apples.find(a=>a.st==="spare")||apples.find(a=>a.st==="flying");
-  if(!slot) return;
-  state.carried--; state.thrown++;
-  $("hudCarry").textContent=state.carried; $("hudThrown").textContent=state.thrown;
-  const bp=state.bunnyPos, fwd=new THREE.Vector3(Math.sin(state.bunnyRotY),0,Math.cos(state.bunnyRotY));
-  slot.el.setAttribute("visible","true");
-  slot.el.setAttribute("position",bp.x+" "+(bp.y+2.6)+" "+bp.z);
-  slot.vel.copy(fwd.multiplyScalar(8.5)); slot.vel.y=4.4; slot.bounces=0; slot.st="flying";
-  slot.p=new THREE.Vector3(bp.x,bp.y+2.6,bp.z);
+  if(!state.ready) return;
+  if(state.throwCd>0) return;
+  if(state.carried<=0){ popText("No apples! Hop onto a 🍎 to pick one up", 1600); return; }
+  state.throwCd=0.22;
+  state.carried--;
+  const bp=state.bunnyPos, gy=groundY(bp.x,bp.z);
+  const fwd=new THREE.Vector3(Math.sin(state.bunnyRotY),0,Math.cos(state.bunnyRotY));
+  launchApple(getFlyer(), new THREE.Vector3(bp.x, gy+2.6, bp.z),
+              new THREE.Vector3(fwd.x*9.5, 4.6, fwd.z*9.5), "throw");
+  syncHUD();
 }
-// pointer: touch left half = stick, any other drag = orbit
+function lobFrom(b){
+  const gyB=groundY(b.x,b.z), bp=state.bunnyPos, gyP=groundY(bp.x,bp.z);
+  const from=new THREE.Vector3(b.x, gyB+b.h+0.55, b.z);
+  const tx=bp.x+(Math.random()-0.5)*1.5, tz=bp.z+(Math.random()-0.5)*1.5;
+  const dist=Math.hypot(tx-from.x, tz-from.z);
+  const T=Math.min(1.7, Math.max(0.85, dist/6.5));
+  const ty=gyP+1.0;
+  const vel=new THREE.Vector3((tx-from.x)/T, (ty-from.y)/T + 0.5*GRAV*T, (tz-from.z)/T);
+  launchApple(getFlyer(), from, vel, "lob");
+}
+function landApple(a){
+  a.st="ground"; a.kind=null;
+  a.el.setAttribute("position",a.p.x+" "+a.p.y+" "+a.p.z);
+  a.el.setAttribute("rotation","0 0 0");
+}
+function bonkBully(b, a){
+  state.bonks++;
+  burst(b.x, groundY(b.x,b.z)+b.h+0.7, b.z);
+  b.spinT=0.7;
+  popText("🎯 BONK! "+b.name+" sees stars!", 1300);
+  landApple(a); syncHUD();
+  if(state.bonks>=10) endRound(true);
+}
+function bonkBunny(a){
+  state.bonked++;
+  state.flashT=0.45; state.wobbleT=0.55;
+  popText("💥 BONKED! The bullies got you!", 1300);
+  a.p.set(state.bunnyPos.x+0.5, groundY(state.bunnyPos.x,state.bunnyPos.z)+0.16, state.bunnyPos.z+0.4);
+  landApple(a); syncHUD();
+  if(state.bonked>=3) endRound(false);
+}
+function endRound(playerWon){
+  state.bonks=0; state.bonked=0;
+  if(playerWon){
+    state.round++;
+    state.celebT=1.1;
+    bullies.forEach(b=>{ b.spinT=Math.max(b.spinT,0.7); });
+    showBanner("🏆 YOU WIN THE MEADOW!", "Round "+(state.round-1)+" is Bunny's! The bullies regroup — a touch faster now…", 3800);
+  } else {
+    bullies.forEach(b=>{ b.celebT=1.5; });
+    showBanner("🍎 THE BULLIES WIN THIS ROUND", "Bunny shakes it off. Grab some apples and bonk them back!", 3800);
+  }
+  state.lobTimer=3.2;
+  syncHUD();
+}
+// ---------- input: keyboard, thumb-stick, look-drag, tilt ----------
+window.addEventListener("keydown",e=>{
+  if(["Space","ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].includes(e.code)) e.preventDefault();
+  state.keys[e.code]=true;
+  if(e.code==="Space") throwApple();
+});
+window.addEventListener("keyup",e=>{ state.keys[e.code]=false; });
+let lastTapThrow=0;
+$("throwBtn").addEventListener("touchstart",e=>{ e.preventDefault(); lastTapThrow=performance.now(); throwApple(); },{passive:false});
+$("throwBtn").addEventListener("click",()=>{ if(performance.now()-lastTapThrow>350) throwApple(); });
+$("tiltBtn").addEventListener("click", async ()=>{
+  if(state.tiltOn){ state.tiltOn=false; $("tiltBtn").classList.remove("on"); $("tiltBtn").textContent="🧭 TILT"; return; }
+  if(window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission==="function"){
+    try{ const p=await DeviceOrientationEvent.requestPermission();
+      if(p!=="granted"){ popText("Tilt said no — the drag-look still works 🙂", 2000); return; }
+    }catch(e){ popText("Tilt unavailable here — drag-look it is 🙂", 2000); return; }
+  }
+  state.tiltOn=true; $("tiltBtn").classList.add("on"); $("tiltBtn").textContent="🧭 TILT ON";
+  popText("🧭 Tilt your phone to pivot the camera", 1800);
+});
+window.addEventListener("deviceorientation",e=>{ if(state.tiltOn&&e.gamma!==null) state.tiltGamma=e.gamma; });
 const pointers={};
-function stageEl(){ return $("stage"); }
+function stageRect(){ return $("stage").getBoundingClientRect(); }
 function onDown(e){
-  const r=stageEl().getBoundingClientRect(), x=e.clientX-r.left;
-  pointers[e.pointerId]={x0:e.clientX,y0:e.clientY,x:e.clientX,y:e.clientY,
-    mode:(e.pointerType==="touch"&&x<r.width*0.5)?"stick":"orbit"};
-  if(pointers[e.pointerId].mode==="stick"){ state.stick.active=true; }
+  if(e.target.closest("button")) return;
+  const r=stageRect(), lx=e.clientX-r.left, ly=e.clientY-r.top;
+  if(e.pointerType==="touch" && lx<r.width*0.5 && state.stick.id===null){
+    pointers[e.pointerId]={mode:"stick"};
+    state.stick.id=e.pointerId; state.stick.active=true; state.stick.x=0; state.stick.y=0;
+    const joy=$("joy");
+    joy.style.display="block";
+    joy.style.left=Math.max(4,Math.min(r.width-122, lx-59))+"px";
+    joy.style.top=Math.max(4,Math.min(r.height-122, ly-59))+"px";
+    joy.dataset.cx=lx; joy.dataset.cy=ly;
+    $("joyKnob").style.transform="translate(0px,0px)";
+  } else {
+    pointers[e.pointerId]={mode:"look", x:e.clientX, y:e.clientY};
+  }
 }
 function onMove(e){
   const p=pointers[e.pointerId]; if(!p) return;
-  const dx=e.clientX-p.x, dy=e.clientY-p.y; p.x=e.clientX; p.y=e.clientY;
-  if(p.mode==="orbit"){ state.camYaw-=dx*0.005; state.camPitch=Math.min(1.2,Math.max(0.08,state.camPitch+dy*0.004)); }
-  else { const r=stageEl().getBoundingClientRect();
-    state.stick.x=Math.max(-1,Math.min(1,(e.clientX-p.x0)/60));
-    state.stick.y=Math.max(-1,Math.min(1,(e.clientY-p.y0)/60)); }
+  if(p.mode==="look"){
+    const dx=e.clientX-p.x, dy=e.clientY-p.y; p.x=e.clientX; p.y=e.clientY;
+    state.camYaw-=dx*0.0052;
+    state.camPitch=Math.min(1.2,Math.max(0.08,state.camPitch+dy*0.004));
+  } else if(p.mode==="stick"){
+    const r=stageRect(), lx=e.clientX-r.left, ly=e.clientY-r.top;
+    let dx=lx-(+($("joy").dataset.cx||0)), dy=ly-(+($("joy").dataset.cy||0));
+    const m=Math.hypot(dx,dy), max=46;
+    if(m>max){ dx*=max/m; dy*=max/m; }
+    state.stick.x=dx/max; state.stick.y=dy/max;
+    $("joyKnob").style.transform="translate("+dx+"px,"+dy+"px)";
+  }
 }
-function onUp(e){ const p=pointers[e.pointerId]; if(p&&p.mode==="stick"){ state.stick.active=false; state.stick.x=0; state.stick.y=0; } delete pointers[e.pointerId]; }
-window.addEventListener("pointerdown",e=>{ if(e.target.closest("#stage")&&e.target.id!=="throwBtn") onDown(e); });
+function onUp(e){
+  const p=pointers[e.pointerId]; if(!p) return;
+  if(p.mode==="stick"){
+    state.stick.active=false; state.stick.id=null; state.stick.x=0; state.stick.y=0;
+    $("joy").style.display="none";
+  }
+  delete pointers[e.pointerId];
+}
+window.addEventListener("pointerdown",e=>{ if(e.target.closest("#stage")) onDown(e); });
 window.addEventListener("pointermove",onMove);
 window.addEventListener("pointerup",onUp); window.addEventListener("pointercancel",onUp);
 window.addEventListener("wheel",e=>{ if(e.target.closest("#stage")){ state.camDist=Math.min(13,Math.max(4.5,state.camDist+e.deltaY*0.01)); } },{passive:true});
+// ---------- bullies ----------
+function angleLerp(a,b,t){
+  let d=b-a; while(d>Math.PI)d-=2*Math.PI; while(d<-Math.PI)d+=2*Math.PI;
+  return a+d*Math.min(1,t);
+}
+function updateBully(b, dt){
+  const t=state.t, gy=groundY(b.x,b.z);
+  let hopY=0, moving=false;
+  if(b.spinT>0){
+    b.spinT-=dt; b.rotY+=dt*11*Math.max(0.25,b.spinT/0.7);
+    hopY=Math.sin(Math.max(0,b.spinT/0.7)*Math.PI)*0.45;
+  } else if(b.celebT>0){
+    b.celebT-=dt; hopY=Math.abs(Math.sin(t*10))*0.5;
+  } else if(b.pauseT>0){
+    b.pauseT-=dt; hopY=Math.sin(t*1.7+b.hop)*0.03;
+  } else {
+    if(!b.target){
+      for(let tries=0;tries<6;tries++){
+        const a=Math.random()*Math.PI*2, r=2+Math.random()*7;
+        const nx=b.x+Math.cos(a)*r, nz=b.z+Math.sin(a)*r;
+        if(Math.hypot(nx,nz)>20.5) continue;
+        if(Math.hypot(nx-TREE_POS.x,nz-TREE_POS.z)<3.6) continue;
+        if(Math.hypot(nx-state.bunnyPos.x,nz-state.bunnyPos.z)<3.2) continue;
+        b.target={x:nx,z:nz}; break;
+      }
+      if(!b.target){ b.pauseT=0.5; }
+    }
+    if(b.target){
+      const dx=b.target.x-b.x, dz=b.target.z-b.z, d=Math.hypot(dx,dz);
+      if(d<0.45){ b.target=null; b.pauseT=0.7+Math.random()*1.6; }
+      else {
+        const sp=b.speed*(1+0.09*(state.round-1));
+        b.x+=dx/d*sp*dt; b.z+=dz/d*sp*dt;
+        b.rotY=angleLerp(b.rotY, Math.atan2(dx,dz), dt*7);
+        b.hop+=dt*8.5; hopY=Math.abs(Math.sin(b.hop))*0.15; moving=true;
+      }
+    }
+  }
+  // keep a respectful (cowardly) distance from Bunny and from each other
+  const db=Math.hypot(b.x-state.bunnyPos.x, b.z-state.bunnyPos.z);
+  if(db<2.3&&db>0.001){ b.x+=(b.x-state.bunnyPos.x)/db*(2.3-db); b.z+=(b.z-state.bunnyPos.z)/db*(2.3-db); }
+  for(const o of bullies){ if(o===b) continue;
+    const dd=Math.hypot(b.x-o.x,b.z-o.z);
+    if(dd<1.7&&dd>0.001){ b.x+=(b.x-o.x)/dd*(1.7-dd)*0.5; b.z+=(b.z-o.z)/dd*(1.7-dd)*0.5; }
+  }
+  const rr2=Math.hypot(b.x,b.z);
+  if(rr2>21){ b.x*=21/rr2; b.z*=21/rr2; }
+  const gy2=groundY(b.x,b.z);
+  b.el.setAttribute("position",b.x+" "+(gy2+hopY)+" "+b.z);
+  b.el.setAttribute("rotation","0 "+(b.rotY*180/Math.PI)+" 0");
+  b.label.setAttribute("position",b.x+" "+(gy2+b.h+0.75+hopY)+" "+b.z);
+  b.shadow.setAttribute("position",b.x+" "+(gy2+0.04)+" "+b.z);
+  return moving;
+}
 // ---------- the living loop ----------
 let lastT=performance.now();
 function tickLoop(now){
@@ -295,25 +684,44 @@ function tickLoop(now){
   const dt=Math.min(0.05,(now-lastT)/1000); lastT=now;
   if(!state.ready||!bunnyEl) return;
   state.t+=dt; const t=state.t;
-  // input vector (camera-relative)
-  let ix=0, iz=0;
-  if(state.keys["KeyW"]||state.keys["ArrowUp"]) iz-=1;
-  if(state.keys["KeyS"]||state.keys["ArrowDown"]) iz+=1;
-  if(state.keys["KeyA"]||state.keys["ArrowLeft"]) ix-=1;
-  if(state.keys["KeyD"]||state.keys["ArrowRight"]) ix+=1;
-  if(state.stick.active){ ix+=state.stick.x; iz+=state.stick.y; }
-  const mag=Math.hypot(ix,iz); if(mag>1){ ix/=mag; iz/=mag; }
-  const sy=Math.sin(state.camYaw), cy=Math.cos(state.camYaw);
-  // camera forward on the ground plane points from camera toward bunny: (-sin yaw, -cos yaw) when cam sits at +sin/+cos offset
-  const fwd={x:-sy, z:-cy}, rgt={x:cy, z:-sy};
-  const mx=fwd.x*(-iz)+rgt.x*ix, mz=fwd.z*(-iz)+rgt.z*ix;
-  const moving=Math.hypot(mx,mz)>0.08;
-  const speed=6.2;
+  if(state.throwCd>0) state.throwCd-=dt;
+  // tilt pivots the camera (independent channel — merges with drag and stick)
+  if(state.tiltOn){
+    const g=state.tiltGamma;
+    if(Math.abs(g)>3) state.camYaw-=g*0.03*dt;
+  }
+  // ---- movement: thumb-stick drives Bunny-relative; keys drive camera-relative
+  let mx=0, mz=0, moving=false;
+  if(state.stick.active){
+    const sx=state.stick.x, sy=state.stick.y;
+    const fwdAmt=Math.max(-1,Math.min(1,-sy));
+    if(Math.abs(sx)>0.08) state.bunnyRotY-=sx*2.3*dt;      // steer left/right
+    if(Math.abs(fwdAmt)>0.07){
+      const R=state.bunnyRotY;
+      const fx=Math.sin(R), fz=Math.cos(R), rx=-Math.cos(R), rz=Math.sin(R);
+      const sp=fwdAmt>=0?6.4:3.6;
+      mx=(fx*fwdAmt+rx*sx*0.3*Math.abs(fwdAmt))*sp;
+      mz=(fz*fwdAmt+rz*sx*0.3*Math.abs(fwdAmt))*sp;
+      moving=true;
+    }
+  } else {
+    let ix=0, iz=0;
+    if(state.keys["KeyW"]||state.keys["ArrowUp"]) iz-=1;
+    if(state.keys["KeyS"]||state.keys["ArrowDown"]) iz+=1;
+    if(state.keys["KeyA"]||state.keys["ArrowLeft"]) ix-=1;
+    if(state.keys["KeyD"]||state.keys["ArrowRight"]) ix+=1;
+    const mag=Math.hypot(ix,iz); if(mag>1){ ix/=mag; iz/=mag; }
+    const sy2=Math.sin(state.camYaw), cy2=Math.cos(state.camYaw);
+    const fwd={x:-sy2, z:-cy2}, rgt={x:cy2, z:-sy2};
+    mx=(fwd.x*(-iz)+rgt.x*ix)*6.2; mz=(fwd.z*(-iz)+rgt.z*ix)*6.2;
+    moving=Math.hypot(mx,mz)>0.5;
+    if(moving){
+      const targetRot=Math.atan2(mx,mz);
+      state.bunnyRotY=angleLerp(state.bunnyRotY, targetRot, dt*10);
+    }
+  }
   if(moving){
-    state.bunnyPos.x+=mx*speed*dt; state.bunnyPos.z+=mz*speed*dt;
-    const targetRot=Math.atan2(mx,mz);
-    let d=targetRot-state.bunnyRotY; while(d>Math.PI)d-=2*Math.PI; while(d<-Math.PI)d+=2*Math.PI;
-    state.bunnyRotY+=d*Math.min(1,dt*10);
+    state.bunnyPos.x+=mx*dt; state.bunnyPos.z+=mz*dt;
     state.hopPhase+=dt*9.5;
   }
   // soft boundary + tree collision
@@ -322,16 +730,25 @@ function tickLoop(now){
   const td=Math.hypot(state.bunnyPos.x-TREE_POS.x, state.bunnyPos.z-TREE_POS.z);
   if(td<TREE_R&&td>0.001){ const push=(TREE_R-td); state.bunnyPos.x+=(state.bunnyPos.x-TREE_POS.x)/td*push; state.bunnyPos.z+=(state.bunnyPos.z-TREE_POS.z)/td*push; }
   const gy=groundY(state.bunnyPos.x,state.bunnyPos.z);
-  const hop=moving?Math.abs(Math.sin(state.hopPhase))*0.30:Math.sin(t*1.8)*0.03;
-  state.bunnyPos.y=gy;
+  state.bunnyPos.y=gy;   // Bunny stands exactly on the sampled surface, every frame
+  let hop=moving?Math.abs(Math.sin(state.hopPhase))*0.30:Math.sin(t*1.8)*0.03;
+  if(state.celebT>0){ state.celebT-=dt; hop=Math.abs(Math.sin(t*9))*0.5; }
+  let roll=0;
+  if(state.wobbleT>0){ state.wobbleT-=dt; roll=Math.sin(t*36)*11*Math.max(0,state.wobbleT/0.55); }
   bunnyEl.setAttribute("position",state.bunnyPos.x+" "+(gy+hop)+" "+state.bunnyPos.z);
-  bunnyEl.setAttribute("rotation",(moving?Math.sin(state.hopPhase)*4:0)+" "+(state.bunnyRotY*180/Math.PI)+" 0");
-  // camera follow
+  bunnyEl.setAttribute("rotation",(moving?Math.sin(state.hopPhase)*4:0)+" "+(state.bunnyRotY*180/Math.PI)+" "+roll);
+  if(bunnyShadow) bunnyShadow.setAttribute("position",state.bunnyPos.x+" "+(gy+0.04)+" "+state.bunnyPos.z);
+  // camera follow — snapped on the first frame, then lerped, and HARD-clamped
+  // above the terrain at its own footprint so it can never dive under the meadow
   const camTarget=new THREE.Vector3(
     state.bunnyPos.x+Math.sin(state.camYaw)*state.camDist*Math.cos(state.camPitch),
     gy+1.9+Math.sin(state.camPitch)*state.camDist,
     state.bunnyPos.z+Math.cos(state.camYaw)*state.camDist*Math.cos(state.camPitch));
-  const co=camEl.object3D.position; co.lerp(camTarget,Math.min(1,dt*6));
+  const co=camEl.object3D.position;
+  if(state.camSnap){ co.copy(camTarget); state.camSnap=false; }
+  else co.lerp(camTarget,Math.min(1,dt*6));
+  const camFloor=groundY(co.x,co.z)+1.0;
+  if(co.y<camFloor) co.y=camFloor;
   camEl.object3D.lookAt(state.bunnyPos.x, gy+1.8, state.bunnyPos.z);
   // carried apple rides overhead, spinning slowly
   if(_dyn.carriedEl){
@@ -340,34 +757,69 @@ function tickLoop(now){
     if(vis) _dyn.carriedEl.setAttribute("position",state.bunnyPos.x+" "+(gy+hop+2.62+Math.sin(t*2.2)*0.05)+" "+state.bunnyPos.z),
             _dyn.carriedEl.setAttribute("rotation","0 "+(t*40)+" 0");
   }
-  // apples: pickup + flight physics
+  // the bullies wander, celebrate, spin…
+  for(const b of bullies) updateBully(b, dt);
+  // …and pelt Bunny on a timer that tightens each round
+  state.lobTimer-=dt;
+  if(state.lobTimer<=0){
+    const ready=bullies.filter(b=>b.spinT<=0&&b.celebT<=0);
+    if(ready.length) lobFrom(ready[Math.floor(Math.random()*ready.length)]);
+    const base=Math.max(2.4, 4.4-0.25*(state.round-1));
+    state.lobTimer=base*(0.75+Math.random()*0.5);
+  }
+  // keep the meadow stocked: an apple drops from the tree when loose apples run low
+  state.looseTimer-=dt;
+  if(state.looseTimer<=0){
+    state.looseTimer=1.5;
+    if(apples.filter(a=>a.st==="ground").length<6) dropFromTree();
+  }
+  // apples: pickup + flight physics + hits
   for(const a of apples){
     if(a.st==="ground"){
       const p=a.el.getAttribute("position");
       const dd=Math.hypot(p.x-state.bunnyPos.x, p.z-state.bunnyPos.z);
       if(dd<1.15){ a.st="carried"; a.el.setAttribute("visible","false"); state.carried++;
-        $("hudCarry").textContent=state.carried; }
+        syncHUD(); }
     } else if(a.st==="flying"){
-      a.vel.y-=15.5*dt;
+      a.vel.y-=GRAV*dt;
       a.p.addScaledVector(a.vel,dt);
+      if(a.kind==="throw"){
+        for(const b of bullies){
+          const gyB=groundY(b.x,b.z);
+          if(Math.hypot(a.p.x-b.x,a.p.z-b.z)<1.05 && a.p.y>gyB-0.3 && a.p.y<gyB+b.h+0.6){ bonkBully(b,a); break; }
+        }
+        if(a.st!=="flying") continue;
+      } else if(a.kind==="lob"){
+        if(Math.hypot(a.p.x-state.bunnyPos.x,a.p.z-state.bunnyPos.z)<1.0 && a.p.y>gy-0.2 && a.p.y<gy+2.45){ bonkBunny(a); continue; }
+      }
       const g=groundY(a.p.x,a.p.z)+0.16;
       if(a.p.y<=g){ a.p.y=g;
         if(a.bounces<1&&Math.abs(a.vel.y)>2.2){ a.vel.y*=-0.38; a.vel.x*=0.7; a.vel.z*=0.7; a.bounces++; }
-        else { a.st="ground"; }
+        else landApple(a);
       }
-      a.el.setAttribute("position",a.p.x+" "+a.p.y+" "+a.p.z);
-      a.el.setAttribute("rotation",(t*260)%360+" "+(t*190)%360+" 0");
+      if(a.st==="flying"){
+        a.el.setAttribute("position",a.p.x+" "+a.p.y+" "+a.p.z);
+        a.el.setAttribute("rotation",(t*260)%360+" "+(t*190)%360+" 0");
+      }
     }
   }
-  // residents idle life
-  if(_dyn.frank) _dyn.frank.setAttribute("rotation","0 115 "+Math.sin(t*1.1)*1.6);
-  if(_dyn.rinky) _dyn.rinky.setAttribute("rotation","0 -50 "+Math.sin(t*1.4+2)*1.6);
-  if(_dyn.gamera) _dyn.gamera.setAttribute("rotation","0 30 "+Math.sin(t*0.9+4)*1.6);
+  // star bursts
+  for(let i=sparks.length-1;i>=0;i--){
+    const s=sparks[i]; s.life-=dt;
+    if(s.life<=0){ if(s.el.parentNode) s.el.parentNode.removeChild(s.el); sparks.splice(i,1); continue; }
+    s.vel.y-=6*dt;
+    const p=s.el.getAttribute("position");
+    s.el.setAttribute("position",(p.x+s.vel.x*dt)+" "+(p.y+s.vel.y*dt)+" "+(p.z+s.vel.z*dt));
+    s.el.setAttribute("rotation",(t*300)+" "+(t*240)+" 0");
+  }
+  // bonk flash decay
+  if(state.flashT>0){ state.flashT-=dt; $("flash").style.opacity=Math.max(0,state.flashT/0.45*0.55); }
+  else if($("flash").style.opacity!=="0") $("flash").style.opacity="0";
   // bird circles the meadow
   if(critters.bird){
-    state.birdA+=dt*0.105; const a=state.birdA;
-    const bx=Math.cos(a)*19, bz=Math.sin(a)*19, by=15.5+Math.sin(t*0.6)*1.3;
-    const vx=-Math.sin(a), vz=Math.cos(a);
+    state.birdA+=dt*0.105; const a2=state.birdA;
+    const bx=Math.cos(a2)*19, bz=Math.sin(a2)*19, by=groundY(bx,bz)+7.5+Math.sin(t*0.6)*1.3;
+    const vx=-Math.sin(a2), vz=Math.cos(a2);
     critters.bird.setAttribute("position",bx+" "+by+" "+bz);
     critters.bird.setAttribute("rotation","0 "+(Math.atan2(vx,vz)*180/Math.PI)+" 18");
   }
@@ -384,7 +836,7 @@ function tickLoop(now){
   // door ring slow spin + clouds drift
   if(_dyn.doorRing) _dyn.doorRing.rotation.z+=dt*0.5;
   if(_dyn.clouds) _dyn.clouds.forEach((c,i)=>{ const o=c.object3D; o.position.x+=Math.sin(t*0.05+i)*0.0015; });
-  // labels face the camera
+  // labels face the camera (bully labels ride in the same list, positions already updated)
   const cp=camEl.object3D.position;
   for(const l of labels){ if(l.object3D) l.object3D.lookAt(cp.x, l.object3D.position.y, cp.z); }
 }
@@ -397,10 +849,13 @@ async function boot(){
   for(const a of MAN.assets){
     const f=await ladder(a.blob);
     if(sha256hex(new Uint8Array(f.buf))!==a.sha256) throw new Error("sha256 mismatch on "+a.name+" — refused");
+    BUFFERS[a.name]=f.buf;
     URLS[a.name]=URL.createObjectURL(new Blob([f.buf],{type:"model/gltf-binary"}));
     total+=a.bytes;
     log("✔ "+a.name+" ("+a.role+") — "+a.bytes.toLocaleString()+" B · sha256 verified · via "+f.via,"ok");
   }
+  const ntris=buildHeightfield(BUFFERS.terrain);
+  log("🗺️ ground truth read from the verified terrain blob — "+ntris.toLocaleString()+" triangles; the door stands at height "+groundY(0,10.5).toFixed(1)+" (this meadow is a plateau — v1.0 assumed 0 and buried the camera; fixed)","ok");
   log("🧊 "+MAN.assets.length+" objects proven, "+(total/1048576).toFixed(1)+" MB recalled from Walrus. Assembling the cube…","dim");
   $("custody").innerHTML="cube manifest <a href=\""+AGG+CUBE_MANIFEST+"\" target=\"_blank\" rel=\"noopener\">"+CUBE_MANIFEST+" ↗</a> · seed "+MAN.seed+" · artifacts: the 2008 production .blend files (blobbed Oct–Nov 2026) → objects: this manifest";
   buildScene();
