@@ -198,7 +198,17 @@
 <div class="card" id="mv-stage" style="display:none">
   <h2 style="margin:2px 0 4px" id="mv-stageTitle">THE STAGE</h2>
   <button class="mv-btn ghost" id="mv-btn-stop" style="margin:2px 0 8px">⏹ STOP FILM</button>
+  <style>@keyframes mvspin{to{transform:rotate(360deg)}} .mv-spin{animation:mvspin 1s linear infinite}</style>
+  <div id="mv-screen" style="position:relative">
   <video id="mv-v" controls playsinline></video>
+  <div id="mv-load" style="display:none;position:absolute;inset:0;background:rgba(5,5,16,.9);align-items:center;justify-content:center;flex-direction:column;gap:10px;text-align:center;padding:18px;z-index:5">
+    <div class="mv-spin" style="width:36px;height:36px;border-radius:50%;border:4px solid #23233d;border-top-color:#00ffa3"></div>
+    <div style="font-weight:700;letter-spacing:.14em;color:#e8e8f2">LOADING BLOBS</div>
+    <div id="mv-loadTxt" style="color:#9a9ac0;font-size:13px">fetching &amp; verifying sections…</div>
+    <div style="width:82%;max-width:420px;height:8px;background:#23233d;border-radius:99px;overflow:hidden"><div id="mv-loadBar" style="height:100%;width:0%;background:#00ffa3;transition:width .3s"></div></div>
+    <div style="color:#5d5d86;font-size:11px">the film pops in the moment it's playable — nothing here is stored on the page</div>
+  </div>
+  </div>
   <div id="mv-strip"></div>
   <div id="mvMatrixWrap">
     <div class="small" style="color:#9a9ac0;margin-top:6px">▦ <b style="color:#e8e8f2">THE MATRIX</b> — the film as data: one cell per section. Watch the network hand us the movie, piece by piece, code of light as it lands.</div>
@@ -920,6 +930,10 @@ async function showFilm(key){
   const T0=performance.now();
   const unlock=()=>{ RUNNING=false; mq("mv-btn-bbb").disabled=mq("mv-btn-rh").disabled=mq("mv-btn-notld").disabled=false; };
   const S={fetchMs:0,bytes:0,done:0,failed:false};
+  const showLoad=()=>{ const e=mq("mv-load"); if(e) e.style.display="flex"; const b=mq("mv-loadBar"); if(b) b.style.width="0%"; };
+  const loadTick=()=>{ const t=mq("mv-loadTxt"); if(t) t.textContent="fetching & verifying — section "+S.done+" of "+m.sections.length+" · "+(S.bytes/1048576).toFixed(1)+" MB proven so far"; const b=mq("mv-loadBar"); if(b) b.style.width=Math.round(S.done/m.sections.length*100)+"%"; };
+  const hideLoad=()=>{ const e=mq("mv-load"); if(e) e.style.display="none"; };
+  showLoad();
   async function pullSection(i){
     const s=m.sections[i];
     blocks[i].className="blk pull"; window.__mxSet(i,"pull");
@@ -941,10 +955,12 @@ async function showFilm(key){
     blocks[i].className="blk ok"; S.done++; window.__mxSet(i,"ok",cipher,media,fms);
     mvNow("PLAYING FROM BLOBS","section "+s.n+" ✔ · fetched in "+fms.toFixed(0)+" ms · sha256 verified in "+vms.toFixed(0)+" ms · "+S.done+"/"+m.sections.length+" sections on screen");
     mvLed([["sections verified",S.done+" / "+m.sections.length],["bytes pulled from Walrus",(S.bytes/1048576).toFixed(2)+" MB"],["total fetch time",(S.fetchMs/1000).toFixed(1)+" s"],["avg per section",(S.fetchMs/Math.max(1,S.done)).toFixed(0)+" ms"]],null);
+    loadTick();
     return media;
   }
   async function phonePath(reason){
     mvLog("📱 PHONE PATH — "+reason+". This browser cannot stream from blobs, so the film is fetched, decrypted and hash-verified whole, then played natively. Same blobs, same proofs — different plumbing (the house phone mode, Oct 2026).","dim");
+    const lt=mq("mv-loadTxt"); if(lt) lt.textContent="📱 phone mode — assembling the whole film first; it plays when the bar fills";
     const parts=[];
     for(let i=0;i<m.sections.length;i++){
       if(MV_STOP) break;
@@ -955,11 +971,11 @@ async function showFilm(key){
     if(MV_STOP){
       mvLog("⏹ stopped by the viewer — "+S.done+"/"+m.sections.length+" sections had arrived and verified","dim");
       mvNow("STOPPED","you halted the assembly. The blobs wait — pick any film to start again.");
-      unlock(); return;
+      hideLoad(); unlock(); return;
     }
     if(S.failed||S.done<m.sections.length){
       mvNow("STOPPED","assembly halted at section "+(S.done+1)+" of "+m.sections.length+" — the log line above says why. Buttons are free; you can try again.");
-      unlock(); return;
+      hideLoad(); unlock(); return;
     }
     const blob=new Blob(parts,{type:"video/mp4"});
     v.src=URL.createObjectURL(blob);
@@ -967,7 +983,7 @@ async function showFilm(key){
     mvLog("📱 assembled "+(blob.size/1048576).toFixed(1)+" MB from "+S.done+" verified sections — native playback","ok");
     mvLed([["sections verified",S.done+" / "+m.sections.length],["bytes pulled from Walrus",(S.bytes/1048576).toFixed(2)+" MB"],["total fetch time",(S.fetchMs/1000).toFixed(1)+" s"],["avg per section",(S.fetchMs/Math.max(1,S.done)).toFixed(0)+" ms"]],["⏱ TIME TO PLAYABLE FILM",((performance.now()-T0)/1000).toFixed(2)+" s"]);
     mvNow("PLAYING FROM BLOBS — PHONE MODE","whole film assembled from "+S.done+" verified blob sections. If it doesn't start by itself, tap the film once — iPhones want a fresh tap after a long fetch.");
-    v.play().catch(()=>{});
+    hideLoad(); v.play().catch(()=>{});
     unlock();
   }
   let phoneStarted=false;
@@ -1006,7 +1022,7 @@ async function showFilm(key){
       const media=await pullSection(i);
       if(media===null) break;
       queue.push(media); pump();
-      if(S.done===1){ firstFrameAt=performance.now()-T0; v.play().catch(()=>{});
+      if(S.done===1){ firstFrameAt=performance.now()-T0; v.play().catch(()=>{}); hideLoad();
         mvLed([["sections verified",S.done+" / "+m.sections.length],["bytes pulled from Walrus",(S.bytes/1048576).toFixed(2)+" MB"],["total fetch time",(S.fetchMs/1000).toFixed(1)+" s"],["avg per section",(S.fetchMs/Math.max(1,S.done)).toFixed(0)+" ms"]],["⏱ TIME TO FIRST FRAME",(firstFrameAt/1000).toFixed(2)+" s"]); }
       if(sb.updating) await Promise.race([ new Promise(r=>sb.addEventListener("updateend",r,{once:true})),
         new Promise(r=>setTimeout(r,3000)) ]);
@@ -1025,7 +1041,7 @@ async function showFilm(key){
     const myRun=(window.__mvRun=(window.__mvRun||0)+1);
     (async()=>{ while(queue.length||appending) await new Promise(r=>setTimeout(r,300));
       try{ if(window.__mvRun===myRun&&ms.readyState==="open") ms.endOfStream(); }catch(e){} })();
-    unlock();
+    hideLoad(); unlock();
   });
 }
 mq("mv-btn-dead").onclick=async()=>{
@@ -1101,7 +1117,10 @@ mq("mv-btn-spot").onclick=async()=>{
 mq("mv-btn-bbb").onclick=()=>showFilm("bbb");
 mq("mv-btn-rh").onclick=()=>showFilm("rh");
 mq("mv-btn-notld").onclick=()=>showFilm("notld");
-mq("mv-btn-stop").onclick=()=>{ MV_STOP=true; };
+mq("mv-btn-stop").onclick=()=>{ MV_STOP=true;
+  if(!RUNNING){ const v=mq("mv-v"); try{ v.pause(); }catch(e){}
+    const le=mq("mv-load"); if(le) le.style.display="none";
+    mvNow("STOPPED","you halted the film. The blobs wait — pick any film to start again."); } };
 pingStat("bbb"); pingStat("rh"); pingStat("notld");
 })();
 </script>
@@ -1454,7 +1473,7 @@ function onStarted(){
 spinUp().catch(e=>{ log("SPIN-UP FAILED — "+e.message,"bad"); });
 </script>
 
-<!-- MG-V18 --><!-- NOTLD-V19 --><!-- STOP-V21 --><!-- GAME2-V23 --><!-- ROOTV8-V24 --><!-- PHONE-V25 -->
+<!-- MG-V18 --><!-- NOTLD-V19 --><!-- STOP-V21 --><!-- GAME2-V23 --><!-- ROOTV8-V24 --><!-- PHONE-V25 --><!-- LOAD-V26 -->
 <div class="panel" id="movieGamesPanel">
   <h2 style="margin:2px 0 6px">10 · 🎬 MOVIE-GAMES — the film is the design document</h2>
   <p class="small" style="margin:2px 0 8px">A movie already contains a game: its sets are the world, its cast are the roles, its beats are the levels, its lines are the dialogue at the checkpoints. What was missing was a way to <i>deal</i> a film into a game without re-making any of it. The missing piece is the printed record's fifth use — beside name, key, proof and measure, a manifest entry can now be a <b>script</b> (format <span class="mono">script/1</span>): a beat table that sits beside a film's cinema manifest and references it. Nothing is re-stored; the uses multiply and the storage doesn't.</p>
