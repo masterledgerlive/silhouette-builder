@@ -106,7 +106,7 @@ function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a
 <script>
 "use strict";
 let MAN=null; const URLS={};
-const state={ready:false, carried:0, thrown:0, camYaw:Math.PI, camDist:8, camPitch:0.42,
+const state={ready:false, carried:0, thrown:0, camYaw:0, camDist:8, camPitch:0.42,
              keys:{}, stick:{x:0,y:0,active:false}, bunnyPos:new THREE.Vector3(0,0,10.5),
              bunnyRotY:Math.PI, hopPhase:0, birdA:0, t:0};
 const PLAY_R=23, TREE_POS={x:7,z:-9}, TREE_R=2.6;
@@ -142,9 +142,13 @@ function buildScene(){
   hemi.setAttribute("light","type: hemisphere; skyColor: #bfe3ff; groundColor: #4a7c43; intensity: 0.95");
   sceneEl.appendChild(hemi);
   const sun=document.createElement("a-entity");
-  sun.setAttribute("light","type: directional; intensity: 1.35; castShadow: true; shadow.camera.left: -34; shadow.camera.right: 34; shadow.camera.top: 34; shadow.camera.bottom: -34; shadow.camera.far: 90; shadow.mapSize.width: 2048; shadow.mapSize.height: 2048");
+  sun.setAttribute("light","type: directional; intensity: 1.35; castShadow: true; shadow.mapSize.width: 2048; shadow.mapSize.height: 2048");
   sun.setAttribute("position","20 30 14");
   sceneEl.appendChild(sun);
+  sun.addEventListener("loaded", ()=>{
+    const L=sun.components.light.light;
+    if(L&&L.shadow){ const c=L.shadow.camera; c.left=-36; c.right=36; c.top=36; c.bottom=-36; c.near=1; c.far=95; c.updateProjectionMatrix(); }
+  });
   worldEl=document.createElement("a-entity"); worldEl.id="world"; sceneEl.appendChild(worldEl);
   camEl=document.createElement("a-entity"); camEl.setAttribute("camera","active: true; fov: 58; near: 0.1; far: 300");
   sceneEl.appendChild(camEl);
