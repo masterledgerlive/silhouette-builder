@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>BUNNY CUBE v1.3.1 — BONK THE BULLIES (a 3D world from Walrus blobs)</title>
+<title>BUNNY CUBE v1.4 — BONK THE BULLIES (a 3D world from Walrus blobs)</title>
 <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
 <style>
   body{background:#07070f;color:#e8e8f2;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;margin:0;padding:14px;line-height:1.45}
@@ -47,6 +47,15 @@
        background:rgba(255,255,255,.10);border:2px solid rgba(255,255,255,.45)}
   #joyKnob{position:absolute;left:50%;top:50%;width:54px;height:54px;border-radius:50%;margin:-27px 0 0 -27px;
        background:rgba(255,255,255,.35);border:2px solid rgba(255,255,255,.7)}
+  #stage{touch-action:none}
+  #pad{position:absolute;left:14px;bottom:14px;z-index:7;display:none;width:136px;height:136px;border-radius:50%;
+       background:radial-gradient(circle at 50% 42%, rgba(255,255,255,.16), rgba(8,14,24,.55));
+       border:2px solid rgba(255,255,255,.5);box-shadow:0 4px 18px rgba(0,0,0,.4);touch-action:none}
+  #padKnob{position:absolute;left:50%;top:50%;width:58px;height:58px;border-radius:50%;margin:-29px 0 0 -29px;
+       background:rgba(255,255,255,.4);border:2px solid rgba(255,255,255,.85);box-shadow:0 2px 8px rgba(0,0,0,.35)}
+  #pad .pip{position:absolute;color:rgba(255,255,255,.75);font-size:15px;pointer-events:none}
+  #pad .pU{left:50%;top:5px;transform:translateX(-50%)} #pad .pD{left:50%;bottom:5px;transform:translateX(-50%)}
+  #pad .pL{left:7px;top:50%;transform:translateY(-50%)} #pad .pR{right:7px;top:50%;transform:translateY(-50%)}
   .small{font-size:12.5px;color:#9fb4c8}
 </style>
 </head>
@@ -66,13 +75,14 @@ grab apples, bonk them back. First to the banner takes the round.</p>
       <div id="story">🍎 THE BULLIES are pelting Bunny — bonk them back!</div>
       <div id="counts">🍎 <b id="hudCarry">0</b> carried · 🎯 <b id="hudBonk">0</b>/10 bonks · 💥 <b id="hudBonked">0</b>/3 bonked · 🏁 ROUND <b id="hudRound">1</b></div>
     </div>
-    <div id="hint">📱 Left thumb: push up = hop forward, left/right = steer · right thumb drag = look around · 🧭 TILT = pivot by tilting your phone · 🍎 button = throw.<br>Desktop: WASD / arrows + mouse drag to look · SPACE or the apple button to throw.</div>
+    <div id="hint">📱 Control pad (bottom-left): hold + push up = hop forward, slide left/right = steer · right thumb drag on the meadow = look around · 🧭 TILT = pivot by tilting your phone · 🍎 button = throw.<br>Desktop: WASD / arrows + mouse drag to look · SPACE or the apple button to throw.</div>
     <div id="flash"></div>
     <div id="banner"><div id="bannerMain"></div><div id="bannerSub"></div></div>
     <div id="pop"></div>
-    <div id="verTag">🧊 CUBE v1.3.1 · BONK THE BULLIES</div>
+    <div id="verTag">🧊 CUBE v1.4 · BONK THE BULLIES</div>
     <button id="tiltBtn">🧭 TILT</button>
     <div id="joy"><div id="joyKnob"></div></div>
+    <div id="pad"><span class="pip pU">▲</span><span class="pip pD">▼</span><span class="pip pL">◀</span><span class="pip pR">▶</span><div id="padKnob"></div></div>
     <button id="throwBtn">🍎<br>THROW</button>
   </div>
 </div>
@@ -93,7 +103,9 @@ grab apples, bonk them back. First to the banner takes the round.</p>
   lens the other way — and a guard raycast now patrols the lens, lifting it out of the hill if it ever slips again.<br>
   New in v1.3: the confession — the aim was never the whole story. A-Frame had seated its <i>own</i> default camera
   as the active one, rendering from inside the hill, while our camera sat aimed and unused. The page now claims
-  the lens for its house camera at boot and prints the proof (the 🎥 line) in the log below.</p>
+  the lens for its house camera at boot and prints the proof (the 🎥 line) in the log below.<br>
+  New in v1.4: a fixed control pad (bottom-left) — David asked for a pad his thumb can find on the phone; it drives
+  the same stick channel, with the gesture defended so iOS can't steal the hold as a scroll.</p>
   <div class="small" style="line-height:2.1;margin-top:6px">
     🎞️ the film — <i>Big Buck Bunny</i> (2008) · 🐰 cast &amp; set © Blender Foundation · CC-BY 3.0<br>
     <span class="chip">Walrus testnet · 30 epochs · the keeper renews</span>
@@ -439,7 +451,7 @@ function placeWorld(){
   state.ready=true;
   log("🌳 <b>THE CUBE IS OPEN — and it's a game now.</b> The meadow stands on its own proven geometry (door ground "+groundY(0,10.5).toFixed(1)+" up). Frank, Rinky and Gamera are already plotting. Grab a 🍎!","ok");
   $("hud").style.display="block"; $("hint").style.display="block"; $("throwBtn").style.display="block";
-  $("tiltBtn").style.display="block"; $("verTag").style.display="block";
+  $("tiltBtn").style.display="block"; $("verTag").style.display="block"; $("pad").style.display="block";
   syncHUD();
   setTimeout(()=>popText("Grab a 🍎 — then bonk a bully!", 2800), 700);
 }
@@ -591,6 +603,7 @@ const pointers={};
 function stageRect(){ return $("stage").getBoundingClientRect(); }
 function onDown(e){
   if(e.target.closest("button")) return;
+  if(e.target.closest("#pad")) return;
   const r=stageRect(), lx=e.clientX-r.left, ly=e.clientY-r.top;
   if(e.pointerType==="touch" && lx<r.width*0.5 && state.stick.id===null){
     pointers[e.pointerId]={mode:"stick"};
@@ -631,6 +644,36 @@ function onUp(e){
 window.addEventListener("pointerdown",e=>{ if(e.target.closest("#stage")) onDown(e); });
 window.addEventListener("pointermove",onMove);
 window.addEventListener("pointerup",onUp); window.addEventListener("pointercancel",onUp);
+// ---------- v1.4: the fixed control pad (David's ask, Nov 6) ----------
+// A visible pad your thumb can find without looking. It drives the same
+// state.stick channel as the floating stick; its own touch-action:none +
+// preventDefault keep iOS from stealing the hold as a scroll gesture.
+const padEl=$("pad"), padKnob=$("padKnob");
+let padPointer=null;
+function padDrive(e){
+  const r=padEl.getBoundingClientRect();
+  let dx=e.clientX-(r.left+r.width/2), dy=e.clientY-(r.top+r.height/2);
+  const m=Math.hypot(dx,dy), max=46;
+  if(m>max){ dx*=max/m; dy*=max/m; }
+  state.stick.x=dx/max; state.stick.y=dy/max;
+  padKnob.style.transform="translate("+dx+"px,"+dy+"px)";
+}
+padEl.addEventListener("pointerdown",e=>{
+  e.preventDefault();
+  padPointer=e.pointerId;
+  try{ padEl.setPointerCapture(e.pointerId); }catch(err){}
+  state.stick.active=true; state.stick.id="pad";
+  padDrive(e);
+});
+padEl.addEventListener("pointermove",e=>{ if(e.pointerId===padPointer) padDrive(e); });
+function padRelease(e){
+  if(e.pointerId!==padPointer) return;
+  padPointer=null;
+  state.stick.active=false; state.stick.id=null; state.stick.x=0; state.stick.y=0;
+  padKnob.style.transform="translate(0px,0px)";
+}
+padEl.addEventListener("pointerup",padRelease);
+padEl.addEventListener("pointercancel",padRelease);
 window.addEventListener("wheel",e=>{ if(e.target.closest("#stage")){ state.camDist=Math.min(13,Math.max(4.5,state.camDist+e.deltaY*0.01)); } },{passive:true});
 // ---------- bullies ----------
 function angleLerp(a,b,t){
