@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>BUNNY CUBE v1.1 — BONK THE BULLIES (a 3D world from Walrus blobs)</title>
+<title>BUNNY CUBE v1.2 — BONK THE BULLIES (a 3D world from Walrus blobs)</title>
 <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
 <style>
   body{background:#07070f;color:#e8e8f2;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;margin:0;padding:14px;line-height:1.45}
@@ -57,7 +57,7 @@
 This is a <b>3D open world</b>: the film's own 2008 production models — Bunny, Frank, Rinky, Gamera, the apple tree, even the
 meadow terrain — converted once from the original <span class="mono">.blend</span> artifacts into game objects, blobbed to Walrus,
 sha256-verified in your browser, and assembled into the cube. You enter through <b>THE DOOR</b> — and this time the meadow
-fights back: <b>v1.1 is BONK THE BULLIES</b>, the film's own story. Frank, Rinky and Gamera pelt Bunny with apples;
+fights back: <b>BONK THE BULLIES</b>, the film's own story. Frank, Rinky and Gamera pelt Bunny with apples;
 grab apples, bonk them back. First to the banner takes the round.</p>
 
 <div class="panel" style="padding:0;border:none;background:none;margin:0">
@@ -70,7 +70,7 @@ grab apples, bonk them back. First to the banner takes the round.</p>
     <div id="flash"></div>
     <div id="banner"><div id="bannerMain"></div><div id="bannerSub"></div></div>
     <div id="pop"></div>
-    <div id="verTag">🧊 CUBE v1.1 · BONK THE BULLIES</div>
+    <div id="verTag">🧊 CUBE v1.2 · BONK THE BULLIES</div>
     <button id="tiltBtn">🧭 TILT</button>
     <div id="joy"><div id="joyKnob"></div></div>
     <button id="throwBtn">🍎<br>THROW</button>
@@ -88,12 +88,14 @@ grab apples, bonk them back. First to the banner takes the round.</p>
   <i>injected into the cube</i>: one manifest names every object, and this page proves each one before it appears.
   The 12 apples hanging in the tree sit at the exact points the 2008 layout artists marked with empties in the tree file.
   New in v1.1: the ground under your feet is sampled from the terrain blob's own verified geometry — the meadow is a
-  high plateau (the film's relief runs about 11 units), and the page now stands on the real numbers.</p>
+  high plateau (the film's relief runs about 11 units), and the page now stands on the real numbers.
+  New in v1.2: the camera finally looks through its own lens — v1.1 aimed the camera's <i>frame</i> at Bunny, which faced the
+  lens the other way — and a guard raycast now patrols the lens, lifting it out of the hill if it ever slips again.</p>
   <div class="small" style="line-height:2.1;margin-top:6px">
     🎞️ the film — <i>Big Buck Bunny</i> (2008) · 🐰 cast &amp; set © Blender Foundation · CC-BY 3.0<br>
     <span class="chip">Walrus testnet · 30 epochs · the keeper renews</span>
     <span class="chip">3D: A-Frame 1.6 (three.js)</span>
-    <span class="chip">v1.1: BONK THE BULLIES · thumb-stick + tilt pivot · geometry-sampled ground</span>
+    <span class="chip">v1.2: the lens, healed — camera aim fixed + a self-guarding camera · BONK THE BULLIES · geometry-sampled ground</span>
   </div>
   <div id="custody" class="small mono" style="margin-top:8px"></div>
 </div>
@@ -146,6 +148,9 @@ const state={ready:false, carried:0, round:1, bonks:0, bonked:0,
              tiltOn:false, tiltGamma:0, throwCd:0, lobTimer:2.4, looseTimer:1.2};
 const PLAY_R=23, TREE_POS={x:7,z:-9}, TREE_R=2.6, GRAV=15.5;
 let sceneEl, worldEl, bunnyEl, camEl, terrainMesh=null;
+let camObj=null, _camLeveled=false;                       // the PerspectiveCamera child of camEl (v1.2)
+let _guardTick=0, _guardLiftLogged=false, _guardMissLogged=false;  // camera self-healing guard (v1.2)
+const _cwV=new THREE.Vector3(), _gwV=new THREE.Vector3();
 const apples=[];       // {el, st:'ground'|'carried'|'flying'|'spare', kind:'throw'|'lob', p, vel, bounces}
 const labels=[];       // static a-text els to billboard (door)
 const critters={};     // bird, butterflies
@@ -378,7 +383,7 @@ function addLabel(text,x,z,h){
 function addGroundApple(x, z, seeded){
   const el=mkEntity(worldEl, URLS.apple, 1.15);
   el.setAttribute("position",x+" "+(groundY(x,z)+0.16)+" "+z);
-  const a={el, st:"ground", kind:null, vel:new THREE.Vector3(), p:new THREE.Vector3(x,groundY(x,z)+0.16,z), bounces:0};
+  const a={el, st:"ground", kind:null, vel:new THREE.Vector3(), p:new THREE.Vector3(x,groundY(x,z)+0.16,z), bounces:0, restAt:-10};
   apples.push(a); return a;
 }
 function placeWorld(){
@@ -424,7 +429,7 @@ function placeWorld(){
   // flight pool: 3 hidden apples ready for throws and lobs
   for(let i=0;i<3;i++){
     const el=mkEntity(worldEl,URLS.apple,1.15); el.setAttribute("visible","false");
-    apples.push({el, st:"spare", kind:null, vel:new THREE.Vector3(), p:new THREE.Vector3(), bounces:0});
+    apples.push({el, st:"spare", kind:null, vel:new THREE.Vector3(), p:new THREE.Vector3(), bounces:0, restAt:-10});
   }
   // the carried apple that rides over Bunny's head
   _dyn.carriedEl=mkEntity(worldEl, URLS.apple, 1.15); _dyn.carriedEl.setAttribute("visible","false");
@@ -475,7 +480,7 @@ function getFlyer(){
   const flying=apples.filter(a=>a.st==="flying");
   if(flying.length<6){
     const el=mkEntity(worldEl, URLS.apple, 1.15); el.setAttribute("visible","false");
-    s={el, st:"spare", kind:null, vel:new THREE.Vector3(), p:new THREE.Vector3(), bounces:0};
+    s={el, st:"spare", kind:null, vel:new THREE.Vector3(), p:new THREE.Vector3(), bounces:0, restAt:-10};
     apples.push(s); return s;
   }
   return flying[0]; // recycle the oldest flyer
@@ -492,7 +497,7 @@ function dropFromTree(){
       const p=a.el.getAttribute("position"), d=Math.hypot(p.x-state.bunnyPos.x,p.z-state.bunnyPos.z);
       if(d>fd){ fd=d; far=a; } }
     if(far){ far.el.setAttribute("position",x+" "+(groundY(x,z)+0.16)+" "+z);
-             far.p.set(x,groundY(x,z)+0.16,z); }
+             far.p.set(x,groundY(x,z)+0.16,z); far.restAt=state.t; }
   }
 }
 function launchApple(a, from, vel, kind){
@@ -524,6 +529,7 @@ function lobFrom(b){
 }
 function landApple(a){
   a.st="ground"; a.kind=null;
+  a.restAt=state.t;   // v1.2: the rest clock starts — an apple must REST before paws can grab it
   a.el.setAttribute("position",a.p.x+" "+a.p.y+" "+a.p.z);
   a.el.setAttribute("rotation","0 0 0");
 }
@@ -747,9 +753,40 @@ function tickLoop(now){
   const co=camEl.object3D.position;
   if(state.camSnap){ co.copy(camTarget); state.camSnap=false; }
   else co.lerp(camTarget,Math.min(1,dt*6));
-  const camFloor=groundY(co.x,co.z)+1.0;
-  if(co.y<camFloor) co.y=camFloor;
-  camEl.object3D.lookAt(state.bunnyPos.x, gy+1.8, state.bunnyPos.z);
+  // v1.2 — decide from the camera's WORLD position, and aim the CAMERA, not the
+  // entity. v1.0/v1.1 called lookAt on camEl's group: Object3D.lookAt points a
+  // plain object's +Z at the target, but the PerspectiveCamera child renders
+  // down -Z, so the lens faced exactly 180° away from Bunny (probe-proven —
+  // scripts/camprobe.js). The camera object itself uses the camera convention.
+  if(!camObj) camObj=camEl.getObject3D("camera");
+  if(camObj&&!_camLeveled){ _camLeveled=true; camEl.object3D.quaternion.identity(); }
+  const cw=camObj?camObj.getWorldPosition(_cwV):co;
+  const camFloor=groundY(cw.x,cw.z)+1.0;
+  if(cw.y<camFloor) co.y+=camFloor-cw.y;
+  if(camObj) camObj.lookAt(state.bunnyPos.x, gy+1.8, state.bunnyPos.z);
+  else camEl.object3D.lookAt(state.bunnyPos.x, gy+1.8, state.bunnyPos.z);
+  // self-healing guard: every ~30 frames, raycast DOWN the lens's column against
+  // the rendered terrain (origin raised 40 so the probe still bites even if the
+  // lens has already slipped inside). Inside the hill → lift out, and say so once.
+  _guardTick++;
+  if(_guardTick>=30&&terrainMesh&&camObj){
+    _guardTick=0;
+    try{
+      const wp=camObj.getWorldPosition(_gwV);
+      const rc=new THREE.Raycaster();
+      rc.set(new THREE.Vector3(wp.x, wp.y+40, wp.z), new THREE.Vector3(0,-1,0)); rc.far=500;
+      const hits=rc.intersectObject(terrainMesh,true);
+      if(hits.length){
+        const hitY=hits[0].point.y;
+        if(wp.y<hitY+1.2){
+          co.y+=(hitY+2.2)-wp.y;
+          if(!_guardLiftLogged){ _guardLiftLogged=true;
+            log("🛟 camera lifted to stay above the meadow — the guard raycast found the ground at "+hitY.toFixed(1)+" under the lens","dim"); }
+        }
+      } else if(!_guardMissLogged){ _guardMissLogged=true;
+        log("🛟 camera guard: looking straight down from the lens, the raycast found no meadow in this column — noted, still watching","dim"); }
+    }catch(e){ /* the guard must never break the loop */ }
+  }
   // carried apple rides overhead, spinning slowly
   if(_dyn.carriedEl){
     const vis=state.carried>0;
@@ -778,7 +815,11 @@ function tickLoop(now){
     if(a.st==="ground"){
       const p=a.el.getAttribute("position");
       const dd=Math.hypot(p.x-state.bunnyPos.x, p.z-state.bunnyPos.z);
-      if(dd<1.15){ a.st="carried"; a.el.setAttribute("visible","false"); state.carried++;
+      // v1.2: carried only when the apple is AT REST (landed a full second ago;
+      // placed scatter apples are born rested) AND within 1.1 of Bunny. A lobbed
+      // apple that bonks Bunny — or lands at his feet — no longer vacuums
+      // straight into his paws; it drops, rests, and is pickable normally after.
+      if(dd<1.1 && (state.t-(a.restAt===undefined?-10:a.restAt))>=1.0){ a.st="carried"; a.el.setAttribute("visible","false"); state.carried++;
         syncHUD(); }
     } else if(a.st==="flying"){
       a.vel.y-=GRAV*dt;
