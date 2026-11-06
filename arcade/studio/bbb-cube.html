@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>BUNNY CUBE v1.2 — BONK THE BULLIES (a 3D world from Walrus blobs)</title>
+<title>BUNNY CUBE v1.3 — BONK THE BULLIES (a 3D world from Walrus blobs)</title>
 <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
 <style>
   body{background:#07070f;color:#e8e8f2;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;margin:0;padding:14px;line-height:1.45}
@@ -70,7 +70,7 @@ grab apples, bonk them back. First to the banner takes the round.</p>
     <div id="flash"></div>
     <div id="banner"><div id="bannerMain"></div><div id="bannerSub"></div></div>
     <div id="pop"></div>
-    <div id="verTag">🧊 CUBE v1.2 · BONK THE BULLIES</div>
+    <div id="verTag">🧊 CUBE v1.3 · BONK THE BULLIES</div>
     <button id="tiltBtn">🧭 TILT</button>
     <div id="joy"><div id="joyKnob"></div></div>
     <button id="throwBtn">🍎<br>THROW</button>
@@ -90,12 +90,15 @@ grab apples, bonk them back. First to the banner takes the round.</p>
   New in v1.1: the ground under your feet is sampled from the terrain blob's own verified geometry — the meadow is a
   high plateau (the film's relief runs about 11 units), and the page now stands on the real numbers.
   New in v1.2: the camera finally looks through its own lens — v1.1 aimed the camera's <i>frame</i> at Bunny, which faced the
-  lens the other way — and a guard raycast now patrols the lens, lifting it out of the hill if it ever slips again.</p>
+  lens the other way — and a guard raycast now patrols the lens, lifting it out of the hill if it ever slips again.<br>
+  New in v1.3: the confession — the aim was never the whole story. A-Frame had seated its <i>own</i> default camera
+  as the active one, rendering from inside the hill, while our camera sat aimed and unused. The page now claims
+  the lens for its house camera at boot and prints the proof (the 🎥 line) in the log below.</p>
   <div class="small" style="line-height:2.1;margin-top:6px">
     🎞️ the film — <i>Big Buck Bunny</i> (2008) · 🐰 cast &amp; set © Blender Foundation · CC-BY 3.0<br>
     <span class="chip">Walrus testnet · 30 epochs · the keeper renews</span>
     <span class="chip">3D: A-Frame 1.6 (three.js)</span>
-    <span class="chip">v1.2: the lens, healed — camera aim fixed + a self-guarding camera · BONK THE BULLIES · geometry-sampled ground</span>
+    <span class="chip">v1.3: the lens, claimed — house camera verified active in the boot log · BONK THE BULLIES · geometry-sampled ground</span>
   </div>
   <div id="custody" class="small mono" style="margin-top:8px"></div>
 </div>
@@ -765,6 +768,11 @@ function tickLoop(now){
   if(cw.y<camFloor) co.y+=camFloor-cw.y;
   if(camObj) camObj.lookAt(state.bunnyPos.x, gy+1.8, state.bunnyPos.z);
   else camEl.object3D.lookAt(state.bunnyPos.x, gy+1.8, state.bunnyPos.z);
+  // v1.3 — if the active camera is ever not ours, take the seat back; the
+  // first time it holds, print the receipt in the log for anyone to see.
+  if(camObj&&sceneEl&&sceneEl.camera!==camObj) claimCamera();
+  else if(camObj&&sceneEl&&!_camClaimLogged){ _camClaimLogged=true;
+    log("🎥 active camera: THE HOUSE CAMERA ✓ — the lens Bunny is framed through is ours (A-Frame's default camera stood down)","ok"); }
   // self-healing guard: every ~30 frames, raycast DOWN the lens's column against
   // the rendered terrain (origin raised 40 so the probe still bites even if the
   // lens has already slipped inside). Inside the hill → lift out, and say so once.
@@ -819,7 +827,7 @@ function tickLoop(now){
       // placed scatter apples are born rested) AND within 1.1 of Bunny. A lobbed
       // apple that bonks Bunny — or lands at his feet — no longer vacuums
       // straight into his paws; it drops, rests, and is pickable normally after.
-      if(dd<1.1 && (state.t-(a.restAt===undefined?-10:a.restAt))>=1.0){ a.st="carried"; a.el.setAttribute("visible","false"); state.carried++;
+      if(dd<1.05 && moving && (state.t-(a.restAt===undefined?-10:a.restAt))>=1.0){ // v1.3: rest AND a step — a lobbed apple at Bunny's feet waits until he moves a.st="carried"; a.el.setAttribute("visible","false"); state.carried++;
         syncHUD(); }
     } else if(a.st==="flying"){
       a.vel.y-=GRAV*dt;
@@ -881,6 +889,22 @@ function tickLoop(now){
   const cp=camEl.object3D.position;
   for(const l of labels){ if(l.object3D) l.object3D.lookAt(cp.x, l.object3D.position.y, cp.z); }
 }
+
+// ---------- v1.3: claim the lens ----------
+// THE true root cause of the upside-down world (v1.0-v1.2): A-Frame quietly
+// seated its OWN default camera as the scene's active camera, rendering from
+// (0, 1.6, 0) — inside the plateau — while this page's camEl was followed,
+// clamped and aimed perfectly by the tick and rendered NOTHING. The fix is
+// not a better aim; it is taking the active-camera seat, and proving it.
+let _camClaimLogged=false;
+function claimCamera(){
+  if(!sceneEl||!camEl) return false;
+  document.querySelectorAll("a-scene [camera]").forEach(el=>{ if(el!==camEl) el.setAttribute("camera","active: false"); });
+  camEl.setAttribute("camera","active: true");
+  try{ const sys=sceneEl.systems&&sceneEl.systems.camera; if(sys&&sys.setActiveCamera) sys.setActiveCamera(camEl); }catch(e){}
+  const ours=camEl.getObject3D("camera");
+  return !!(ours&&sceneEl.camera===ours);
+}
 // ---------- boot ----------
 async function boot(){
   const mf=await ladder(CUBE_MANIFEST);
@@ -900,6 +924,7 @@ async function boot(){
   log("🧊 "+MAN.assets.length+" objects proven, "+(total/1048576).toFixed(1)+" MB recalled from Walrus. Assembling the cube…","dim");
   $("custody").innerHTML="cube manifest <a href=\""+AGG+CUBE_MANIFEST+"\" target=\"_blank\" rel=\"noopener\">"+CUBE_MANIFEST+" ↗</a> · seed "+MAN.seed+" · artifacts: the 2008 production .blend files (blobbed Oct–Nov 2026) → objects: this manifest";
   buildScene();
+  if(sceneEl) sceneEl.addEventListener("loaded", ()=>{ try{ claimCamera(); }catch(e){} });
 }
 boot().catch(e=>{ log("⛔ THE CUBE COULD NOT BE ASSEMBLED — "+e.message,"bad"); });
 </script>
