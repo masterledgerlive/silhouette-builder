@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>🌀 KODAKAI BLOB LOADER — every game a blob</title>
+<style>
+  html,body{margin:0;padding:0;background:#0b0b18;color:#e8e8ff;font-family:system-ui,sans-serif}
+  #wrap{max-width:680px;margin:0 auto;padding:18px 14px 40px}
+  h1{font-size:26px;margin:6px 0 2px;color:#ffd76b}
+  .sub{color:#b9b9d9;font-size:14px;line-height:1.45;margin:0 0 14px}
+  .panel{background:#14142a;border:1.5px solid #33335e;border-radius:14px;padding:12px 14px;margin:12px 0}
+  .panel h2{margin:0 0 8px;font-size:17px;color:#ffd76b}
+  .game{display:block;width:100%;text-align:left;background:#1d1d38;color:#fff;border:1.5px solid #ffd76b;border-radius:12px;padding:12px;margin:8px 0;font-size:16px;cursor:pointer}
+  .game small{display:block;color:#b9b9d9;font-size:12.5px;margin-top:3px}
+  .mono{font-family:ui-monospace,Menlo,monospace;font-size:11.5px;word-break:break-all}
+  input{width:100%;box-sizing:border-box;background:#0d0d20;color:#fff;border:1px solid #44447a;border-radius:9px;padding:10px;font-size:14px;margin:4px 0}
+  .btn{background:#ffd76b;color:#191930;border:none;border-radius:10px;padding:11px 18px;font-weight:bold;font-size:15px;cursor:pointer;margin-top:6px}
+  #status{background:#08081a;border:1px solid #2c2c50;border-radius:10px;padding:10px 12px;font-size:13.5px;line-height:1.55;min-height:44px;white-space:pre-wrap}
+  .ok{color:#8dff9a}.bad{color:#ff8d8d}.dim{color:#9a9ac0}
+  .foot{color:#9a9ac0;font-size:12.5px;line-height:1.5;margin-top:16px}
+  li{margin:3px 0}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <h1>🌀 THE BLOB LOADER</h1>
+  <p class="sub">Every game below is a <b>blob</b> on the Walrus network. This loader recalls the build, <b>checks its hash in front of you</b>, and only then opens it. No game server. No trust. <b>The hash is the host.</b> GitHub is one optional shelf this page can sit on — the games never needed it.</p>
+
+  <div class="panel"><h2>🎮 THE SHELF — FINAL BUILDS, BLOBBED</h2><div id="shelf"></div></div>
+
+  <div class="panel"><h2>🔑 RECALL ANY BLOB</h2>
+    <p class="sub" style="margin:0">Paste any blob id — a game build, a record, a tape. The loader recalls it, names what section of the library it belongs to, and verifies it.</p>
+    <input id="pasteId" placeholder="blob id">
+    <input id="pasteSha" placeholder="sha256 pin (optional — the build's fingerprint)">
+    <button class="btn" id="pasteBtn">RECALL + VERIFY</button>
+    <div id="admit" style="margin-top:8px;font-size:14px;line-height:1.5"></div>
+  </div>
+
+  <div class="panel"><h2>🌳 THE LIBRARY — ATTACHED HERE</h2><div id="rootBox" class="dim">recalling the library root…</div></div>
+
+  <div class="panel"><h2>🗂 THE FLOCK — THIS LOADER'S STORAGE ALLOCATION</h2>
+    <div id="flock" style="font-size:13.5px;line-height:1.6"></div>
+    <p class="sub" style="margin:6px 0 0">Kept alive by the reblob loop: holders re-blob what they love, the keeper audits the flock, nothing here lives on one server. Storage gets streamlined section by section, under this loader's watch.</p>
+  </div>
+
+  <div class="panel"><h2>📜 RECALL LOG</h2><div id="status">the loader is awake.</div></div>
+
+  <p class="foot">HOW IT WORKS HERE: builds iterate, take apart, piece back together — every version frozen. The <b>final</b> build gets blobbed and pinned on the shelf. Anyone can recall it and check the hash themselves. If everybody loves it, it graduates — hard-lined into the real system — and that step is David's press, always. The resurrection code lives in this page, as thin as it can be: mirrors, hashes, lineage. However small the loader gets, that part is already allocated and never removed.</p>
+</div>
+<script>
+/* ═══════════════ RESURRECTION CORE — allocated first, never removed ═══════════════
+   recall anything by its blob id · prove it by its hash · walk its lineage home.   */
+function sha256hex(data){
+  var K=[0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2];
+  var H=[0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19];
+  var l=data.length, padLen=(((l+9+63)>>6)<<6), m=new Uint8Array(padLen);
+  m.set(data); m[l]=0x80;
+  var dv=new DataView(m.buffer), bitLen=l*8;
+  dv.setUint32(padLen-4, bitLen>>>0); dv.setUint32(padLen-8, Math.floor(bitLen/4294967296));
+  var w=new Uint32Array(64);
+  function rotr(x,n){return (x>>>n)|(x<<(32-n));}
+  for(var off=0;off<padLen;off+=64){
+    for(var i=0;i<16;i++) w[i]=dv.getUint32(off+i*4);
+    for(var i=16;i<64;i++){ var s0=rotr(w[i-15],7)^rotr(w[i-15],18)^(w[i-15]>>>3), s1=rotr(w[i-2],17)^rotr(w[i-2],19)^(w[i-2]>>>10); w[i]=(w[i-16]+s0+w[i-7]+s1)|0; }
+    var a=H[0],b=H[1],c=H[2],d=H[3],e=H[4],f=H[5],g=H[6],h=H[7];
+    for(var i=0;i<64;i++){ var S1=rotr(e,6)^rotr(e,11)^rotr(e,25), ch=(e&f)^(~e&g), t1=(h+S1+ch+K[i]+w[i])|0, S0=rotr(a,2)^rotr(a,13)^rotr(a,22), mj=(a&b)^(a&c)^(b&c), t2=(S0+mj)|0; h=g;g=f;f=e;e=(d+t1)|0;d=c;c=b;b=a;a=(t1+t2)|0; }
+    H[0]=(H[0]+a)|0;H[1]=(H[1]+b)|0;H[2]=(H[2]+c)|0;H[3]=(H[3]+d)|0;H[4]=(H[4]+e)|0;H[5]=(H[5]+f)|0;H[6]=(H[6]+g)|0;H[7]=(H[7]+h)|0;
+  }
+  var out=""; for(var i=0;i<8;i++) out+=("0000000"+(H[i]>>>0).toString(16)).slice(-8);
+  return out;
+}
+const MIRRORS = ["https://aggregator.walrus-testnet.walrus.space/v1/blobs/", "https://walrus-testnet.blockscope.net/v1/blobs/"];
+async function recall(id){ let last=null;
+  for(const m of MIRRORS){ try{ const r = await fetch(m + id, {cache:"no-store"}); if(r.ok) return await r.arrayBuffer(); last = new Error("HTTP " + r.status); }catch(e){ last = e; } }
+  throw last || new Error("no mirror answered");
+}
+function winHash(r){ const c = {format:r.format, winner:r.winner, who:r.who, secs:r.secs, round:r.round, ts:r.ts, prev:r.prev}; return sha256hex(new TextEncoder().encode(JSON.stringify(c))); }
+function zHash(r){ return sha256hex(new TextEncoder().encode(["zombie-run/1", r.side, r.nights, r.k1, r.k2, r.secs, r.ts, r.prev, r.zt||0].join("|"))); }
+function classify(bytes){
+  if(bytes.length > 24 && new TextDecoder().decode(bytes.slice(0, 15)).includes("<!DOCTYPE")) return {section:"🎮 GAMES — a build (page)", kind:"page"};
+  try{ const j = JSON.parse(new TextDecoder().decode(bytes));
+    if(j.format === "cube-win/1") return {section:"🏆 RECORDS — Bunny Cube", kind:"record", rec:j, ok: winHash(j) === j.h};
+    if(j.format === "zombie-run/1") return {section:"🏆 RECORDS — Zombie World", kind:"record", rec:j, ok: zHash(j) === j.h};
+    if(j.format === "cube-tape/1" || j.format === "zombie-tape/1") return {section:"🎞 TAPES — a sealed match", kind:"tape", rec:j};
+    if(j.format === "mother-reel/1" || j.names || j.entries) return {section:"🌳 LIBRARY ROOT", kind:"root", rec:j};
+    if(j.format) return {section:"📦 MANIFEST — " + j.format, kind:"manifest", rec:j};
+    return {section:"🧩 LIBRARY OBJECT", kind:"object", rec:j};
+  }catch(e){ return {section:"🗃 BLOB — raw bytes", kind:"raw"}; }
+}
+/* ═══════════════ end RESURRECTION CORE ═══════════════ */
+
+const $ = s => document.querySelector(s);
+const LIBRARY_ROOT = "-Pf5lfueNjU59iWgxkMoUW6GkOwUpPTb5ngLbfAngIo";
+const SHELF = [
+  {name:"🧟 ZOMBIE WORLD", note:"survive the nights — two-story house, graveyard horde, chest weapons · v1.0 FINAL", blob:"BNHiuU_GizzZdSAiDKvohg1an4TNcWuUJJNtu1Z5I5Q", sha:"243a2e20861a1c120e81ac8f49b262275f4aee14b0cc6a175e48145727df353d", world:"uB8NNkBbtVzH1L35Sa6RjKKs9dkYx91rQP55Auu7X3I"},
+  {name:"🐰 BUNNY CUBE", note:"bonk the bullies — the meadow, two phones, one sealed world · v1.9.1 FINAL", blob:"9ytG2kDy2cAgc5ifMo2FdqjZ6Sq2Ejbh8B8xUs-m8FE", sha:"df9d9ff6aff1c046e551002d621ada78bc8fae021bfc0e7f54fae8894c96d475", world:"hul119v83vpAVM60pXnhIRgEmM7YYPTjevG5S0EU5e8"}
+];
+const FLOCK = [
+  ["🧟 Zombie World — final build", SHELF[0].blob], ["🐰 Bunny Cube — final build", SHELF[1].blob],
+  ["🌳 Library root (Mother Reel v9)", LIBRARY_ROOT], ["🧟 Zombie rules + world record", SHELF[0].world], ["🐰 Meadow world manifest (14 assets)", SHELF[1].world]
+];
+function say(msg, cls){ const el = $("#status"); const d = document.createElement("div"); if(cls) d.className = cls; d.textContent = msg; el.appendChild(d); el.scrollTop = el.scrollHeight; }
+function setLog(o){ window.__loaderLog = o; try{ sessionStorage.setItem("blob-loader-log", JSON.stringify(o)); }catch(e){} }
+async function resurrect(entry){
+  say("🎮 " + entry.name);
+  say("recalling the build from the Walrus network…");
+  const buf = await recall(entry.blob);
+  const bytes = new Uint8Array(buf);
+  say("recalled " + bytes.length.toLocaleString() + " bytes — hashing the build…");
+  const h = sha256hex(bytes);
+  if(h !== entry.sha){ say("✗ HASH MISMATCH — sha256 " + h, "bad"); say("this copy is NOT the pinned final build. Refused. The pin is the promise.", "bad"); setLog({blob:entry.blob, bytes:bytes.length, sha:h, verified:false}); return; }
+  say("sha256 " + h.slice(0, 24) + "… ✓ MATCHES THE PIN", "ok");
+  try{ const w = await recall(entry.world); say("its world answers too ✓ (" + w.byteLength.toLocaleString() + " bytes of world record)", "ok"); }catch(e){ say("world record did not answer — opening anyway, the game checks it itself", "dim"); }
+  setLog({blob:entry.blob, bytes:bytes.length, sha:h, verified:true});
+  say("✓ RESURRECTED — opening. This page lived in the blobs the whole time.", "ok");
+  openBytes(bytes);
+}
+async function loadById(blob, shaPin, name){
+  say("🔑 recalling " + blob.slice(0, 20) + "…");
+  const buf = await recall(blob);
+  const bytes = new Uint8Array(buf);
+  const h = sha256hex(bytes);
+  if(shaPin && h !== shaPin){ say("✗ HASH MISMATCH — sha256 " + h, "bad"); setLog({blob, bytes:bytes.length, sha:h, verified:false}); return; }
+  const c = classify(bytes);
+  say("sha256 " + h.slice(0, 24) + "…" + (shaPin ? " ✓ pin matches" : ""), "ok");
+  say("section: " + c.section, "ok");
+  setLog({blob, bytes:bytes.length, sha:h, verified: shaPin ? true : null, section: c.section});
+  if(c.kind === "page"){ say("opening the build…", "ok"); openBytes(bytes);
+  } else if(c.kind === "record"){ say(c.ok ? "⛓ record hash VERIFIES ✓ — it belongs in the Hall" : "✗ record hash does not verify", c.ok ? "ok" : "bad"); }
+  else { say("recalled and classified — " + bytes.length.toLocaleString() + " bytes held in this page's hands.", "dim"); }
+  return c;
+}
+function openBytes(bytes){
+  const url = URL.createObjectURL(new Blob([bytes], {type:"text/html"}));
+  const keep = new URLSearchParams(location.search); ["g","h","n"].forEach(k=>keep.delete(k));
+  const qs = keep.toString();
+  setTimeout(()=>{ try{ location.replace(url + (qs ? "?" + qs : "")); }catch(e){}
+    setTimeout(()=>{ if(document.title.includes("BLOB LOADER")){ try{ document.open(); document.write(new TextDecoder().decode(bytes)); document.close(); }catch(e){} } }, 3000);
+  }, 400);
+}
+function renderShelf(){
+  $("#shelf").innerHTML = "";
+  for(const e of SHELF){ const b = document.createElement("button"); b.className = "game";
+    b.innerHTML = e.name + "<small>" + e.note + "</small><small class='mono'>blob " + e.blob + "</small><small class='mono'>sha256 " + e.sha + "</small>";
+    b.onclick = ()=>resurrect(e).catch(err=>say("✗ recall failed: " + err.message, "bad"));
+    $("#shelf").appendChild(b); }
+  $("#flock").innerHTML = FLOCK.map(f=>"• " + f[0] + "<br><span class='mono dim'>&nbsp;&nbsp;" + f[1] + "</span>").join("<br>");
+}
+async function attachRoot(){
+  try{ const buf = await recall(LIBRARY_ROOT); const j = JSON.parse(new TextDecoder().decode(new Uint8Array(buf)));
+    const names = j.names || j.entries || []; const list = Array.isArray(names) ? names : Object.keys(names);
+    $("#rootBox").innerHTML = "✓ library attached — root <span class='mono'>" + LIBRARY_ROOT + "</span><br>" + list.length + " works held: " + list.map(x=>typeof x === "string" ? x : (x.name || "?")).join(" · ");
+  }catch(e){ $("#rootBox").textContent = "the root did not answer just now — the shelf below works regardless; the library attaches when a mirror responds."; }
+}
+$("#pasteBtn").onclick = async ()=>{
+  const id = $("#pasteId").value.trim(), pin = $("#pasteSha").value.trim();
+  if(!id){ $("#admit").textContent = "paste a blob id first"; return; }
+  $("#admit").textContent = "recalling…";
+  try{ const c = await loadById(id, pin || null); $("#admit").innerHTML = "section: <b>" + c.section + "</b>" + (c.kind === "record" ? (c.ok ? " · ⛓ hash verifies ✓" : " · ✗ hash fails") : "") + (c.kind === "page" ? " · opening…" : "");
+  }catch(e){ $("#admit").textContent = "✗ recall failed: " + e.message; }
+};
+renderShelf();
+const Q = new URLSearchParams(location.search);
+if(Q.get("g")){ const g = Q.get("g"); const known = SHELF.find(e=>e.blob === g);
+  loadById(g, Q.get("h") || (known ? known.sha : null), Q.get("n") || (known ? known.name : "blob build")).catch(e=>say("✗ recall failed: " + e.message, "bad"));
+} else { attachRoot(); }
+</script>
+</body>
+</html>
