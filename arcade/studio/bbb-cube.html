@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>BUNNY CUBE v1.8.6 — BONK THE BULLIES (a 3D world from Walrus blobs)</title>
+<title>BUNNY CUBE v1.8.5.1 — BONK THE BULLIES (a 3D world from Walrus blobs)</title>
 <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/mqtt@5.10.1/dist/mqtt.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -159,7 +159,7 @@ grab apples, bonk them back. First to the banner takes the round.</p>
       <button class="lkBtn" id="eatBtn" style="font-size:19px;padding:12px 26px">🍎 EAT APPLE</button>
     </div>
     <div id="pop"></div>
-    <div id="verTag">🧊 CUBE v1.8.6 · BONK THE BULLIES</div>
+    <div id="verTag">🧊 CUBE v1.8.5.1 · BONK THE BULLIES</div>
     <button id="tiltBtn">🧭 TILT</button>
     <div id="joy"><div id="joyKnob"></div></div>
     <div id="pad"><span class="pip pU">▲</span><span class="pip pD">▼</span><span class="pip pL">◀</span><span class="pip pR">▶</span><div id="padKnob"></div></div>
@@ -192,7 +192,6 @@ grab apples, bonk them back. First to the banner takes the round.</p>
         <div class="ssName">🏷️ YOUR NAME&nbsp; <input id="nameInput" maxlength="14" placeholder="BUNNY" autocomplete="off"></div>
         <div class="ssName">🔊 SOUND&nbsp; <button class="lkBtn" id="sndBtn" type="button">SOUND ON</button>&nbsp; <input id="sndVol" type="range" min="0" max="100" value="80" style="width:110px;vertical-align:middle"></div>
         <div class="ssName">🌌 SKY&nbsp; <button class="lkBtn" id="nightBtn" type="button">☀️ DAY</button></div>
-        <div class="ssName">🕐 CLOCK&nbsp; <button class="lkBtn" id="cycBtn" type="button">CYCLE OFF</button></div>
         <button class="ssBtn" id="playBtn"><span class="tri">▶</span> PLAY</button>
         <button class="ssBtn small" id="howBtn">? HOW TO PLAY</button>
         <button class="ssBtn small" id="linkBtn">🔗 2-PLAYER LINK</button>
@@ -760,7 +759,7 @@ const SND={ctx:null, on:localStorage.getItem("cube-snd-on")!=="0", vol:+(localSt
 // round = the tree forgets. Once offered, the offer stands for the session.
 const STAR_MSG="i love you Krystian, Kai, & Koda you bit into the tree of knowledge! Love always, Your DA! Remember God first! #whospink?";
 const SEQ={step:0, offered:false};
-let nightEl=null, secretEl=null, glowRing=null, moonEl=null, skyDome=null, skyNight=false, skySecret=false;
+let nightEl=null, secretEl=null, glowRing=null, moonEl=null, skyNight=false, skySecret=false;
 function seqGlow(){
   if(!glowRing) return;
   const o=SEQ.offered?0.95:(SEQ.step===2?0.65:(SEQ.step===1?0.32:0));
@@ -791,105 +790,35 @@ function seqImpact(a){
   for(const c of COLLIDERS){ if(Math.hypot(a.p.x-c.x, a.p.z-c.z)<c.r+0.3 && a.p.y<groundY(c.x,c.z)+2.8){ SND.play("rock"); seqHit("rock", a.src); a.p.y=groundY(a.p.x,a.p.z)+0.16; landApple(a); return true; } }
   return false;
 }
-// v1.8.6 SKY & CLOCK (David, Nov 7 03:13): the sky is a set of ELEMENTS the page
-// owns — a gradient dome, a sun, a moon, and real lights — driven by a 24-hour
-// CLOCK (Red Dead-style: setting sun, rising moon, round and round while it
-// runs). The clock rides every snapshot (core.tod), so a recording plays back
-// the sunset, the moonrise, and the secret trigger itself. Public night = the
-// MOON lights the field silver-blue. The eaten secret = the WORDS take the
-// moon's place: the constellation curves along the sky's rim and becomes the
-// light source, washing the field gold. Illumination is real light on real
-// materials, so every object's color provably changes with the phase.
-const SKY={tod:10.4, cycle:false, speed:24/240, mode:"day", words:false, acc:0};
-let skyDomeHf=null, sunDisc=null, moonDisc=null, sunLightEl=null, moonLightEl=null, hemiEl=null, wordLightEl=null;
-const SKY_STOPS=[[0,"#03051a","#0e1836"],[5.5,"#03051a","#0e1836"],[7,"#35507e","#e8a37c"],[9,"#3f83cc","#bfe3f7"],[16.5,"#3f83cc","#bfe3f7"],[18,"#2c3e70","#ff9a3c"],[19.5,"#070a24","#1a2340"],[21,"#03051a","#0e1836"],[24,"#03051a","#0e1836"]];
-function skyPalette(tod){
-  let a=SKY_STOPS[0], b=SKY_STOPS[SKY_STOPS.length-1];
-  for(let i=0;i<SKY_STOPS.length-1;i++){ if(tod>=SKY_STOPS[i][0] && tod<=SKY_STOPS[i+1][0]){ a=SKY_STOPS[i]; b=SKY_STOPS[i+1]; break; } }
-  const f=(tod-a[0])/Math.max(0.0001,(b[0]-a[0]));
-  return { top:new THREE.Color(a[1]).lerp(new THREE.Color(b[1]),f), hor:new THREE.Color(a[2]).lerp(new THREE.Color(b[2]),f) };
-}
-function skyDark(tod){
-  if(tod<5.5) return 1;
-  if(tod<7) return 1-(tod-5.5)/1.5;
-  if(tod<17) return 0;
-  if(tod<19.5) return (tod-17)/2.5;
-  return 1;
-}
 function buildSky(){
-  if(nightEl) { applySky(); return; }
+  if(nightEl) return;
   const sc=sceneEl.object3D;
-  // gradient dome (vertex colors by height) — a mesh we own, not the scene background
-  const dg=new THREE.SphereGeometry(430, 28, 14);
-  const dp=dg.getAttribute("position"); const dc=new Float32Array(dp.count*3); skyDomeHf=new Float32Array(dp.count);
-  for(let i=0;i<dp.count;i++){ const ny=dp.getY(i)/430; let hf=Math.min(1,Math.max(0,(ny+0.25)/0.95)); hf=hf*hf*(3-2*hf); skyDomeHf[i]=hf; }
-  dg.setAttribute("color", new THREE.BufferAttribute(dc,3));
-  skyDome=new THREE.Mesh(dg, new THREE.MeshBasicMaterial({vertexColors:true, side:THREE.BackSide, fog:false, depthWrite:false}));
-  skyDome.renderOrder=-10; sc.add(skyDome);
-  // the star field
   const pts=[];
-  for(let i=0;i<750;i++){ const th=Math.random()*Math.PI*2, ph=Math.acos(Math.random()*0.92), r=415;
+  for(let i=0;i<750;i++){ const th=Math.random()*Math.PI*2, ph=Math.acos(Math.random()*0.92), r=260;
     pts.push(r*Math.sin(ph)*Math.cos(th), r*Math.cos(ph)+4, r*Math.sin(ph)*Math.sin(th)); }
   const starGeo=new THREE.BufferGeometry();
   starGeo.setAttribute("position", new THREE.Float32BufferAttribute(pts,3));
-  nightEl=new THREE.Points(starGeo, new THREE.PointsMaterial({color:0xcfe0ff, size:2.5, sizeAttenuation:false, transparent:true, opacity:0, fog:false}));
+  nightEl=new THREE.Points(starGeo, new THREE.PointsMaterial({color:0xcfe0ff, size:2.5, sizeAttenuation:false, transparent:true, opacity:1, fog:false}));
   nightEl.visible=false; sc.add(nightEl);
-  // the secret constellation, curved onto the rim of the sky (every sampled point
-  // pushed out to the dome shell, so the words wrap the sky line)
   const cv=document.createElement("canvas"); cv.width=1400; cv.height=620;
   const cx2=cv.getContext("2d"); cx2.fillStyle="#000"; cx2.fillRect(0,0,1400,620);
   cx2.fillStyle="#fff"; cx2.textAlign="center"; cx2.font="800 92px system-ui, sans-serif";
   ["I LOVE YOU","KRYSTIAN, KAI & KODA","YOU BIT INTO THE","TREE OF KNOWLEDGE!","LOVE ALWAYS, YOUR DA!","REMEMBER GOD FIRST!","#WHOSPINK?"].forEach((ln,i)=>cx2.fillText(ln, 700, 108+i*76));
-  const img=cx2.getImageData(0,0,1400,620).data; const sp=[]; const v=new THREE.Vector3();
-  for(let y=0;y<620;y+=6) for(let x=0;x<1400;x+=6){ if(img[(y*1400+x)*4+3]>120){ v.set(((x-700)/1400)*330, 30+(1-y/620)*235, -330); v.normalize().multiplyScalar(408); sp.push(v.x, v.y, v.z); } }
+  const img=cx2.getImageData(0,0,1400,620).data; const sp=[];
+  for(let y=0;y<620;y+=6) for(let x=0;x<1400;x+=6){ if(img[(y*1400+x)*4+3]>120) sp.push(((x-700)/1400)*300, 118-(y/620)*118, -195-(Math.abs(x-700)/1400)*22); }
   const sg=new THREE.BufferGeometry(); sg.setAttribute("position", new THREE.Float32BufferAttribute(sp,3));
   secretEl=new THREE.Points(sg, new THREE.PointsMaterial({color:0xffe9a8, size:3.3, sizeAttenuation:false, transparent:true, opacity:1, fog:false}));
   secretEl.visible=false; sc.add(secretEl);
-  // sun and moon discs
-  sunDisc=new THREE.Mesh(new THREE.SphereGeometry(13, 18, 12), new THREE.MeshBasicMaterial({color:0xffdf6b, fog:false}));
-  moonDisc=new THREE.Mesh(new THREE.SphereGeometry(10.5, 18, 12), new THREE.MeshBasicMaterial({color:0xdfe9ff, fog:false}));
-  sc.add(sunDisc); sc.add(moonDisc);
   moonEl=new THREE.AmbientLight(0x8fb4ff, 0); sc.add(moonEl);
-  // the lights (A-Frame entities, so every device lights the same way)
-  const mk=(light)=>{ const e=document.createElement("a-entity"); e.setAttribute("light", light); sceneEl.appendChild(e); return e; };
-  hemiEl=mk({type:"hemisphere", color:"#bcd8ff", groundColor:"#6a7a52", intensity:0.85});
-  sunLightEl=mk({type:"directional", color:"#fff2d0", intensity:1.1, castShadow:true});
-  moonLightEl=mk({type:"directional", color:"#a9c2ff", intensity:0, castShadow:true});
-  wordLightEl=mk({type:"point", color:"#ffd76a", intensity:0, distance:900, decay:0});
-  wordLightEl.setAttribute("position","0 80 -240");
-  teleEvent("STAR SKY","🌌 sky elements built · dome, sun, moon, lights · "+sp.length+" stars spell the words along the rim");
-  applySky();
-}
-function applySky(){
-  if(!skyDome) return;
-  const tod=SKY.tod, dark=skyDark(tod), pal=skyPalette(tod);
-  SKY.mode = dark>=1 ? "night" : (tod>=17&&tod<19.5) ? "sunset" : (tod>=5.5&&tod<7.5) ? "dawn" : "day";
-  const dc=skyDome.geometry.getAttribute("color");
-  const tmp=new THREE.Color();
-  for(let i=0;i<dc.count;i++){ tmp.copy(pal.hor).lerp(pal.top, skyDomeHf[i]); dc.setXYZ(i, tmp.r, tmp.g, tmp.b); }
-  dc.needsUpdate=true;
-  sceneEl.setAttribute("background","color: #"+pal.top.getHexString());
-  if(sceneEl.renderer) sceneEl.renderer.setClearColor(pal.top);
-  sceneEl.setAttribute("fog","type: linear; color: #"+pal.hor.getHexString()+"; near: "+Math.round(38-dark*8)+"; far: "+Math.round(120+dark*180));
-  if(nightEl){ nightEl.visible=dark>0.03; nightEl.material.opacity=dark; }
-  if(secretEl) secretEl.visible=SKY.words && dark>0.5;
-  const sang=((tod-6)/12)*Math.PI, mang=(((tod+24-18)%24)/12)*Math.PI;
-  const sx=Math.cos(sang)*300, sy=Math.sin(sang)*290, mx=Math.cos(mang)*300, my=Math.sin(mang)*290;
-  if(sunDisc){ sunDisc.position.set(sx, sy, -120); sunDisc.visible=sy>-18; }
-  if(moonDisc){ moonDisc.position.set(mx, my, -120); moonDisc.visible=my>-18; }
-  if(sunLightEl){ sunLightEl.setAttribute("position", (sx*0.35)+" "+(Math.max(6,sy*0.35))+" "+(-120*0.35)); sunLightEl.setAttribute("light",{intensity:Math.max(0,Math.sin(sang))*1.15, color:(Math.sin(sang)<0.35?"#ff9448":"#fff2d0"), castShadow:Math.sin(sang)>0}); }
-  if(moonLightEl){ moonLightEl.setAttribute("position", (mx*0.35)+" "+(Math.max(6,my*0.35))+" "+(-120*0.35)); moonLightEl.setAttribute("light",{intensity:Math.max(0,Math.sin(mang))*0.9, castShadow:(Math.sin(mang)>0 && Math.sin(sang)<=0)}); }
-  if(hemiEl) hemiEl.setAttribute("light",{intensity:0.85-dark*0.4, color:(SKY.words&&dark>0.5)?"#ffdf9e":(dark>0.5?"#7286b8":"#bcd8ff")});
-  if(moonEl) moonEl.intensity=dark*0.22;
-  if(wordLightEl) wordLightEl.setAttribute("light",{intensity:(SKY.words&&dark>0.5)?2.4:0});
-  skyNight=dark>0.5; skySecret=SKY.words&&dark>0.5;
+  teleEvent("STAR SKY","🌌 the night dome is built · "+sp.length+" stars spell the words — visible only to those who bite");
 }
 function setSky(night, secret){
-  buildSky();
-  SKY.cycle=false; const cb=$("cycBtn"); if(cb) cb.textContent="CYCLE OFF";
-  SKY.tod=night?21.6:10.4;
-  SKY.words=night?!!secret:false;
-  applySky();
+  buildSky(); skyNight=night; skySecret=secret;
+  sceneEl.setAttribute("background","color: "+(night?"#060a1d":"#9fd0f2"));
+  sceneEl.setAttribute("fog","type: linear; color: "+(night?"#0a1030":"#b5d9f2")+"; near: "+(night?30:38)+"; far: "+(night?260:120));
+  if(nightEl) nightEl.visible=night;
+  if(secretEl) secretEl.visible=night&&secret;
+  if(moonEl) moonEl.intensity=night?0.85:0;
   const nb=$("nightBtn"); if(nb) nb.textContent=night?"🌌 NIGHT":"☀️ DAY";
 }
 function offerEat(){ const b=$("eatBox"); if(b) b.style.display="block"; }
@@ -899,7 +828,7 @@ function eatNow(){
   setSky(true, true);
   showBanner("🌌✨ THE SKY OPENS", STAR_MSG, 7000);
   SND.play("win");
-  teleEvent("THE CHOICE","🍎 "+myName()+" bit the apple — the words take the moon's place and light the field");
+  teleEvent("THE CHOICE","🍎 "+myName()+" bit the apple — night falls, and the words are in the stars");
   if(NET.role==="guest") mqSend("up",{type:"eat"});
 }
 // v1.8.3 BOW-DRAW AIM (David, Nov 6 23:43): hold to draw — zoom, true arc, power.
@@ -1067,7 +996,6 @@ function placeReplayGuest(gst){
   if(rpGuestLabel) rpGuestLabel.setAttribute("position", gst.x+" "+(groundY(gst.x,gst.z)+3.1)+" "+gst.z);
 }
 function rpPlace(f){
-  if(typeof f.tod==="number"){ SKY.tod=f.tod; SKY.words=(localStorage.getItem("cube-star-found")==="1" && !!f.offer); applySky(); }
   RP.view={host:{x:f.host.x, z:f.host.z, r:f.host.r}, guest:(f.guest&&typeof f.guest.x==="number")?{x:f.guest.x, z:f.guest.z, r:f.guest.r}:null, bullies:{}};
   if(f.bullies) for(const row of f.bullies) RP.view.bullies[row[0]]={x:row[1], z:row[2], r:row[3]};
   if(f.fly) placeGuestFlyers(f.fly); else placeGuestFlyers([]);
@@ -1553,7 +1481,7 @@ function hostGuestTick(dt){
 }
 function buildCore(){
   const bp=state.bunnyPos, g=NET.guest;
-  const core={v:1, n:++NET.snapN, t:+state.t.toFixed(2), w:Date.now(), round:state.round, bonks:state.bonks, bonked:state.bonked, match:{a:NET.match.P1, b:NET.match.P2, c:NET.match.AI}, seq:SEQ.step, offer:SEQ.offered?1:0, tod:+SKY.tod.toFixed(2), sky:SKY.mode,
+  const core={v:1, n:++NET.snapN, t:+state.t.toFixed(2), w:Date.now(), round:state.round, bonks:state.bonks, bonked:state.bonked, match:{a:NET.match.P1, b:NET.match.P2, c:NET.match.AI}, seq:SEQ.step, offer:SEQ.offered?1:0,
     host:{x:+bp.x.toFixed(2), z:+bp.z.toFixed(2), r:+state.bunnyRotY.toFixed(2), c:state.carried},
     guest:{x:+g.x.toFixed(2), z:+g.z.toFixed(2), r:+g.rotY.toFixed(2), c:g.carried, b:g.bonks, role:g.role},
     bullies:bullies.map(b=>[b.key, +b.x.toFixed(2), +b.z.toFixed(2), +b.rotY.toFixed(2)]),
@@ -1633,7 +1561,6 @@ function applySnap(core){
   if(core.match){ NET.match={P1:core.match.a, P2:core.match.b, AI:core.match.c}; const hm=$("hudMatch"); if(hm) hm.textContent=core.match.a+"–"+core.match.b+(core.match.c?" · AI "+core.match.c:""); }
   if(typeof core.seq==="number" && core.seq!==SEQ.step){ SEQ.step=core.seq; seqGlow(); }
   if(core.offer && !SEQ.offered){ SEQ.offered=true; seqGlow(); offerEat(); popText("✨ The sequence is complete — the tree offers an apple…", 2800); }
-  if(typeof core.tod==="number" && !RP.active){ SKY.tod=core.tod; applySky(); }
   if(typeof NET.lastCarried==="number" && core.guest.c>NET.lastCarried) SND.play("pickup"); NET.lastCarried=core.guest.c; state.carried=core.guest.c; syncHUD();
   if(core.fly) placeGuestFlyers(core.fly);
   if(core.guest && typeof core.guest.b==="number" && core.guest.b>NET.myBonks){ NET.myBonks=core.guest.b; teleEvent("YOUR BONKS — IN THE SEAL","snapshot #"+core.n+" carries your bonk count: "+NET.myBonks+" · hash "+core.h.slice(0,10)+"…"); }
@@ -1845,7 +1772,6 @@ $("aboutClose").addEventListener("click",()=>{ $("aboutSheet").style.display="no
   sndLabel();
   const eb=$("eatBtn"); if(eb) eb.addEventListener("click", eatNow);
   const nb2=$("nightBtn"); if(nb2) nb2.addEventListener("click",()=>{ if(skyNight) setSky(false,false); else setSky(true, localStorage.getItem("cube-star-found")==="1"); });
-  const cyb=$("cycBtn"); if(cyb) cyb.addEventListener("click",()=>{ buildSky(); SKY.cycle=!SKY.cycle; cyb.textContent=SKY.cycle?"CYCLE ON":"CYCLE OFF"; if(SKY.cycle) teleEvent("SKY CLOCK","🕐 the 24-hour cycle turns — a full day every 4 minutes"); applySky(); });
   const ma=$("matchAgain"), mw=$("matchWatch");
   if(ma) ma.addEventListener("click",()=>{ if(NET.role==="guest") return;
     NET.match={P1:0,P2:0,AI:0}; NET.matchOver=false; NET.matchTape=[]; NET.matchWinner=""; NET.matchTapeBlob=null;
@@ -2126,7 +2052,6 @@ function tickLoop(now){
   if(_dyn.doorRing) _dyn.doorRing.rotation.z+=dt*0.5;
   if(_dyn.clouds) _dyn.clouds.forEach((c,i)=>{ const o=c.object3D; o.position.x+=Math.sin(t*0.05+i)*0.0015; });
   netTick(dt); rpTick(dt); if(AIM.on) aimDraw();
-  if(SKY.cycle){ SKY.acc+=dt; if(SKY.acc>0.25){ SKY.tod=(SKY.tod+SKY.acc*SKY.speed)%24; SKY.acc=0; applySky(); } }
   if((_mapTick++ % 5)===0) drawMap();
   // labels face the camera (bully labels ride in the same list, positions already updated)
   const cp=camEl.object3D.position;
