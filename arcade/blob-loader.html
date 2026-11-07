@@ -3,179 +3,54 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>ZOMBIE WORLD v1.0 — SURVIVE THE NIGHTS (a world from Walrus blobs)</title>
-<script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/mqtt@5.10.1/dist/mqtt.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<title>🌀 KODAKAI BLOB LOADER — every game a blob</title>
 <style>
-  html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#06060f;font-family:system-ui,sans-serif;color:#e8e8ff;-webkit-user-select:none;user-select:none}
-  #stage{position:fixed;inset:0;height:100dvh;overflow:hidden;overscroll-behavior:none}
-  a-scene{position:absolute;inset:0}
-  .pill{position:absolute;background:rgba(8,8,24,.82);border:1px solid #4a4a7a;border-radius:10px;padding:6px 10px;font-size:.85em;z-index:30}
-  #verTag{left:10px;bottom:186px;color:#9a9ac0}
-  #linkBadge{right:10px;top:10px;cursor:pointer;color:#ffd76b;font-weight:bold}
-  #hud{position:absolute;top:10px;left:50%;transform:translateX(-50%);text-align:center;z-index:25;width:min(94vw,560px);pointer-events:none}
-  #gameBar{display:flex;gap:5px;justify-content:center;flex-wrap:wrap;margin-bottom:4px}
-  .chip{background:rgba(8,8,24,.85);border:1px solid #4a4a7a;border-radius:9px;padding:3px 8px;font-size:.78em;white-space:nowrap}
-  .chip.out{opacity:.45;border-color:#773333}
-  .ebar{display:inline-block;width:46px;height:7px;background:#2a2a44;border-radius:3px;vertical-align:middle;overflow:hidden}
-  .ebar i{display:block;height:100%;border-radius:3px}
-  #counts{background:rgba(8,8,24,.85);border:1px solid #4a4a7a;border-radius:9px;padding:3px 10px;font-size:.85em;display:inline-block}
-  #banner{position:absolute;top:22%;left:50%;transform:translateX(-50%);text-align:center;z-index:40;pointer-events:none;width:94vw}
-  #bannerMain{font-size:1.7em;font-weight:bold;color:#ffd76b;text-shadow:0 2px 10px #000}
-  #bannerSub{font-size:1em;color:#e8e8ff;text-shadow:0 1px 6px #000}
-  #pop{position:absolute;bottom:31%;left:50%;transform:translateX(-50%);background:rgba(8,8,24,.88);border:1px solid #ffd76b;color:#ffe9a8;border-radius:10px;padding:7px 14px;font-size:1em;z-index:40;display:none;max-width:92vw;text-align:center}
-  #mapWrap{position:absolute;right:10px;top:64px;z-index:20;text-align:center}
-  #mapCv{border:2px solid #4a4a7a;border-radius:10px;background:rgba(6,10,8,.72)}
-  #mapCap{font-size:.68em;color:#c8c8e8;text-shadow:0 1px 4px #000}
-  #pad{position:absolute;left:16px;bottom:22px;width:144px;height:144px;border-radius:50%;background:rgba(20,20,44,.5);border:2px solid rgba(150,150,220,.55);z-index:35;touch-action:none}
-  #padKnob{position:absolute;left:50%;top:50%;width:58px;height:58px;border-radius:50%;background:rgba(120,120,200,.55);border:2px solid rgba(200,200,255,.7);transform:translate(-50%,-50%)}
-  #fireBtn{position:absolute;right:18px;bottom:158px;width:104px;height:104px;border-radius:50%;background:radial-gradient(circle at 35% 30%, #ff9a5c, #c33d12);border:3px solid #ffd76b;color:#fff;font-weight:bold;font-size:.95em;z-index:35;touch-action:none;box-shadow:0 4px 18px rgba(0,0,0,.5)}
-  #fireBtn small{display:block;font-size:.62em;font-weight:normal}
-  #scare{position:absolute;inset:0;z-index:60;display:none;pointer-events:none;background:radial-gradient(circle, transparent 30%, rgba(160,0,0,.55) 78%, rgba(90,0,0,.9) 100%)}
-  #scareFace{position:absolute;left:50%;top:46%;transform:translate(-50%,-50%);font-size:11em;filter:drop-shadow(0 0 24px #000)}
-  #scareScratch{position:absolute;inset:0;background:repeating-linear-gradient(115deg, transparent 0 46px, rgba(200,0,0,.28) 46px 50px, transparent 50px 120px)}
-  #scareTxt{position:absolute;left:50%;bottom:16%;transform:translateX(-50%);font-size:1.3em;font-weight:bold;color:#ffb3b3;text-shadow:0 2px 8px #000}
-  .sheet{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(94vw,430px);max-height:88dvh;overflow-y:auto;background:rgba(10,10,28,.97);border:2px solid #ffd76b;border-radius:16px;padding:18px;z-index:50;text-align:center;box-shadow:0 10px 44px rgba(0,0,0,.7)}
-  .sheet h1{font-family:Georgia,serif;margin:2px 0 4px;color:#ff8a6b;letter-spacing:1px}
-  .sheet h2{margin:4px 0;color:#ffd76b}
-  .ssBtn{display:block;width:100%;margin:7px 0;padding:13px;border-radius:11px;border:2px solid #ffd76b;background:#23234d;color:#ffe9a8;font-size:1.12em;font-weight:bold;cursor:pointer}
-  .ssBtn.small{font-size:.95em;padding:10px;background:#191938;color:#e8e8ff;border-color:#4a4a7a}
-  .ssBtn.sel{background:#5c1f14;border-color:#ff8a6b;color:#ffd9c9}
-  .ssName{margin:8px 0;font-size:.95em}
-  .ssName input{background:#0a0a20;color:#ffe9a8;border:1px solid #4a4a7a;border-radius:7px;padding:6px 8px;width:130px;text-transform:uppercase}
-  select{background:#0a0a20;color:#ffe9a8;border:1px solid #4a4a7a;border-radius:7px;padding:6px}
-  #teleOverlay{position:absolute;left:10px;top:64px;z-index:28;background:rgba(6,6,18,.78);border:1px solid #4a4a7a;border-radius:10px;padding:8px 10px;font-size:.74em;max-width:min(78vw,400px);display:none}
-  #teleOverlay.mini{display:block;max-height:110px;overflow:hidden}
-  #teleOverlay.full{display:block;max-height:60dvh;overflow-y:auto}
-  .mono{font-family:ui-monospace,monospace}
-  .small{font-size:.8em;color:#9a9ac0}
-  #log{font-size:.78em;text-align:left;max-height:200px;overflow-y:auto;background:#07071a;border-radius:8px;padding:8px}
-  #log .ok{color:#8affa8} #log .dim{color:#8a8ab0}
-  #rpBar{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);z-index:45;background:rgba(8,8,24,.94);border:2px solid #7dd8ff;border-radius:12px;padding:8px 12px;display:none;text-align:center;width:min(94vw,520px)}
-  #rpBar button{background:#23234d;color:#cfeeff;border:1px solid #7dd8ff;border-radius:8px;padding:7px 10px;margin:2px;cursor:pointer}
-  #rpScrub{width:55%}
-  .boardRow{padding:5px 4px;border-bottom:1px solid #2a2a4d;font-size:.9em;text-align:left}
-  .watchBtn{background:#143d14;color:#a8ffb0;border:1px solid #4caf50;border-radius:6px;padding:3px 8px;cursor:pointer}
-  #qrBox{display:flex;justify-content:center;margin:8px}
-  #qrBox img,#qrBox canvas{border:6px solid #fff;border-radius:6px}
+  html,body{margin:0;padding:0;background:#0b0b18;color:#e8e8ff;font-family:system-ui,sans-serif}
+  #wrap{max-width:680px;margin:0 auto;padding:18px 14px 40px}
+  h1{font-size:26px;margin:6px 0 2px;color:#ffd76b}
+  .sub{color:#b9b9d9;font-size:14px;line-height:1.45;margin:0 0 14px}
+  .panel{background:#14142a;border:1.5px solid #33335e;border-radius:14px;padding:12px 14px;margin:12px 0}
+  .panel h2{margin:0 0 8px;font-size:17px;color:#ffd76b}
+  .game{display:block;width:100%;text-align:left;background:#1d1d38;color:#fff;border:1.5px solid #ffd76b;border-radius:12px;padding:12px;margin:8px 0;font-size:16px;cursor:pointer}
+  .game small{display:block;color:#b9b9d9;font-size:12.5px;margin-top:3px}
+  .mono{font-family:ui-monospace,Menlo,monospace;font-size:11.5px;word-break:break-all}
+  input{width:100%;box-sizing:border-box;background:#0d0d20;color:#fff;border:1px solid #44447a;border-radius:9px;padding:10px;font-size:14px;margin:4px 0}
+  .btn{background:#ffd76b;color:#191930;border:none;border-radius:10px;padding:11px 18px;font-weight:bold;font-size:15px;cursor:pointer;margin-top:6px}
+  #status{background:#08081a;border:1px solid #2c2c50;border-radius:10px;padding:10px 12px;font-size:13.5px;line-height:1.55;min-height:44px;white-space:pre-wrap}
+  .ok{color:#8dff9a}.bad{color:#ff8d8d}.dim{color:#9a9ac0}
+  .foot{color:#9a9ac0;font-size:12.5px;line-height:1.5;margin-top:16px}
+  li{margin:3px 0}
 </style>
 </head>
 <body>
-<div id="stage">
-  <a-scene id="scene" vr-mode-ui="enabled: false" renderer="antialias: true; shadowMapEnabled: true" background="color: #79a6d8"></a-scene>
+<div id="wrap">
+  <h1>🌀 THE BLOB LOADER</h1>
+  <p class="sub">Every game below is a <b>blob</b> on the Walrus network. This loader recalls the build, <b>checks its hash in front of you</b>, and only then opens it. No game server. No trust. <b>The hash is the host.</b> GitHub is one optional shelf this page can sit on — the games never needed it.</p>
 
-  <div id="hud" style="display:none">
-    <div id="gameBar"></div>
-    <div id="counts">🧟 ZOMBIE WORLD</div>
-  </div>
-  <div id="banner" style="display:none"><div id="bannerMain"></div><div id="bannerSub"></div></div>
-  <div id="pop"></div>
-  <div id="mapWrap" style="display:none"><canvas id="mapCv" width="148" height="148"></canvas><div id="mapCap">🗺️ THE FIELD · N ↑</div></div>
-  <div id="verTag" class="pill">🧊 ZOMBIE v1.0 · SURVIVE THE NIGHTS</div>
-  <div id="linkBadge" class="pill">🔗 LINK</div>
-  <div id="teleOverlay"><div id="teleBody" class="mono"></div></div>
-  <div id="pad" style="display:none"><div id="padKnob"></div></div>
-  <button id="fireBtn" style="display:none">🎯<small>FIRE / USE</small></button>
-  <div id="scare"><div id="scareScratch"></div><div id="scareFace">🧟</div><div id="scareTxt">IT'S ON YOU!</div></div>
+  <div class="panel"><h2>🎮 THE SHELF — FINAL BUILDS, BLOBBED</h2><div id="shelf"></div></div>
 
-  <div id="startScr" class="sheet" style="display:none">
-    <h1>🧟 ZOMBIE WORLD</h1>
-    <div style="font-family:Georgia,serif;color:#c8c8e8">survive the nights</div>
-    <div class="ssName">🏷️ YOUR NAME&nbsp; <input id="nameInput" maxlength="14" placeholder="SURVIVOR" autocomplete="off"></div>
-    <div style="font-size:.72em;color:#9fd8a8;max-width:340px;margin:2px auto 0">🌐 THIS WORLD RIDES IN FROM THE <b>WALRUS BLOB NETWORK</b> — the field is the meadow's own terrain blob, hash-verified on this phone. The rules ride in as a blob too. This page is only the envelope.</div>
-    <div style="margin-top:10px;font-size:.9em;color:#c8c8e8">WHO ARE YOU?</div>
-    <div style="display:flex;gap:8px">
-      <button class="ssBtn sel" id="charBoy" style="flex:1">👦 BOY</button>
-      <button class="ssBtn" id="charGirl" style="flex:1">👧 GIRL</button>
-    </div>
-    <button class="ssBtn" id="playBtn">▶ PLAY</button>
-    <button class="ssBtn small" id="boardBtn">🏆 HIGH SCORES</button>
-    <button class="ssBtn small" id="linkBtn">🔗 2-PLAYER LINK</button>
-    <button class="ssBtn small" id="howBtn">? HOW TO PLAY</button>
-    <button class="ssBtn small" id="aboutBtn">📖 ABOUT &amp; PROOF</button>
-    <div style="display:flex;gap:8px;align-items:center;justify-content:center;margin-top:6px">
-      <button class="ssBtn small" id="sndBtn" style="flex:1">🔊 SOUND ON</button>
-      <input type="range" id="volRange" min="0" max="100" value="80" style="flex:1">
-    </div>
-    <div class="small" id="bootStat" style="margin-top:8px">recalling the world from the blob network…</div>
+  <div class="panel"><h2>🔑 RECALL ANY BLOB</h2>
+    <p class="sub" style="margin:0">Paste any blob id — a game build, a record, a tape. The loader recalls it, names what section of the library it belongs to, and verifies it.</p>
+    <input id="pasteId" placeholder="blob id">
+    <input id="pasteSha" placeholder="sha256 pin (optional — the build's fingerprint)">
+    <button class="btn" id="pasteBtn">RECALL + VERIFY</button>
+    <div id="admit" style="margin-top:8px;font-size:14px;line-height:1.5"></div>
   </div>
 
-  <div id="howPanel" class="sheet" style="display:none">
-    <h2>HOW TO PLAY</h2>
-    <div style="text-align:left;font-size:.92em;line-height:1.45">
-      🏃 <b>Move</b> with the thumb pad (left) or WASD/arrows. Drag to look.<br>
-      ☀️ <b>Day (2 min)</b>: scavenge. Zombies shamble but none spawn.<br>
-      🌙 <b>Night (2 min)</b>: the graves give up the dead — <b>2 × the night number</b>, two by two. What you don't kill <b>carries over</b>. The horde compounds until it's impossible. Your score: <b>nights survived + kills</b>.<br>
-      🍎 <b>Red apple</b>: +1 heart. ✨ <b>Golden apple</b>: appears briefly, once a night — grab it and <b>every zombie dies</b>. 🟢 <b>Green apple</b>: full health + 10 s invincible — <b>your touch kills</b>.<br>
-      🧰 <b>The chest</b> holds one weapon at a time: 🔫 rifle (pinpoint line), 🚀 rocket (blast zone), 🧨 dynamite (3-2-1 ticker, biggest zone, <b>no safe sides</b>). FIRE button shoots.<br>
-      🏠 The <b>two-story house</b> is real cover — up the stairs, hold the floor. The graves are by the dead tree.<br>
-      🧟 If one reaches you: flash, scratch, blood — <b>−1 heart</b>. Five hearts. Zero = eaten.<br>
-      👥 Two players: one hosts, one joins — as a fellow survivor, or <b>as a zombie</b>: die, watch-and-wait, and the graveyard issues you a new body. Kill all the good guys and the <b>zombie board</b> takes your time.
-    </div>
-    <button class="ssBtn small" id="howClose">← BACK</button>
+  <div class="panel"><h2>🌳 THE LIBRARY — ATTACHED HERE</h2><div id="rootBox" class="dim">recalling the library root…</div></div>
+
+  <div class="panel"><h2>🗂 THE FLOCK — THIS LOADER'S STORAGE ALLOCATION</h2>
+    <div id="flock" style="font-size:13.5px;line-height:1.6"></div>
+    <p class="sub" style="margin:6px 0 0">Kept alive by the reblob loop: holders re-blob what they love, the keeper audits the flock, nothing here lives on one server. Storage gets streamlined section by section, under this loader's watch.</p>
   </div>
 
-  <div id="linkPanel" class="sheet" style="display:none">
-    <h2>🔗 2-PLAYER LINK</h2>
-    <div id="linkStatus" style="font-size:.92em">Host a meadow here, or join one anywhere — across the room or across the country. The joiner needs no wallet, no account: the same verified world, a room code, and a role.</div>
-    <button class="ssBtn" id="hostBtn">📡 HOST A GAME</button>
-    <div id="qrBox"></div>
-    <div style="font-size:.78em;color:#9fd8a8;margin:6px 0">🌐 PROVENANCE: the field (the meadow's terrain blob) loads from Walrus and is sha256-verified in this browser. GitHub Pages serves only this HTML envelope — the world, the scores and the replays live on the blob network.</div>
-    <div style="margin:8px 0">JOIN AS&nbsp;
-      <select id="roleSel"><option value="survivor">🧑 Survivor (co-op)</option><option value="zombie">🧟 A ZOMBIE (versus)</option></select>
-    </div>
-    <div style="display:flex;gap:8px"><input id="joinCode" placeholder="ROOM CODE" maxlength="5" style="flex:1;background:#0a0a20;color:#ffe9a8;border:1px solid #4a4a7a;border-radius:7px;padding:10px;text-transform:uppercase">
-    <button class="ssBtn small" id="joinBtn" style="flex:1;margin:0">🔑 JOIN</button></div>
-    <button class="ssBtn small" id="lookBtn">👀 LOOK FOR AN OPEN TABLE</button>
-    <div id="lobbyList" style="font-size:.9em"></div>
-    <button class="ssBtn" id="panelPlay" style="display:none">▶ PLAY</button>
-    <button class="ssBtn small" id="linkClose">← BACK</button>
-    <div id="linkStats"></div>
-  </div>
+  <div class="panel"><h2>📜 RECALL LOG</h2><div id="status">the loader is awake.</div></div>
 
-  <div id="boardPanel" class="sheet" style="display:none">
-    <h2>🏆 HIGH SCORES — ZOMBIE WORLD</h2>
-    <div id="boardBody" style="max-height:56dvh;overflow-y:auto"></div>
-    <button class="ssBtn small" id="boardClose">← BACK</button>
-  </div>
-
-  <div id="aboutSheet" class="sheet" style="display:none">
-    <h2>📖 ABOUT &amp; PROOF</h2>
-    <div class="small" style="text-align:left">ZOMBIE WORLD is composed from the library: the meadow field (terrain blob from Big Buck Bunny's production files, on Walrus), the SKY &amp; CLOCK layer, the sealed-snapshot link, the hash-chained record chain. The house, the graveyard and the chest are MOVE library objects — built to be reused by the next game. Every score below exists as a Walrus blob, hash-chained, re-verified when shown.</div>
-    <h2 style="font-size:1.05em">🎞️ MATCH REPLAY</h2>
-    <div id="rpInfo" class="small">No match recorded yet on this device.</div>
-    <button class="ssBtn small" id="rpWatch">🎞️ WATCH LAST MATCH</button>
-    <button class="ssBtn small" id="rpSeal">🧊 SEAL REPLAY AS A BLOB</button>
-    <div id="rpBlobId" class="small mono"></div>
-    <div style="display:flex;gap:6px"><input id="rpLoadId" placeholder="paste a replay blob id" style="flex:1;background:#0a0a20;color:#ffe9a8;border:1px solid #4a4a7a;border-radius:7px;padding:8px"><button class="ssBtn small" id="rpLoad" style="flex:0 0 auto;margin:0">LOAD</button></div>
-    <h2 style="font-size:1.05em">📼 BOOT LOG</h2>
-    <div id="log"></div>
-    <button class="ssBtn small" id="aboutClose">← BACK</button>
-  </div>
-
-  <div id="matchPanel" class="sheet" style="display:none">
-    <h2 id="matchTitle">🏆 MATCH</h2>
-    <div id="matchSub" style="font-size:.95em"></div>
-    <button class="ssBtn" id="againBtn">▶ PLAY AGAIN</button>
-    <button class="ssBtn small" id="watchMatchBtn">🎞️ WATCH THE MATCH</button>
-    <button class="ssBtn small" id="matchBoardBtn">🏆 HIGH SCORES</button>
-  </div>
-
-  <div id="rpBar">
-    <div id="rpInfo2" class="small">🎞️ REPLAY</div>
-    <button id="rpPlayBtn">⏸ PAUSE</button>
-    <input type="range" id="rpScrub" min="0" max="100" value="0">
-    <select id="rpCam"><option value="follow">🎥 FOLLOW</option><option value="p1">👁 P1 POV</option><option value="p2">👁 P2 POV</option><option value="free">🕊 FREE CAM</option></select>
-    <button id="rpExit">✖ EXIT</button>
-  </div>
+  <p class="foot">HOW IT WORKS HERE: builds iterate, take apart, piece back together — every version frozen. The <b>final</b> build gets blobbed and pinned on the shelf. Anyone can recall it and check the hash themselves. If everybody loves it, it graduates — hard-lined into the real system — and that step is David's press, always. The resurrection code lives in this page, as thin as it can be: mirrors, hashes, lineage. However small the loader gets, that part is already allocated and never removed.</p>
 </div>
 <script>
-"use strict";
-const $=id=>document.getElementById(id);
-const CUBE_MANIFEST="hul119v83vpAVM60pXnhIRgEmM7YYPTjevG5S0EU5e8";
-const AGG="https://aggregator.walrus-testnet.walrus.space/v1/blobs/";
-const AGG2="https://walrus-testnet.blockscope.net/v1/blobs/";
+/* ═══════════════ RESURRECTION CORE — allocated first, never removed ═══════════════
+   recall anything by its blob id · prove it by its hash · walk its lineage home.   */
 function sha256hex(data){
   var K=[0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2];
   var H=[0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19];
@@ -195,1215 +70,101 @@ function sha256hex(data){
   var out=""; for(var i=0;i<8;i++) out+=("0000000"+(H[i]>>>0).toString(16)).slice(-8);
   return out;
 }
-function log(msg, cls){ const el=$("log"); const d=document.createElement("div"); if(cls) d.className=cls; d.innerHTML=msg; el.appendChild(d); const bs=$("bootStat"); if(bs && !state.ready){ bs.style.display="block"; bs.textContent=msg.replace(/<[^>]*>/g,""); } }
-$("log").innerHTML="";
-async function ladder(id){
-  try{ const r=await fetch(AGG+id,{cache:"no-store"}); if(r.ok) return {buf:await r.arrayBuffer(), via:"mirror 1"}; }catch(e){}
-  const r=await fetch(AGG2+id,{cache:"no-store"});
-  if(!r.ok) throw new Error("both mirrors failed for blob "+id.slice(0,16)+"…");
-  return {buf:await r.arrayBuffer(), via:"mirror 2"};
+const MIRRORS = ["https://aggregator.walrus-testnet.walrus.space/v1/blobs/", "https://walrus-testnet.blockscope.net/v1/blobs/"];
+async function recall(id){ let last=null;
+  for(const m of MIRRORS){ try{ const r = await fetch(m + id, {cache:"no-store"}); if(r.ok) return await r.arrayBuffer(); last = new Error("HTTP " + r.status); }catch(e){ last = e; } }
+  throw last || new Error("no mirror answered");
 }
-function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;}}
-</script>
-<script>
-let HF=null;
-function buildHeightfield(buf){
-  const dv=new DataView(buf);
-  if(dv.getUint32(0,true)!==0x46546C67) throw new Error("terrain blob is not glTF binary");
-  const jlen=dv.getUint32(12,true);
-  const js=JSON.parse(new TextDecoder().decode(new Uint8Array(buf,20,jlen)));
-  let binOff=20+jlen; const blen=dv.getUint32(binOff,true); binOff+=8;
-  const bin=new DataView(buf,binOff,blen);
-  const ESZ={5126:4,5125:4,5123:2,5122:2,5121:1,5120:1};
-  function accData(idx){
-    const acc=js.accessors[idx], bv=js.bufferViews[acc.bufferView];
-    const off=(bv.byteOffset||0)+(acc.byteOffset||0), n=acc.count, ct=acc.componentType;
-    const nc={SCALAR:1,VEC2:2,VEC3:3,VEC4:4}[acc.type], esz=ESZ[ct];
-    const stride=bv.byteStride||nc*esz;
-    const rd=ct===5126?(o)=>bin.getFloat32(o,true):ct===5125?(o)=>bin.getUint32(o,true)
-           :ct===5123?(o)=>bin.getUint16(o,true):ct===5122?(o)=>bin.getInt16(o,true)
-           :ct===5121?(o)=>bin.getUint8(o):(o)=>bin.getInt8(o);
-    const out=new Float64Array(n*nc);
-    for(let i=0;i<n;i++) for(let c=0;c<nc;c++) out[i*nc+c]=rd(off+i*stride+c*esz);
-    return out;
-  }
-  function nodeM(nd){
-    if(nd.matrix) return nd.matrix.slice();
-    const t=nd.translation||[0,0,0], q=nd.rotation||[0,0,0,1], s=nd.scale||[1,1,1];
-    const x=q[0],y=q[1],z=q[2],w=q[3];
-    const R=[1-2*(y*y+z*z),2*(x*y-z*w),2*(x*z+y*w), 2*(x*y+z*w),1-2*(x*x+z*z),2*(y*z-x*w), 2*(x*z-y*w),2*(y*z+x*w),1-2*(x*x+y*y)];
-    return [R[0]*s[0],R[1]*s[0],R[2]*s[0],0, R[3]*s[1],R[4]*s[1],R[5]*s[1],0, R[6]*s[2],R[7]*s[2],R[8]*s[2],0, t[0],t[1],t[2],1];
-  }
-  function mulM(a,b){ const o=new Array(16); for(let c=0;c<4;c++) for(let r=0;r<4;r++){ let s=0; for(let k=0;k<4;k++) s+=a[k*4+r]*b[c*4+k]; o[c*4+r]=s; } return o; }
-  function applyM(m,p){ return [m[0]*p[0]+m[4]*p[1]+m[8]*p[2]+m[12], m[1]*p[0]+m[5]*p[1]+m[9]*p[2]+m[13], m[2]*p[0]+m[6]*p[1]+m[10]*p[2]+m[14]]; }
-  const tris=[];
-  function walk(ni,parent){
-    const nd=js.nodes[ni]; if(!nd) return;
-    const M=mulM(parent,nodeM(nd));
-    if(nd.mesh!==undefined){
-      for(const prim of js.meshes[nd.mesh].primitives){
-        const pos=accData(prim.attributes.POSITION);
-        const idx=prim.indices!==undefined?accData(prim.indices):null;
-        const cnt=idx?idx.length:pos.length/3, wp=[];
-        for(let i=0;i<pos.length/3;i++) wp.push(applyM(M,[pos[i*3],pos[i*3+1],pos[i*3+2]]));
-        for(let k=0;k+2<cnt;k+=3){
-          const a=wp[idx?idx[k]:k], b=wp[idx?idx[k+1]:k+1], c=wp[idx?idx[k+2]:k+2];
-          tris.push(a[0],a[1],a[2], b[0],b[1],b[2], c[0],c[1],c[2]);
-        }
-      }
-    }
-    (nd.children||[]).forEach(ch=>walk(ch,M));
-  }
-  const I=[1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1];
-  ((js.scenes[js.scene||0]||{}).nodes||[]).forEach(ni=>walk(ni,I));
-  HF={tris:new Float64Array(tris)};
-  return tris.length/9;
+function winHash(r){ const c = {format:r.format, winner:r.winner, who:r.who, secs:r.secs, round:r.round, ts:r.ts, prev:r.prev}; return sha256hex(new TextEncoder().encode(JSON.stringify(c))); }
+function zHash(r){ return sha256hex(new TextEncoder().encode(["zombie-run/1", r.side, r.nights, r.k1, r.k2, r.secs, r.ts, r.prev, r.zt||0].join("|"))); }
+function classify(bytes){
+  if(bytes.length > 24 && new TextDecoder().decode(bytes.slice(0, 15)).includes("<!DOCTYPE")) return {section:"🎮 GAMES — a build (page)", kind:"page"};
+  try{ const j = JSON.parse(new TextDecoder().decode(bytes));
+    if(j.format === "cube-win/1") return {section:"🏆 RECORDS — Bunny Cube", kind:"record", rec:j, ok: winHash(j) === j.h};
+    if(j.format === "zombie-run/1") return {section:"🏆 RECORDS — Zombie World", kind:"record", rec:j, ok: zHash(j) === j.h};
+    if(j.format === "cube-tape/1" || j.format === "zombie-tape/1") return {section:"🎞 TAPES — a sealed match", kind:"tape", rec:j};
+    if(j.format === "mother-reel/1" || j.names || j.entries) return {section:"🌳 LIBRARY ROOT", kind:"root", rec:j};
+    if(j.format) return {section:"📦 MANIFEST — " + j.format, kind:"manifest", rec:j};
+    return {section:"🧩 LIBRARY OBJECT", kind:"object", rec:j};
+  }catch(e){ return {section:"🗃 BLOB — raw bytes", kind:"raw"}; }
 }
-function groundCPU(x,z){
-  if(!HF) return 0;
-  const T=HF.tris; let best=null;
-  for(let i=0;i<T.length;i+=9){
-    const ax=T[i],ay=T[i+1],az=T[i+2], bx=T[i+3],by=T[i+4],bz=T[i+5], cx=T[i+6],cy=T[i+7],cz=T[i+8];
-    const den=(bz-cz)*(ax-cx)+(cx-bx)*(az-cz);
-    if(Math.abs(den)<1e-12) continue;
-    const l1=((bz-cz)*(x-cx)+(cx-bx)*(z-cz))/den;
-    const l2=((cz-az)*(x-cx)+(ax-cx)*(z-cz))/den;
-    const l3=1-l1-l2;
-    if(l1>=-1e-9&&l2>=-1e-9&&l3>=-1e-9){ const y=l1*ay+l2*by+l3*cy; if(best===null||y>best) best=y; }
-  }
-  return best===null?0:best;
-}
-const _gc=new Map();
-function groundY(x,z){
-  const k=Math.round(x*4)+":"+Math.round(z*4);
-  let v=_gc.get(k); if(v!==undefined) return v;
-  v=groundCPU(x,z);
-  if(_gc.size>8000) _gc.clear();
-  _gc.set(k,v); return v;
-}
-// one-time honesty check: does the renderer's own raycast agree with the blob geometry?
-function mkEntity(parent, url, scale){
-  const el=document.createElement("a-entity");
-  if(url) el.setAttribute("gltf-model","url("+url+")");
-  if(scale) el.setAttribute("scale",scale+" "+scale+" "+scale);
-  parent.appendChild(el);
-  return el;
-}
-function attachMesh(el, mesh){
-  const add=()=>{ try{ el.object3D.add(mesh); }catch(e){} };
-  add(); el.addEventListener("loaded", add);
-}
-function mkShadow(r, op){
-  const el=document.createElement("a-entity"); worldEl.appendChild(el);
-  const m=new THREE.Mesh(new THREE.CircleGeometry(r,26),
-    new THREE.MeshBasicMaterial({color:0x14300f, transparent:true, opacity:op, depthWrite:false}));
-  m.rotation.x=-Math.PI/2; m.renderOrder=1;
-  attachMesh(el,m);
-  return el;
-}
-"use strict";
-// ================= ZOMBIE WORLD v1.0 =================
-// Composed from the library: meadow field blob + SKY & CLOCK layer + sealed link
-// + hash-chained records. House/graveyard/chest are MOVE library objects.
-const ZWORLD="uB8NNkBbtVzH1L35Sa6RjKKs9dkYx91rQP55Auu7X3I";
-let ZMAN=null, MAN=null; const URLS={}, BUFFERS={};
-const state={ready:false, started:false, over:false, t:0, phase:"day", phaseT:120, nightN:0,
-             waveLeft:0, spawnT:0, secs:0, runT0:0, drawN:0, seed:((Math.random()*1e9)|0),
-             camYaw:Math.PI, camPitch:0.42, camDist:8.5, keys:{}, stick:{x:0,y:0,active:false,id:null},
-             charSel:"boy", goldSpawned:false, greenSpawned:false, redT:4, chestT:0, groanT:5, skyAcc:0};
-let sceneEl, worldEl, camEl, terrainMesh=null;
-let nightEl=null, secretEl=null, moonEl=null;
-const PLAY_R=23, TREE_POS={x:7,z:-9}, TREE_R=2.6, GRAV=15.5, FENCE_Y=3.0, PHASE_LEN=120;
-const COLLIDERS=[];
-function pushOut(o,cx,cz,cr){ const dx=o.x-cx, dz=o.z-cz, d=Math.hypot(dx,dz); if(d<=0.001){ o.x=cx+cr; o.z=cz; return; } if(d<cr){ o.x=cx+dx/d*cr; o.z=cz+dz/d*cr; } }
-function solidPush(o){ const rr=Math.hypot(o.x,o.z); if(rr>PLAY_R){ o.x*=PLAY_R/rr; o.z*=PLAY_R/rr; } pushOut(o,TREE_POS.x,TREE_POS.z,TREE_R); for(const c of COLLIDERS) pushOut(o,c.x,c.z,c.r); }
-// ---------- the two-story house: real levels in the voxel space ----------
-const HOUSE={x0:-6,x1:4,z0:-4,z1:6,f1:0,f2:0,doorX0:-2.2,doorX1:-0.2,stairX0:2.6,stairZT:4.6,stairZB:-2.6};
-function inFoot(x,z){ return x>=HOUSE.x0&&x<=HOUSE.x1&&z>=HOUSE.z0&&z<=HOUSE.z1; }
-function houseGy(x,z,y){
-  if(!inFoot(x,z)) return null;
-  if(x>=HOUSE.stairX0&&z>=HOUSE.stairZB&&z<=HOUSE.stairZT){
-    const t=(HOUSE.stairZT-z)/(HOUSE.stairZT-HOUSE.stairZB), sy=HOUSE.f1+t*(HOUSE.f2-HOUSE.f1);
-    if(y===undefined||Math.abs(y-sy)<1.7) return sy;
-  }
-  if(x<HOUSE.stairX0&&y!==undefined&&y>HOUSE.f1+1.4) return HOUSE.f2;
-  return HOUSE.f1;
-}
-function groundY2(x,z,y){ const h=houseGy(x,z,y); return h!==null?h:groundY(x,z); }
-function crossesWall(x0,z0,x1,z1,gy){
-  const a=inFoot(x0,z0), b=inFoot(x1,z1); if(a===b) return false;
-  if(gy>HOUSE.f1+0.6) return true;                       // upstairs: only the stairs connect
-  if(Math.abs(z1-z0)>1e-9){ const t=(HOUSE.z1-z0)/(z1-z0); if(t>=0&&t<=1){ const cx=x0+(x1-x0)*t; if(cx>=HOUSE.doorX0&&cx<=HOUSE.doorX1) return false; } }
-  return true;
-}
-function zStep(e,nx,nz){
-  const bad=(x,z)=>{ if(crossesWall(e.x,e.z,x,z,e.gy)) return true; const gy=groundY2(x,z,e.y); if(gy<e.gy-2.2) return true; if(!inFoot(x,z)&&gy<FENCE_Y) return true; return false; };
-  if(bad(nx,nz)){ if(!bad(nx,e.z)) nz=e.z; else if(!bad(e.x,nz)) nx=e.x; else { nx=e.x; nz=e.z; } }
-  e.x=nx; e.z=nz; solidPush(e); e.gy=groundY2(e.x,e.z,e.y); e.y=e.gy;
-}
-// ---------- figures (voxel people, composed in-page) ----------
-function bx(parent,w,h,d,x,y,z,color,rx){
-  const e=document.createElement("a-box");
-  e.setAttribute("width",w); e.setAttribute("height",h); e.setAttribute("depth",d);
-  e.setAttribute("position",x+" "+y+" "+z); e.setAttribute("color",color);
-  e.setAttribute("shadow","cast: true");
-  if(rx) e.setAttribute("rotation",rx+" 0 0");
-  parent.appendChild(e); return e;
-}
-function addLabel(parent,txt,y,color){
-  const e=document.createElement("a-text");
-  e.setAttribute("value",txt); e.setAttribute("align","center"); e.setAttribute("color",color||"#ffffff");
-  e.setAttribute("width","7"); e.setAttribute("position","0 "+y+" 0"); e.setAttribute("look-at","[camera]");
-  parent.appendChild(e); return e;
-}
-function makeFigure(opt){
-  const g=document.createElement("a-entity");
-  const skin=opt.skin, shirt=opt.shirt, pants=opt.pants, hair=opt.hair;
-  bx(g,0.2,0.5,0.22,-0.12,0.25,0,pants); bx(g,0.2,0.5,0.22,0.12,0.25,0,pants);
-  bx(g,0.56,0.66,0.3,0,0.83,0,shirt);
-  if(opt.zombie){ bx(g,0.15,0.15,0.55,-0.36,0.95,0.22,skin); bx(g,0.15,0.15,0.55,0.36,0.95,0.22,skin); }
-  else { bx(g,0.15,0.55,0.17,-0.37,0.83,0,skin); bx(g,0.15,0.55,0.17,0.37,0.83,0,skin); }
-  bx(g,0.42,0.42,0.42,0,1.37,0,skin);
-  bx(g,0.46,0.13,0.46,0,1.62,0,hair);
-  if(opt.girl){ bx(g,0.1,0.5,0.4,-0.26,1.3,0,hair); bx(g,0.1,0.5,0.4,0.26,1.3,0,hair); }
-  if(opt.zombie){ bx(g,0.44,0.1,0.44,0,1.13,0,"#3a3a44"); }
-  const sh=document.createElement("a-circle");
-  sh.setAttribute("radius","0.55"); sh.setAttribute("rotation","-90 0 0"); sh.setAttribute("position","0 0.03 0");
-  sh.setAttribute("material","color: #000000; transparent: true; opacity: 0.28"); g.appendChild(sh);
-  const label=addLabel(g,opt.label,2.05,opt.labelColor||"#ffffff");
-  worldEl.appendChild(g);
-  return {el:g,label};
-}
-function placeFig(o){ if(!o.el) return; o.el.setAttribute("position",o.x+" "+(o.y+(o.hopBob||0))+" "+o.z); o.el.setAttribute("rotation","0 "+(o.rotY*180/Math.PI)+" 0"); }
-// ---------- survivors & zombies ----------
-function mkSurvivor(id,name,char){
-  return {id,name,char,x:0,z:14,y:0,gy:0,rotY:Math.PI,hp:5,dead:false,grace:0,invisT:0,
-          weapon:null,ammo:0,kills:0,el:null,label:null,hop:0,hopBob:0,wish:{x:0,z:0},fireQ:0,fireRy:0,moving:false};
-}
-let P1=null, P2=null; const survivors=[];
-const ZOMBIES=[]; let zid=1;
-function zombieFigure(player){
-  return makeFigure({skin:"#7fae5a",shirt:player?"#6a1f1f":"#4a4a55",pants:"#33333d",hair:"#2c3a22",zombie:true,
-                     label:player?"🧟":"",labelColor:"#ff9a9a"});
-}
-function spawnZombie(x,z,player){
-  const f=zombieFigure(!!player);
-  const zn={id:zid++,x,z,y:0,gy:groundY2(x,z,0),rotY:Math.random()*6.28,hp:player?3:1,dead:false,rise:1.2,pauseT:0,
-            el:f.el,label:f.label,player:!!player,hop:Math.random()*6,feedT:0};
-  zn.y=zn.gy; zn.el.setAttribute("position",x+" "+(zn.gy-1.7)+" "+z);
-  if(player){ zn.label.setAttribute("value","🧟 PLAYER"); }
-  ZOMBIES.push(zn); return zn;
-}
-// ---------- world build ----------
-function box(parent,w,h,d,x,y,z,color,ry){
-  const e=document.createElement("a-box");
-  e.setAttribute("width",w); e.setAttribute("height",h); e.setAttribute("depth",d);
-  e.setAttribute("position",x+" "+y+" "+z); e.setAttribute("color",color);
-  e.setAttribute("shadow","cast: true; receive: true"); if(ry) e.setAttribute("rotation","0 "+ry+" 0");
-  parent.appendChild(e); return e;
-}
-function buildHouse(){
-  const g=document.createElement("a-entity"); worldEl.appendChild(g);
-  let mx=-99; for(let x=HOUSE.x0;x<=HOUSE.x1;x+=0.75) for(let z=HOUSE.z0;z<=HOUSE.z1;z+=0.75) mx=Math.max(mx,groundY(x,z));
-  HOUSE.f1=mx+0.22; HOUSE.f2=HOUSE.f1+3.0;
-  const cx=(HOUSE.x0+HOUSE.x1)/2, cz=(HOUSE.z0+HOUSE.z1)/2, W=HOUSE.x1-HOUSE.x0, D=HOUSE.z1-HOUSE.z0;
-  box(g,W+1.2,1.3,D+1.2,cx,HOUSE.f1-0.65,cz,"#6b6f78");                                   // stone platform
-  const wall="#8a6f4d", f1=HOUSE.f1, f2=HOUSE.f2;
-  // ground floor walls (door gap on the south wall, window gaps)
-  box(g,W,2.9,0.25,cx,f1+1.45,HOUSE.z0,wall);                                            // north
-  box(g,0.25,2.9,D,HOUSE.x0,f1+1.45,cz,wall);                                            // west
-  box(g,0.25,2.9,D,HOUSE.x1,f1+1.45,cz,wall);                                            // east
-  const dw=HOUSE.doorX1-HOUSE.doorX0, dcx=(HOUSE.doorX0+HOUSE.doorX1)/2;
-  box(g,(dcx-HOUSE.doorX0)+ (HOUSE.doorX0-HOUSE.x0),2.9,0.25,(HOUSE.x0+HOUSE.doorX0)/2,f1+1.45,HOUSE.z1,wall);
-  box(g,(HOUSE.x1-HOUSE.doorX1),2.9,0.25,(HOUSE.doorX1+HOUSE.x1)/2,f1+1.45,HOUSE.z1,wall);
-  box(g,dw,0.8,0.25,dcx,f1+2.5,HOUSE.z1,wall);                                           // lintel
-  // upper floor: slab leaving the stair well (east strip) open
-  box(g,HOUSE.stairX0-HOUSE.x0,0.22,D,(HOUSE.x0+HOUSE.stairX0)/2,f2,cz,"#7a5f42");
-  // stairs: 10 steps up the east wall, south -> north
-  for(let i=0;i<10;i++){ const z=HOUSE.stairZT-0.36-i*0.72, y=f1+0.15+i*0.3; box(g,1.3,0.3,0.74,(HOUSE.stairX0+HOUSE.x1)/2,y,z,"#7a5f42"); }
-  // railing along the stair well + upper south edge
-  box(g,0.08,0.8,D,HOUSE.stairX0,f2+0.5,cz,"#5d4830");
-  // roof on posts (open-air upper deck under a gable)
-  [[HOUSE.x0+0.3,HOUSE.z0+0.3],[HOUSE.stairX0-0.3,HOUSE.z0+0.3],[HOUSE.x0+0.3,HOUSE.z1-0.3],[HOUSE.stairX0-0.3,HOUSE.z1-0.3]].forEach(p=>box(g,0.22,2.6,0.22,p[0],f2+1.3,p[1],"#5d4830"));
-  const r1=box(g,W-1.4,0.14,D/2+0.7,cx-0.7,f2+3.1,cz-D/4,"#93392a"); r1.setAttribute("rotation","24 0 0");
-  const r2=box(g,W-1.4,0.14,D/2+0.7,cx-0.7,f2+3.1,cz+D/4,"#93392a"); r2.setAttribute("rotation","-24 0 0");
-  const dl=document.createElement("a-text"); dl.setAttribute("value","🏠 THE HOUSE — TWO FLOORS"); dl.setAttribute("align","center");
-  dl.setAttribute("color","#ffd76b"); dl.setAttribute("width","9"); dl.setAttribute("position",cx+" "+(f2+4.4)+" "+cz); dl.setAttribute("look-at","[camera]"); g.appendChild(dl);
-  log("🏠 the house stands at ("+cx+","+cz+") — platform "+HOUSE.f1.toFixed(1)+", upper floor "+HOUSE.f2.toFixed(1)+", stairs on the east wall","dim");
-}
-function buildGraveyard(){
-  const g=document.createElement("a-entity"); worldEl.appendChild(g);
-  for(const gp of ZMAN.graves){
-    const x=gp[0], z=gp[1], gy=groundY(x,z);
-    const st=box(g,0.72,0.95,0.12,x,gy+0.42,z,"#9aa0a8"); st.setAttribute("rotation","0 "+(Math.random()*40-20)+" "+(Math.random()*8-4));
-    const md=document.createElement("a-sphere"); md.setAttribute("radius","0.55"); md.setAttribute("scale","1 0.32 1.4");
-    md.setAttribute("position",x+" "+(gy+0.05)+" "+(z+0.55)); md.setAttribute("color","#4d4438"); g.appendChild(md);
-  }
-  const dl=document.createElement("a-text"); dl.setAttribute("value","🪦 THE GRAVEYARD"); dl.setAttribute("align","center");
-  dl.setAttribute("color","#b8ffc8"); dl.setAttribute("width","9"); dl.setAttribute("position",TREE_POS.x+" "+(groundY(TREE_POS.x,TREE_POS.z)+6.4)+" "+TREE_POS.z); dl.setAttribute("look-at","[camera]"); g.appendChild(dl);
-  log("🪦 graveyard set around the dead tree — "+ZMAN.graves.length+" graves, every one a door","dim");
-}
-// chest + apples visuals
-let chestEl=null, chestGlow=null;
-const ZAPPLES=[]; let zaid=1;
-function buildChest(){
-  chestEl=document.createElement("a-entity");
-  box(chestEl,0.9,0.55,0.6,0,0.28,0,"#7a4d1f"); box(chestEl,0.95,0.2,0.65,0,0.62,0,"#96622a");
-  box(chestEl,0.16,0.2,0.05,0,0.45,0.33,"#ffd76b");
-  chestGlow=document.createElement("a-torus"); chestGlow.setAttribute("radius","0.85"); chestGlow.setAttribute("radius-tubular","0.045");
-  chestGlow.setAttribute("rotation","90 0 0"); chestGlow.setAttribute("position","0 0.1 0");
-  chestGlow.setAttribute("material","color: #ffd76b; emissive: #ffca55; emissiveIntensity: 1.4; transparent: true; opacity: 0.9");
-  chestEl.appendChild(chestGlow); chestEl.setAttribute("visible","false"); worldEl.appendChild(chestEl);
-}
-const CHEST={active:false,x:0,z:0,y:0};
-function spawnApple(kind,x,z){
-  const el=document.createElement("a-entity"); el.setAttribute("gltf-model","url("+URLS.apple+")"); el.setAttribute("scale","1.6 1.6 1.6");
-  const gy=groundY2(x,z,99);
-  el.setAttribute("position",x+" "+(gy+0.28)+" "+z); worldEl.appendChild(el);
-  if(kind!=="red"){ const gl=document.createElement("a-sphere"); gl.setAttribute("radius","0.42");
-    gl.setAttribute("material","color: "+(kind==="gold"?"#ffd76b":"#51ff7a")+"; emissive: "+(kind==="gold"?"#ffca55":"#2aff5a")+"; emissiveIntensity: 1.6; transparent: true; opacity: 0.55");
-    gl.setAttribute("position","0 0.1 0"); el.appendChild(gl); }
-  const a={id:zaid++,kind,x,z,y:gy,el,bob:Math.random()*6};
-  ZAPPLES.push(a); return a;
-}
-function removeApple(a){ const i=ZAPPLES.indexOf(a); if(i>=0) ZAPPLES.splice(i,1); if(a.el&&a.el.parentNode) a.el.parentNode.removeChild(a.el); }
+/* ═══════════════ end RESURRECTION CORE ═══════════════ */
 
-const SND={ctx:null, on:localStorage.getItem("cube-snd-on")!=="0", vol:+(localStorage.getItem("cube-snd-vol")||"0.8"), mus:null,
-  init(){ if(this.ctx){ if(this.ctx.state==="suspended") this.ctx.resume(); return; } try{ this.ctx=new (window.AudioContext||window.webkitAudioContext)(); }catch(_){ this.ctx=null; } },
-  tone(f0,f1,dur,type,g0,when){ if(!this.ctx||!this.on) return; const t=this.ctx.currentTime+(when||0); const o=this.ctx.createOscillator(), g=this.ctx.createGain(); o.type=type||"sine"; o.frequency.setValueAtTime(Math.max(30,f0),t); o.frequency.exponentialRampToValueAtTime(Math.max(30,f1),t+dur); g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(Math.max(0.001,(g0||0.2)*this.vol),t+0.015); g.gain.exponentialRampToValueAtTime(0.0001,t+dur); o.connect(g); g.connect(this.ctx.destination); o.start(t); o.stop(t+dur+0.05); },
-  noise(dur,fFrom,fTo,g0){ if(!this.ctx||!this.on) return; const t=this.ctx.currentTime; const len=Math.max(1,(dur*this.ctx.sampleRate)|0); const buf=this.ctx.createBuffer(1,len,this.ctx.sampleRate); const d=buf.getChannelData(0); for(let i=0;i<len;i++) d[i]=Math.random()*2-1; const s=this.ctx.createBufferSource(); s.buffer=buf; const f=this.ctx.createBiquadFilter(); f.type="bandpass"; f.Q.value=1.1; f.frequency.setValueAtTime(fFrom,t); f.frequency.exponentialRampToValueAtTime(Math.max(40,fTo),t+dur); const g=this.ctx.createGain(); g.gain.setValueAtTime(Math.max(0.001,(g0||0.15)*this.vol),t); g.gain.exponentialRampToValueAtTime(0.0001,t+dur); s.connect(f); f.connect(g); g.connect(this.ctx.destination); s.start(t); s.stop(t+dur+0.02); },
-  play(name){ if(!this.ctx||!this.on) return;
-    if(name==="pickup"){ this.tone(880,1320,0.12,"sine",0.16); this.tone(1320,1760,0.10,"sine",0.09,0.05); }
-    else if(name==="throw"){ this.noise(0.18,1400,300,0.11); }
-    else if(name==="bonk"){ this.tone(300,60,0.16,"square",0.18); this.noise(0.08,900,200,0.13); }
-    else if(name==="thud"){ this.tone(140,45,0.25,"sine",0.28); this.noise(0.12,500,120,0.11); }
-    else if(name==="win"){ [523,659,784,1046].forEach((f,i)=>this.tone(f,f,0.16,"triangle",0.16,i*0.09)); }
-    else if(name==="tree"){ this.tone(210,65,0.13,"square",0.20); this.tone(120,55,0.17,"sine",0.22); this.noise(0.07,700,250,0.12); }
-    else if(name==="rock"){ this.tone(2350,1900,0.06,"triangle",0.15); this.tone(3150,2600,0.045,"sine",0.10,0.012); this.noise(0.05,3800,2400,0.10); }
-    else if(name==="lose"){ [392,330,262,196].forEach((f,i)=>this.tone(f,f*0.97,0.18,"triangle",0.13,i*0.10)); } },
-  musicStart(){ if(!this.ctx||this.mus) return; const g=this.ctx.createGain(); g.gain.value=0.0001; g.connect(this.ctx.destination);
-    const chords=[[220,261.63,329.63],[174.61,220,261.63],[196,246.94,293.66],[164.81,196,246.94]]; let ci=0, cur=[];
-    const mk=()=>{ cur=chords[ci].map(f=>{ const o=this.ctx.createOscillator(); o.type="sine"; o.frequency.value=f; const og=this.ctx.createGain(); og.gain.value=0.045; o.connect(og); og.connect(g); o.start(); return o; }); if(this.mus) this.mus.cur=cur; };
-    mk(); g.gain.linearRampToValueAtTime(0.55*this.vol, this.ctx.currentTime+2.5);
-    const iv=setInterval(()=>{ cur.forEach(o=>{ try{ o.stop(); }catch(_){} }); ci=(ci+1)%chords.length; mk(); }, 8000);
-    this.mus={g, iv, cur}; },
-  musicStop(){ const m=this.mus; if(!m) return; this.mus=null; clearInterval(m.iv); (m.cur||[]).forEach(o=>{ try{ o.stop(); }catch(_){} }); try{ m.g.disconnect(); }catch(_){} }
+const $ = s => document.querySelector(s);
+const LIBRARY_ROOT = "-Pf5lfueNjU59iWgxkMoUW6GkOwUpPTb5ngLbfAngIo";
+const SHELF = [
+  {name:"🧟 ZOMBIE WORLD", note:"survive the nights — two-story house, graveyard horde, chest weapons · v1.0 FINAL", blob:"BNHiuU_GizzZdSAiDKvohg1an4TNcWuUJJNtu1Z5I5Q", sha:"243a2e20861a1c120e81ac8f49b262275f4aee14b0cc6a175e48145727df353d", world:"uB8NNkBbtVzH1L35Sa6RjKKs9dkYx91rQP55Auu7X3I"},
+  {name:"🐰 BUNNY CUBE", note:"bonk the bullies — the meadow, two phones, one sealed world · v1.9.1 FINAL", blob:"9ytG2kDy2cAgc5ifMo2FdqjZ6Sq2Ejbh8B8xUs-m8FE", sha:"df9d9ff6aff1c046e551002d621ada78bc8fae021bfc0e7f54fae8894c96d475", world:"hul119v83vpAVM60pXnhIRgEmM7YYPTjevG5S0EU5e8"}
+];
+const FLOCK = [
+  ["🧟 Zombie World — final build", SHELF[0].blob], ["🐰 Bunny Cube — final build", SHELF[1].blob],
+  ["🌳 Library root (Mother Reel v9)", LIBRARY_ROOT], ["🧟 Zombie rules + world record", SHELF[0].world], ["🐰 Meadow world manifest (14 assets)", SHELF[1].world]
+];
+function say(msg, cls){ const el = $("#status"); const d = document.createElement("div"); if(cls) d.className = cls; d.textContent = msg; el.appendChild(d); el.scrollTop = el.scrollHeight; }
+function setLog(o){ window.__loaderLog = o; try{ sessionStorage.setItem("blob-loader-log", JSON.stringify(o)); }catch(e){} }
+async function resurrect(entry){
+  say("🎮 " + entry.name);
+  say("recalling the build from the Walrus network…");
+  const buf = await recall(entry.blob);
+  const bytes = new Uint8Array(buf);
+  say("recalled " + bytes.length.toLocaleString() + " bytes — hashing the build…");
+  const h = sha256hex(bytes);
+  if(h !== entry.sha){ say("✗ HASH MISMATCH — sha256 " + h, "bad"); say("this copy is NOT the pinned final build. Refused. The pin is the promise.", "bad"); setLog({blob:entry.blob, bytes:bytes.length, sha:h, verified:false}); return; }
+  say("sha256 " + h.slice(0, 24) + "… ✓ MATCHES THE PIN", "ok");
+  try{ const w = await recall(entry.world); say("its world answers too ✓ (" + w.byteLength.toLocaleString() + " bytes of world record)", "ok"); }catch(e){ say("world record did not answer — opening anyway, the game checks it itself", "dim"); }
+  setLog({blob:entry.blob, bytes:bytes.length, sha:h, verified:true});
+  say("✓ RESURRECTED — opening. This page lived in the blobs the whole time.", "ok");
+  openBytes(bytes);
+}
+async function loadById(blob, shaPin, name){
+  say("🔑 recalling " + blob.slice(0, 20) + "…");
+  const buf = await recall(blob);
+  const bytes = new Uint8Array(buf);
+  const h = sha256hex(bytes);
+  if(shaPin && h !== shaPin){ say("✗ HASH MISMATCH — sha256 " + h, "bad"); setLog({blob, bytes:bytes.length, sha:h, verified:false}); return; }
+  const c = classify(bytes);
+  say("sha256 " + h.slice(0, 24) + "…" + (shaPin ? " ✓ pin matches" : ""), "ok");
+  say("section: " + c.section, "ok");
+  setLog({blob, bytes:bytes.length, sha:h, verified: shaPin ? true : null, section: c.section});
+  if(c.kind === "page"){ say("opening the build…", "ok"); openBytes(bytes);
+  } else if(c.kind === "record"){ say(c.ok ? "⛓ record hash VERIFIES ✓ — it belongs in the Hall" : "✗ record hash does not verify", c.ok ? "ok" : "bad"); }
+  else { say("recalled and classified — " + bytes.length.toLocaleString() + " bytes held in this page's hands.", "dim"); }
+  return c;
+}
+function openBytes(bytes){
+  const url = URL.createObjectURL(new Blob([bytes], {type:"text/html"}));
+  const keep = new URLSearchParams(location.search); ["g","h","n"].forEach(k=>keep.delete(k));
+  const qs = keep.toString();
+  setTimeout(()=>{ try{ location.replace(url + (qs ? "?" + qs : "")); }catch(e){}
+    setTimeout(()=>{ if(document.title.includes("BLOB LOADER")){ try{ document.open(); document.write(new TextDecoder().decode(bytes)); document.close(); }catch(e){} } }, 3000);
+  }, 400);
+}
+function renderShelf(){
+  $("#shelf").innerHTML = "";
+  for(const e of SHELF){ const b = document.createElement("button"); b.className = "game";
+    b.innerHTML = e.name + "<small>" + e.note + "</small><small class='mono'>blob " + e.blob + "</small><small class='mono'>sha256 " + e.sha + "</small>";
+    b.onclick = ()=>resurrect(e).catch(err=>say("✗ recall failed: " + err.message, "bad"));
+    $("#shelf").appendChild(b); }
+  $("#flock").innerHTML = FLOCK.map(f=>"• " + f[0] + "<br><span class='mono dim'>&nbsp;&nbsp;" + f[1] + "</span>").join("<br>");
+}
+async function attachRoot(){
+  try{ const buf = await recall(LIBRARY_ROOT); const j = JSON.parse(new TextDecoder().decode(new Uint8Array(buf)));
+    const names = j.names || j.entries || []; const list = Array.isArray(names) ? names : Object.keys(names);
+    $("#rootBox").innerHTML = "✓ library attached — root <span class='mono'>" + LIBRARY_ROOT + "</span><br>" + list.length + " works held: " + list.map(x=>typeof x === "string" ? x : (x.name || "?")).join(" · ");
+  }catch(e){ $("#rootBox").textContent = "the root did not answer just now — the shelf below works regardless; the library attaches when a mirror responds."; }
+}
+$("#pasteBtn").onclick = async ()=>{
+  const id = $("#pasteId").value.trim(), pin = $("#pasteSha").value.trim();
+  if(!id){ $("#admit").textContent = "paste a blob id first"; return; }
+  $("#admit").textContent = "recalling…";
+  try{ const c = await loadById(id, pin || null); $("#admit").innerHTML = "section: <b>" + c.section + "</b>" + (c.kind === "record" ? (c.ok ? " · ⛓ hash verifies ✓" : " · ✗ hash fails") : "") + (c.kind === "page" ? " · opening…" : "");
+  }catch(e){ $("#admit").textContent = "✗ recall failed: " + e.message; }
 };
-// v1.8.5 THE STAR SECRET (David, Nov 7 02:15–02:18 — for Krystian, Koda & Kai):
-// tree → tree → rock, same round, ANY player's apples count (a family trigger,
-// host-tracked, progress sealed in every snapshot). The sequence does not force
-// the sky: it raises an OFFER, and every player chooses for themselves —
-// 🍎 EAT APPLE is the final step, and the night (and the words written in it)
-// comes only to those who bite. The public night sky is innocent; the
-// constellation is not in it. Out-of-order rock = the tree forgets; a new
-// round = the tree forgets. Once offered, the offer stands for the session.
-const STAR_MSG="";
-const SKY={tod:10.4, cycle:false, speed:24/240, mode:"day", words:false, acc:0};
-let skyDomeHf=null, sunDisc=null, moonDisc=null, sunLightEl=null, moonLightEl=null, hemiEl=null, wordLightEl=null;
-const SKY_STOPS=[[0,"#03051a","#0e1836"],[5.5,"#03051a","#0e1836"],[7,"#35507e","#e8a37c"],[9,"#3f83cc","#bfe3f7"],[16.5,"#3f83cc","#bfe3f7"],[18,"#2c3e70","#ff9a3c"],[19.5,"#070a24","#1a2340"],[21,"#03051a","#0e1836"],[24,"#03051a","#0e1836"]];
-function skyPalette(tod){
-  let a=SKY_STOPS[0], b=SKY_STOPS[SKY_STOPS.length-1];
-  for(let i=0;i<SKY_STOPS.length-1;i++){ if(tod>=SKY_STOPS[i][0] && tod<=SKY_STOPS[i+1][0]){ a=SKY_STOPS[i]; b=SKY_STOPS[i+1]; break; } }
-  const f=(tod-a[0])/Math.max(0.0001,(b[0]-a[0]));
-  return { top:new THREE.Color(a[1]).lerp(new THREE.Color(b[1]),f), hor:new THREE.Color(a[2]).lerp(new THREE.Color(b[2]),f) };
-}
-function skyDark(tod){
-  if(tod<5.5) return 1;
-  if(tod<7) return 1-(tod-5.5)/1.5;
-  if(tod<17) return 0;
-  if(tod<19.5) return (tod-17)/2.5;
-  return 1;
-}
-function buildSky(){
-  if(nightEl) { applySky(); return; }
-  const sc=sceneEl.object3D;
-  // gradient dome (vertex colors by height) — a mesh we own, not the scene background
-  const dg=new THREE.SphereGeometry(430, 28, 14);
-  const dp=dg.getAttribute("position"); const dc=new Float32Array(dp.count*3); skyDomeHf=new Float32Array(dp.count);
-  for(let i=0;i<dp.count;i++){ const ny=dp.getY(i)/430; let hf=Math.min(1,Math.max(0,(ny+0.25)/0.95)); hf=hf*hf*(3-2*hf); skyDomeHf[i]=hf; }
-  dg.setAttribute("color", new THREE.BufferAttribute(dc,3));
-  skyDome=new THREE.Mesh(dg, new THREE.MeshBasicMaterial({vertexColors:true, side:THREE.BackSide, fog:false, depthWrite:false}));
-  skyDome.renderOrder=-10; sc.add(skyDome);
-  // the star field
-  const pts=[];
-  for(let i=0;i<750;i++){ const th=Math.random()*Math.PI*2, ph=Math.acos(Math.random()*0.92), r=415;
-    pts.push(r*Math.sin(ph)*Math.cos(th), r*Math.cos(ph)+4, r*Math.sin(ph)*Math.sin(th)); }
-  const starGeo=new THREE.BufferGeometry();
-  starGeo.setAttribute("position", new THREE.Float32BufferAttribute(pts,3));
-  nightEl=new THREE.Points(starGeo, new THREE.PointsMaterial({color:0xcfe0ff, size:2.5, sizeAttenuation:false, transparent:true, opacity:0, fog:false}));
-  nightEl.visible=false; sc.add(nightEl);
-  // the secret constellation, curved onto the rim of the sky (every sampled point
-  // pushed out to the dome shell, so the words wrap the sky line)
-  const cv=document.createElement("canvas"); cv.width=1400; cv.height=620;
-  const cx2=cv.getContext("2d"); cx2.fillStyle="#000"; cx2.fillRect(0,0,1400,620);
-  cx2.fillStyle="#fff"; cx2.textAlign="center"; cx2.font="800 92px system-ui, sans-serif";
-  ["I LOVE YOU","KRYSTIAN, KAI & KODA","YOU BIT INTO THE","TREE OF KNOWLEDGE!","LOVE ALWAYS, YOUR DA!","REMEMBER GOD FIRST!","#WHOSPINK?"].forEach((ln,i)=>cx2.fillText(ln, 700, 108+i*76));
-  const img=cx2.getImageData(0,0,1400,620).data; const sp=[]; const v=new THREE.Vector3();
-  for(let y=0;y<620;y+=6) for(let x=0;x<1400;x+=6){ if(img[(y*1400+x)*4+3]>120){ v.set(((x-700)/1400)*330, 30+(1-y/620)*235, -330); v.normalize().multiplyScalar(408); sp.push(v.x, v.y, v.z); } }
-  const sg=new THREE.BufferGeometry(); sg.setAttribute("position", new THREE.Float32BufferAttribute(sp,3));
-  secretEl=new THREE.Points(sg, new THREE.PointsMaterial({color:0xffe9a8, size:3.3, sizeAttenuation:false, transparent:true, opacity:1, fog:false}));
-  secretEl.visible=false; sc.add(secretEl);
-  // sun and moon discs
-  sunDisc=new THREE.Mesh(new THREE.SphereGeometry(13, 18, 12), new THREE.MeshBasicMaterial({color:0xffdf6b, fog:false}));
-  moonDisc=new THREE.Mesh(new THREE.SphereGeometry(10.5, 18, 12), new THREE.MeshBasicMaterial({color:0xdfe9ff, fog:false}));
-  sc.add(sunDisc); sc.add(moonDisc);
-  moonEl=new THREE.AmbientLight(0x8fb4ff, 0); sc.add(moonEl);
-  // the lights (A-Frame entities, so every device lights the same way)
-  const mk=(light)=>{ const e=document.createElement("a-entity"); e.setAttribute("light", light); sceneEl.appendChild(e); return e; };
-  hemiEl=mk({type:"hemisphere", color:"#bcd8ff", groundColor:"#6a7a52", intensity:0.85});
-  sunLightEl=mk({type:"directional", color:"#fff2d0", intensity:1.1, castShadow:true});
-  moonLightEl=mk({type:"directional", color:"#a9c2ff", intensity:0, castShadow:true});
-  wordLightEl=mk({type:"point", color:"#ffd76a", intensity:0, distance:900, decay:0});
-  wordLightEl.setAttribute("position","0 80 -240");
-  teleEvent("STAR SKY","🌌 sky elements built · dome, sun, moon, lights · "+sp.length+" stars spell the words along the rim");
-  applySky();
-}
-function applySky(){
-  if(!skyDome) return;
-  const tod=SKY.tod, dark=skyDark(tod), pal=skyPalette(tod);
-  SKY.mode = dark>=1 ? "night" : (tod>=17&&tod<19.5) ? "sunset" : (tod>=5.5&&tod<7.5) ? "dawn" : "day";
-  const dc=skyDome.geometry.getAttribute("color");
-  const tmp=new THREE.Color();
-  for(let i=0;i<dc.count;i++){ tmp.copy(pal.hor).lerp(pal.top, skyDomeHf[i]); dc.setXYZ(i, tmp.r, tmp.g, tmp.b); }
-  dc.needsUpdate=true;
-  sceneEl.setAttribute("background","color: #"+pal.top.getHexString());
-  if(sceneEl.renderer) sceneEl.renderer.setClearColor(pal.top);
-  sceneEl.setAttribute("fog","type: linear; color: #"+pal.hor.getHexString()+"; near: "+Math.round(38-dark*8)+"; far: "+Math.round(120+dark*180));
-  if(nightEl){ nightEl.visible=dark>0.03; nightEl.material.opacity=dark; }
-  if(secretEl) secretEl.visible=SKY.words && dark>0.5;
-  const sang=((tod-6)/12)*Math.PI, mang=(((tod+24-18)%24)/12)*Math.PI;
-  const sx=Math.cos(sang)*300, sy=Math.sin(sang)*290, mx=Math.cos(mang)*300, my=Math.sin(mang)*290;
-  if(sunDisc){ sunDisc.position.set(sx, sy, -120); sunDisc.visible=sy>-18; }
-  if(moonDisc){ moonDisc.position.set(mx, my, -120); moonDisc.visible=my>-18; }
-  if(sunLightEl){ sunLightEl.setAttribute("position", (sx*0.35)+" "+(Math.max(6,sy*0.35))+" "+(-120*0.35)); sunLightEl.setAttribute("light",{intensity:Math.max(0,Math.sin(sang))*1.15, color:(Math.sin(sang)<0.35?"#ff9448":"#fff2d0"), castShadow:Math.sin(sang)>0}); }
-  if(moonLightEl){ moonLightEl.setAttribute("position", (mx*0.35)+" "+(Math.max(6,my*0.35))+" "+(-120*0.35)); moonLightEl.setAttribute("light",{intensity:Math.max(0,Math.sin(mang))*0.9, castShadow:(Math.sin(mang)>0 && Math.sin(sang)<=0)}); }
-  if(hemiEl) hemiEl.setAttribute("light",{intensity:0.85-dark*0.4, color:(SKY.words&&dark>0.5)?"#ffdf9e":(dark>0.5?"#7286b8":"#bcd8ff")});
-  if(moonEl) moonEl.intensity=dark*0.22;
-  if(wordLightEl) wordLightEl.setAttribute("light",{intensity:(SKY.words&&dark>0.5)?2.4:0});
-  skyNight=dark>0.5; skySecret=SKY.words&&dark>0.5;
-}
-// ---------- presentation helpers ----------
-let bannerTO=null, popTO=null;
-function showBanner(main, sub, ms){ const b=$("banner"); $("bannerMain").textContent=main; $("bannerSub").textContent=sub||""; b.style.display="block"; clearTimeout(bannerTO); if(ms) bannerTO=setTimeout(()=>{ b.style.display="none"; }, ms); }
-function popText(txt, ms){ const p=$("pop"); p.textContent=txt; p.style.display="block"; clearTimeout(popTO); popTO=setTimeout(()=>{ p.style.display="none"; }, ms||2200); }
-function zsnd(name){
-  if(!SND.ctx||!SND.on) return;
-  try{
-    if(name==="rifle"){ SND.noise(0.13,3200,300,0.28); SND.tone(160,55,0.14,"square",0.2); }
-    else if(name==="boom"){ SND.noise(0.5,900,60,0.4); SND.tone(90,30,0.5,"sine",0.4); }
-    else if(name==="scare"){ SND.tone(95,38,0.55,"sawtooth",0.32); SND.noise(0.42,2400,180,0.22); }
-    else if(name==="groan"){ SND.tone(65+Math.random()*35,48,0.8,"sawtooth",0.06); }
-    else if(name==="chest"){ [392,523,659,784].forEach((f,i)=>SND.tone(f,f,0.13,"triangle",0.15,i*0.07)); }
-    else if(name==="bite"){ SND.tone(220,70,0.2,"square",0.22); SND.noise(0.16,1200,300,0.18); }
-    else SND.play(name);
-  }catch(e){}
-}
-let scareTO=null;
-function scare(s){
-  const sc=$("scare"); sc.style.display="block";
-  $("scareTxt").textContent="🧟 IT'S ON YOU, "+s.name+"! −1 ❤";
-  zsnd("scare"); clearTimeout(scareTO); scareTO=setTimeout(()=>{ sc.style.display="none"; }, 750);
-  if(navigator.vibrate) navigator.vibrate(120);
-}
-// ---------- derived draws (the chest is a counter; the draw is a hash) ----------
-function drawRand(tag){
-  const s=state.seed+"|"+tag+"|"+state.drawN++;
-  let h=0; const hex=sha256hex(new TextEncoder().encode(s));
-  return parseInt(hex.slice(0,8),16)/4294967295;
-}
-// ---------- the run ----------
-function startRun(){
-  state.started=true; state.over=false; state.t=0; state.secs=0; state.phase="day"; state.phaseT=PHASE_LEN;
-  state.nightN=0; state.waveLeft=0; state.goldSpawned=false; state.greenSpawned=false; state.redT=3; state.chestT=2;
-  state.runT0=state.t;
-  for(const zn of ZOMBIES) if(zn.el&&zn.el.parentNode) zn.el.parentNode.removeChild(zn.el);
-  ZOMBIES.length=0;
-  for(const a of [...ZAPPLES]) removeApple(a);
-  survivors.length=0;
-  P1=mkSurvivor("P1", state.name||"SURVIVOR", state.charSel);
-  P1.x=0; P1.z=14; P1.gy=groundY2(0,14,0); P1.y=P1.gy;
-  const f=makeFigure({skin:P1.char==="girl"?"#f2c49b":"#e8b88a", shirt:P1.char==="girl"?"#d84f7a":"#3f6fd8", pants:"#3a3f4a", hair:P1.char==="girl"?"#5a3a1a":"#2a2a33", girl:P1.char==="girl", label:"🧑 "+P1.name, labelColor:"#a8d8ff"});
-  P1.el=f.el; P1.label=f.label; survivors.push(P1);
-  if(NET.role==="host"&&NET.guest.joined){
-    if(NET.guest.role==="survivor"){ addGuestSurvivor(); }
-    else { NET.guest.respawnT=1.5; }
-  }
-  CHEST.active=false; if(chestEl) chestEl.setAttribute("visible","false");
-  showBanner("☀️ DAY 1", "Scavenge. The chest holds a weapon. Night is coming.", 4200);
-  popText("☀️ DAY 1 — find the chest, eat apples, watch the graves at dark", 3600);
-  teleEvent("RUN START","seed "+state.seed+" · "+P1.name+" as "+P1.char);
-}
-function addGuestSurvivor(){
-  P2=mkSurvivor("P2", NET.guest.name||"SURVIVOR 2", NET.guest.char==="girl"?"girl":"boy");
-  P2.x=2.5; P2.z=15; P2.gy=groundY2(2.5,15,0); P2.y=P2.gy;
-  const f=makeFigure({skin:"#e8b88a", shirt:P2.char==="girl"?"#d84f7a":"#3f9e4d", pants:"#3a3f4a", hair:"#2a2a33", girl:P2.char==="girl", label:"🧑 "+P2.name, labelColor:"#a8ffb0"});
-  P2.el=f.el; P2.label=f.label; survivors.push(P2);
-}
-function phaseTick(dt){
-  state.phaseT-=dt;
-  const frac=1-state.phaseT/PHASE_LEN;
-  let tod;
-  if(state.phase==="day"){ tod=9+frac*7.5; }
-  else { tod=20.5+frac*8; if(tod>=24) tod-=24; }
-  state.skyAcc+=dt;
-  if(state.skyAcc>0.3){ state.skyAcc=0; SKY.tod=tod; applySky(); }
-  if(state.phaseT<=0){
-    if(state.phase==="day"){
-      state.phase="night"; state.phaseT=PHASE_LEN; state.nightN++;
-      state.waveLeft=2*state.nightN; state.spawnT=0.5; state.goldSpawned=false;
-      showBanner("🌙 NIGHT "+state.nightN, "The graves give up "+state.waveLeft+" dead. Survive to dawn.", 4200);
-      popText("🌙 NIGHT "+state.nightN+" — "+state.waveLeft+" coming, two by two…", 3400); zsnd("lose");
-      teleEvent("NIGHTFALL","night "+state.nightN+" · wave "+state.waveLeft);
-    } else {
-      state.phase="day"; state.phaseT=PHASE_LEN; state.greenSpawned=false;
-      showBanner("🌅 DAWN", "Night "+state.nightN+" survived. Level "+state.nightN+". Breathe — then scavenge.", 4200);
-      popText("🌅 DAWN — NIGHT "+state.nightN+" SURVIVED ✓", 3200); zsnd("win");
-      teleEvent("DAWN","nights survived: "+state.nightN);
-    }
-  }
-  if(state.phase==="night"&&state.waveLeft>0){
-    state.spawnT-=dt;
-    if(state.spawnT<=0){
-      state.spawnT=3.5;
-      for(let i=0;i<2&&state.waveLeft>0;i++){
-        const gp=ZMAN.graves[(Math.random()*ZMAN.graves.length)|0];
-        spawnZombie(gp[0]+(Math.random()*1.4-0.7), gp[1]+(Math.random()*1.4-0.7), false);
-        state.waveLeft--;
-      }
-      zsnd("groan");
-    }
-  }
-  // golden apple: once a night, brief
-  if(state.phase==="night"&&!state.goldSpawned&&state.phaseT<PHASE_LEN*0.7&&Math.random()<dt*0.03){
-    state.goldSpawned=true; const a=spawnApple("gold", (Math.random()*36-18), (Math.random()*36-18)); a.expireT=12;
-    popText("✨ A GOLDEN APPLE! Grab it — every zombie dies!", 3000); teleEvent("GOLDEN","appeared at "+a.x.toFixed(0)+","+a.z.toFixed(0));
-  }
-  // green apple: once a day
-  if(state.phase==="day"&&!state.greenSpawned&&state.phaseT<PHASE_LEN*0.6&&Math.random()<dt*0.02){
-    state.greenSpawned=true; const a=spawnApple("green", (Math.random()*36-18), (Math.random()*36-18)); a.expireT=15;
-    popText("🟢 A GREEN APPLE! Full health + touch-of-death for 10 s!", 3000); teleEvent("GREEN","appeared");
-  }
-  state.redT-=dt;
-  if(state.redT<=0){ state.redT=9; if(ZAPPLES.filter(a=>a.kind==="red").length<3) spawnApple("red",(Math.random()*38-19),(Math.random()*38-19)); }
-  for(const a of [...ZAPPLES]) if(a.expireT!==undefined){ a.expireT-=dt; if(a.expireT<=0) removeApple(a); }
-  state.chestT-=dt;
-  if(state.chestT<=0&&!CHEST.active){ state.chestT=6; placeChest(); }
-  state.groanT-=dt; if(state.groanT<=0){ state.groanT=6+Math.random()*7; if(ZOMBIES.some(z=>!z.dead)) zsnd("groan"); }
-}
-// ---------- chest & weapons ----------
-const WEAPONS=[{kind:"rifle",icon:"🔫",name:"RIFLE",ammo:6},{kind:"rocket",icon:"🚀",name:"ROCKET",ammo:3},{kind:"dynamite",icon:"🧨",name:"DYNAMITE",ammo:1}];
-function placeChest(){
-  const spots=ZMAN.chestSpots; const i=Math.floor(drawRand("chest")*spots.length);
-  CHEST.x=spots[i][0]; CHEST.z=spots[i][1]; CHEST.y=groundY2(CHEST.x,CHEST.z,99); CHEST.active=true;
-  chestEl.setAttribute("position",CHEST.x+" "+CHEST.y+" "+CHEST.z); chestEl.setAttribute("visible","true");
-  teleEvent("CHEST","appeared at "+CHEST.x+","+CHEST.z);
-}
-function openChest(s){
-  const w=WEAPONS[Math.floor(drawRand("weapon")*WEAPONS.length)];
-  s.weapon=w.kind; s.ammo=w.ammo;
-  CHEST.active=false; chestEl.setAttribute("visible","false"); state.chestT=5;
-  zsnd("chest"); popText(w.icon+" "+s.name+" got the "+w.name+"! ("+w.ammo+" shots) — the next chest is coming", 3000);
-  teleEvent("CHEST OPEN",s.name+" drew "+w.kind);
-  if(s===P1||NET.role==="guest") updateFireBtn();
-}
-const PROJ=[], PLANTED=[];
-function killZombie(zn, by){
-  if(zn.dead) return; zn.dead=true; zn.deadT=2.2;
-  if(by){ by.kills++; }
-  if(zn.player){ onPlayerZombieKilled(by); }
-  zsnd("bonk");
-}
-function explode(x,z,r,by, hurt){
-  const ring=document.createElement("a-sphere"); ring.setAttribute("radius",r);
-  ring.setAttribute("material","color: #ffb36b; emissive: #ff7b2a; emissiveIntensity: 2.2; transparent: true; opacity: 0.5");
-  ring.setAttribute("position",x+" "+(groundY2(x,z,99)+0.7)+" "+z); worldEl.appendChild(ring);
-  setTimeout(()=>{ if(ring.parentNode) ring.parentNode.removeChild(ring); }, 350);
-  zsnd("boom");
-  for(const zn of [...ZOMBIES]) if(!zn.dead&&Math.hypot(zn.x-x,zn.z-z)<=r) killZombie(zn, by);
-  if(hurt) for(const s of survivors) if(!s.dead&&Math.hypot(s.x-x,s.z-z)<=r) damageSurvivor(s,null,"the blast");
-  teleEvent("EXPLOSION","r="+r+" at "+x.toFixed(0)+","+z.toFixed(0));
-}
-function fireWeapon(s){
-  if(!s||s.dead||!s.weapon||s.ammo<=0) return;
-  s.ammo--;
-  const ry=s.rotY;
-  if(s.weapon==="rifle"){
-    zsnd("rifle");
-    let best=null, bd=16;
-    for(const zn of ZOMBIES){ if(zn.dead||zn.rise>0) continue; const dx=zn.x-s.x, dz=zn.z-s.z, d=Math.hypot(dx,dz); if(d>16) continue;
-      let ang=Math.atan2(dx,dz)-ry; while(ang>Math.PI)ang-=2*Math.PI; while(ang<-Math.PI)ang+=2*Math.PI;
-      if(Math.abs(ang)<0.35&&d<bd){ bd=d; best=zn; } }
-    if(best){ killZombie(best, s); popText("🔫 "+s.name+" — dead on the line ("+bd.toFixed(0)+" m)", 1400); teleEvent("RIFLE HIT",s.name+" dropped zombie #"+best.id); }
-    else popText("🔫 "+s.name+" — the line was empty", 1200);
-  } else if(s.weapon==="rocket"){
-    zsnd("throw");
-    PROJ.push({x:s.x+Math.sin(ry)*0.7, y:s.y+1.3, z:s.z+Math.cos(ry)*0.7, vx:Math.sin(ry)*17, vz:Math.cos(ry)*17, by:s, dist:0,
-               el:(()=>{ const e=document.createElement("a-sphere"); e.setAttribute("radius","0.18"); e.setAttribute("material","color: #ffb36b; emissive: #ff7b2a; emissiveIntensity: 2"); worldEl.appendChild(e); return e; })()});
-    teleEvent("ROCKET AWAY",s.name);
-  } else if(s.weapon==="dynamite"){
-    const el=document.createElement("a-box"); el.setAttribute("width","0.4"); el.setAttribute("height","0.25"); el.setAttribute("depth","0.25");
-    el.setAttribute("color","#c22"); el.setAttribute("position",s.x+" "+(s.gy+0.15)+" "+s.z); worldEl.appendChild(el);
-    const lab=addLabel(el,"3",1.1,"#ff9a9a");
-    PLANTED.push({x:s.x,z:s.z,t:3.2,by:s,el,lab,lastSec:3});
-    popText("🧨 DYNAMITE PLANTED — 3… 2… 1… NO SAFE SIDES!", 2200); teleEvent("DYNAMITE",s.name+" planted");
-  }
-  if(s.ammo<=0){ s.weapon=null; popText("🎒 "+s.name+"'s weapon is spent — find the next chest", 2200); }
-  if(s===P1||NET.role==="guest") updateFireBtn();
-}
-function weaponTick(dt){
-  for(const p of [...PROJ]){
-    p.x+=p.vx*dt; p.z+=p.vz*dt; p.dist+=17*dt; p.el.setAttribute("position",p.x+" "+p.y+" "+p.z);
-    let hit=p.dist>22;
-    for(const zn of ZOMBIES) if(!zn.dead&&Math.hypot(zn.x-p.x,zn.z-p.z)<1.0) hit=true;
-    if(hit){ if(p.el.parentNode) p.el.parentNode.removeChild(p.el); PROJ.splice(PROJ.indexOf(p),1); explode(p.x,p.z,3.0,p.by,true); }
-  }
-  for(const d of [...PLANTED]){
-    d.t-=dt; const sec=Math.ceil(d.t);
-    if(sec!==d.lastSec){ d.lastSec=sec; if(sec>0){ d.lab.setAttribute("value",""+sec); zsnd("rock"); } }
-    if(d.t<=0){ if(d.el.parentNode) d.el.parentNode.removeChild(d.el); PLANTED.splice(PLANTED.indexOf(d),1); explode(d.x,d.z,4.5,d.by,true); }
-  }
-}
-// ---------- bites & damage ----------
-function damageSurvivor(s, zn, how){
-  if(s.dead||s.grace>0||state.over) return;
-  if(s.invisT>0&&zn){ killZombie(zn, s); popText("🟢 "+s.name+"'s touch is death!", 1200); return; }
-  s.hp--; s.grace=0.9; scare(s); zsnd("bite");
-  popText("🧟 "+s.name+" bitten "+(how||"")+" — "+Math.max(0,s.hp)+" ❤ left", 1800);
-  teleEvent("BITE",s.name+" hp "+s.hp);
-  if(zn){ zn.pauseT=1.2; }
-  if(s.hp<=0){ s.dead=true; if(s.el) s.el.setAttribute("rotation","-80 "+(s.rotY*180/Math.PI)+" 0");
-    popText("💀 "+s.name+" HAS BEEN EATEN", 3000); zsnd("lose"); teleEvent("SURVIVOR DOWN",s.name);
-    if(survivors.every(x=>x.dead)) endRun(NET.guest.role==="zombie" ? "zombie" : "horde");
-  }
-}
-function zombieTick(dt){
-  for(const zn of [...ZOMBIES]){
-    if(zn.dead){ zn.deadT-=dt; if(zn.el&&zn.deadT>0) zn.el.setAttribute("rotation","-85 "+(zn.rotY*180/Math.PI)+" 0");
-      if(zn.deadT<=0){ if(zn.el&&zn.el.parentNode) zn.el.parentNode.removeChild(zn.el); ZOMBIES.splice(ZOMBIES.indexOf(zn),1); } continue; }
-    if(zn.rise>0){ zn.rise-=dt; const y=zn.gy-1.7*(Math.max(0,zn.rise)/1.2); zn.el.setAttribute("position",zn.x+" "+y+" "+zn.z); continue; }
-    if(zn.player) continue;                       // driven by the guest's whispers (host applies)
-    if(zn.pauseT>0){ zn.pauseT-=dt; continue; }
-    let tgt=null, bd=1e9;
-    for(const s of survivors){ if(s.dead) continue; const d=Math.hypot(s.x-zn.x,s.z-zn.z); if(d<bd){ bd=d; tgt=s; } }
-    if(!tgt) continue;
-    // house waypoint: if the prey is on the other side of the wall, go to the door
-    let tx=tgt.x, tz=tgt.z;
-    if(inFoot(tgt.x,tgt.z)!==inFoot(zn.x,zn.z)&&tgt.gy<HOUSE.f1+0.6){ tx=(HOUSE.doorX0+HOUSE.doorX1)/2; tz=HOUSE.z1+ (inFoot(zn.x,zn.z)? 1.2 : -1.2); }
-    const dx=tx-zn.x, dz=tz-zn.z, d=Math.hypot(dx,dz)||1;
-    const sp=(state.phase==="night"?2.9:2.0)*(zn.speedJit||(zn.speedJit=0.85+Math.random()*0.3));
-    zn.rotY=Math.atan2(dx,dz);
-    zStep(zn, zn.x+dx/d*sp*dt, zn.z+dz/d*sp*dt);
-    zn.hop+=dt*7; zn.hopBob=Math.abs(Math.sin(zn.hop))*0.08;
-    if(bd<1.15) damageSurvivor(tgt, zn);
-  }
-}
-function survivorTick(dt){
-  for(const s of survivors){
-    if(s.grace>0) s.grace-=dt;
-    if(s.invisT>0){ s.invisT-=dt; if(s.invisT<=0) popText("🟢 "+s.name+"'s power fades", 1400); }
-    if(s.dead) continue;
-    let wx=0, wz=0;
-    if(s===P1&&NET.role!=="guest"){ wx=localWish().x; wz=localWish().z; }
-    else if(s===P2){ wx=NET.guest.wish.x; wz=NET.guest.wish.z; }
-    const m=Math.hypot(wx,wz);
-    if(m>0.05){ const sp=6.2; s.rotY=Math.atan2(wx,wz); zStep(s, s.x+wx/m*Math.min(1,m)*sp*dt, s.z+wz/m*Math.min(1,m)*sp*dt); s.hop+=dt*10; s.hopBob=Math.abs(Math.sin(s.hop))*0.12; s.moving=true; }
-    else { s.hopBob=0; s.moving=false; }
-    if(s.fireQ>0){ s.fireQ=0; s.rotY=s.fireRy; fireWeapon(s); }
-    // apples
-    for(const a of [...ZAPPLES]){
-      if(Math.hypot(a.x-s.x,a.z-s.z)<1.05){
-        if(a.kind==="red"){ if(s.hp<5){ s.hp++; popText("🍎 "+s.name+" +1 ❤ ("+s.hp+"/5)", 1500); zsnd("pickup"); removeApple(a); } }
-        else if(a.kind==="gold"){ removeApple(a); let n=0; for(const zn of [...ZOMBIES]) if(!zn.dead){ killZombie(zn,s); n++; }
-          popText("✨ GOLDEN! "+s.name+" — "+n+" zombies fall where they stand!", 3200); showBanner("✨ GOLDEN APPLE", n+" zombies die. The field breathes.", 2600); zsnd("win"); teleEvent("GOLDEN TAKEN",s.name+" · "+n+" kills"); }
-        else if(a.kind==="green"){ removeApple(a); s.hp=5; s.invisT=10; popText("🟢 "+s.name+": FULL HEALTH + INVINCIBLE — touch them and they die!", 3000); zsnd("win"); teleEvent("GREEN TAKEN",s.name); }
-      }
-    }
-    // chest
-    if(CHEST.active&&Math.hypot(CHEST.x-s.x,CHEST.z-s.z)<1.2&&!s.weapon) openChest(s);
-    // player-zombie contact (the versus bite)
-    const pz=ZOMBIES.find(z=>z.player&&!z.dead&&z.rise<=0);
-    if(pz&&Math.hypot(pz.x-s.x,pz.z-s.z)<1.15) damageSurvivor(s, pz);
-  }
-}
-function simWorld(dt){
-  if(!state.started||state.over) return;
-  state.t+=dt; state.secs=state.t;
-  phaseTick(dt); survivorTick(dt); zombieTick(dt); weaponTick(dt);
-  if(NET.role==="host"&&NET.guest.role==="zombie"&&NET.guest.joined) guestZombieTick(dt);
-}
-function onPlayerZombieKilled(by){
-  teleEvent("PLAYER ZOMBIE DOWN","killed by "+(by?by.name:"the field"));
-  if(NET.role==="host"){ NET.guest.respawnT=8; sendEv({pzdead:1}); }
-}
-function guestZombieTick(dt){
-  const g=NET.guest; if(!g.joined) return;
-  if(g.respawnT>0){ g.respawnT-=dt;
-    if(g.respawnT<=0){ const gp=ZMAN.graves[(Math.random()*ZMAN.graves.length)|0]; const zn=spawnZombie(gp[0],gp[1],true); g.zombie=zn; sendEv({pzspawn:1}); popText("🧟 The graveyard issues the zombie player a new body", 2200); teleEvent("PZ RESPAWN",""); }
-    return; }
-  const zn=g.zombie; if(!zn||zn.dead) return;
-  const wx=g.wish.x, wz=g.wish.z, m=Math.hypot(wx,wz);
-  if(m>0.05){ zn.rotY=Math.atan2(wx,wz); zStep(zn, zn.x+wx/m*Math.min(1,m)*5.2*dt, zn.z+wz/m*Math.min(1,m)*5.2*dt); zn.hop+=dt*8; zn.hopBob=Math.abs(Math.sin(zn.hop))*0.09; }
-}
-// ---------- input ----------
-function localWish(){
-  let x=0,z=0;
-  const k=state.keys;
-  if(k["arrowup"]||k["w"]) z-=1; if(k["arrowdown"]||k["s"]) z+=1;
-  if(k["arrowleft"]||k["a"]) x-=1; if(k["arrowright"]||k["d"]) x+=1;
-  if(state.stick.active){ x+=state.stick.x; z+=state.stick.y; }
-  const m=Math.hypot(x,z); if(m<0.05) return {x:0,z:0};
-  const s=Math.sin(state.camYaw), c=Math.cos(state.camYaw);
-  return {x:(x*c - z*s)/Math.max(1,m)*Math.min(1,m), z:(x*s + z*c)/Math.max(1,m)*Math.min(1,m)};
-}
-function myFigure(){ if(NET.role==="guest") return NET.guest.role==="zombie" ? (NET.guest.zombieMirror||null) : P2; return P1; }
-function updateFireBtn(){
-  const b=$("fireBtn"); if(!b) return;
-  const w = NET.role==="guest" ? NET.guest.myWeapon : (P1?P1.weapon:null);
-  const ammo = NET.role==="guest" ? NET.guest.myAmmo : (P1?P1.ammo:0);
-  if(w){ const wd=WEAPONS.find(x=>x.kind===w); b.innerHTML=wd.icon+"<small>"+wd.name+" ×"+ammo+"</small>"; }
-  else b.innerHTML="🎯<small>FIRE / USE</small>";
-}
-// (guest mirrors live in part_c: P1/P2/ZOMBIES are mirrors there, truth here)
-
-// ---------- records: hash-chained, blobbed, re-verified ----------
-const WIN_PUBLISHER="https://publisher.walrus-testnet.walrus.space/v1/blobs?epochs=30";
-function zHash(r){ const s=["zombie-run/1",r.side,r.nights,r.k1,r.k2,r.secs,r.ts,r.prev,r.zt||0].join("|"); return sha256hex(new TextEncoder().encode(s)); }
-function loadChain(){ try{ return JSON.parse(localStorage.getItem("zombie-wins-v1")||"[]"); }catch(e){ return []; } }
-function saveChain(c){ try{ localStorage.setItem("zombie-wins-v1", JSON.stringify(c)); }catch(e){} }
-async function sealBlob(obj, fmt){
-  try{ const r=await fetch(WIN_PUBLISHER,{method:"PUT", body:JSON.stringify(obj)}); const j=await r.json();
-    return (j.newlyCreated&&j.newlyCreated.blobObject&&j.newlyCreated.blobObject.blobId)||(j.alreadyCertified&&j.alreadyCertified.blobId)||null;
-  }catch(e){ return null; }
-}
-function recordRun(part){
-  const chain=loadChain(); const prev=chain.length?chain[chain.length-1].h:"GENESIS";
-  const rec={format:"zombie-run/1", side:part.side, nights:part.nights, k1:part.k1||0, k2:part.k2||0,
-             n1:part.n1||"", n2:part.n2||"", secs:part.secs, zt:part.zt||0, ts:Date.now(), prev, blob:null, tape:null};
-  rec.h=zHash(rec); chain.push(rec); saveChain(chain);
-  sealBlob(rec).then(id=>{ if(id){ rec.blob=id; saveChain(chain); teleEvent("RECORD SEALED","blob "+id.slice(0,12)+"…"); } });
-  return rec;
-}
-async function sealTape(frames, recH){
-  if(!frames||frames.length<10) return null;
-  const id=await sealBlob({format:"zombie-tape/1", world:ZWORLD, frames}, "tape");
-  if(id){ const chain=loadChain(); const rec=chain.find(r=>r.h===recH); if(rec&&!rec.tape){ rec.tape=id; saveChain(chain); } NET.matchTapeBlob=id; }
-  return id;
-}
-function renderBoard(){
-  const chain=loadChain(); const body=$("boardBody");
-  let ok=0; for(let i=0;i<chain.length;i++){ const r=chain[i]; if(zHash(r)!==r.h) break; if(i>0&&r.prev!==chain[i-1].h) break; ok++; }
-  let h="<div class='small'>⛓️ record chain: "+(ok===chain.length?"INTACT ✓ ("+chain.length+" records, every hash re-verified)":"⚠ "+ok+"/"+chain.length+" verified")+"</div>";
-  const surv=chain.filter(r=>r.side!=="zombie"), zom=chain.filter(r=>r.side==="zombie");
-  const row=(r,main)=>"<div class='boardRow'>"+main+"<br><span class='small'>"+new Date(r.ts).toLocaleDateString()+" · "+(r.blob?("blob "+r.blob.slice(0,10)+"… · "):"local · ")+(r.tape?"":"")+"</span>"+(r.tape?" <button class='watchBtn' onclick='boardWatch(\""+r.tape+"\")'>▶ WATCH</button>":"")+"</div>";
-  h+="<h3 style='color:#ffd76b'>🌙 MOST NIGHTS SURVIVED</h3>"+(surv.slice().sort((a,b)=>b.nights-a.nights||b.k1-a.k1).slice(0,5).map(r=>row(r,"🌙 <b>"+r.nights+" nights</b> · "+(r.n1||"P1")+" · "+r.secs+"s")).join("")||"<div class='small'>none yet</div>");
-  h+="<h3 style='color:#ffd76b'>🧟 MOST KILLS</h3>"+(surv.slice().sort((a,b)=>(b.k1+b.k2)-(a.k1+a.k2)).slice(0,5).map(r=>row(r,"🧟 <b>"+(r.k1+r.k2)+" kills</b> · "+(r.n1||"P1")+" "+r.k1+(r.n2?" · "+r.n2+" "+r.k2:""))).join("")||"<div class='small'>none yet</div>");
-  h+="<h3 style='color:#ffd76b'>🛡️ ENDURANCE (kills × seconds)</h3>"+(surv.slice().sort((a,b)=>(b.k1+b.k2)*b.secs-(a.k1+a.k2)*a.secs).slice(0,5).map(r=>row(r,"🛡️ <b>"+((r.k1+r.k2)*r.secs)+" pts</b> · "+(r.k1+r.k2)+" hits × "+r.secs+" s")).join("")||"<div class='small'>none yet</div>");
-  h+="<h3 style='color:#ff9a9a'>☠️ ZOMBIE BOARD — FASTEST TAKEDOWN</h3>"+(zom.slice().sort((a,b)=>a.zt-b.zt).slice(0,5).map(r=>row(r,"☠️ <b>"+r.zt+"s</b> to eat everyone · "+(r.n2||"the zombie"))).join("")||"<div class='small'>no zombie-player wins yet</div>");
-  h+="<h3 style='color:#ffd76b'>📜 ALL RECORDS</h3>"+(chain.slice().reverse().map(r=>row(r,(r.side==="zombie"?"☠️ zombie win · ":"🧟 ")+"<b>"+r.nights+" nights</b> · "+(r.k1+r.k2)+" kills · "+r.secs+"s")).join("")||"<div class='small'>none yet</div>");
-  body.innerHTML=h;
-}
-function boardWatch(id){ $("boardPanel").style.display="none"; loadTapeBlob(id); }
-// ---------- the link: host-authoritative sealed snapshots ----------
-const MQ_URLS=["wss://broker.emqx.io:8084/mqtt","ws://broker.emqx.io:8083/mqtt"];
-const NET={role:"solo", room:null, mq:null, up:false, urlIdx:0, welcomed:false,
-  guest:{joined:false, role:null, name:"PLAYER 2", char:"boy", wish:{x:0,z:0}, zombie:null, respawnT:0, myWeapon:null, myAmmo:0},
-  tape:[], lastTape:null, tapeBlob:null, matchTapeBlob:null, snapN:0, lastHash:"GENESIS", sealsOk:0, sealsBad:0, gaps:0,
-  snapTimer:0, inputTimer:0, lobbyT:0, joinT:0, tele:{events:[], msgsUp:0, msgsDown:0, bytesUp:0, bytesDown:0, mode:"off"}};
-function teleEvent(kind, detail){
-  NET.tele.events.unshift({t:state.t.toFixed(1), kind, detail});
-  if(NET.tele.events.length>48) NET.tele.events.pop();
-  renderTele();
-}
-function renderTele(){
-  const o=$("teleOverlay"); if(NET.tele.mode==="off"){ o.style.display="none"; return; }
-  o.style.display="block"; o.className=NET.tele.mode==="mini"?"mini":"full"; o.id="teleOverlay";
-  const head="🌐 WORLD: field = Walrus blob terrain · rules blob "+ZWORLD.slice(0,10)+"… · sha256-verified in THIS browser · GitHub serves only this page<br>"+
-    "🔗 "+(NET.role==="solo"?"solo":NET.role+" · room "+(NET.room||"—"))+" · seals ✓ "+NET.sealsOk+" · broken "+NET.sealsBad+" · gaps ↷ "+NET.gaps+"<br>";
-  $("teleBody").innerHTML=head+NET.tele.events.slice(0,NET.tele.mode==="mini"?4:14).map(e=>"["+e.t+"s] "+e.kind+" — "+e.detail).join("<br>");
-}
-function cycleTele(){ NET.tele.mode = NET.tele.mode==="off" ? "mini" : NET.tele.mode==="mini" ? "full" : "off"; renderTele(); }
-function mqTopic(dir){ return "kodakai/zombie/v1/"+NET.room+"/"+dir; }
-function mqPub(topic, obj){
-  if(!NET.mq||!NET.up) return;
-  const s=JSON.stringify(obj);
-  NET.mq.publish(topic, s);
-  if(topic.endsWith("/up")){ NET.tele.msgsUp++; NET.tele.bytesUp+=s.length; } else { NET.tele.msgsDown++; NET.tele.bytesDown+=s.length; }
-}
-function sendEv(obj){ obj.type="ev"; mqPub(mqTopic("down"), obj); }
-function snapHash(core){ const c=Object.assign({}, core); delete c.h; return sha256hex(new TextEncoder().encode(JSON.stringify(c))).slice(0,16); }
-function liveBar(){
-  return {s1:P1?{n:P1.name,hp:P1.hp,dead:P1.dead?1:0,k:P1.kills,w:P1.weapon}:null,
-          s2:P2?{n:P2.name,hp:P2.hp,dead:P2.dead?1:0,k:P2.kills,w:P2.weapon}:null,
-          horde:ZOMBIES.filter(z=>!z.dead).length, wave:state.waveLeft, nights:state.nightN,
-          pz:NET.guest.role==="zombie"&&NET.guest.joined ? (NET.guest.zombie&&!NET.guest.zombie.dead ? {hp:NET.guest.zombie.hp} : {wait:Math.max(0,NET.guest.respawnT)}) : null};
-}
-function renderBar(bar){
-  if(!bar){ $("gameBar").innerHTML=""; return; }
-  const chipS=(s,ic)=>{ if(!s) return ""; const f=Math.max(0,s.hp)/5;
-    return "<span class='chip"+(s.dead?" out":"")+"'>"+ic+" "+s.n+" <span class='ebar'><i style='width:"+(f*100)+"%;background:"+(f>0.6?"#51ff7a":f>0.3?"#ffd76b":"#ff5c5c")+"'></i></span> "+(s.dead?"✖ EATEN":"❤ "+s.hp+" · 🎯 "+s.k+(s.w?" · "+s.w:""))+"</span>"; };
-  let h=chipS(bar.s1,"🧑")+chipS(bar.s2,"🧑");
-  if(bar.pz) h+="<span class='chip'>🧟 ZOMBIE PLAYER "+(bar.pz.wait!==undefined?("👻 watching — new body in "+bar.pz.wait.toFixed(0)+"s"):("❤ "+bar.pz.hp))+"</span>";
-  h+="<span class='chip'>🧟 HORDE "+bar.horde+(bar.wave?" · +"+bar.wave+" coming":"")+"</span>";
-  h+="<span class='chip'>🌙 NIGHTS "+bar.nights+"</span>";
-  $("gameBar").innerHTML=h;
-}
-function buildCore(){
-  const core={n:++NET.snapN, t:+state.t.toFixed(2), started:state.started?1:0, over:state.over?1:0,
-    phase:state.phase, phaseT:+state.phaseT.toFixed(1), nightN:state.nightN, tod:+SKY.tod.toFixed(2),
-    p1:P1?{x:+P1.x.toFixed(2),z:+P1.z.toFixed(2),r:+P1.rotY.toFixed(2),hp:P1.hp,dead:P1.dead?1:0,kills:P1.kills,w:P1.weapon,ammo:P1.ammo,char:P1.char,name:P1.name,inv:P1.invisT>0?1:0,gy:+P1.gy.toFixed(2)}:null,
-    p2:P2?{x:+P2.x.toFixed(2),z:+P2.z.toFixed(2),r:+P2.rotY.toFixed(2),hp:P2.hp,dead:P2.dead?1:0,kills:P2.kills,w:P2.weapon,ammo:P2.ammo,char:P2.char,name:P2.name,inv:P2.invisT>0?1:0,gy:+P2.gy.toFixed(2)}:null,
-    gz:(NET.guest.role==="zombie"&&NET.guest.joined)?(NET.guest.zombie&&!NET.guest.zombie.dead?{x:+NET.guest.zombie.x.toFixed(2),z:+NET.guest.zombie.z.toFixed(2),r:+NET.guest.zombie.rotY.toFixed(2),hp:NET.guest.zombie.hp,gy:+NET.guest.zombie.gy.toFixed(2)}:{wait:+Math.max(0,NET.guest.respawnT).toFixed(1)}):null,
-    zombies:ZOMBIES.filter(z=>!z.player).map(z=>[z.id,+z.x.toFixed(2),+z.z.toFixed(2),+z.rotY.toFixed(2),z.dead?1:0,z.rise>0?1:0,+z.gy.toFixed(2)]),
-    apples:ZAPPLES.map(a=>[a.id,a.kind,+a.x.toFixed(1),+a.z.toFixed(1)]),
-    chest:CHEST.active?{x:CHEST.x,z:CHEST.z}:null,
-    planted:PLANTED.map(d=>[+d.x.toFixed(1),+d.z.toFixed(1),+d.t.toFixed(1)]),
-    bar:liveBar(), prev:NET.lastHash};
-  core.h=snapHash(core); NET.lastHash=core.h;
-  return core;
-}
-function sendSnap(){
-  const core=buildCore();
-  mqPub(mqTopic("down"), {type:"snap", core});
-  if(state.started&&!state.over){ NET.tape.push(core); if(NET.tape.length>9000) NET.tape.shift(); }
-}
-function ensureSurvivorFig(s, slot){
-  if(s.el) return;
-  const f=makeFigure({skin:"#e8b88a", shirt:s.char==="girl"?"#d84f7a":(slot==="P1"?"#3f6fd8":"#3f9e4d"), pants:"#3a3f4a", hair:"#2a2a33", girl:s.char==="girl", label:"🧑 "+s.name, labelColor:slot==="P1"?"#a8d8ff":"#a8ffb0"});
-  s.el=f.el; s.label=f.label;
-}
-const zMirrors={};
-function applySnap(core){
-  if(snapHash(core)!==core.h){ NET.sealsBad++; teleEvent("SEAL BROKEN","snapshot refused — hash mismatch"); renderTele(); return; }
-  NET.sealsOk++;
-  if(core.prev!==NET.lastHash&&NET.lastHash!=="GENESIS"){ NET.gaps++; teleEvent("SEAL GAP","a whisper was lost in transit — resynced on this true seal (gap "+NET.gaps+")"); }
-  NET.lastHash=core.h;
-  state.started=!!core.started; if(core.over&&!state.over){ state.over=true; }
-  state.phase=core.phase; state.phaseT=core.phaseT; state.nightN=core.nightN; state.t=core.t;
-  if(typeof core.tod==="number"&&!RP.active){ SKY.tod=core.tod; applySky(); }
-  const upd=(s,c,slot)=>{ if(!c){ return; } s.name=c.name; s.char=c.char; ensureSurvivorFig(s,slot);
-    const hpWas=s.hp; s.hp=c.hp; s.dead=!!c.dead; s.kills=c.kills; s.weapon=c.w; s.ammo=c.ammo; s.invisT=c.inv?5:0;
-    if(slot==="P2"){ NET.guest.myWeapon=c.w; NET.guest.myAmmo=c.ammo; updateFireBtn();
-      if(c.hp<hpWas&&c.hp>=0&&hpWas!==undefined&&state.started){ scare(s); }
-      NET.selfT={x:c.x,z:c.z,r:c.r}; if(!NET.selfInit){ NET.selfInit=true; NET.selfC={x:c.x,z:c.z,r:c.r}; s.x=c.x; s.z=c.z; s.rotY=c.r; s.gy=(c.gy!==undefined?c.gy:groundY2(s.x,s.z,99)); s.y=s.gy; }
-    } else { s.x=c.x; s.z=c.z; s.rotY=c.r; s.gy=(c.gy!==undefined?c.gy:groundY2(s.x,s.z,99)); s.y=s.gy; } };
-  if(core.p1){ if(!P1){ P1=mkSurvivor("P1",core.p1.name,core.p1.char); survivors.push(P1); } upd(P1,core.p1,"P1"); }
-  if(core.p2){ if(!P2){ P2=mkSurvivor("P2",core.p2.name,core.p2.char); if(!survivors.includes(P2)) survivors.push(P2); } upd(P2,core.p2,"P2"); }
-  // horde mirrors
-  const seen={};
-  for(const row of core.zombies){ const id=row[0]; seen[id]=1;
-    let zn=zMirrors[id];
-    if(!zn){ zn={id,x:row[1],z:row[2],y:0,gy:groundY2(row[1],row[2],0),rotY:row[3],hp:1,dead:false,player:false,hopBob:0}; zn.y=zn.gy;
-      const f=zombieFigure(false); zn.el=f.el; zn.label=f.label; zMirrors[id]=zn; if(!ZOMBIES.includes(zn)) ZOMBIES.push(zn); }
-    zn.x=row[1]; zn.z=row[2]; zn.rotY=row[3]; zn.dead=!!row[4]; zn.rise=row[5]?0.5:0; zn.gy=(row[6]!==undefined?row[6]:groundY2(zn.x,zn.z,99)); zn.y=zn.gy;
-    if(zn.dead) zn.el.setAttribute("rotation","-85 "+(zn.rotY*180/Math.PI)+" 0");
-  }
-  for(const id of Object.keys(zMirrors)) if(!seen[id]){ const zn=zMirrors[id]; if(zn.el&&zn.el.parentNode) zn.el.parentNode.removeChild(zn.el); delete zMirrors[id]; const ix=ZOMBIES.indexOf(zn); if(ix>=0) ZOMBIES.splice(ix,1); }
-  // guest zombie mirror
-  if(core.gz){ if(!NET.guest.zombieMirror){ const f=zombieFigure(true); NET.guest.zombieMirror={id:"pz",x:0,z:0,y:0,gy:0,rotY:0,hp:3,dead:false,player:true,el:f.el,label:f.label,hopBob:0}; NET.guest.zombieMirror.label.setAttribute("value","🧟 YOU"); ZOMBIES.push(NET.guest.zombieMirror); }
-    const zm=NET.guest.zombieMirror;
-    if(core.gz.wait!==undefined){ zm.dead=true; if(zm.el) zm.el.setAttribute("visible","false"); NET.guest.respawnT=core.gz.wait; }
-    else { zm.dead=false; if(zm.el) zm.el.setAttribute("visible","true"); zm.gy=(core.gz.gy!==undefined?core.gz.gy:zm.gy); zm.y=zm.gy; NET.selfT={x:core.gz.x,z:core.gz.z,r:core.gz.r}; if(!NET.selfInit){ NET.selfInit=true; NET.selfC={x:core.gz.x,z:core.gz.z,r:core.gz.r}; zm.x=core.gz.x; zm.z=core.gz.z; } zm.hp=core.gz.hp; }
-  }
-  // apples by id
-  const aseen={};
-  for(const row of core.apples){ aseen[row[0]]=1; if(!ZAPPLES.find(a=>a.id===row[0])){ const a=spawnApple(row[1],row[2],row[3]); a.id=row[0]; } }
-  for(const a of [...ZAPPLES]) if(!aseen[a.id]) removeApple(a);
-  if(core.chest){ CHEST.active=true; CHEST.x=core.chest.x; CHEST.z=core.chest.z; chestEl.setAttribute("position",CHEST.x+" "+groundY2(CHEST.x,CHEST.z,99)+" "+CHEST.z); chestEl.setAttribute("visible","true"); }
-  else { CHEST.active=false; if(chestEl) chestEl.setAttribute("visible","false"); }
-  renderBar(core.bar);
-  if(state.started){ NET.tape.push(core); if(NET.tape.length>9000) NET.tape.shift(); }
-  renderTele();
-}
-NET.selfT={x:0,z:14,r:Math.PI}; NET.selfC={x:0,z:14,r:Math.PI}; NET.selfInit=false;
-function endRun(side){
-  if(state.over) return; state.over=true;
-  const secs=Math.round(state.t);
-  const rec=recordRun({side, nights:state.nightN, k1:P1?P1.kills:0, k2:P2?P2.kills:0, n1:P1?P1.name:state.name, n2:NET.guest.role==="zombie"?NET.guest.name:(P2?P2.name:""), secs, zt:side==="zombie"?secs:0});
-  NET.lastTape=NET.tape.slice(); NET.tape=[];
-  sealTape(NET.lastTape, rec.h);
-  $("matchTitle").textContent= side==="zombie" ? "☠️ THE ZOMBIE WINS" : "💀 EATEN — NIGHT "+state.nightN;
-  $("matchSub").innerHTML="🌙 nights survived: <b>"+state.nightN+"</b> · 🧟 kills: "+(rec.k1+rec.k2)+" · ⏱ "+secs+"s<br>Record sealed as a blob, hash-chained ✓"+(side==="zombie"?"<br>☠️ zombie takedown time: "+secs+"s — on the zombie board":"");
-  $("matchPanel").style.display="block";
-  if(NET.role==="host") sendEv({runEnd:{side, nights:state.nightN, secs, h:rec.h}});
-  zsnd(side==="zombie"?"lose":"lose"); teleEvent("RUN END",side+" · "+secs+"s · record "+rec.h.slice(0,10));
-}
-function onGuestRunEnd(msg){
-  state.over=true;
-  const chain=loadChain(); const prev=chain.length?chain[chain.length-1].h:"GENESIS";
-  const rec={format:"zombie-run/1", side:msg.side, nights:msg.nights, k1:P1?P1.kills:0, k2:P2?P2.kills:0, n1:P1?P1.name:"", n2:NET.guest.role==="zombie"?state.name:(P2?P2.name:""), secs:msg.secs, zt:msg.side==="zombie"?msg.secs:0, ts:Date.now(), prev, blob:null, tape:null};
-  if(zHash(rec)===msg.h){ rec.h=msg.h; chain.push(rec); saveChain(chain); }
-  NET.lastTape=NET.tape.slice(); NET.tape=[];
-  sealTape(NET.lastTape, msg.h).then(id=>{ if(id) sendEv2({tapeBlob:id}); });
-  $("matchTitle").textContent= msg.side==="zombie" ? "☠️ THE ZOMBIE WINS" : "💀 EATEN — NIGHT "+msg.nights;
-  $("matchSub").innerHTML="🌙 nights survived: <b>"+msg.nights+"</b> · ⏱ "+msg.secs+"s<br>Host's record hash verified on this phone ✓";
-  $("matchPanel").style.display="block";
-}
-function sendEv2(obj){ obj.type="ev2"; mqPub(mqTopic("up"), obj); }
-// ---------- replay: the tape is sealed state, not video ----------
-const RP={active:false, frames:[], i:0, playing:false, camMode:"follow", free:{x:0,z:16,y:12}, label:""};
-function verifyTape(frames){ let ok=0, links=0, prev="GENESIS";
-  for(const f of frames){ if(snapHash(f)===f.h){ ok++; if(f.prev===prev) links++; prev=f.h; } }
-  RP.links=links; return ok; }
-function rpFigureCleanup(){ }
-function startReplay(frames, label){
-  if(!frames||frames.length<10){ popText("🎞️ no tape to watch yet", 2000); return; }
-  const ok=verifyTape(frames);
-  RP.frames=frames; RP.i=0; RP.playing=true; RP.active=true; RP.label=label||"replay";
-  $("rpBar").style.display="block"; $("startScr").style.display="none"; $("matchPanel").style.display="none"; $("boardPanel").style.display="none"; $("aboutSheet").style.display="none";
-  $("hud").style.display="block";
-  teleEvent("REPLAY",label+" · content-true "+ok+"/"+frames.length+" · chain links "+RP.links);
-  rpPlace(frames[0]);
-}
-function rpPlace(f){
-  if(!f) return;
-  if(typeof f.tod==="number"){ SKY.tod=f.tod; applySky(); }
-  state.phase=f.phase; state.nightN=f.nightN;
-  const upd=(s,c,slot)=>{ if(!c) return; s.name=c.name; s.char=c.char; ensureSurvivorFig(s,slot); s.x=c.x; s.z=c.z; s.rotY=c.r; s.hp=c.hp; s.dead=!!c.dead; s.gy=(c.gy!==undefined?c.gy:groundY2(s.x,s.z,99)); s.y=s.gy; };
-  if(f.p1){ if(!P1){ P1=mkSurvivor("P1",f.p1.name,f.p1.char); survivors.push(P1); } upd(P1,f.p1,"P1"); }
-  if(f.p2){ if(!P2){ P2=mkSurvivor("P2",f.p2.name,f.p2.char); if(!survivors.includes(P2)) survivors.push(P2); } upd(P2,f.p2,"P2"); }
-  const seen={};
-  for(const row of f.zombies){ const id=row[0]; seen[id]=1; let zn=zMirrors[id];
-    if(!zn){ zn={id,x:row[1],z:row[2],y:0,gy:0,rotY:row[3],hp:1,dead:false,player:false,hopBob:0}; const fg=zombieFigure(false); zn.el=fg.el; zn.label=fg.label; zMirrors[id]=zn; ZOMBIES.push(zn); }
-    zn.x=row[1]; zn.z=row[2]; zn.rotY=row[3]; zn.dead=!!row[4]; zn.gy=(row[6]!==undefined?row[6]:groundY2(zn.x,zn.z,99)); zn.y=zn.gy; }
-  for(const id of Object.keys(zMirrors)) if(!seen[id]){ const zn=zMirrors[id]; if(zn.el&&zn.el.parentNode) zn.el.parentNode.removeChild(zn.el); delete zMirrors[id]; const ix=ZOMBIES.indexOf(zn); if(ix>=0) ZOMBIES.splice(ix,1); }
-  renderBar(f.bar);
-}
-function rpTick(dt){
-  if(!RP.active) return;
-  const frames=RP.frames; if(!frames.length) return;
-  if(RP.playing){ RP.i+=dt*8; if(RP.i>=frames.length-1){ RP.i=frames.length-1; RP.playing=false; $("rpPlayBtn").textContent="▶ PLAY"; } }
-  const f=frames[Math.floor(RP.i)]; rpPlace(f);
-  $("rpInfo2").textContent="🎞️ "+RP.label+" · frame "+(Math.floor(RP.i)+1)+"/"+frames.length+" · t="+f.t+"s · "+(f.phase==="night"?"🌙 NIGHT "+f.nightN:"☀️ DAY");
-  $("rpScrub").value=Math.floor(RP.i/(frames.length-1)*100);
-  if(RP.camMode==="free"){ const w=localWish(); RP.free.x+=w.x*dt*10; RP.free.z+=w.z*dt*10; }
-}
-async function loadTapeBlob(id){
-  try{ popText("🎞️ pulling the tape blob…", 2000);
-    const got=await ladder(id); const tape=JSON.parse(new TextDecoder().decode(got.buf));
-    if(tape.format!=="zombie-tape/1") throw new Error("not a zombie tape");
-    startReplay(tape.frames, "blob "+id.slice(0,10)+"…");
-  }catch(e){ popText("🎞️ could not load that tape: "+e.message, 3000); }
-}
-// ---------- guest local prediction ----------
-function guestTick(dt){
-  const w=localWish();
-  NET.guest.wish=w;
-  if(NET.guest.role==="survivor"&&P2&&NET.selfInit){
-    const m=Math.hypot(w.x,w.z);
-    if(m>0.05){ P2.rotY=Math.atan2(w.x,w.z); zStep(P2, P2.x+w.x/m*Math.min(1,m)*6.2*dt, P2.z+w.z/m*Math.min(1,m)*6.2*dt); }
-    NET.selfC.x+=(NET.selfT.x-NET.selfC.x)*Math.min(1,dt*10); NET.selfC.z+=(NET.selfT.z-NET.selfC.z)*Math.min(1,dt*10);
-    P2.x=NET.selfC.x; P2.z=NET.selfC.z; P2.gy=groundY2(P2.x,P2.z,99); P2.y=P2.gy;
-  }
-  if(NET.guest.role==="zombie"&&NET.guest.zombieMirror&&!NET.guest.zombieMirror.dead&&NET.selfInit){
-    const zm=NET.guest.zombieMirror, m=Math.hypot(w.x,w.z);
-    if(m>0.05){ zm.rotY=Math.atan2(w.x,w.z); zStep(zm, zm.x+w.x/m*Math.min(1,m)*5.2*dt, zm.z+w.z/m*Math.min(1,m)*5.2*dt); }
-    NET.selfC.x+=(NET.selfT.x-NET.selfC.x)*Math.min(1,dt*10); NET.selfC.z+=(NET.selfT.z-NET.selfC.z)*Math.min(1,dt*10);
-    zm.x=NET.selfC.x; zm.z=NET.selfC.z; zm.gy=groundY2(zm.x,zm.z,99); zm.y=zm.gy;
-  }
-}
-// ---------- net tick ----------
-function netTick(dt){
-  if(NET.role==="host"){
-    NET.snapTimer-=dt; if(NET.snapTimer<=0){ NET.snapTimer=0.125; sendSnap(); }
-    if(!NET.guest.joined){ NET.lobbyT-=dt; if(NET.lobbyT<=0){ NET.lobbyT=5; mqPub("kodakai/zombie/v1/lobby", {type:"open", room:NET.room, world:ZWORLD, need:1, ts:Date.now()}); } }
-  } else if(NET.role==="guest"){
-    NET.inputTimer-=dt;
-    if(NET.inputTimer<=0){ NET.inputTimer=0.1;
-      const fire=NET.fireOut?1:0; NET.fireOut=0;
-      mqPub(mqTopic("up"), {type:"in", wx:+NET.guest.wish.x.toFixed(2), wz:+NET.guest.wish.z.toFixed(2), fire, fry:+((P2?P2.rotY:state.camYaw)).toFixed(2)});
-    }
-    if(!NET.welcomed){ NET.joinT-=dt; if(NET.joinT<=0){ NET.joinT=3; mqPub(mqTopic("up"), {type:"join", role:NET.guest.role, name:state.name, char:state.charSel}); } }
-  } else if(state.started&&!state.over){
-    NET.snapTimer-=dt; if(NET.snapTimer<=0){ NET.snapTimer=0.2; const core=buildCore(); NET.tape.push(core); if(NET.tape.length>9000) NET.tape.shift(); }
-  }
-}
-NET.fireOut=0;
-function mqConnect(){
-  NET.mq=mqtt.connect(MQ_URLS[NET.urlIdx], {clientId:"zombie_"+Math.random().toString(36).slice(2,10), keepalive:30, reconnectPeriod:2500, connectTimeout:9000});
-  NET.mq.on("connect", ()=>{ NET.up=true;
-    if(NET.role==="host") NET.mq.subscribe(mqTopic("up"));
-    if(NET.role==="guest"){ NET.mq.subscribe(mqTopic("down")); mqPub(mqTopic("up"), {type:"join", role:NET.guest.role, name:state.name, char:state.charSel}); }
-    teleEvent("RELAY","MQTT connected ("+MQ_URLS[NET.urlIdx].split("/")[2]+")");
-  });
-  NET.mq.on("message", (topic, payload)=>{
-    let msg; try{ msg=JSON.parse(payload.toString()); }catch(e){ return; }
-    if(topic==="kodakai/zombie/v1/lobby"){ onLobby(msg); return; }
-    if(NET.role==="host") onUp(msg); else if(NET.role==="guest") onDown(msg);
-  });
-  NET.mq.on("error", ()=>{ if(NET.urlIdx<MQ_URLS.length-1){ NET.urlIdx++; try{ NET.mq.end(true); }catch(e){} mqConnect(); } });
-}
-function onLobby(msg){
-  if(msg.type!=="open"||!msg.room) return;
-  const el=$("lobbyList"); if(!el) return;
-  if(el.dataset["r"+msg.room]) return; el.dataset["r"+msg.room]="1";
-  const d=document.createElement("div");
-  d.innerHTML="🧟 open table · room <b>"+msg.room+"</b> ";
-  const b=document.createElement("button"); b.textContent="JOIN"; b.className="watchBtn";
-  b.onclick=()=>{ $("joinCode").value=msg.room; $("joinBtn").click(); };
-  d.appendChild(b); el.appendChild(d);
-}
-function onUp(msg){
-  if(msg.type==="join"){
-    NET.guest.joined=true; NET.guest.role=msg.role||"survivor"; NET.guest.name=(msg.name||"PLAYER 2").toUpperCase(); NET.guest.char=msg.char||"boy";
-    if(state.started&&NET.guest.role==="survivor"&&!P2) addGuestSurvivor();
-    if(state.started&&NET.guest.role==="zombie"&&!NET.guest.zombie) NET.guest.respawnT=1.0;
-    sendEv({welcome:1, role:NET.guest.role});
-    teleEvent("JOIN",NET.guest.name+" as "+NET.guest.role);
-    $("panelPlay").style.display="block"; $("panelPlay").textContent="✓ P2 JOINED — VERIFIED · ▶ PLAY";
-    popText("🔗 "+NET.guest.name+" joined as "+NET.guest.role+"!", 2600);
-  }
-  if(msg.type==="in"){ NET.guest.wish={x:msg.wx||0, z:msg.wz||0};
-    if(msg.fire){ if(NET.guest.role==="survivor"&&P2){ P2.fireQ=1; P2.fireRy=msg.fry||0; } } }
-  if(msg.type==="ev2"&&msg.tapeBlob){ const chain=loadChain(); const rec=chain[chain.length-1]; if(rec&&!rec.tape){ rec.tape=msg.tapeBlob; saveChain(chain); } NET.matchTapeBlob=msg.tapeBlob; }
-}
-function onDown(msg){
-  if(msg.type==="snap"){ applySnap(msg.core); return; }
-  if(msg.type==="ev"){
-    if(msg.welcome){ NET.welcomed=true; $("hostBtn").style.display="none"; $("panelPlay").style.display="block"; $("panelPlay").textContent="✓ JOINED — VERIFIED · ▶ PLAY";
-      $("linkStatus").textContent="You're in ✓ — playing as "+NET.guest.role+". Press PLAY when the host does.";
-      popText("🔗 You're in! Press PLAY ▶", 2400);
-      setTimeout(()=>{ if(NET.role==="guest") popText("🌐 WORLD VERIFIED FROM THE BLOB NETWORK — ON THIS PHONE ✓", 3400); }, 2600);
-      teleEvent("WELCOME","host answered · you are "+NET.guest.role); teleEvent("PROVENANCE","world = Walrus blobs, sha256-verified on this phone · the page is only the envelope"); }
-    if(msg.pzdead){ popText("💀 YOUR ZOMBIE BODY IS DOWN — watch… the graveyard will issue another", 3200); }
-    if(msg.pzspawn){ popText("🧟 A NEW BODY RISES FOR YOU", 2200); }
-    if(msg.runEnd) onGuestRunEnd(msg.runEnd);
-    if(msg.runReset){ state.over=false; NET.tape=[]; $("matchPanel").style.display="none"; popText("▶ NEW RUN", 1800); }
-  }
-}
-
-// ---------- scene ----------
-function buildScene(){
-  sceneEl=$("scene");
-  worldEl=document.createElement("a-entity"); sceneEl.appendChild(worldEl);
-  camEl=document.createElement("a-entity"); camEl.setAttribute("camera","fov: 58; near: 0.1; far: 1500"); camEl.setAttribute("look-controls","enabled: false"); sceneEl.appendChild(camEl);
-  const terr=mkEntity(worldEl, URLS.terrain); terrainMesh=terr;
-  const tree=mkEntity(worldEl, URLS.tree); tree.setAttribute("position",TREE_POS.x+" "+groundY(TREE_POS.x,TREE_POS.z)+" "+TREE_POS.z);
-  const ring=document.createElement("a-torus"); ring.setAttribute("radius","1.5"); ring.setAttribute("radius-tubular","0.07");
-  ring.setAttribute("rotation","90 0 0"); ring.setAttribute("position","0 "+(groundY(0,13)+0.15)+" 13");
-  ring.setAttribute("material","color: #ffd76b; emissive: #ffca55; emissiveIntensity: 1.2"); worldEl.appendChild(ring);
-  const dl=document.createElement("a-text"); dl.setAttribute("value","🚪 THE DOOR"); dl.setAttribute("align","center"); dl.setAttribute("color","#ffd76b");
-  dl.setAttribute("width","8"); dl.setAttribute("position","0 "+(groundY(0,13)+3.4)+" 13"); dl.setAttribute("look-at","[camera]"); worldEl.appendChild(dl);
-  const rng=mulberry32(MAN.seed||20080429);
-  let placed=0, guard=0;
-  while(placed<7&&guard++<300){ const a=rng()*Math.PI*2, r=6+rng()*15, x=Math.cos(a)*r, z=Math.sin(a)*r;
-    if(inFoot(x,z)||Math.hypot(x-TREE_POS.x,z-TREE_POS.z)<5||Math.hypot(x,z-13)<3) continue;
-    const sc=0.8+rng()*0.7, rock=mkEntity(worldEl, URLS.rock, sc); rock.setAttribute("position",x+" "+groundY(x,z)+" "+z); rock.setAttribute("rotation","0 "+(rng()*360)+" 0");
-    COLLIDERS.push({x,z,r:sc*0.95+0.2}); placed++; }
-  for(let i=0;i<22;i++){ const a=rng()*Math.PI*2, r=3+rng()*19, x=Math.cos(a)*r, z=Math.sin(a)*r; if(inFoot(x,z)) continue;
-    const g=mkEntity(worldEl, URLS.grass, 0.7+rng()*0.7); g.setAttribute("position",x+" "+groundY(x,z)+" "+z); }
-  for(let i=0;i<10;i++){ const a=rng()*Math.PI*2, r=3+rng()*19, x=Math.cos(a)*r, z=Math.sin(a)*r; if(inFoot(x,z)) continue;
-    const f=mkEntity(worldEl, URLS[i%2?"flower1":"flower2"], 0.8); f.setAttribute("position",x+" "+groundY(x,z)+" "+z); }
-  buildHouse(); buildGraveyard(); buildChest();
-}
-// ---------- camera / placement / map / HUD ----------
-function camTarget(){
-  if(RP.active){ if(RP.camMode==="p2"&&P2) return P2; if(RP.camMode==="free") return RP.free; return P1; }
-  if(NET.role==="guest") return NET.guest.role==="zombie" ? NET.guest.zombieMirror : P2;
-  return P1;
-}
-function cameraTick(){
-  if(!camEl) return;
-  const t=camTarget(); if(!t) return;
-  const tx=t.x, tz=t.z, ty=(t.y!==undefined?t.y:groundY2(t.x,t.z,99))+1.5;
-  if(RP.active&&RP.camMode==="free"){ camEl.object3D.position.set(RP.free.x, RP.free.y||12, RP.free.z); camEl.object3D.lookAt(tx,ty-4,tz); return; }
-  if(RP.active&&(RP.camMode==="p1"||RP.camMode==="p2")){ const s=t; camEl.object3D.position.set(s.x, (s.y||0)+2.2, s.z); const lx=s.x+Math.sin(s.rotY)*6, lz=s.z+Math.cos(s.rotY)*6; camEl.object3D.lookAt(lx,(s.y||0)+1.6,lz); return; }
-  const cx=tx-Math.sin(state.camYaw)*Math.cos(state.camPitch)*state.camDist;
-  const cz=tz-Math.cos(state.camYaw)*Math.cos(state.camPitch)*state.camDist;
-  const cy=ty+Math.sin(state.camPitch)*state.camDist;
-  camEl.object3D.position.set(cx,cy,cz); camEl.object3D.lookAt(tx,ty,tz);
-}
-function placeAll(){
-  for(const s of survivors){ if(!s.el) continue;
-    if(s.dead){ s.el.setAttribute("position",s.x+" "+(s.gy+0.25)+" "+s.z); s.el.setAttribute("rotation","-80 "+(s.rotY*180/Math.PI)+" 0"); }
-    else { s.el.setAttribute("position",s.x+" "+(s.y+(s.hopBob||0))+" "+s.z); s.el.setAttribute("rotation","0 "+(s.rotY*180/Math.PI)+" 0"); } }
-  for(const zn of ZOMBIES){ if(!zn.el) continue;
-    if(zn.dead){ zn.el.setAttribute("rotation","-85 "+(zn.rotY*180/Math.PI)+" 0"); zn.el.setAttribute("position",zn.x+" "+(zn.gy+0.2)+" "+zn.z); }
-    else if(zn.rise>0){ /* spawnZombie/applySnap owns the rise position */ zn.el.setAttribute("position",zn.x+" "+(zn.gy-1.7*(Math.max(0,zn.rise)/1.2))+" "+zn.z); }
-    else { zn.el.setAttribute("position",zn.x+" "+(zn.y+(zn.hopBob||0))+" "+zn.z); zn.el.setAttribute("rotation","0 "+(zn.rotY*180/Math.PI)+" 0"); } }
-  for(const a of ZAPPLES){ a.bob+=0.03; if(a.el) a.el.setAttribute("position",a.x+" "+(a.y+0.28+Math.sin(a.bob)*0.07)+" "+a.z); }
-  if(CHEST.active&&chestGlow) chestGlow.setAttribute("rotation","90 0 "+((state.t*40)%360));
-}
-function drawMap(){
-  const cv=$("mapCv"); if(!cv) return; const c=cv.getContext("2d"); const W=148, S=W/54;
-  c.clearRect(0,0,W,W);
-  c.fillStyle="rgba(20,40,24,.85)"; c.beginPath(); c.arc(74,74,PLAY_R*S,0,7); c.fill();
-  c.fillStyle="#7a5f42"; c.fillRect((HOUSE.x0+27)*S,(HOUSE.z0+27)*S,(HOUSE.x1-HOUSE.x0)*S,(HOUSE.z1-HOUSE.z0)*S);
-  c.strokeStyle="#b8ffc8"; c.beginPath(); c.arc((TREE_POS.x+27)*S,(TREE_POS.z+27)*S,4.6*S,0,7); c.stroke();
-  c.fillStyle="#ffd76b"; c.beginPath(); c.arc(27*S,40*S,3,0,7); c.fill();
-  if(CHEST.active){ c.fillStyle="#ffb36b"; c.fillRect((CHEST.x+27)*S-3,(CHEST.z+27)*S-3,6,6); }
-  for(const a of ZAPPLES){ c.fillStyle=a.kind==="gold"?"#ffd76b":a.kind==="green"?"#51ff7a":"#ff5c5c"; c.beginPath(); c.arc((a.x+27)*S,(a.z+27)*S,2.4,0,7); c.fill(); }
-  for(const zn of ZOMBIES){ if(zn.dead) continue; c.fillStyle=zn.player?"#ff2a6b":"#c22"; c.beginPath(); c.arc((zn.x+27)*S,(zn.z+27)*S,2.4,0,7); c.fill(); }
-  for(const s of survivors){ if(!s.el) continue; c.fillStyle=s===P1?"#fff":"#7dd8ff"; c.beginPath(); c.arc((s.x+27)*S,(s.z+27)*S,3,0,7); c.fill(); }
-}
-let hudT=0;
-function hudTick(dt){
-  hudT-=dt; if(hudT>0) return; hudT=0.25;
-  const panels=["startScr","linkPanel","boardPanel","aboutSheet","howPanel","matchPanel"].some(id=>$(id).style.display==="block");
-  const show=(state.started||(NET.role==="guest"&&NET.welcomed))&&!RP.active&&!panels;
-  $("hud").style.display=show?"block":"none"; $("mapWrap").style.display=show?"block":"none";
-  $("pad").style.display=show?"block":"none"; $("fireBtn").style.display=show?"block":"none";
-  if(show){ renderBar(liveBar());
-    const mm=String(Math.floor(Math.max(0,state.phaseT)/60)), ss=String(Math.floor(Math.max(0,state.phaseT)%60)).padStart(2,"0");
-    $("counts").textContent=(state.phase==="night"?"🌙 NIGHT "+Math.max(1,state.nightN):"☀️ DAY "+(state.nightN+1))+" · "+mm+":"+ss+" · 🧟 "+ZOMBIES.filter(z=>!z.dead).length+" alive"+(state.waveLeft?" · +"+state.waveLeft+" rising":"")+(state.over?" · 💀 RUN OVER":"");
-    drawMap();
-  }
-  $("linkBadge").textContent= NET.role==="solo" ? "🔗 LINK" : (NET.role==="host" ? "📡 ROOM "+NET.room+" · seals ✓"+NET.sealsOk : "🔗 "+(NET.room||"")+" · seals ✓"+NET.sealsOk+" ↷"+NET.gaps);
-}
-// ---------- main loop ----------
-let lastNow=0;
-function tickLoop(now){
-  requestAnimationFrame(tickLoop);
-  const dt=Math.min(0.05,(now-lastNow)/1000||0.016); lastNow=now;
-  if(!state.ready) return;
-  if(RP.active){ rpTick(dt); }
-  else {
-    if(NET.role!=="guest") simWorld(dt);
-    else guestTick(dt);
-    netTick(dt);
-  }
-  placeAll(); cameraTick(); hudTick(dt);
-}
-requestAnimationFrame(tickLoop);
-// ---------- keeper: the reblob loop, in-page ----------
-async function keeperSweep(){
-  try{
-    const last=+(localStorage.getItem("zombie-keeper-t")||"0");
-    if(Date.now()-last<20*3600*1000) return;
-    const ids=new Set();
-    for(const r of loadChain()){ if(r.blob) ids.add(r.blob); if(r.tape) ids.add(r.tape); }
-    if(!ids.size) return;
-    let n=0;
-    for(const id of ids){ try{ const got=await ladder(id); const r=await fetch(WIN_PUBLISHER,{method:"PUT",body:got.buf}); if(r.ok) n++; }catch(e){} }
-    localStorage.setItem("zombie-keeper-t",""+Date.now());
-    if(n) teleEvent("KEEPER","reblobbed "+n+" record/tape blobs — the library stays alive");
-  }catch(e){}
-}
-// ---------- boot ----------
-async function boot(){
-  try{
-    const zw=await ladder(ZWORLD); ZMAN=JSON.parse(new TextDecoder().decode(zw.buf));
-    log("📜 zombie world rules in ("+zw.via+") — <b>"+ZMAN.name+"</b> · the rules are a blob too","ok");
-    const mf=await ladder(CUBE_MANIFEST); MAN=JSON.parse(new TextDecoder().decode(mf.buf));
-    const want=ZMAN.field.assets; let total=0, got=0;
-    for(const a of MAN.assets){ if(!want.includes(a.name)) continue;
-      const g=await ladder(a.blob); const h=sha256hex(new Uint8Array(g.buf));
-      if(h!==a.sha256) throw new Error("sha256 mismatch on "+a.name);
-      BUFFERS[a.name]=g.buf; URLS[a.name]=URL.createObjectURL(new Blob([g.buf],{type:"model/gltf-binary"})); total+=g.buf.byteLength; got++;
-      log("✓ "+a.name+" · "+(g.buf.byteLength/1024).toFixed(0)+" KB · sha256 ✓ ("+g.via+")","dim");
-    }
-    buildHeightfield(BUFFERS.terrain);
-    buildScene(); buildSky(); SKY.tod=10.4; applySky();
-    state.ready=true;
-    $("startScr").style.display="block";
-    $("bootStat").textContent="🌐 world verified from the blob network ✓ ("+got+" field blobs, "+(total/1048576).toFixed(1)+" MB) — the house and graves are built from the MOVE library";
-    log("🧟 ZOMBIE WORLD OPEN — field recalled from Walrus, rules blob verified","ok");
-    keeperSweep();
-    const q=new URLSearchParams(location.search);
-    if(q.get("join")){ $("linkPanel").style.display="block"; $("startScr").style.display="none"; $("joinCode").value=q.get("join").toUpperCase(); }
-    if(q.get("replay")) setTimeout(()=>loadTapeBlob(q.get("replay")), 4000);
-  }catch(e){ log("❌ boot failed: "+e.message,""); const bs=$("bootStat"); if(bs) bs.textContent="⚠ "+e.message; }
-}
-// ---------- wiring ----------
-function setName(){ const v=($("nameInput").value||"").trim().toUpperCase(); state.name=v||"SURVIVOR"; try{ localStorage.setItem("zombie-name",state.name); }catch(e){} }
-function openPanel(id){ for(const p of ["startScr","linkPanel","boardPanel","aboutSheet","howPanel","matchPanel"]) $(p).style.display = p===id ? "block" : "none"; }
-function closePanels(){ for(const p of ["startScr","linkPanel","boardPanel","aboutSheet","howPanel"]) $(p).style.display="none"; }
-function enterPlay(){
-  SND.init(); if(SND.on) SND.musicStart();
-  closePanels();
-  if(NET.role!=="guest"&&!state.started) startRun();
-}
-function resetWorld(){
-  for(const s of survivors) if(s.el&&s.el.parentNode) s.el.parentNode.removeChild(s.el);
-  for(const zn of ZOMBIES) if(zn.el&&zn.el.parentNode) zn.el.parentNode.removeChild(zn.el);
-  for(const a of [...ZAPPLES]) removeApple(a);
-  survivors.length=0; ZOMBIES.length=0; P1=null; P2=null;
-  for(const id of Object.keys(zMirrors)) delete zMirrors[id];
-  NET.guest.zombie=null; if(NET.guest.zombieMirror){ NET.guest.zombieMirror=null; }
-  NET.tape=[]; state.over=false; state.started=false; NET.lastHash="GENESIS"; NET.snapN=0;
-}
-function wire(){
-  try{ $("nameInput").value=localStorage.getItem("zombie-name")||""; }catch(e){}
-  $("charBoy").onclick=()=>{ state.charSel="boy"; $("charBoy").classList.add("sel"); $("charGirl").classList.remove("sel"); };
-  $("charGirl").onclick=()=>{ state.charSel="girl"; $("charGirl").classList.add("sel"); $("charBoy").classList.remove("sel"); };
-  $("playBtn").onclick=()=>{ setName(); enterPlay(); };
-  $("boardBtn").onclick=()=>{ renderBoard(); openPanel("boardPanel"); };
-  $("boardClose").onclick=()=>openPanel("startScr");
-  $("matchBoardBtn").onclick=()=>{ $("matchPanel").style.display="none"; renderBoard(); openPanel("boardPanel"); };
-  $("howBtn").onclick=()=>openPanel("howPanel");
-  $("howClose").onclick=()=>openPanel("startScr");
-  $("aboutBtn").onclick=()=>openPanel("aboutSheet");
-  $("aboutClose").onclick=()=>openPanel("startScr");
-  $("linkBtn").onclick=()=>openPanel("linkPanel");
-  $("linkClose").onclick=()=>openPanel("startScr");
-  $("linkBadge").onclick=()=>cycleTele();
-  $("hostBtn").onclick=()=>{ setName(); NET.role="host"; NET.room=Math.random().toString(36).slice(2,7).toUpperCase();
-    $("linkStatus").innerHTML="📡 Hosting room <b>"+NET.room+"</b> — send the code (or the QR) to your player 2, anywhere on Earth.";
-    try{ $("qrBox").innerHTML=""; new QRCode($("qrBox"),{text:location.origin+location.pathname+"?join="+NET.room, width:110, height:110}); }catch(e){}
-    ensureMq(); teleEvent("ROOM OPEN",NET.room); };
-  $("joinBtn").onclick=()=>{ setName(); const code=($("joinCode").value||"").trim().toUpperCase(); if(code.length<4){ popText("type the room code first",1800); return; }
-    NET.role="guest"; NET.guest.role=$("roleSel").value; NET.room=code; NET.welcomed=false; ensureMq();
-    $("linkStatus").textContent="🔑 knocking on room "+code+" as "+NET.guest.role+"…"; };
-  $("lookBtn").onclick=()=>{ NET.lobbyMode=true; ensureMq(); $("lobbyList").innerHTML="<div class='small'>listening for open tables…</div>"; };
-  $("panelPlay").onclick=()=>{ setName(); enterPlay(); };
-  $("againBtn").onclick=()=>{ if(NET.role==="guest"){ popText("⏳ the host starts the next run",1800); return; }
-    resetWorld(); $("matchPanel").style.display="none"; if(NET.role==="host") sendEv({runReset:1}); enterPlay(); };
-  $("watchMatchBtn").onclick=()=>{ $("matchPanel").style.display="none"; startReplay(NET.lastTape, "last match"); };
-  $("rpWatch").onclick=()=>{ if(NET.lastTape) startReplay(NET.lastTape,"last match"); else if(NET.matchTapeBlob) loadTapeBlob(NET.matchTapeBlob); else popText("no tape on this device yet — finish a run first",2200); };
-  $("rpSeal").onclick=async()=>{ if(!NET.lastTape){ popText("no tape yet",1600); return; } const chain=loadChain(); const id=await sealTape(NET.lastTape, chain.length?chain[chain.length-1].h:""); $("rpBlobId").textContent=id?("🧊 tape blob: "+id):"seal failed — try again"; };
-  $("rpLoad").onclick=()=>{ const id=($("rpLoadId").value||"").trim(); if(id) loadTapeBlob(id); };
-  $("rpPlayBtn").onclick=()=>{ RP.playing=!RP.playing; $("rpPlayBtn").textContent=RP.playing?"⏸ PAUSE":"▶ PLAY"; };
-  $("rpScrub").oninput=(e)=>{ if(RP.frames.length){ RP.i=+e.target.value/100*(RP.frames.length-1); rpPlace(RP.frames[Math.floor(RP.i)]); } };
-  $("rpCam").onchange=(e)=>{ RP.camMode=e.target.value; };
-  $("rpExit").onclick=()=>location.reload();
-  $("sndBtn").onclick=()=>{ SND.on=!SND.on; try{ localStorage.setItem("cube-snd-on",SND.on?"1":"0"); }catch(e){} $("sndBtn").textContent=SND.on?"🔊 SOUND ON":"🔇 SOUND OFF"; if(!SND.on) SND.musicStop(); };
-  $("sndBtn").textContent=SND.on?"🔊 SOUND ON":"🔇 SOUND OFF";
-  $("volRange").oninput=(e)=>{ SND.vol=+e.target.value/100; try{ localStorage.setItem("cube-snd-vol",""+SND.vol); }catch(e){} };
-  $("fireBtn").addEventListener("pointerdown",(e)=>{ e.preventDefault();
-    if(RP.active) return;
-    if(NET.role==="guest"){ NET.fireOut=1; }
-    else if(P1&&!P1.dead){ P1.fireQ=1; P1.fireRy=P1.rotY; } });
-  // thumb pad
-  const pad=$("pad"), knob=$("padKnob");
-  const padMove=(e)=>{ const r=pad.getBoundingClientRect(), cx=r.left+r.width/2, cy=r.top+r.height/2;
-    let dx=(e.clientX-cx)/(r.width/2), dy=(e.clientY-cy)/(r.height/2); const m=Math.hypot(dx,dy); if(m>1){ dx/=m; dy/=m; }
-    state.stick.x=dx; state.stick.y=dy; knob.style.transform="translate(calc(-50% + "+(dx*38)+"px), calc(-50% + "+(dy*38)+"px))"; };
-  pad.addEventListener("pointerdown",(e)=>{ e.preventDefault(); pad.setPointerCapture(e.pointerId); state.stick.active=true; state.stick.id=e.pointerId; padMove(e); });
-  pad.addEventListener("pointermove",(e)=>{ if(state.stick.active&&e.pointerId===state.stick.id) padMove(e); });
-  const padEnd=(e)=>{ if(e.pointerId===state.stick.id){ state.stick.active=false; state.stick.x=0; state.stick.y=0; knob.style.transform="translate(-50%,-50%)"; } };
-  pad.addEventListener("pointerup",padEnd); pad.addEventListener("pointercancel",padEnd);
-  // drag look
-  let drag=null;
-  $("stage").addEventListener("pointerdown",(e)=>{ if(e.target.closest(".sheet,.pill,#pad,#fireBtn,#rpBar,#mapWrap,#teleOverlay")) return; drag={x:e.clientX,y:e.clientY,id:e.pointerId}; });
-  $("stage").addEventListener("pointermove",(e)=>{ if(!drag||e.pointerId!==drag.id) return; state.camYaw-=(e.clientX-drag.x)*0.005; state.camPitch=Math.max(0.08,Math.min(1.25,state.camPitch+(e.clientY-drag.y)*0.004)); drag.x=e.clientX; drag.y=e.clientY; });
-  $("stage").addEventListener("pointerup",()=>{ drag=null; }); $("stage").addEventListener("pointercancel",()=>{ drag=null; });
-  window.addEventListener("keydown",(e)=>{ const k=e.key.toLowerCase(); state.keys[k]=true;
-    if(k===" "){ e.preventDefault(); if(NET.role==="guest") NET.fireOut=1; else if(P1){ P1.fireQ=1; P1.fireRy=P1.rotY; } }
-    if(["arrowup","arrowdown","arrowleft","arrowright"].includes(k)) e.preventDefault(); });
-  window.addEventListener("keyup",(e)=>{ state.keys[e.key.toLowerCase()]=false; });
-}
-function ensureMq(){
-  if(NET.mq){ NET.mq.removeAllListeners("connect"); NET.mq.on("connect", mqOnConnect); if(NET.up) mqOnConnect(); return; }
-  NET.mq=mqtt.connect(MQ_URLS[NET.urlIdx], {clientId:"zombie_"+Math.random().toString(36).slice(2,10), keepalive:30, reconnectPeriod:2500, connectTimeout:9000});
-  NET.mq.on("connect", mqOnConnect);
-  NET.mq.on("message", (topic, payload)=>{ let msg; try{ msg=JSON.parse(payload.toString()); }catch(e){ return; }
-    if(topic==="kodakai/zombie/v1/lobby"){ onLobby(msg); return; }
-    if(NET.role==="host") onUp(msg); else if(NET.role==="guest") onDown(msg); });
-  NET.mq.on("error", ()=>{ if(NET.urlIdx<MQ_URLS.length-1){ NET.urlIdx++; try{ NET.mq.end(true); }catch(e){} NET.mq=null; ensureMq(); } });
-}
-function mqOnConnect(){
-  NET.up=true;
-  if(NET.lobbyMode) NET.mq.subscribe("kodakai/zombie/v1/lobby");
-  if(NET.role==="host"&&NET.room) NET.mq.subscribe(mqTopic("up"));
-  if(NET.role==="guest"&&NET.room){ NET.mq.subscribe(mqTopic("down")); mqPub(mqTopic("up"), {type:"join", role:NET.guest.role, name:state.name, char:state.charSel}); }
-  teleEvent("RELAY","MQTT connected ("+MQ_URLS[NET.urlIdx].split("/")[2]+")");
-}
-wire();
-boot();
-// probe hooks (rig + debugging)
-window.__Z={state, NET, RP, survivors, ZOMBIES, ZAPPLES, CHEST, HOUSE, PROJ, PLANTED,
-  P1:()=>P1, P2:()=>P2, startRun, spawnZombie, fireWeapon, openChest, placeChest, damageSurvivor, killZombie,
-  spawnApple, endRun, buildCore, applySnap, groundY2, startReplay, recordRun, loadChain, zHash, setPhase:(p,t)=>{ state.phase=p; state.phaseT=t; }};
-
+renderShelf();
+const Q = new URLSearchParams(location.search);
+if(Q.get("g")){ const g = Q.get("g"); const known = SHELF.find(e=>e.blob === g);
+  loadById(g, Q.get("h") || (known ? known.sha : null), Q.get("n") || (known ? known.name : "blob build")).catch(e=>say("✗ recall failed: " + e.message, "bad"));
+} else { attachRoot(); }
 </script>
 </body>
 </html>
