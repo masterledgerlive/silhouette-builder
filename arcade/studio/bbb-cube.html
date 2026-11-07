@@ -3,8 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>BUNNY CUBE v1.5 — BONK THE BULLIES (a 3D world from Walrus blobs)</title>
+<title>BUNNY CUBE v1.6 — BONK THE BULLIES (a 3D world from Walrus blobs)</title>
 <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mqtt@5.10.1/dist/mqtt.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
   body{background:#07070f;color:#e8e8f2;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;margin:0;padding:14px;line-height:1.45}
   .wrap{max-width:900px;margin:0 auto}
@@ -80,6 +82,24 @@
   #howPanel{position:absolute;left:20px;bottom:158px;max-width:330px;display:none;background:rgba(5,8,14,.88);
        border:1px solid rgba(255,255,255,.3);border-radius:12px;padding:12px 14px;color:#e8eef7;font-size:14px;line-height:1.55}
   .ssFoot{position:absolute;right:16px;bottom:16px;color:#9fb4c8;font-size:12px;text-shadow:0 1px 6px #000;text-align:right}
+  #linkPanel{position:absolute;left:20px;bottom:158px;width:340px;max-width:86vw;display:none;background:rgba(5,8,14,.92);
+       border:1px solid rgba(255,255,255,.3);border-radius:12px;padding:12px 14px;color:#e8eef7;font-size:14px;line-height:1.5;z-index:10}
+  .lkBtn{display:inline-block;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.45);color:#fff;
+       border-radius:9px;padding:8px 12px;font-size:15px;font-weight:700;cursor:pointer;margin:3px 2px}
+  .lkBtn:active{transform:scale(.96)}
+  #joinCode{text-transform:uppercase;width:86px;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,.4);
+       background:rgba(255,255,255,.08);color:#fff;font-size:16px;font-weight:700;letter-spacing:.15em}
+  #roleSel{padding:8px;border-radius:8px;background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(255,255,255,.4);font-size:14px}
+  #linkBadge{position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:8;display:none;cursor:pointer;
+       background:rgba(7,10,16,.72);border:1px solid rgba(126,195,242,.6);color:#dff2ff;border-radius:16px;
+       padding:4px 12px;font-size:12.5px;font-weight:700;pointer-events:auto;white-space:nowrap}
+  #linkStats{position:absolute;left:10px;top:118px;z-index:9;display:none;width:338px;max-width:88vw;max-height:52%;
+       overflow:auto;background:rgba(4,7,12,.9);border:1px solid rgba(126,195,242,.55);border-radius:10px;
+       color:#dff2ff;font:11.5px/1.55 ui-monospace,Menlo,Consolas,monospace;padding:9px 11px;white-space:pre-wrap}
+  #linkStats b{color:#ffd76a}
+  #lobbyList .row{display:flex;justify-content:space-between;align-items:center;gap:8px;background:rgba(255,255,255,.06);
+       border:1px solid rgba(255,255,255,.16);border-radius:8px;padding:5px 8px;margin:4px 0}
+  #qrBox{background:#fff;border-radius:8px;padding:6px;width:144px}
   .small{font-size:12.5px;color:#9fb4c8}
 </style>
 </head>
@@ -104,19 +124,40 @@ grab apples, bonk them back. First to the banner takes the round.</p>
     <div id="flash"></div>
     <div id="banner"><div id="bannerMain"></div><div id="bannerSub"></div></div>
     <div id="pop"></div>
-    <div id="verTag">🧊 CUBE v1.5 · BONK THE BULLIES</div>
+    <div id="verTag">🧊 CUBE v1.6 · BONK THE BULLIES</div>
     <button id="tiltBtn">🧭 TILT</button>
     <div id="joy"><div id="joyKnob"></div></div>
     <div id="pad"><span class="pip pU">▲</span><span class="pip pD">▼</span><span class="pip pL">◀</span><span class="pip pR">▶</span><div id="padKnob"></div></div>
     <button id="throwBtn">🍎<br>THROW</button>
     <div id="mapBox"><canvas id="mapCv" width="148" height="148"></canvas><div id="mapCap">🗺️ THE MEADOW · N ↑</div></div>
+    <div id="linkBadge"></div>
+    <div id="linkStats"></div>
     <div id="startScreen">
       <div class="ssTitle">BUNNY <span class="red">CUBE</span></div>
       <div class="ssSub">— BONK THE BULLIES —</div>
       <div id="howPanel">🕹️ <b>Pad</b> (bottom-left): push up = hop forward, slide = steer.<br>👀 Drag the meadow to look · 🍎 button throws.<br>🗺️ <b>The map</b> (top-right): ⚪ you · 🟠 <b>F</b>rank <b>R</b>inky <b>G</b>amera · 🔴 apples · 🌳 tree · 🟡 THE DOOR.<br>🎯 The gold line under your counts points at the nearest bully, with the distance.</div>
+      <div id="linkPanel">
+        <div style="font-weight:700;margin-bottom:4px">🔗 2-PLAYER LINK TEST</div>
+        <button class="lkBtn" id="hostBtn">🏠 HOST A ROOM — you are Bunny</button>
+        <div id="hostInfo" style="display:none;margin:4px 0">Room code: <b id="roomCode" style="font-size:21px;letter-spacing:.22em;color:#ffd76a"></b><br>
+        <span class="small">Same-room test — player 2 just scans this. The code carries the room + the world's address, not the world itself:</span>
+        <div id="qrBox" style="margin:6px 0"></div>
+        <span class="small">…or opens this link and taps JOIN:</span><br><span id="joinLink" class="mono" style="font-size:11px;word-break:break-all;color:#7ec3f2"></span></div>
+        <div style="margin:8px 0 2px">— or join a room —</div>
+        <input id="joinCode" placeholder="CODE" maxlength="5">
+        <select id="roleSel"><option value="bunny2">🐰 Bunny Two</option><option value="frank">😤 Frank — bad guy</option><option value="rinky">😤 Rinky — bad guy</option><option value="gamera">😤 Gamera — bad guy</option></select>
+        <button class="lkBtn" id="joinBtn">▶ JOIN</button>
+        <div style="margin:10px 0 2px">— 🌍 anywhere test: open tables —</div>
+        <button class="lkBtn" id="lobbyBtn">👀 LOOK FOR AN OPEN TABLE</button>
+        <div id="lobbyList" class="small" style="margin-top:4px">Hosts announce their table here every few seconds — like a chess board waiting for a challenger. Tap one to join it from anywhere.</div>
+        <button class="lkBtn" id="teleBtn">📊 TIMING &amp; PROOF</button>
+        <div id="proofLine" class="small mono" style="margin-top:4px"></div>
+        <div id="linkStatus" class="small" style="margin-top:8px">The relay passes only whispers — inputs, positions, seals. The world is already on both phones, from the blobs. The room code is the key: share it only with your player 2.</div>
+      </div>
       <div class="ssMenu">
         <button class="ssBtn" id="playBtn"><span class="tri">▶</span> PLAY</button>
         <button class="ssBtn small" id="howBtn">? HOW TO PLAY</button>
+        <button class="ssBtn small" id="linkBtn">🔗 2-PLAYER LINK</button>
         <div class="ssNote">First to the banner takes the round · your 10 bonks win the meadow · their 3 bonks on you win it back.</div>
       </div>
       <div class="ssFoot">the film's own world, rebuilt from blobs<br>every object hash-verified in your browser</div>
@@ -146,7 +187,18 @@ grab apples, bonk them back. First to the banner takes the round.</p>
   New in v1.5: a front door like the pictures he sent (The Shining / Stand By Me concept menus, with a Red Dead
   black-and-red heart): a start screen over the living meadow with a big PLAY button — the round waits for the
   press — plus a live map of the meadow (top-right) so you can find the players: bullies initialed, apples,
-  the tree, THE DOOR, and a gold objective line that names the nearest bully, its distance, and which way to turn.</p>
+  the tree, THE DOOR, and a gold objective line that names the nearest bully, its distance, and which way to turn.<br>
+  New in v1.6: the 2-PLAYER LINK TEST. One phone hosts the meadow (its truth is the truth); player 2 joins by room
+  code as Bunny Two or as one of the bad guys. The relay carries only whispers — a wish direction, a throw — and
+  the host answers with hash-chained sealed snapshots, which the guest's phone verifies one by one instead of
+  trusting. The world itself never travels: both phones already hold it, from the blobs.<br>
+  And it shows its work: tap the 🔗 badge for TIMING &amp; PROOF — relay round-trip in milliseconds, snapshot
+  interval and delay, guest-input→applied ms, seal-verify time on the guest's own phone, a timed control-point
+  log (join, throw, pickup, each hit with its strike zone), and the relay's total byte count next to the world's
+  provenance (manifest, blob count, megabytes, hashes verified at boot). GitHub serves only this page's envelope;
+  the meadow arrives from Walrus. The host panel also deals a QR for the same-room test — the code carries the
+  room and the world's address, never the world — and hosts announce an open table in the 🌍 lobby every 5 s,
+  chess-challenge style, for the anywhere test.</p>
   <div class="small" style="line-height:2.1;margin-top:6px">
     🎞️ the film — <i>Big Buck Bunny</i> (2008) · 🐰 cast &amp; set © Blender Foundation · CC-BY 3.0<br>
     <span class="chip">Walrus testnet · 30 epochs · the keeper renews</span>
@@ -202,6 +254,18 @@ const state={ready:false, started:false, carried:0, round:1, bonks:0, bonked:0,
              bunnyPos:new THREE.Vector3(0,0,10.5), bunnyRotY:Math.PI, hopPhase:0,
              wobbleT:0, celebT:0, flashT:0, birdA:0, t:0,
              tiltOn:false, tiltGamma:0, throwCd:0, lobTimer:2.4, looseTimer:1.2};
+const NET={role:"solo", room:null, mq:null, up:false, urlIdx:0,
+           guest:{joined:false, role:null, x:2.5, z:13, rotY:Math.PI, carried:0, wish:{x:0,z:0},
+                  throwQ:0, throwCd:0, hop:0, el:null, label:null, bully:null, lastIn:0},
+           hostT:{x:0,z:10.5,r:Math.PI}, hostC:{x:0,z:10.5,r:Math.PI},
+           bT:{}, snapN:0, lastHash:"GENESIS", sealsOk:0, sealsBad:0,
+           snapTimer:0, inputTimer:0, joinTimer:0, welcomed:false, throwOut:0,
+           meEl:null, hostEl:null, sim:null, simLast:"GENESIS",
+           tele:{events:[], bytesUp:0, bytesDown:0, msgsUp:0, msgsDown:0, inputs:0,
+                 pendingInputPerf:0, lastInputAppliedMs:null, lastSnapRecv:0, snapIntervalMs:null,
+                 snapDelayMs:null, rttMs:null, offsetMs:0, verifyMs:null, pingSeq:0, pingTimer:0,
+                 lastSnapHash:"", lastRender:0, show:false},
+           lobby:{seen:{}, timer:0, listening:false}};
 const PLAY_R=23, TREE_POS={x:7,z:-9}, TREE_R=2.6, GRAV=15.5;
 let sceneEl, worldEl, bunnyEl, camEl, terrainMesh=null;
 let camObj=null, _camLeveled=false;                       // the PerspectiveCamera child of camEl (v1.2)
@@ -566,6 +630,7 @@ function launchApple(a, from, vel, kind){
 function throwApple(){
   if(!state.ready) return;
   if(!state.started) return;
+  if(NET.role==="guest"){ NET.throwOut=1; return; }
   if(state.throwCd>0) return;
   if(state.carried<=0){ popText("No apples! Hop onto a 🍎 to pick one up", 1600); return; }
   state.throwCd=0.22;
@@ -596,14 +661,14 @@ function bonkBully(b, a){
   state.bonks++;
   burst(b.x, groundY(b.x,b.z)+b.h+0.7, b.z);
   b.spinT=0.7;
-  popText("🎯 BONK! "+b.name+" sees stars!", 1300);
+  popText("🎯 BONK! "+b.name+" sees stars!", 1300); netEvPop("🎯 BONK! "+b.name+" sees stars!"); teleEvent((a&&a.src==="P2")?"P2 HIT":"P1 HIT", b.name+" bonked · apple kind="+(a?a.kind:"?")+" · strike zone: within 1.05 of center, height window "+(b.h+0.6).toFixed(1)+" · bonks="+state.bonks);
   landApple(a); syncHUD();
   if(state.bonks>=10) endRound(true);
 }
 function bonkBunny(a){
   state.bonked++;
   state.flashT=0.45; state.wobbleT=0.55;
-  popText("💥 BONKED! The bullies got you!", 1300);
+  popText("💥 BONKED! The bullies got you!", 1300); netEvPop("💥 BONKED! Bunny got hit!"); teleEvent((a&&a.src==="P2")?"P2 HIT":"AI HIT", "Bunny bonked · apple kind="+(a?a.kind:"?")+" · strike zone: within 1.0 of center, below 2.45 · bonked="+state.bonked);
   a.p.set(state.bunnyPos.x+0.5, groundY(state.bunnyPos.x,state.bunnyPos.z)+0.16, state.bunnyPos.z+0.4);
   landApple(a); syncHUD();
   if(state.bonked>=3) endRound(false);
@@ -614,10 +679,10 @@ function endRound(playerWon){
     state.round++;
     state.celebT=1.1;
     bullies.forEach(b=>{ b.spinT=Math.max(b.spinT,0.7); });
-    showBanner("🏆 YOU WIN THE MEADOW!", "Round "+(state.round-1)+" is Bunny's! The bullies regroup — a touch faster now…", 3800);
+    showBanner("🏆 YOU WIN THE MEADOW!", "Round "+(state.round-1)+" is Bunny's! The bullies regroup — a touch faster now…", 3800); netEvBanner("🏆 YOU WIN THE MEADOW!", "Round "+(state.round-1)+" is Bunny's!");
   } else {
     bullies.forEach(b=>{ b.celebT=1.5; });
-    showBanner("🍎 THE BULLIES WIN THIS ROUND", "Bunny shakes it off. Grab some apples and bonk them back!", 3800);
+    showBanner("🍎 THE BULLIES WIN THIS ROUND", "Bunny shakes it off. Grab some apples and bonk them back!", 3800); netEvBanner("🍎 THE BULLIES WIN THIS ROUND", "Bunny shakes it off — bonk them back!");
   }
   state.lobTimer=3.2;
   syncHUD();
@@ -763,6 +828,15 @@ function drawMap(){
   g.beginPath(); g.arc(bx,bz,5.5,0,Math.PI*2); g.fill(); g.stroke();
   g.strokeStyle="#fff"; g.beginPath(); g.moveTo(bx,bz);
   g.lineTo(bx+Math.sin(state.bunnyRotY)*9, bz+Math.cos(state.bunnyRotY)*9); g.stroke();
+  // v1.6: the second player is a dot too — host sees P2, guest sees P1
+  if(NET.role==="host" && NET.guest.joined){
+    g.fillStyle=NET.guest.role==="bunny2"?"#7ec3f2":"#ff5147";
+    g.beginPath(); g.arc(px(NET.guest.x),pz(NET.guest.z),5,0,Math.PI*2); g.fill();
+    g.fillStyle="#fff"; g.font="700 8px system-ui"; g.fillText("2", px(NET.guest.x), pz(NET.guest.z)+0.5);
+  } else if(NET.role==="guest"){
+    g.fillStyle="#bfe3ff"; g.beginPath(); g.arc(px(NET.hostC.x),pz(NET.hostC.z),5,0,Math.PI*2); g.fill();
+    g.fillStyle="#123"; g.font="700 8px system-ui"; g.fillText("1", px(NET.hostC.x), pz(NET.hostC.z)+0.5);
+  }
   // the objective line: nearest bully, distance, and a compass arrow that
   // turns with your camera (rotation = facing bearing - target bearing)
   if(near){
@@ -774,6 +848,396 @@ function drawMap(){
     $("objArrow").style.transform="rotate("+(rel*180/Math.PI).toFixed(0)+"deg)";
   }
 }
+
+// ---------- v1.6: the 2-PLAYER LINK TEST (David's commission, Nov 6) ----------
+// Host-authoritative, exactly like he pictured it: one phone (the host) runs
+// the meadow as the server; the guest's phone sends only whispers — a wish
+// direction, a throw — and receives sealed snapshots back. Every snapshot is
+// hash-chained (h = sha256(core), core carries prev), so the guest's screen
+// doesn't trust the relay: it VERIFIES each state it is shown. The world
+// itself never travels — both phones already hold it, from the blobs.
+const MQ_URLS=["wss://broker.emqx.io:8084/mqtt","ws://broker.emqx.io:8083/mqtt"];
+const LOBBY_TOPIC="kodakai/cube/v1/lobby";
+const _enc=new TextEncoder();
+function snapHash(core){ const c={...core}; delete c.h; return sha256hex(_enc.encode(JSON.stringify(c))); }
+function verifySnap(core, chain){
+  if(!core || snapHash(core)!==core.h) return false;
+  if(chain.lastHash!=="GENESIS" && core.prev!==chain.lastHash) return false;
+  chain.lastHash=core.h; return true;
+}
+function netStatus(t){ const el=$("linkStatus"); if(el) el.innerHTML=t; }
+function netBadge(){
+  const b=$("linkBadge"); if(!b) return;
+  if(NET.role==="host"){ b.style.display="block"; b.textContent="🔗 HOST · room "+NET.room+(NET.guest.joined?" · P2 in as "+NET.guest.role+" ✓":" · waiting for P2…"); }
+  else if(NET.role==="guest"){ b.style.display="block"; b.textContent="🔗 GUEST · room "+NET.room+" · seals ✓ "+NET.sealsOk+(NET.sealsBad?" · ⚠ "+NET.sealsBad+" broken":" · chain intact"); }
+  else b.style.display="none";
+}
+function fmtMs(x){ return (x===null||x===undefined) ? "—" : Math.round(x)+" ms"; }
+function teleEvent(kind, detail){
+  const T=NET.tele;
+  T.events.push({perf:performance.now(), t:state.t, kind, detail});
+  if(T.events.length>48) T.events.shift();
+  renderTele();
+}
+function worldFacts(){
+  if(!MAN) return "world: (still recalling the blobs…)";
+  const mb=(MAN.assets.reduce((s,a)=>s+(a.bytes||0),0)/1048576).toFixed(1);
+  return "world: "+MAN.assets.length+" Walrus blobs · "+mb+" MB · manifest "+CUBE_MANIFEST.slice(0,8)+"… · every asset sha256-verified in THIS browser before it appeared";
+}
+function renderTele(){
+  const el=$("linkStats"); if(!el) return;
+  const T=NET.tele;
+  el.style.display=T.show?"block":"none";
+  const relay="relay: MQTT "+MQ_URLS[NET.urlIdx].split("/")[2]+" · topics kodakai/cube/v1/"+(NET.room||"—")+"/up|down · carried "+T.msgsUp+"↑/"+T.msgsDown+"↓ msgs · "+T.bytesUp+"↑/"+T.bytesDown+"↓ bytes (whispers only)";
+  const pl=$("proofLine"); if(pl) pl.textContent=worldFacts()+" · "+relay;
+  if(!T.show) return;
+  let head;
+  if(NET.role==="host"){
+    head="📊 TIMING — HOST (this phone IS the server)\n"+
+      "guest input → applied on this meadow: "+fmtMs(T.lastInputAppliedMs)+" · inputs received: "+T.inputs+"\n"+
+      "snapshots out: #"+NET.snapN+" every "+(state.started?"125":"500")+" ms · latest seal "+(T.lastSnapHash?T.lastSnapHash.slice(0,12)+"…":"—")+"\n";
+  } else if(NET.role==="guest"){
+    head="📊 TIMING — GUEST\n"+
+      "relay round-trip (ping↔pong): "+fmtMs(T.rttMs)+"\n"+
+      "snapshot interval: "+fmtMs(T.snapIntervalMs)+" · host→this phone ≈ "+fmtMs(T.snapDelayMs)+"\n"+
+      "seal verify on this phone: "+(T.verifyMs===null?"—":T.verifyMs.toFixed(2)+" ms")+" · seals ✓ "+NET.sealsOk+(NET.sealsBad?" · ⚠ "+NET.sealsBad+" BROKEN":" · chain intact")+"\n";
+  } else head="📊 TIMING — not linked yet\n";
+  const ev=T.events.slice(-8).reverse().map(e=>"· ["+(e.perf/1000).toFixed(2)+"s · game "+e.t.toFixed(1)+"s] "+e.kind+" — "+e.detail).join("\n");
+  el.innerHTML="<b>HOW THIS IS REAL</b>\nEnvelope (this page shell): GitHub Pages — HTML only, no world in it.\n"+worldFacts()+".\n"+relay+"\n"+head+(ev?"\nCONTROL POINTS (newest first)\n"+ev:"");
+}
+function mqConnect(cb){
+  if(typeof mqtt==="undefined"){ netStatus("⚠️ The relay library didn't load — check the connection and reopen the page."); return; }
+  if(NET.mq){ if(NET.up) cb&&cb(); return; }
+  netStatus("Connecting to the relay…");
+  NET.mq=mqtt.connect(MQ_URLS[NET.urlIdx],{clientId:"cube_"+Math.random().toString(36).slice(2,10), keepalive:30, reconnectPeriod:2500, connectTimeout:9000});
+  NET.mq.on("connect",()=>{ NET.up=true; cb&&cb(); });
+  NET.mq.on("error",()=>{ if(!NET.up && NET.urlIdx===0){ NET.urlIdx=1; try{ NET.mq.end(true); }catch(e){} NET.mq=null; mqConnect(cb); } });
+}
+function mqTopic(dir){ return "kodakai/cube/v1/"+NET.room+"/"+dir; }
+function mqPub(topic, obj){
+  if(NET.mq && NET.up){ const s=JSON.stringify(obj); NET.tele.bytesUp+=s.length; NET.tele.msgsUp++; NET.mq.publish(topic, s); }
+}
+function mqSend(dir, obj){ mqPub(mqTopic(dir), obj); }
+function netEvPop(t){ if(NET.role==="host") mqSend("down",{type:"ev", pop:t}); }
+function netEvBanner(m,s){ if(NET.role==="host") mqSend("down",{type:"ev", banner:[m,s]}); }
+
+// ----- host side -----
+function hostRoom(){
+  if(NET.role!=="solo") return;
+  NET.room=Array.from({length:5},()=>"ABCDEFGHJKMNPQRSTUVWXYZ23456789"[Math.floor(Math.random()*31)]).join("");
+  NET.role="host";
+  mqConnect(()=>{
+    NET.mq.subscribe(mqTopic("up")); NET.mq.on("message",onHostMsg);
+    $("hostInfo").style.display="block"; $("roomCode").textContent=NET.room;
+    $("joinLink").textContent=location.origin+location.pathname+"?room="+NET.room;
+    try{ const qb=$("qrBox"); qb.innerHTML=""; if(window.QRCode) new QRCode(qb,{text:$("joinLink").textContent, width:132, height:132, correctLevel:QRCode.CorrectLevel.M}); }catch(e){}
+    netStatus("Room open ✓ — you are the host: the meadow's truth lives on YOUR phone, the relay only ferries whispers. When she's in, both press PLAY.");
+    netBadge();
+    NET.tele.show=true; teleEvent("ROOM OPEN","room "+NET.room+" · this phone is the server · table announced in the 🌍 lobby every 5 s"); renderTele();
+  });
+}
+function onHostMsg(t, m){
+  NET.tele.bytesDown+=(m&&m.length)||0; NET.tele.msgsDown++;
+  let msg; try{ msg=JSON.parse(m.toString()); }catch(e){ return; }
+  if(msg.type==="join"){ teleEvent("JOIN KNOCK",(msg.role||"?")+" asked to enter room "+NET.room); setupGuest(msg.role); }
+  else if(msg.type==="ping"){ mqSend("down",{type:"pong", id:msg.id, t:msg.t, ht:Date.now(), snap:NET.snapN}); }
+  else if(msg.type==="in" && NET.guest.joined){
+    NET.tele.inputs++;
+    NET.tele.pendingInputPerf=performance.now();
+    NET.guest.wish.x=+msg.wx||0; NET.guest.wish.z=+msg.wz||0;
+    if(msg.th){ NET.guest.throwQ=1; teleEvent("THROW WHISPER","P2's throw bit arrived · wish ("+(+msg.wx||0)+", "+(+msg.wz||0)+")"); }
+    NET.guest.lastIn=state.t;
+  }
+}
+function setupGuest(role){
+  const g=NET.guest;
+  if(g.joined && g.role===role){ mqSend("down",{type:"welcome", role}); return; }
+  if(g.el && !g.bully && g.el.parentNode) g.el.parentNode.removeChild(g.el);
+  if(g.label){ if(g.label.parentNode) g.label.parentNode.removeChild(g.label); const i=labels.indexOf(g.label); if(i>=0) labels.splice(i,1); }
+  if(g.bully) g.bully.possessed=false;
+  g.joined=true; g.role=role; g.carried=0; g.throwQ=0; g.bully=null; g.el=null; g.label=null;
+  if(role==="bunny2"){
+    g.x=2.5; g.z=13; g.rotY=Math.PI;
+    g.el=mkEntity(worldEl, URLS.bunny, 1);
+    g.label=addLabel("🐰 BUNNY 2", g.x, g.z, 3.1);
+  } else {
+    const b=bullies.find(x=>x.key===role); if(!b) return;
+    b.possessed=true; g.bully=b; g.el=b.el; g.x=b.x; g.z=b.z; g.rotY=b.rotY;
+    g.label=addLabel("★ "+b.name+" — P2", b.x, b.z, b.h+1.3);
+  }
+  mqSend("down",{type:"welcome", role});
+  teleEvent("WELCOME SENT","P2 seated as "+role+" · sealed snapshot stream running");
+  popText("🔗 Player 2 is in — as "+(role==="bunny2"?"BUNNY TWO":"a bad guy")+"!", 2600);
+  netStatus("Player 2 joined as "+role+" ✓ — both press PLAY and play!");
+  netBadge();
+}
+function hostGuestTick(dt){
+  const g=NET.guest; if(!g.joined) return;
+  if(NET.tele.pendingInputPerf){ NET.tele.lastInputAppliedMs=performance.now()-NET.tele.pendingInputPerf; NET.tele.pendingInputPerf=0; }
+  g.throwCd-=dt;
+  const wx=g.wish.x, wz=g.wish.z, mag=Math.hypot(wx,wz), moving=mag>0.08;
+  if(moving){
+    const s=6.2/Math.max(1,mag);
+    g.x+=wx*s*dt; g.z+=wz*s*dt; g.rotY=Math.atan2(wx,wz); g.hop+=dt*9.5;
+    const rr=Math.hypot(g.x,g.z); if(rr>PLAY_R){ g.x*=PLAY_R/rr; g.z*=PLAY_R/rr; }
+    const td=Math.hypot(g.x-TREE_POS.x, g.z-TREE_POS.z);
+    if(td<TREE_R && td>0.001){ const p=(TREE_R-td); g.x+=(g.x-TREE_POS.x)/td*p; g.z+=(g.z-TREE_POS.z)/td*p; }
+    for(const a of apples){
+      if(a.st!=="ground") continue;
+      if(Math.hypot(a.p.x-g.x, a.p.z-g.z)<1.05 && (state.t-(a.restAt===undefined?-10:a.restAt))>=1.0){
+        a.st="gone"; a.el.setAttribute("visible","false"); g.carried++; teleEvent("PICKUP","P2 grabbed 🍎 #"+g.carried+" at ("+g.x.toFixed(1)+", "+g.z.toFixed(1)+") · rest rule ≥1.0 s + step rule ✓"); break;
+      }
+    }
+  }
+  if(g.throwQ){
+    if(g.carried<=0) teleEvent("THROW DENIED","P2 threw with empty paws — nothing launched");
+    g.throwQ=0;
+    if(g.carried>0 && g.throwCd<=0){
+      g.throwCd=0.25; g.carried--;
+      const gy=groundY(g.x,g.z);
+      if(g.role==="bunny2"){
+        const fx=Math.sin(g.rotY), fz=Math.cos(g.rotY);
+        const fa=getFlyer(); fa.src="P2"; launchApple(fa, new THREE.Vector3(g.x, gy+2.6, g.z), new THREE.Vector3(fx*9.5, 4.6, fz*9.5), "throw"); teleEvent("THROW EXEC","P2 (Bunny Two) apple away · facing "+(g.rotY*180/Math.PI).toFixed(0)+"°");
+      } else {
+        const bp=state.bunnyPos, gyP=groundY(bp.x,bp.z), h=g.bully?g.bully.h:2.2;
+        const from=new THREE.Vector3(g.x, gy+h+0.55, g.z);
+        const dist=Math.hypot(bp.x-from.x, bp.z-from.z), T=Math.min(1.7, Math.max(0.85, dist/6.5));
+        const fa2=getFlyer(); fa2.src="P2"; launchApple(fa2, from, new THREE.Vector3((bp.x-from.x)/T, (gyP+1.0-from.y)/T + 0.5*GRAV*T, (bp.z-from.z)/T), "lob"); teleEvent("THROW EXEC","P2 (bad guy) lobbed at Bunny · flight time "+T.toFixed(2)+" s");
+      }
+    }
+  }
+  if(g.el){
+    const gy=groundY(g.x,g.z);
+    const hop=moving?Math.abs(Math.sin(g.hop))*0.30:Math.sin(state.t*1.8)*0.03;
+    let extra=0;
+    if(g.bully && g.bully.spinT>0){ g.bully.spinT-=dt; extra=g.bully.spinT*260; }
+    g.el.setAttribute("position",g.x+" "+(gy+hop)+" "+g.z);
+    g.el.setAttribute("rotation","0 "+(g.rotY*180/Math.PI+extra)+" 0");
+    if(g.bully){ g.bully.x=g.x; g.bully.z=g.z; g.bully.rotY=g.rotY; }
+    if(g.label) g.label.setAttribute("position",g.x+" "+(gy+(g.bully?g.bully.h+1.3:3.1))+" "+g.z);
+  }
+}
+function sendSnap(){
+  const bp=state.bunnyPos, g=NET.guest;
+  const core={v:1, n:++NET.snapN, t:+state.t.toFixed(2), w:Date.now(), round:state.round, bonks:state.bonks, bonked:state.bonked,
+    host:{x:+bp.x.toFixed(2), z:+bp.z.toFixed(2), r:+state.bunnyRotY.toFixed(2), c:state.carried},
+    guest:{x:+g.x.toFixed(2), z:+g.z.toFixed(2), r:+g.rotY.toFixed(2), c:g.carried, role:g.role},
+    bullies:bullies.map(b=>[b.key, +b.x.toFixed(2), +b.z.toFixed(2), +b.rotY.toFixed(2)]),
+    apples:apples.filter(a=>a.st==="ground").map(a=>[+a.p.x.toFixed(1), +a.p.z.toFixed(1)]),
+    prev:NET.lastHash};
+  core.h=snapHash(core); NET.lastHash=core.h;
+  NET.tele.lastSnapHash=core.h;
+  if(NET.snapN===1) teleEvent("SEAL CHAIN STARTED","snapshot #1 · sha256 "+core.h.slice(0,12)+"… · every next snapshot carries prev");
+  mqSend("down",{type:"snap", core});
+}
+
+// ----- guest side -----
+function joinRoom(){
+  if(NET.role!=="solo") return;
+  const code=($("joinCode").value||"").trim().toUpperCase();
+  if(code.length<4){ netStatus("Type the room code from the host's screen first 🙂"); return; }
+  NET.room=code; NET.role="guest"; NET.meRole=$("roleSel").value;
+  mqConnect(()=>{
+    NET.mq.subscribe(mqTopic("down")); NET.mq.on("message",onGuestMsg);
+    mqSend("up",{type:"join", role:NET.meRole});
+    netStatus("Joining room "+code+" as "+NET.meRole+"… the game re-asks every few seconds until the host answers.");
+    netBadge();
+    NET.tele.show=true; renderTele();
+  });
+}
+function setupGuestSelf(role){
+  NET.meRole=role;
+  if(role==="bunny2"){
+    NET.hostEl=mkEntity(worldEl, URLS.bunny, 1);
+    NET.hostLabel=addLabel("🐰 BUNNY — P1", NET.hostC.x, NET.hostC.z, 3.1);
+    NET.meEl=bunnyEl;
+  } else {
+    const b=bullies.find(x=>x.key===role);
+    NET.meEl=b?b.el:bunnyEl; NET.meBully=b||null;
+    if(b) NET.meLabel=addLabel("★ YOU", b.x, b.z, b.h+1.3);
+    NET.hostEl=bunnyEl;
+  }
+}
+function onGuestMsg(t, m){
+  NET.tele.bytesDown+=(m&&m.length)||0; NET.tele.msgsDown++;
+  let msg; try{ msg=JSON.parse(m.toString()); }catch(e){ return; }
+  if(msg.type==="welcome"){ NET.welcomed=true; setupGuestSelf(msg.role); netStatus("You're in ✓ — playing as "+msg.role+". Press PLAY when the host does."); popText("🔗 You're in! Press PLAY ▶", 2400); teleEvent("WELCOME","host answered · you are "+msg.role+" · seal stream incoming"); }
+  else if(msg.type==="pong"){
+    const now=Date.now(), rtt=now-(+msg.t||now);
+    NET.tele.rttMs=rtt;
+    NET.tele.offsetMs=Math.round((+msg.ht||now)-(((+msg.t||now)+now)/2));
+    if((msg.id%3)===1) teleEvent("PING","round-trip "+rtt+" ms · host clock offset ≈ "+NET.tele.offsetMs+" ms · host at snapshot #"+(msg.snap||0));
+    renderTele();
+  }
+  else if(msg.type==="snap") applySnap(msg.core);
+  else if(msg.type==="ev"){ if(msg.pop) popText(msg.pop, 1500); if(msg.banner) showBanner(msg.banner[0], msg.banner[1], 3800); }
+}
+function applySnap(core){
+  const v0=performance.now();
+  const okSnap=verifySnap(core, NET);
+  NET.tele.verifyMs=performance.now()-v0;
+  if(!okSnap){ NET.sealsBad++; teleEvent("SEAL BROKEN","snapshot #"+(core&&core.n)+" failed its hash/chain check — REFUSED, not drawn"); netBadge(); return; }
+  NET.sealsOk++;
+  const nowP=performance.now();
+  if(NET.tele.lastSnapRecv) NET.tele.snapIntervalMs=nowP-NET.tele.lastSnapRecv;
+  NET.tele.lastSnapRecv=nowP;
+  if(core.w){ const d=Date.now()-(core.w+NET.tele.offsetMs); if(d>-5000&&d<60000) NET.tele.snapDelayMs=Math.max(0,d); }
+  if(NET.sealsOk===1) teleEvent("SEAL VERIFIED","snapshot #"+core.n+" · sha256 "+core.h.slice(0,12)+"… · prev link ✓ · verified in "+NET.tele.verifyMs.toFixed(2)+" ms");
+  state.round=core.round; state.bonks=core.bonks; state.bonked=core.bonked;
+  state.carried=core.guest.c; syncHUD();
+  NET.hostT={x:core.host.x, z:core.host.z, r:core.host.r};
+  for(const row of core.bullies) NET.bT[row[0]]={x:row[1], z:row[2], r:row[3]};
+  placeGuestApples(core.apples);
+  if(NET.sealsOk%10===1) netBadge();
+}
+function placeGuestApples(list){
+  const pool=apples.filter(a=>a.st==="ground"||a.st==="spare");
+  list.forEach((p,i)=>{
+    const a=pool[i]; if(!a) return;
+    a.st="ground"; a.p.set(p[0], groundY(p[0],p[1])+0.16, p[1]);
+    a.el.setAttribute("visible","true");
+    a.el.setAttribute("position",p[0]+" "+a.p.y+" "+p[1]);
+  });
+  pool.slice(list.length).forEach(a=>{ a.st="spare"; a.el.setAttribute("visible","false"); });
+}
+function guestPlaceTick(dt){
+  const hc=NET.hostC, ht=NET.hostT, k=Math.min(1, dt*10);
+  hc.x+=(ht.x-hc.x)*k; hc.z+=(ht.z-hc.z)*k; hc.r=ht.r;
+  const hel=NET.meRole==="bunny2" ? NET.hostEl : bunnyEl;
+  if(hel && NET.welcomed){
+    const gy=groundY(hc.x,hc.z);
+    hel.setAttribute("position",hc.x+" "+(gy+0.03)+" "+hc.z);
+    hel.setAttribute("rotation","0 "+(hc.r*180/Math.PI)+" 0");
+    if(NET.hostLabel) NET.hostLabel.setAttribute("position",hc.x+" "+(gy+3.1)+" "+hc.z);
+  }
+  for(const b of bullies){
+    const t2=NET.bT[b.key]; if(!t2) continue;
+    b.x+=(t2.x-b.x)*k; b.z+=(t2.z-b.z)*k; b.rotY=t2.r;
+    if(NET.meBully && b===NET.meBully) continue;
+    const gy=groundY(b.x,b.z);
+    b.el.setAttribute("position",b.x+" "+gy+" "+b.z);
+    b.el.setAttribute("rotation","0 "+(b.rotY*180/Math.PI)+" 0");
+    if(b.label) b.label.setAttribute("position",b.x+" "+(gy+b.h+0.9)+" "+b.z);
+  }
+}
+function sendInput(){
+  let wx=0, wz=0;
+  if(state.stick.active){
+    const R=state.bunnyRotY, sx=state.stick.x, fwdAmt=Math.max(-1,Math.min(1,-state.stick.y));
+    wx=Math.sin(R)*fwdAmt + (-Math.cos(R))*sx*0.3*Math.abs(fwdAmt);
+    wz=Math.cos(R)*fwdAmt + Math.sin(R)*sx*0.3*Math.abs(fwdAmt);
+  } else {
+    let ix=0, iz=0;
+    if(state.keys["KeyW"]||state.keys["ArrowUp"]) iz-=1;
+    if(state.keys["KeyS"]||state.keys["ArrowDown"]) iz+=1;
+    if(state.keys["KeyA"]||state.keys["ArrowLeft"]) ix-=1;
+    if(state.keys["KeyD"]||state.keys["ArrowRight"]) ix+=1;
+    if(ix||iz){
+      const sy2=Math.sin(state.camYaw), cy2=Math.cos(state.camYaw);
+      wx=(-sy2)*(-iz)+cy2*ix; wz=(-cy2)*(-iz)+(-sy2)*ix;
+      const m=Math.hypot(wx,wz); if(m>1){ wx/=m; wz/=m; }
+    }
+  }
+  mqSend("up",{type:"in", wx:+wx.toFixed(2), wz:+wz.toFixed(2), th:NET.throwOut});
+  NET.throwOut=0;
+}
+function netTick(dt){
+  if(NET.role==="host"){
+    hostGuestTick(dt);
+    if(NET.mq && NET.up){
+      NET.lobby.timer-=dt;
+      if(NET.lobby.timer<=0){ NET.lobby.timer=5; mqPub(LOBBY_TOPIC,{type:"open", room:NET.room, world:CUBE_MANIFEST, need:1, ts:Date.now()}); }
+    }
+    if(NET.guest.joined && state.ready){
+      NET.snapTimer-=dt;
+      if(NET.snapTimer<=0){ NET.snapTimer=state.started?0.125:0.5; sendSnap(); }
+    }
+  } else if(NET.role==="guest"){
+    guestPlaceTick(dt);
+    if(!NET.welcomed){
+      NET.joinTimer-=dt;
+      if(NET.joinTimer<=0){ NET.joinTimer=2.5; mqSend("up",{type:"join", role:NET.meRole}); }
+    }
+    if(NET.welcomed){
+      NET.tele.pingTimer-=dt;
+      if(NET.tele.pingTimer<=0){ NET.tele.pingTimer=2; mqSend("up",{type:"ping", id:++NET.tele.pingSeq, t:Date.now()}); }
+    }
+    if(state.started){
+      NET.inputTimer-=dt;
+      if(NET.inputTimer<=0){ NET.inputTimer=0.12; sendInput(); }
+    }
+  }
+  if(NET.tele.show && performance.now()-NET.tele.lastRender>600){ NET.tele.lastRender=performance.now(); renderTele(); }
+}
+$("hostBtn").addEventListener("click",hostRoom);
+$("joinBtn").addEventListener("click",joinRoom);
+$("lobbyBtn").addEventListener("click",lobbyListen);
+$("teleBtn").addEventListener("click",()=>{ NET.tele.show=!NET.tele.show; renderTele(); });
+$("linkBadge").addEventListener("click",()=>{ NET.tele.show=!NET.tele.show; renderTele(); });
+function renderLobby(){
+  const el=$("lobbyList"); if(!el) return;
+  const now=Date.now();
+  const rows=Object.values(NET.lobby.seen).filter(r=>now-(r.seenAt||0)<25000);
+  if(!rows.length){ el.innerHTML="No open tables seen yet — a host announces every 5 s. (Your own table doesn't list here.)"; return; }
+  el.innerHTML="";
+  rows.forEach(r=>{
+    const div=document.createElement("div"); div.className="row";
+    const age=Math.max(0,Math.round((now-r.seenAt)/1000));
+    const span=document.createElement("span");
+    span.innerHTML="🐰 Bunny's table · room <b>"+r.room+"</b> · world "+String(r.world||"").slice(0,8)+"… · seen "+age+"s ago";
+    const b=document.createElement("button"); b.className="lkBtn"; b.textContent="▶ JOIN";
+    b.addEventListener("click",()=>{ $("joinCode").value=r.room; joinRoom(); });
+    div.appendChild(span); div.appendChild(b); el.appendChild(div);
+  });
+}
+function lobbyListen(){
+  if(NET.lobby.listening){ renderLobby(); return; }
+  mqConnect(()=>{
+    NET.lobby.listening=true;
+    NET.mq.subscribe(LOBBY_TOPIC);
+    NET.mq.on("message",(t,m)=>{
+      if(t!==LOBBY_TOPIC) return;
+      let d; try{ d=JSON.parse(m.toString()); }catch(e){ return; }
+      if(d && d.type==="open" && d.room && d.room!==NET.room){ NET.lobby.seen[d.room]={...d, seenAt:Date.now()}; renderLobby(); }
+    });
+    netStatus("Watching the 🌍 lobby for open tables…");
+    renderLobby();
+  });
+}
+$("linkBtn").addEventListener("click",()=>{
+  const p=$("linkPanel"), on=p.style.display==="block";
+  p.style.display=on?"none":"block";
+  if(!on) $("howPanel").style.display="none";
+});
+$("howBtn").addEventListener("click",()=>{ $("linkPanel").style.display="none"; });
+try{
+  const q=new URLSearchParams(location.search), rm=q.get("room");
+  if(rm){ $("joinCode").value=rm.toUpperCase(); $("linkPanel").style.display="block"; }
+}catch(e){}
+// self-test hook: a simulated second player through the REAL relay — it joins,
+// drives forward, and verifies every seal the host sends. Used by the desk's
+// browser proof; harmless in production.
+NET.simGuest=function(role){
+  if(typeof mqtt==="undefined") return "no mqtt lib";
+  const chain={lastHash:"GENESIS"};
+  const sim={sealsOk:0, sealsBad:0, snaps:0, chain};
+  NET.sim=sim;
+  const c=mqtt.connect(MQ_URLS[NET.urlIdx],{clientId:"cubesim_"+Math.random().toString(36).slice(2,10), keepalive:30});
+  sim.end=()=>{ try{ clearInterval(sim.iv); }catch(e){} try{ c.end(true); }catch(e){} };
+  c.on("connect",()=>{
+    c.subscribe(mqTopic("down"));
+    c.publish(mqTopic("up"), JSON.stringify({type:"join", role:role||"bunny2"}));
+    sim.iv=setInterval(()=>{ c.publish(mqTopic("up"), JSON.stringify({type:"in", wx:0, wz:-1, th:0})); },150);
+  });
+  c.on("message",(t,m)=>{
+    try{
+      const msg=JSON.parse(m.toString());
+      if(msg.type==="snap"){ sim.snaps++; if(verifySnap(msg.core, chain)) sim.sealsOk++; else sim.sealsBad++; }
+    }catch(e){}
+  });
+  return "sim connecting";
+};
+window.__LINK=NET;
 window.addEventListener("wheel",e=>{ if(e.target.closest("#stage")){ state.camDist=Math.min(13,Math.max(4.5,state.camDist+e.deltaY*0.01)); } },{passive:true});
 // ---------- bullies ----------
 function angleLerp(a,b,t){
@@ -781,6 +1245,7 @@ function angleLerp(a,b,t){
   return a+d*Math.min(1,t);
 }
 function updateBully(b, dt){
+  if(b.possessed) return;
   const t=state.t, gy=groundY(b.x,b.z);
   let hopY=0, moving=false;
   if(b.spinT>0){
@@ -890,6 +1355,11 @@ function tickLoop(now){
   if(state.wobbleT>0){ state.wobbleT-=dt; roll=Math.sin(t*36)*11*Math.max(0,state.wobbleT/0.55); }
   bunnyEl.setAttribute("position",state.bunnyPos.x+" "+(gy+hop)+" "+state.bunnyPos.z);
   bunnyEl.setAttribute("rotation",(moving?Math.sin(state.hopPhase)*4:0)+" "+(state.bunnyRotY*180/Math.PI)+" "+roll);
+  if(NET.role==="guest" && NET.meEl && NET.meEl!==bunnyEl){
+    NET.meEl.setAttribute("position",state.bunnyPos.x+" "+(gy+hop)+" "+state.bunnyPos.z);
+    NET.meEl.setAttribute("rotation","0 "+(state.bunnyRotY*180/Math.PI)+" 0");
+    if(NET.meLabel) NET.meLabel.setAttribute("position",state.bunnyPos.x+" "+(gy+3.6)+" "+state.bunnyPos.z);
+  }
   if(bunnyShadow) bunnyShadow.setAttribute("position",state.bunnyPos.x+" "+(gy+0.04)+" "+state.bunnyPos.z);
   // camera follow — snapped on the first frame, then lerped, and HARD-clamped
   // above the terrain at its own footprint so it can never dive under the meadow
@@ -946,13 +1416,13 @@ function tickLoop(now){
     if(vis) _dyn.carriedEl.setAttribute("position",state.bunnyPos.x+" "+(gy+hop+2.62+Math.sin(t*2.2)*0.05)+" "+state.bunnyPos.z),
             _dyn.carriedEl.setAttribute("rotation","0 "+(t*40)+" 0");
   }
-  if(state.started){
+  if(state.started && NET.role!=="guest"){
   // the bullies wander, celebrate, spin…
   for(const b of bullies) updateBully(b, dt);
   // …and pelt Bunny on a timer that tightens each round
   state.lobTimer-=dt;
   if(state.lobTimer<=0){
-    const ready=bullies.filter(b=>b.spinT<=0&&b.celebT<=0);
+    const ready=bullies.filter(b=>b.spinT<=0&&b.celebT<=0&&!b.possessed);
     if(ready.length) lobFrom(ready[Math.floor(Math.random()*ready.length)]);
     const base=Math.max(2.4, 4.4-0.25*(state.round-1));
     state.lobTimer=base*(0.75+Math.random()*0.5);
@@ -1032,6 +1502,7 @@ function tickLoop(now){
   // door ring slow spin + clouds drift
   if(_dyn.doorRing) _dyn.doorRing.rotation.z+=dt*0.5;
   if(_dyn.clouds) _dyn.clouds.forEach((c,i)=>{ const o=c.object3D; o.position.x+=Math.sin(t*0.05+i)*0.0015; });
+  netTick(dt);
   if((_mapTick++ % 5)===0) drawMap();
   // labels face the camera (bully labels ride in the same list, positions already updated)
   const cp=camEl.object3D.position;
