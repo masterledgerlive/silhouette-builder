@@ -373,7 +373,9 @@ function sha256hex(data){
 function winHash(r){ const c={format:r.format, winner:r.winner, who:r.who, secs:r.secs, round:r.round, ts:r.ts, prev:r.prev}; return sha256hex(_enc.encode(JSON.stringify(c))); }
 const CUBE_SEED=["PJBuzw0GA2rtbGKGpQP8m9imSh8LCe9eaOSkaoKjFdM"];
 const CUBE_LADDER=["https://walrus-testnet.blockscope.net/v1/blobs/","https://aggregator.walrus-testnet.walrus.space/v1/blobs/"];
-function cubeIds(){ let extra=[]; try{ extra=JSON.parse(localStorage.getItem("hall-cube-records")||"[]"); }catch(e){} return Array.from(new Set(CUBE_SEED.concat(extra))); }
+function cubeIds(){ let extra=[]; try{ extra=JSON.parse(localStorage.getItem("hall-cube-records")||"[]"); }catch(e){}
+  try{ const h=(location.hash||"").match(/#cube=([A-Za-z0-9_,-]+)/); if(h){ const inc=h[1].split(",").filter(x=>x.length>20); if(inc.length){ extra=Array.from(new Set(extra.concat(inc))); localStorage.setItem("hall-cube-records", JSON.stringify(extra)); const m=document.getElementById("cubeRecMsg"); if(m) m.textContent="📥 "+inc.length+" record(s) arrived from your Cube — verified below as they load."; } } }catch(e){}
+  return Array.from(new Set(CUBE_SEED.concat(extra))); }
 async function cubeFetch(id){
   for(const base of CUBE_LADDER){ try{ const r=await fetch(base+id); if(r.ok) return await r.json(); }catch(e){} }
   return null;
