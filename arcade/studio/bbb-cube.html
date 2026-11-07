@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>BUNNY CUBE v1.8.7 — BONK THE BULLIES (a 3D world from Walrus blobs)</title>
+<title>BUNNY CUBE v1.8.8 — BONK THE BULLIES (a 3D world from Walrus blobs)</title>
 <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/mqtt@5.10.1/dist/mqtt.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -164,7 +164,7 @@ grab apples, bonk them back. First to the banner takes the round.</p>
       <button class="lkBtn" id="eatBtn" style="font-size:19px;padding:12px 26px">🍎 EAT APPLE</button>
     </div>
     <div id="pop"></div>
-    <div id="verTag">🧊 CUBE v1.8.7 · BONK THE BULLIES</div>
+    <div id="verTag">🧊 CUBE v1.8.8 · BONK THE BULLIES</div>
     <button id="tiltBtn">🧭 TILT</button>
     <div id="joy"><div id="joyKnob"></div></div>
     <div id="pad"><span class="pip pU">▲</span><span class="pip pD">▼</span><span class="pip pL">◀</span><span class="pip pR">▶</span><div id="padKnob"></div></div>
@@ -199,10 +199,10 @@ grab apples, bonk them back. First to the banner takes the round.</p>
         <div class="ssName">🌌 SKY&nbsp; <button class="lkBtn" id="nightBtn" type="button">☀️ DAY</button></div>
         <div class="ssName">🕐 CLOCK&nbsp; <button class="lkBtn" id="cycBtn" type="button">CYCLE OFF</button></div>
         <button class="ssBtn" id="playBtn"><span class="tri">▶</span> PLAY</button>
+        <button class="ssBtn small" id="boardBtn">🏆 HIGH SCORES</button>
         <button class="ssBtn small" id="howBtn">? HOW TO PLAY</button>
         <button class="ssBtn small" id="linkBtn">🔗 2-PLAYER LINK</button>
         <button class="ssBtn small" id="aboutBtn">📖 ABOUT &amp; PROOF</button>
-        <button class="ssBtn small" id="boardBtn">🏆 HIGH SCORES</button>
         <div class="ssNote">First to the banner takes the round · your 10 bonks win the meadow · their 3 bonks on you win it back.</div>
       </div>
       <div class="ssFoot">the film's own world, rebuilt from blobs<br>every object hash-verified in your browser</div>
@@ -2159,6 +2159,7 @@ function tickLoop(now){
   if(_dyn.doorRing) _dyn.doorRing.rotation.z+=dt*0.5;
   if(_dyn.clouds) _dyn.clouds.forEach((c,i)=>{ const o=c.object3D; o.position.x+=Math.sin(t*0.05+i)*0.0015; });
   netTick(dt); rpTick(dt); if(AIM.on) aimDraw();
+  if(!state.started && NET.role!=="guest" && RP && !RP.active){ const _h=$("hud"); if(_h && _h.style.display!=="none" && !state.started) _h.style.display="none"; }
   if(SKY.cycle){ SKY.acc+=dt; if(SKY.acc>0.25){ SKY.tod=(SKY.tod+SKY.acc*SKY.speed)%24; SKY.acc=0; applySky(); } }
   if((_mapTick++ % 5)===0) drawMap();
   // labels face the camera (bully labels ride in the same list, positions already updated)
