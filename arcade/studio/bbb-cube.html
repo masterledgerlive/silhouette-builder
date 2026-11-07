@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>BUNNY CUBE v1.6 — BONK THE BULLIES (a 3D world from Walrus blobs)</title>
+<title>BUNNY CUBE v1.7 — BONK THE BULLIES (a 3D world from Walrus blobs)</title>
 <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/mqtt@5.10.1/dist/mqtt.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -101,12 +101,31 @@
        border:1px solid rgba(255,255,255,.16);border-radius:8px;padding:5px 8px;margin:4px 0}
   #qrBox{background:#fff;border-radius:8px;padding:6px;width:144px}
   .small{font-size:12.5px;color:#9fb4c8}
+  /* ---------- v1.7: clean full-screen game mode (David's phone verdict) ---------- */
+  html,body{height:100%;overflow:hidden;overscroll-behavior:none}
+  body{touch-action:none;-webkit-user-select:none;user-select:none}
+  input,select{user-select:text;-webkit-user-select:text}
+  .wrap{max-width:none;margin:0;padding:0}
+  #stage{position:fixed;inset:0;width:100vw;height:100vh;height:100dvh;border:none;border-radius:0;z-index:1}
+  #aboutSheet{position:fixed;inset:0;z-index:60;display:none;overflow-y:auto;-webkit-overflow-scrolling:touch;
+       background:#0b0e14;padding:52px 16px 24px;touch-action:pan-y}
+  #aboutClose{position:fixed;top:10px;right:12px;z-index:61;font-size:15px}
+  #bootStat{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);z-index:8;display:none;max-width:92vw;
+       background:rgba(7,10,16,.78);border:1px solid rgba(255,255,255,.25);color:#dff2ff;border-radius:10px;
+       padding:6px 12px;font:12px ui-monospace,Menlo,Consolas,monospace;text-align:center;pointer-events:none}
+  #linkPanel{left:50%;transform:translateX(-50%);bottom:92px;width:min(430px,94vw);max-height:min(76%,calc(100% - 168px));overflow-y:auto;
+       -webkit-overflow-scrolling:touch;background:#05080e;z-index:30;touch-action:pan-y;font-size:15px}
+  #howPanel{left:50%;transform:translateX(-50%);bottom:92px;width:min(430px,94vw);max-height:min(60%,calc(100% - 168px));overflow-y:auto;
+       -webkit-overflow-scrolling:touch;background:#05080e;z-index:30;touch-action:pan-y}
+  #startScreen{overflow-y:auto;touch-action:pan-y}
+  #qrBox{margin:8px auto}
+  #joinCode{font-size:18px}
 </style>
 </head>
 <body>
 <div class="wrap">
-<h1>🧊🐰 BUNNY CUBE — the meadow, alive</h1>
-<p class="sub">A whole new Bunny game, and a different species from the 2D cabinet (which stays frozen as a first attempt, per the versioning law).
+<h1 data-about>🧊🐰 BUNNY CUBE — the meadow, alive</h1>
+<p class="sub" data-about>A whole new Bunny game, and a different species from the 2D cabinet (which stays frozen as a first attempt, per the versioning law).
 This is a <b>3D open world</b>: the film's own 2008 production models — Bunny, Frank, Rinky, Gamera, the apple tree, even the
 meadow terrain — converted once from the original <span class="mono">.blend</span> artifacts into game objects, blobbed to Walrus,
 sha256-verified in your browser, and assembled into the cube. You enter through <b>THE DOOR</b> — and this time the meadow
@@ -120,11 +139,12 @@ grab apples, bonk them back. First to the banner takes the round.</p>
       <div id="counts">🍎 <b id="hudCarry">0</b> carried · 🎯 <b id="hudBonk">0</b>/10 bonks · 💥 <b id="hudBonked">0</b>/3 bonked · 🏁 ROUND <b id="hudRound">1</b></div>
       <div id="objective">🎯 <b id="objName">—</b> · <span id="objDist">–</span>m <span id="objArrow">▲</span> <span style="color:#9fb4c8;font-weight:400">nearest bully — the map knows</span></div>
     </div>
+    <div id="bootStat">recalling the meadow from the blobs…</div>
     <div id="hint">📱 Control pad (bottom-left): hold + push up = hop forward, slide left/right = steer · right thumb drag on the meadow = look around · 🧭 TILT = pivot by tilting your phone · 🍎 button = throw.<br>Desktop: WASD / arrows + mouse drag to look · SPACE or the apple button to throw.</div>
     <div id="flash"></div>
     <div id="banner"><div id="bannerMain"></div><div id="bannerSub"></div></div>
     <div id="pop"></div>
-    <div id="verTag">🧊 CUBE v1.6 · BONK THE BULLIES</div>
+    <div id="verTag">🧊 CUBE v1.7 · BONK THE BULLIES</div>
     <button id="tiltBtn">🧭 TILT</button>
     <div id="joy"><div id="joyKnob"></div></div>
     <div id="pad"><span class="pip pU">▲</span><span class="pip pD">▼</span><span class="pip pL">◀</span><span class="pip pR">▶</span><div id="padKnob"></div></div>
@@ -143,21 +163,20 @@ grab apples, bonk them back. First to the banner takes the round.</p>
         <span class="small">Same-room test — player 2 just scans this. The code carries the room + the world's address, not the world itself:</span>
         <div id="qrBox" style="margin:6px 0"></div>
         <span class="small">…or opens this link and taps JOIN:</span><br><span id="joinLink" class="mono" style="font-size:11px;word-break:break-all;color:#7ec3f2"></span></div>
-        <div style="margin:8px 0 2px">— or join a room —</div>
+        <div id="joinDiv" style="margin:8px 0 2px">— or join a room —</div>
         <input id="joinCode" placeholder="CODE" maxlength="5">
         <select id="roleSel"><option value="bunny2">🐰 Bunny Two</option><option value="frank">😤 Frank — bad guy</option><option value="rinky">😤 Rinky — bad guy</option><option value="gamera">😤 Gamera — bad guy</option></select>
         <button class="lkBtn" id="joinBtn">▶ JOIN</button>
-        <div style="margin:10px 0 2px">— 🌍 anywhere test: open tables —</div>
+        <div id="lobbyDiv" style="margin:10px 0 2px">— 🌍 anywhere test: open tables —</div>
         <button class="lkBtn" id="lobbyBtn">👀 LOOK FOR AN OPEN TABLE</button>
         <div id="lobbyList" class="small" style="margin-top:4px">Hosts announce their table here every few seconds — like a chess board waiting for a challenger. Tap one to join it from anywhere.</div>
-        <button class="lkBtn" id="teleBtn">📊 TIMING &amp; PROOF</button>
-        <div id="proofLine" class="small mono" style="margin-top:4px"></div>
         <div id="linkStatus" class="small" style="margin-top:8px">The relay passes only whispers — inputs, positions, seals. The world is already on both phones, from the blobs. The room code is the key: share it only with your player 2.</div>
       </div>
       <div class="ssMenu">
         <button class="ssBtn" id="playBtn"><span class="tri">▶</span> PLAY</button>
         <button class="ssBtn small" id="howBtn">? HOW TO PLAY</button>
         <button class="ssBtn small" id="linkBtn">🔗 2-PLAYER LINK</button>
+        <button class="ssBtn small" id="aboutBtn">📖 ABOUT &amp; PROOF</button>
         <div class="ssNote">First to the banner takes the round · your 10 bonks win the meadow · their 3 bonks on you win it back.</div>
       </div>
       <div class="ssFoot">the film's own world, rebuilt from blobs<br>every object hash-verified in your browser</div>
@@ -165,9 +184,10 @@ grab apples, bonk them back. First to the banner takes the round.</p>
   </div>
 </div>
 
-<div class="panel"><div id="log">warming the cube — recalling the meadow from the blobs…</div></div>
+<div id="aboutSheet"><button id="aboutClose" class="lkBtn">✕ CLOSE</button></div>
+<div class="panel" data-about><div id="log">warming the cube — recalling the meadow from the blobs…</div></div>
 
-<div class="panel">
+<div class="panel" data-about>
   <h2>🌳 WHAT YOU'RE STANDING IN</h2>
   <p class="small" style="margin:0">Every object in this world is a Walrus blob with a printed record — name (blob id), key, proof
   (sha256), measure (bytes). The cast and the set were <i>already rendered in 2008</i> for the film <i>Big Buck Bunny</i>
@@ -198,7 +218,12 @@ grab apples, bonk them back. First to the banner takes the round.</p>
   provenance (manifest, blob count, megabytes, hashes verified at boot). GitHub serves only this page's envelope;
   the meadow arrives from Walrus. The host panel also deals a QR for the same-room test — the code carries the
   room and the world's address, never the world — and hosts announce an open table in the 🌍 lobby every 5 s,
-  chess-challenge style, for the anywhere test.</p>
+  chess-challenge style, for the anywhere test.<br>
+  New in v1.7: CLEAN FULLSCREEN, per David's phone verdict on the first live two-phone test (his wife joined as
+  Bunny Two — it worked, and it was too busy). The game now fills the whole screen with every button inside it;
+  the explainer text and the boot log moved behind 📖 ABOUT &amp; PROOF (nothing deleted, nothing in the way);
+  the link panel is one solid, scrollable card — host room and QR first, big — and PLAY sweeps every panel off
+  the field. The timing view lives behind the 🔗 badge alone, one copy, on demand.</p>
   <div class="small" style="line-height:2.1;margin-top:6px">
     🎞️ the film — <i>Big Buck Bunny</i> (2008) · 🐰 cast &amp; set © Blender Foundation · CC-BY 3.0<br>
     <span class="chip">Walrus testnet · 30 epochs · the keeper renews</span>
@@ -234,7 +259,7 @@ function sha256hex(data){
   var out=""; for(var i=0;i<8;i++) out+=("0000000"+(H[i]>>>0).toString(16)).slice(-8);
   return out;
 }
-function log(msg, cls){ const el=$("log"); const d=document.createElement("div"); if(cls) d.className=cls; d.innerHTML=msg; el.appendChild(d); }
+function log(msg, cls){ const el=$("log"); const d=document.createElement("div"); if(cls) d.className=cls; d.innerHTML=msg; el.appendChild(d); const bs=$("bootStat"); if(bs && !state.ready){ bs.style.display="block"; bs.textContent=msg.replace(/<[^>]*>/g,""); } }
 $("log").innerHTML="";
 async function ladder(id){
   try{ const r=await fetch(AGG+id,{cache:"no-store"}); if(r.ok) return {buf:await r.arrayBuffer(), via:"mirror 1"}; }catch(e){}
@@ -558,7 +583,7 @@ function placeWorld(){
   log("🌳 <b>THE CUBE IS OPEN — and it's a game now.</b> The meadow stands on its own proven geometry (door ground "+groundY(0,10.5).toFixed(1)+" up). Frank, Rinky and Gamera are already plotting. Grab a 🍎!","ok");
   $("hud").style.display="block"; $("hint").style.display="block"; $("throwBtn").style.display="block";
   $("tiltBtn").style.display="block"; $("verTag").style.display="block"; $("pad").style.display="block";
-  $("mapBox").style.display="block"; $("startScreen").style.display="block";
+  $("mapBox").style.display="block"; $("startScreen").style.display="block"; $("bootStat").style.display="none";
   syncHUD();
   // v1.5: the grab-a-🍎 pop fires on the PLAY press, not over the start menu
 }
@@ -792,6 +817,11 @@ $("playBtn").addEventListener("click",()=>{
   if(state.started) return;
   state.started=true;
   $("startScreen").style.display="none";
+  $("howPanel").style.display="none"; $("linkPanel").style.display="none"; $("aboutSheet").style.display="none";
+  NET.tele.show=false; renderTele();
+  $("hint").style.display="none"; $("verTag").style.display="none";
+  try{ const de=document.documentElement; if(de.requestFullscreen) de.requestFullscreen().catch(()=>{});
+       if(screen.orientation && screen.orientation.lock) screen.orientation.lock("landscape").catch(()=>{}); }catch(e){}
   popText("🎬 ROUND "+state.round+" — grab a 🍎, bonk a bully!", 2600);
 });
 $("howBtn").addEventListener("click",()=>{
@@ -929,8 +959,10 @@ function hostRoom(){
   mqConnect(()=>{
     NET.mq.subscribe(mqTopic("up")); NET.mq.on("message",onHostMsg);
     $("hostInfo").style.display="block"; $("roomCode").textContent=NET.room;
+    ["joinDiv","joinCode","roleSel","joinBtn","lobbyDiv","lobbyBtn","lobbyList"].forEach(id=>{ const e=$(id); if(e) e.style.display="none"; });
     $("joinLink").textContent=location.origin+location.pathname+"?room="+NET.room;
     try{ const qb=$("qrBox"); qb.innerHTML=""; if(window.QRCode) new QRCode(qb,{text:$("joinLink").textContent, width:132, height:132, correctLevel:QRCode.CorrectLevel.M}); }catch(e){}
+    setTimeout(()=>{ const qb=$("qrBox"); if(qb && qb.children.length===0){ const im=document.createElement("img"); im.alt="join QR"; im.width=148; im.height=148; im.src="https://api.qrserver.com/v1/create-qr-code/?size=148x148&data="+encodeURIComponent($("joinLink").textContent); qb.appendChild(im); } },1400);
     netStatus("Room open ✓ — you are the host: the meadow's truth lives on YOUR phone, the relay only ferries whispers. When she's in, both press PLAY.");
     netBadge();
     NET.tele.show=true; teleEvent("ROOM OPEN","room "+NET.room+" · this phone is the server · table announced in the 🌍 lobby every 5 s"); renderTele();
@@ -1061,7 +1093,7 @@ function setupGuestSelf(role){
 function onGuestMsg(t, m){
   NET.tele.bytesDown+=(m&&m.length)||0; NET.tele.msgsDown++;
   let msg; try{ msg=JSON.parse(m.toString()); }catch(e){ return; }
-  if(msg.type==="welcome"){ NET.welcomed=true; setupGuestSelf(msg.role); netStatus("You're in ✓ — playing as "+msg.role+". Press PLAY when the host does."); popText("🔗 You're in! Press PLAY ▶", 2400); teleEvent("WELCOME","host answered · you are "+msg.role+" · seal stream incoming"); }
+  if(msg.type==="welcome"){ NET.welcomed=true; setupGuestSelf(msg.role); $("hostBtn").style.display="none"; netStatus("You're in ✓ — playing as "+msg.role+". Press PLAY when the host does."); popText("🔗 You're in! Press PLAY ▶", 2400); teleEvent("WELCOME","host answered · you are "+msg.role+" · seal stream incoming"); }
   else if(msg.type==="pong"){
     const now=Date.now(), rtt=now-(+msg.t||now);
     NET.tele.rttMs=rtt;
@@ -1172,7 +1204,6 @@ function netTick(dt){
 $("hostBtn").addEventListener("click",hostRoom);
 $("joinBtn").addEventListener("click",joinRoom);
 $("lobbyBtn").addEventListener("click",lobbyListen);
-$("teleBtn").addEventListener("click",()=>{ NET.tele.show=!NET.tele.show; renderTele(); });
 $("linkBadge").addEventListener("click",()=>{ NET.tele.show=!NET.tele.show; renderTele(); });
 function renderLobby(){
   const el=$("lobbyList"); if(!el) return;
@@ -1207,7 +1238,7 @@ function lobbyListen(){
 $("linkBtn").addEventListener("click",()=>{
   const p=$("linkPanel"), on=p.style.display==="block";
   p.style.display=on?"none":"block";
-  if(!on) $("howPanel").style.display="none";
+  if(!on){ $("howPanel").style.display="none"; NET.tele.show=false; renderTele(); }
 });
 $("howBtn").addEventListener("click",()=>{ $("linkPanel").style.display="none"; });
 try{
@@ -1238,6 +1269,9 @@ NET.simGuest=function(role){
   return "sim connecting";
 };
 window.__LINK=NET;
+$("aboutBtn").addEventListener("click",()=>{ $("aboutSheet").style.display="block"; });
+$("aboutClose").addEventListener("click",()=>{ $("aboutSheet").style.display="none"; });
+(function(){ const sh=$("aboutSheet"); if(sh) document.querySelectorAll("[data-about]").forEach(el=>sh.appendChild(el)); })();
 window.addEventListener("wheel",e=>{ if(e.target.closest("#stage")){ state.camDist=Math.min(13,Math.max(4.5,state.camDist+e.deltaY*0.01)); } },{passive:true});
 // ---------- bullies ----------
 function angleLerp(a,b,t){
