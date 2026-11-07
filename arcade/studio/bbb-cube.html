@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>BUNNY CUBE v1.8.9 — BONK THE BULLIES (a 3D world from Walrus blobs)</title>
+<title>BUNNY CUBE v1.8.10 — BONK THE BULLIES (a 3D world from Walrus blobs)</title>
 <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/mqtt@5.10.1/dist/mqtt.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -155,7 +155,7 @@ grab apples, bonk them back. First to the banner takes the round.</p>
       <div id="matchWait" style="font-size:12.5px;opacity:.85;margin-top:9px"></div>
     </div>
     <div id="boardPanel" style="display:none;position:absolute;inset:12px;z-index:12;background:rgba(8,10,18,.96);border:1.5px solid #ffd76a;border-radius:14px;padding:14px 16px;color:#f2ecd8;overflow-y:auto;text-align:left">
-      <div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:17px">🏆 HIGH SCORES</b><button class="lkBtn" id="boardClose">✕ CLOSE</button></div>
+      <div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:17px">🏆 HIGH SCORES</b><span><button class="lkBtn" id="boardHallTop">🌐 HALL — ALL GAMES</button> <button class="lkBtn" id="boardClose">✕ CLOSE</button></span></div>
       <div style="margin:8px 0"><button class="lkBtn" id="boardHall">📤 OPEN MY RECORDS IN THE HALL — every game, playable there</button></div>
       <div style="font-size:12px;opacity:.85;margin:4px 0 10px">Every record is a Walrus blob. Every blob replays. The chain re-verifies on this phone.</div>
       <div id="boardBody" style="font-size:13.5px;line-height:1.55"></div>
@@ -165,7 +165,7 @@ grab apples, bonk them back. First to the banner takes the round.</p>
       <button class="lkBtn" id="eatBtn" style="font-size:19px;padding:12px 26px">🍎 EAT APPLE</button>
     </div>
     <div id="pop"></div>
-    <div id="verTag">🧊 CUBE v1.8.9 · BONK THE BULLIES</div>
+    <div id="verTag">🧊 CUBE v1.8.10 · BONK THE BULLIES</div>
     <button id="tiltBtn">🧭 TILT</button>
     <div id="joy"><div id="joyKnob"></div></div>
     <div id="pad"><span class="pip pU">▲</span><span class="pip pD">▼</span><span class="pip pL">◀</span><span class="pip pR">▶</span><div id="padKnob"></div></div>
@@ -1109,12 +1109,23 @@ function myName(){ const v=($("nameInput")&&$("nameInput").value||"").trim()||lo
 function winHash(r){ const c={format:r.format, winner:r.winner, who:r.who, secs:r.secs, round:r.round, ts:r.ts, prev:r.prev}; return sha256hex(_enc.encode(JSON.stringify(c))); }
 function loadWinChain(){ try{ winChain=JSON.parse(localStorage.getItem("cube-wins-v1")||"[]"); }catch(e){ winChain=[]; } renderWinBook(); }
 function saveWinChain(){ try{ localStorage.setItem("cube-wins-v1", JSON.stringify(winChain)); }catch(e){} renderWinBook(); }
+async function sealRoundTape(frames, recH){
+  if(!frames || frames.length<10 || !recH) return;
+  try{
+    const resp=await fetch(WIN_PUBLISHER,{method:"PUT", body:JSON.stringify({format:"cube-tape/1", world:CUBE_MANIFEST, frames})});
+    if(!resp.ok) return;
+    const j=await resp.json().catch(()=>null);
+    const blobId=j&&((j.newlyCreated&&j.newlyCreated.blobObject&&j.newlyCreated.blobObject.blobId)||(j.alreadyCertified&&j.alreadyCertified.blobObject&&j.alreadyCertified.blobObject.blobId));
+    if(blobId){ const r=winChain.find(x=>x.h===recH); if(r && !r.tape){ r.tape=blobId; saveWinChain(); renderBoard(); teleEvent("🎞️ ROUND TAPE","this round is a blob now: "+blobId.slice(0,16)+"… — ▶ WATCH sits on its record"); } }
+  }catch(e){}
+}
 function recordWin(part){
   const rec={format:"cube-win/1", winner:part.winner, who:part.who, secs:part.secs, round:part.round, match:part.match?1:0, h1:part.h1||0, h2:part.h2||0, ha:part.ha||0, n1:part.n1||"", n2:part.n2||"", tape:null, ts:Date.now(), prev:winChain.length?winChain[winChain.length-1].h:"GENESIS", blob:null};
   rec.h=winHash(rec);
   winChain.push(rec); saveWinChain();
   teleEvent("RECORD SEALED (local)","🏆 "+rec.winner+" · round "+rec.round+" · ⏱ "+rec.secs+" s · hash "+rec.h.slice(0,12)+"… · solidifying into a blob…");
   sealWinBlob(rec, true);
+  return rec;
 }
 async function sealWinBlob(rec, tellGuest){
   try{
@@ -1201,6 +1212,7 @@ function showMatchPanel(){
 function endRound(playerWon, who){
   const _rh1=state.bonks, _rh2=NET.guest.bonks, _rha=state.bonked;
   SND.play(playerWon?"win":"lose");
+  const _rf=NET.tape.slice();
   if(NET.tape.length>10) NET.lastTape=NET.tape;
   NET.matchTape=(NET.matchTape||[]).concat(NET.tape);
   NET.tape=[]; NET.tapeBlob=null; renderReplayPanel();
@@ -1224,7 +1236,8 @@ function endRound(playerWon, who){
   const mKey=playerWon?(who||"P1"):"AI";
   NET.match[mKey]++;
   const mWon=NET.match[mKey]>=2;
-  if(NET.role!=="guest") recordWin({winner:wName, who:playerWon?(who||"P1"):"AI", secs, round:finRound, match:mWon, h1:_rh1, h2:_rh2, ha:_rha, n1:myName(), n2:NET.guest.name||""});
+  const _rec=(NET.role!=="guest")?recordWin({winner:wName, who:playerWon?(who||"P1"):"AI", secs, round:finRound, match:mWon, h1:_rh1, h2:_rh2, ha:_rha, n1:myName(), n2:NET.guest.name||""}):null;
+  if(_rec && _rf.length>10) sealRoundTape(_rf, _rec.h);
   if(mWon){
     NET.matchOver=true; const mName=playerWon?wName:"THE BULLIES"; NET.matchWinner=mName;
     state.started=false;
@@ -1667,7 +1680,7 @@ function onGuestMsg(t, m){
     if(msg.seqhit){ const sh=msg.seqhit; SND.play(sh.kind); if(sh.kind==="tree") popText(sh.step>=2?"🌳🌳 THE TREE IS WAITING — one rock, any rock! ("+sh.step+"/2)":"🌳 The tree stirs… ("+sh.step+"/2)", 2000); else if(!sh.offered && sh.step===0) popText("🪨 A rock too soon — the tree forgets.", 2000); else if(!sh.offered) popText("🪨 Stone on stone — a clean hit.", 1500); } if(msg.matchEnd){ NET.match={P1:msg.matchEnd.a, P2:msg.matchEnd.b, AI:msg.matchEnd.c}; NET.matchOver=true; NET.matchWinner=msg.matchEnd.winner; syncHUD(); showMatchPanel(); }
   if(msg.tapeBlob){ NET.matchTapeBlob=msg.tapeBlob; teleEvent("MATCH TAPE","🎞️ the whole match, sealed as one blob: "+msg.tapeBlob.slice(0,16)+"… — WATCH THE MATCH loads it"); const wb=$("matchWatch"); if(wb) wb.textContent="🎞️ WATCH THE MATCH ✓"; if($("matchPanel").style.display!=="none") showMatchPanel(); if(winChain.length){ const lr=[...winChain].reverse().find(r=>r.match && !r.tape && (Date.now()-r.ts)<15*60*1000); if(lr){ lr.tape=msg.tapeBlob; saveWinChain(); } } }
   if(msg.matchReset){ NET.matchOver=false; NET.match={P1:0,P2:0,AI:0}; NET.matchTapeBlob=null; $("matchPanel").style.display="none"; syncHUD(); popText("🏆 NEW MATCH — first to 2 rounds takes it!", 2200); }
-  if(msg.banner) showBanner(msg.banner[0], msg.banner[1], 3800); if(msg.win){ SND.play(msg.win.who==="P2"?"win":"lose"); appendWinRecord(msg.win); if(NET.tape.length>10) NET.lastTape=NET.tape; NET.tape=[]; NET.tapeBlob=null; renderReplayPanel(); if(msg.win.who==="P2") showBanner("🏆 YOU WIN THE MEADOW!", "⏱ "+msg.win.secs+" s · your name goes in the book — sealed as a blob", 4200); } }
+  if(msg.banner) showBanner(msg.banner[0], msg.banner[1], 3800); if(msg.win){ SND.play(msg.win.who==="P2"?"win":"lose"); appendWinRecord(msg.win); const _gf=NET.tape.slice(); if(_gf.length>10) sealRoundTape(_gf, msg.win.h); if(NET.tape.length>10) NET.lastTape=NET.tape; NET.tape=[]; NET.tapeBlob=null; renderReplayPanel(); if(msg.win.who==="P2") showBanner("🏆 YOU WIN THE MEADOW!", "⏱ "+msg.win.secs+" s · your name goes in the book — sealed as a blob", 4200); } }
 }
 function applySnap(core){
   const v0=performance.now();
@@ -1884,6 +1897,7 @@ $("aboutBtn").addEventListener("click",()=>{ $("aboutSheet").style.display="bloc
 $("boardBtn").addEventListener("click",()=>{ renderBoard(); $("boardPanel").style.display="block"; });
 $("boardClose").addEventListener("click",()=>{ $("boardPanel").style.display="none"; });
 $("hallBtn").addEventListener("click",()=>{ location.href="../blob-cinema/scores.html"; });
+$("boardHallTop").addEventListener("click",()=>{ location.href="../blob-cinema/scores.html"; });
 $("boardHall").addEventListener("click",()=>{
   const ids=winChain.filter(r=>r.blob).map(r=>r.blob);
   if(!ids.length){ popText("no sealed records yet — finish a match first 🏆"); return; }
