@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>BUNNY CUBE v1.8.10 — BONK THE BULLIES (a 3D world from Walrus blobs)</title>
+<title>BUNNY CUBE v1.9.0 — BONK THE BULLIES (a 3D world from Walrus blobs)</title>
 <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/mqtt@5.10.1/dist/mqtt.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -36,7 +36,7 @@
   #bannerSub{font-size:16px;color:#ffe9a8;text-shadow:0 1px 8px rgba(0,0,0,.8);margin-top:4px;font-weight:600}
   #pop{position:absolute;left:50%;top:56%;transform:translate(-50%,-50%);z-index:8;display:none;text-align:center;
        pointer-events:none;font-size:21px;font-weight:800;color:#ffd76a;text-shadow:0 2px 10px rgba(0,0,0,.75)}
-  #verTag{position:absolute;right:10px;top:64px;z-index:5;display:none;background:rgba(7,10,16,.5);border:1px solid rgba(255,215,106,.4);
+  #verTag{position:absolute;left:10px;bottom:186px;z-index:5;display:none;background:rgba(7,10,16,.5);border:1px solid rgba(255,215,106,.4);
           color:#ffd76a;border-radius:8px;padding:3px 9px;font-size:12px;font-weight:700;pointer-events:none}
   #tiltBtn{position:absolute;right:14px;top:12px;z-index:6;display:none;padding:10px 14px;border-radius:22px;
         background:rgba(10,16,28,.72);border:2px solid #7ec3f2;color:#dff2ff;font-size:14px;font-weight:700;cursor:pointer;touch-action:none}
@@ -140,7 +140,8 @@ grab apples, bonk them back. First to the banner takes the round.</p>
   <div id="stage">
     <div id="hud">
       <div id="story">🍎 THE BULLIES are pelting Bunny — bonk them back!</div>
-      <div id="counts">🍎 <b id="hudCarry">0</b> carried · 🎯 <b id="hudBonk">0</b>/10 bonks · 💥 <b id="hudBonked">0</b>/3 bonked · 🏁 ROUND <b id="hudRound">1</b> · 🏆 MATCH <b id="hudMatch">0–0</b></div>
+      <div id="gameBar" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:5px"></div>
+      <div id="counts">🍎 <b id="hudCarry">0</b> carried · 🎯 <b id="hudBonk">0</b>/9 to clear · 💥 <b id="hudBonked">0</b>/3 bonked · 🏁 ROUND <b id="hudRound">1</b> · 🏆 MATCH <b id="hudMatch">0–0</b></div>
       <div id="objective">🎯 <b id="objName">—</b> · <span id="objDist">–</span>m <span id="objArrow">▲</span> <span style="color:#9fb4c8;font-weight:400">nearest bully — the map knows</span></div>
     </div>
     <div id="bootStat">recalling the meadow from the blobs…</div>
@@ -165,7 +166,7 @@ grab apples, bonk them back. First to the banner takes the round.</p>
       <button class="lkBtn" id="eatBtn" style="font-size:19px;padding:12px 26px">🍎 EAT APPLE</button>
     </div>
     <div id="pop"></div>
-    <div id="verTag">🧊 CUBE v1.8.10 · BONK THE BULLIES</div>
+    <div id="verTag">🧊 CUBE v1.9.0 · BONK THE BULLIES</div>
     <button id="tiltBtn">🧭 TILT</button>
     <div id="joy"><div id="joyKnob"></div></div>
     <div id="pad"><span class="pip pU">▲</span><span class="pip pD">▼</span><span class="pip pL">◀</span><span class="pip pR">▶</span><div id="padKnob"></div></div>
@@ -327,7 +328,7 @@ function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a
 <script>
 "use strict";
 let MAN=null; const URLS={}, BUFFERS={};
-const state={ready:false, started:false, carried:0, round:1, bonks:0, bonked:0,
+const state={ready:false, started:false, carried:0, round:1, bonks:0, bonked:0, pickups:0, kb:{},
              camYaw:0, camDist:8, camPitch:0.42, camSnap:true,
              keys:{}, stick:{x:0,y:0,active:false,id:null},
              bunnyPos:new THREE.Vector3(0,0,10.5), bunnyRotY:Math.PI, hopPhase:0, roundT0:0,
@@ -637,7 +638,7 @@ function placeWorld(){
   defs.forEach((d,i)=>{
     P(d.el, d.x, d.z, d.rotY*180/Math.PI);
     const b={key:d.key, name:d.name, el:d.el, x:d.x, z:d.z, rotY:d.rotY, scale:d.scale, h:d.h,
-             speed:1.5, target:null, pauseT:0.6+i*0.7, hop:Math.random()*6, spinT:0, celebT:0,
+             speed:1.5, target:null, pauseT:0.6+i*0.7, hop:Math.random()*6, spinT:0, celebT:0, hp:3, dizzyT:0, out:false,
              label:addLabel(d.name, d.x, d.z, d.h+0.75), shadow:mkShadow(0.95, 0.24)};
     b.shadow.setAttribute("position",d.x+" "+(groundY(d.x,d.z)+0.04)+" "+d.z);
     bullies.push(b);
@@ -671,9 +672,26 @@ function placeWorld(){
 <script>
 "use strict";
 // ---------- HUD & fanfare ----------
+function liveBar(){
+  const bh={}, dz={};
+  bullies.forEach(b=>{ bh[b.key]=b.hp; dz[b.key]=b.dizzyT>0?1:0; });
+  return {n1:myName(), n2:(NET.guest&&NET.guest.name)||"", k1:state.bonks, k2:NET.guest.bonks||0, kd:state.bonked, a1:state.pickups||0, a2:NET.guest.pickups||0, bh, dz, has2:(NET.role==="guest"||!!(NET.guest&&NET.guest.role))};
+}
+function renderBar(bar){
+  const el=$("gameBar"); if(!el||!bar) return;
+  const ebar=(frac,dead)=>{ const w=Math.round(Math.max(0,Math.min(1,frac))*100); const col=dead?"#ff5470":(frac>0.66?"#7CFF6B":(frac>0.33?"#ffd76a":"#ff9046")); return '<span style="display:inline-block;width:46px;height:7px;background:rgba(255,255,255,.15);border-radius:99px;vertical-align:middle;overflow:hidden"><span class="ebar" style="display:block;height:100%;width:'+w+'%;background:'+col+';border-radius:99px"></span></span>'; };
+  const chip=(inner,dead)=>'<span style="background:rgba(10,12,20,.85);border:1px solid '+(dead?'#ff5470':'#ffd76a')+';border-radius:999px;padding:3px 10px;font-size:12.5px;color:#f2ecd8;white-space:nowrap">'+inner+'</span>';
+  let h=chip("🐰 "+(bar.n1||"BUNNY")+" "+ebar((3-(bar.kd||0))/3,(bar.kd||0)>=3)+" 💥 "+(bar.kd||0)+" · "+(3-(bar.kd||0))+" LEFT · 🎯 "+(bar.k1||0)+" · 🍎 "+(bar.a1||0), (bar.kd||0)>=3);
+  if(bar.has2) h+=chip("🐰 "+(bar.n2||"BUNNY 2")+" · 🎯 "+(bar.k2||0)+" · 🍎 "+(bar.a2||0), false);
+  for(const b of bullies){ const hp=(bar.bh&&bar.bh[b.key]!==undefined)?bar.bh[b.key]:3; const dz=bar.dz&&bar.dz[b.key];
+    h+=chip(b.name+" "+ebar(hp/3, hp<=0)+(hp<=0?" ✖ OUT":" · "+hp+" TO BONK"+(dz?" 💫":"")), hp<=0); }
+  el.innerHTML=h;
+}
+function setBullyLabel(b,txt){ try{ if(b.label) b.label.setAttribute("value",txt); }catch(e){} }
 function syncHUD(){
   $("hudCarry").textContent=state.carried;
-  $("hudBonk").textContent=state.bonks;
+  $("hudBonk").textContent=state.bonks+(NET.guest.bonks||0);
+  renderBar(liveBar());
   $("hudBonked").textContent=state.bonked;
   $("hudRound").textContent=state.round;
   const hm=$("hudMatch"); if(hm) hm.textContent=NET.match.P1+"–"+NET.match.P2+(NET.match.AI?" · AI "+NET.match.AI:"");
@@ -966,15 +984,19 @@ function landApple(a){
   a.el.setAttribute("rotation","0 0 0");
 }
 function bonkBully(b, a){
+  if(b.out){ landApple(a); return; }
   const byP2=!!(a&&a.src==="P2");
   if(byP2) NET.guest.bonks++; else state.bonks++;
+  if(byP2){ (state.kb[b.key]=state.kb[b.key]||[0,0])[1]++; } else { (state.kb[b.key]=state.kb[b.key]||[0,0])[0]++; }
+  b.hp--;
+  if(b.hp<=0 && !b.out){ b.out=true; b.dizzyT=0; setBullyLabel(b,"✖ OUT"); popText("💀 "+b.name+" IS OUT! "+bullies.filter(x=>!x.out).length+" bullies left standing", 1700); }
+  else if(b.hp>0){ b.dizzyT=2.0; setBullyLabel(b,"💫"); }
   SND.play("bonk");
   burst(b.x, groundY(b.x,b.z)+b.h+0.7, b.z);
   b.spinT=0.7;
   popText("🎯 BONK! "+b.name+" sees stars!"+(byP2?" · P2 scores #"+NET.guest.bonks:" · your #"+state.bonks), 1300); netEvPop(byP2?"🎯 P2 HIT! "+b.name+" bonked (#"+NET.guest.bonks+")":"🎯 P1 HIT! "+b.name+" bonked (#"+state.bonks+")"); if(NET.role==="host") mqSend("down",{type:"ev", hit:{by:byP2?"P2":"P1", target:b.name, n:byP2?NET.guest.bonks:state.bonks, h:NET.lastHash}}); teleEvent(byP2?"P2 HIT":"P1 HIT", b.name+" bonked · apple kind="+(a?a.kind:"?")+" · strike zone: within 1.05 of center, height window "+(b.h+0.6).toFixed(1)+" · bonks="+(byP2?NET.guest.bonks:state.bonks));
   landApple(a); syncHUD();
-  if(state.bonks>=10) endRound(true,"P1");
-  else if(NET.guest.bonks>=10) endRound(true,"P2");
+  if(bullies.every(x=>x.out)) endRound(true, state.bonks>=(NET.guest.bonks||0)?"P1":"P2");
 }
 function bonkBunny(a){
   state.bonked++;
@@ -1120,7 +1142,7 @@ async function sealRoundTape(frames, recH){
   }catch(e){}
 }
 function recordWin(part){
-  const rec={format:"cube-win/1", winner:part.winner, who:part.who, secs:part.secs, round:part.round, match:part.match?1:0, h1:part.h1||0, h2:part.h2||0, ha:part.ha||0, n1:part.n1||"", n2:part.n2||"", tape:null, ts:Date.now(), prev:winChain.length?winChain[winChain.length-1].h:"GENESIS", blob:null};
+  const rec={format:"cube-win/1", winner:part.winner, who:part.who, secs:part.secs, round:part.round, match:part.match?1:0, h1:part.h1||0, h2:part.h2||0, ha:part.ha||0, kb:part.kb||{}, outs:part.outs||0, a1:part.a1||0, a2:part.a2||0, n1:part.n1||"", n2:part.n2||"", tape:null, ts:Date.now(), prev:winChain.length?winChain[winChain.length-1].h:"GENESIS", blob:null};
   rec.h=winHash(rec);
   winChain.push(rec); saveWinChain();
   teleEvent("RECORD SEALED (local)","🏆 "+rec.winner+" · round "+rec.round+" · ⏱ "+rec.secs+" s · hash "+rec.h.slice(0,12)+"… · solidifying into a blob…");
@@ -1198,7 +1220,7 @@ function renderBoard(){
   h+="<br><br><b>⚡ FASTEST WINS</b><br>"+(fastest.length? fastest.map((r,i)=>(i===0?"⚡ ":"")+"<b>"+r.secs+" s</b> — "+esc(r.winner)+" · round "+r.round+(r.match?" · 🏆 match":"")+" · "+when(r.ts)+" · "+blob(r)+watch(r)).join("<br>") : "No player finishes yet.");
   h+="<br><br><b>🎯 MOST HITS IN A ROUND</b> — hits are points, win or lose<br>"+(hits.length? hits.map(x=>"<b>"+x.h+" hits</b> — "+esc(x.who)+" · round "+x.r.round+" · "+(x.r.who==="AI"?"fell at "+x.r.secs+" s":"won in "+x.r.secs+" s")+" · "+when(x.r.ts)+watch(x.r)).join("<br>") : "No hits on record yet.");
   h+="<br><br><b>🛡️ ENDURANCE</b> — losses, scored: <b>hits × seconds survived</b><br>"+(endu.length? endu.map(x=>"<b>"+x.score+" pts</b> — "+x.h+" hits × "+x.r.secs+" s · "+esc(x.r.n1||"P1")+(x.r.n2?" + "+esc(x.r.n2):"")+" · round "+x.r.round+" · "+when(x.r.ts)+watch(x.r)).join("<br>") : "No scored losses yet — the bullies haven't taken a round with hits on the board.");
-  h+="<br><br><b>📜 ALL RECORDS</b><br>"+winChain.slice().reverse().map(r=>(r.match?"🏆 ":"")+"<b>"+esc(r.winner)+"</b> · "+r.secs+" s · round "+r.round+" · hits "+(r.h1||0)+"/"+(r.h2||0)+" · "+when(r.ts)+" · "+blob(r)+watch(r)).join("<br>");
+  h+="<br><br><b>📜 ALL RECORDS</b><br>"+winChain.slice().reverse().map(r=>(r.match?"🏆 ":"")+"<b>"+esc(r.winner)+"</b> · "+r.secs+" s · round "+r.round+" · hits "+(r.h1||0)+"/"+(r.h2||0)+((r.kb||r.outs!==undefined)?" · bonked "+((r.h1||0)+(r.h2||0))+"/9":"")+((r.a1||r.a2)?" · 🍎 "+((r.a1||0)+(r.a2||0))+" picked":"")+" · "+when(r.ts)+" · "+blob(r)+watch(r)).join("<br>");
   el.innerHTML=h;
 }
 function showMatchPanel(){
@@ -1210,7 +1232,7 @@ function showMatchPanel(){
   p.style.display="block";
 }
 function endRound(playerWon, who){
-  const _rh1=state.bonks, _rh2=NET.guest.bonks, _rha=state.bonked;
+  const _rh1=state.bonks, _rh2=NET.guest.bonks, _rha=state.bonked, _rkb=JSON.parse(JSON.stringify(state.kb||{})), _routs=bullies.filter(b=>b.out).length, _ra1=state.pickups||0, _ra2=NET.guest.pickups||0;
   SND.play(playerWon?"win":"lose");
   const _rf=NET.tape.slice();
   if(NET.tape.length>10) NET.lastTape=NET.tape;
@@ -1236,7 +1258,9 @@ function endRound(playerWon, who){
   const mKey=playerWon?(who||"P1"):"AI";
   NET.match[mKey]++;
   const mWon=NET.match[mKey]>=2;
-  const _rec=(NET.role!=="guest")?recordWin({winner:wName, who:playerWon?(who||"P1"):"AI", secs, round:finRound, match:mWon, h1:_rh1, h2:_rh2, ha:_rha, n1:myName(), n2:NET.guest.name||""}):null;
+  const _rec=(NET.role!=="guest")?recordWin({winner:wName, who:playerWon?(who||"P1"):"AI", secs, round:finRound, match:mWon, h1:_rh1, h2:_rh2, ha:_rha, n1:myName(), n2:NET.guest.name||"", kb:_rkb, outs:_routs, a1:_ra1, a2:_ra2}):null;
+  bullies.forEach(b=>{ b.hp=3; b.out=false; b.dizzyT=0; setBullyLabel(b,b.name); });
+  state.kb={}; state.pickups=0; NET.guest.pickups=0;
   if(_rec && _rf.length>10) sealRoundTape(_rf, _rec.h);
   if(mWon){
     NET.matchOver=true; const mName=playerWon?wName:"THE BULLIES"; NET.matchWinner=mName;
@@ -1583,7 +1607,7 @@ function hostGuestTick(dt){
     for(const a of apples){
       if(a.st!=="ground") continue;
       if(Math.hypot(a.p.x-g.x, a.p.z-g.z)<1.05 && (state.t-(a.restAt===undefined?-10:a.restAt))>=1.0){
-        a.st="gone"; a.el.setAttribute("visible","false"); g.carried++; SND.play("pickup"); teleEvent("PICKUP","P2 grabbed 🍎 #"+g.carried+" at ("+g.x.toFixed(1)+", "+g.z.toFixed(1)+") · rest rule ≥1.0 s + step rule ✓"); break;
+        a.st="gone"; a.el.setAttribute("visible","false"); g.carried++; NET.guest.pickups=(NET.guest.pickups||0)+1; SND.play("pickup"); teleEvent("PICKUP","P2 grabbed 🍎 #"+g.carried+" at ("+g.x.toFixed(1)+", "+g.z.toFixed(1)+") · rest rule ≥1.0 s + step rule ✓"); break;
       }
     }
   }
@@ -1618,10 +1642,11 @@ function hostGuestTick(dt){
 }
 function buildCore(){
   const bp=state.bunnyPos, g=NET.guest;
-  const core={v:1, n:++NET.snapN, t:+state.t.toFixed(2), w:Date.now(), round:state.round, bonks:state.bonks, bonked:state.bonked, match:{a:NET.match.P1, b:NET.match.P2, c:NET.match.AI}, seq:SEQ.step, offer:SEQ.offered?1:0, tod:+SKY.tod.toFixed(2), sky:SKY.mode,
+  const core={v:1, n:++NET.snapN, t:+state.t.toFixed(2), w:Date.now(), round:state.round, bonks:state.bonks, bonked:state.bonked, match:{a:NET.match.P1, b:NET.match.P2, c:NET.match.AI}, seq:SEQ.step, offer:SEQ.offered?1:0, tod:+SKY.tod.toFixed(2), sky:SKY.mode, started:state.started?1:0,
     host:{x:+bp.x.toFixed(2), z:+bp.z.toFixed(2), r:+state.bunnyRotY.toFixed(2), c:state.carried},
     guest:{x:+g.x.toFixed(2), z:+g.z.toFixed(2), r:+g.rotY.toFixed(2), c:g.carried, b:g.bonks, role:g.role},
-    bullies:bullies.map(b=>[b.key, +b.x.toFixed(2), +b.z.toFixed(2), +b.rotY.toFixed(2)]),
+    bullies:bullies.map(b=>[b.key, +b.x.toFixed(2), +b.z.toFixed(2), +b.rotY.toFixed(2), b.hp, b.dizzyT>0?1:0]),
+    bar:liveBar(),
     apples:apples.filter(a=>a.st==="ground").map(a=>[a.id, +a.p.x.toFixed(1), +a.p.z.toFixed(1)]),
     fly:apples.filter(a=>a.st==="flying").map(a=>[a.fid||0, +a.p.x.toFixed(2), +a.p.y.toFixed(2), +a.p.z.toFixed(2), a.src||"P1"]),
     prev:NET.lastHash};
@@ -1698,6 +1723,8 @@ function applySnap(core){
   if(core.match){ NET.match={P1:core.match.a, P2:core.match.b, AI:core.match.c}; const hm=$("hudMatch"); if(hm) hm.textContent=core.match.a+"–"+core.match.b+(core.match.c?" · AI "+core.match.c:""); }
   if(typeof core.seq==="number" && core.seq!==SEQ.step){ SEQ.step=core.seq; seqGlow(); }
   if(core.offer && !SEQ.offered){ SEQ.offered=true; seqGlow(); offerEat(); popText("✨ The sequence is complete — the tree offers an apple…", 2800); }
+  if(core.bar) renderBar(core.bar);
+  if(core.started!==undefined) state.started=!!core.started;
   if(typeof core.tod==="number" && !RP.active){ SKY.tod=core.tod; applySky(); }
   if(typeof NET.lastCarried==="number" && core.guest.c>NET.lastCarried) SND.play("pickup"); NET.lastCarried=core.guest.c; state.carried=core.guest.c; syncHUD();
   if(core.fly) placeGuestFlyers(core.fly);
@@ -1705,7 +1732,7 @@ function applySnap(core){
   if(NET.role==="guest") $("hudBonk").textContent=NET.myBonks;
   NET.hostT={x:core.host.x, z:core.host.z, r:core.host.r};
   if(core.guest){ NET.selfT={x:core.guest.x, z:core.guest.z, r:core.guest.r}; if(!NET.selfInit){ NET.selfInit=true; NET.selfC={x:core.guest.x, z:core.guest.z, r:core.guest.r}; } }
-  for(const row of core.bullies) NET.bT[row[0]]={x:row[1], z:row[2], r:row[3]};
+  for(const row of core.bullies) NET.bT[row[0]]={x:row[1], z:row[2], r:row[3], hp:row[4], dz:row[5]};
   placeGuestApples(core.apples);
   if(NET.sealsOk%10===1) netBadge();
 }
@@ -1766,8 +1793,9 @@ function guestPlaceTick(dt){
     if(NET.meBully && b===NET.meBully) continue;
     const gy=groundY(b.x,b.z);
     b.el.setAttribute("position",b.x+" "+gy+" "+b.z);
-    b.el.setAttribute("rotation","0 "+(b.rotY*180/Math.PI)+" 0");
+    b.el.setAttribute("rotation",((t2.hp!==undefined&&t2.hp<=0)?"-88 ":"0 ")+(b.rotY*180/Math.PI)+" 0");
     if(b.label) b.label.setAttribute("position",b.x+" "+(gy+b.h+0.9)+" "+b.z);
+    const _lv=(t2.hp!==undefined&&t2.hp<=0)?"✖ OUT":(t2.dz?"💫":b.name); if(b._lv!==_lv){ b._lv=_lv; setBullyLabel(b,_lv); }
   }
 }
 function sendInput(){
@@ -1942,9 +1970,13 @@ function angleLerp(a,b,t){
 }
 function updateBully(b, dt){
   if(b.possessed) return;
+  if(b.out){ const gy2=groundY(b.x,b.z); b.el.setAttribute("position",b.x+" "+gy2+" "+b.z); b.el.setAttribute("rotation","-88 "+(b.rotY*180/Math.PI)+" 0"); b.label.setAttribute("position",b.x+" "+(gy2+1.15)+" "+b.z); return false; }
   const t=state.t, gy=groundY(b.x,b.z);
   let hopY=0, moving=false;
-  if(b.spinT>0){
+  if(b.dizzyT>0){
+    b.dizzyT-=dt; hopY=Math.sin(t*2.4+b.hop)*0.04; b.rotY+=Math.sin(t*9+b.hop)*dt*0.7;
+    if(b.dizzyT<=0 && !b.out) setBullyLabel(b, b.name);
+  } else if(b.spinT>0){
     b.spinT-=dt; b.rotY+=dt*11*Math.max(0.25,b.spinT/0.7);
     hopY=Math.sin(Math.max(0,b.spinT/0.7)*Math.PI)*0.45;
   } else if(b.celebT>0){
@@ -2139,7 +2171,7 @@ function tickLoop(now){
       // apple that bonks Bunny — or lands at his feet — no longer vacuums
       // straight into his paws; it drops, rests, and is pickable normally after.
       if(dd<1.05 && moving && (state.t-(a.restAt===undefined?-10:a.restAt))>=1.0){ // v1.3: rest AND a step
-        a.st="carried"; a.el.setAttribute("visible","false"); state.carried++; SND.play("pickup");
+        a.st="carried"; a.el.setAttribute("visible","false"); state.carried++; state.pickups++; SND.play("pickup");
         syncHUD(); }
     } else if(a.st==="flying"){
       a.vel.y-=GRAV*dt;
@@ -2201,7 +2233,9 @@ function tickLoop(now){
   if(_dyn.doorRing) _dyn.doorRing.rotation.z+=dt*0.5;
   if(_dyn.clouds) _dyn.clouds.forEach((c,i)=>{ const o=c.object3D; o.position.x+=Math.sin(t*0.05+i)*0.0015; });
   netTick(dt); rpTick(dt); if(AIM.on) aimDraw();
-  if(!state.started && NET.role!=="guest" && RP && !RP.active){ const _h=$("hud"); if(_h && _h.style.display!=="none" && !state.started) _h.style.display="none"; }
+  { const _ss=$("startScreen"), _mp2=$("matchPanel"), _bp2=$("boardPanel");
+    const _want=(state.started||(NET.role==="guest"&&NET.welcomed)) && !(RP&&RP.active) && (!_ss||_ss.style.display==="none") && (!_mp2||_mp2.style.display==="none") && (!_bp2||_bp2.style.display==="none");
+    const _h=$("hud"); if(_h) _h.style.display=_want?"block":"none"; }
   if(SKY.cycle){ SKY.acc+=dt; if(SKY.acc>0.25){ SKY.tod=(SKY.tod+SKY.acc*SKY.speed)%24; SKY.acc=0; applySky(); } }
   if((_mapTick++ % 5)===0) drawMap();
   // labels face the camera (bully labels ride in the same list, positions already updated)
