@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>ZOMBIE WORLD v1.1 — SURVIVE THE NIGHTS (a world from Walrus blobs)</title>
+<title>ZOMBIE WORLD v1.2 — SURVIVE THE NIGHTS (a world from Walrus blobs)</title>
 <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/mqtt@5.10.1/dist/mqtt.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -15,6 +15,16 @@
   #verTag{left:10px;bottom:186px;color:#9a9ac0}
   #zHunt{font-size:15px;font-weight:bold;color:#ffb36b;margin-top:2px;text-shadow:0 1px 6px #000}
   #zHunt .arr{display:inline-block;font-size:19px;color:#ff5c5c;transition:transform .2s}
+  #camBtn{position:absolute;right:10px;top:248px;z-index:36;background:rgba(20,20,44,.72);color:#cfe0ff;border:2px solid rgba(150,150,220,.6);border-radius:999px;padding:9px 13px;font-weight:bold;font-size:13px}
+  #tvBtn{position:absolute;right:10px;top:294px;z-index:36;background:rgba(20,20,44,.72);color:#ffe9a3;border:2px solid rgba(255,215,107,.55);border-radius:999px;padding:9px 13px;font-weight:bold;font-size:13px}
+  #tvQr{position:absolute;left:14px;bottom:14px;z-index:34}
+  .tvQrCard{background:rgba(8,8,20,.82);border:2px solid #ffd76b;border-radius:16px;padding:12px;text-align:center;color:#fff;max-width:250px}
+  #tvQrTxt{font-size:26px;font-weight:bold;letter-spacing:2px;margin-top:6px}
+  .tvQrSub{font-size:12px;color:#cfe0ff;margin-top:4px}
+  body.tvmode #pad, body.tvmode #fireBtn, body.tvmode #camBtn{display:none!important}
+  body.tvmode #counts{font-size:25px}
+  body.tvmode #zHunt{font-size:23px}
+  body.tvmode #mapCv{width:216px;height:216px}
   #linkBadge{right:10px;top:10px;cursor:pointer;color:#ffd76b;font-weight:bold}
   #hud{position:absolute;top:10px;left:50%;transform:translateX(-50%);text-align:center;z-index:25;width:min(94vw,560px);pointer-events:none}
   #gameBar{display:flex;gap:5px;justify-content:center;flex-wrap:wrap;margin-bottom:4px}
@@ -71,11 +81,14 @@
     <div id="gameBar"></div>
     <div id="counts">🧟 ZOMBIE WORLD</div>
     <div id="zHunt">🧟 all quiet</div>
+    <button id="camBtn">👁 3RD PERSON</button>
+    <button id="tvBtn">📺 TV MODE</button>
   </div>
+  <div id="tvQr" style="display:none"><div class="tvQrCard"><div id="tvQrBox"></div><div id="tvQrTxt"></div><div class="tvQrSub">📱 phones: scan — or type the code — and drive from your couch</div></div></div>
   <div id="banner" style="display:none"><div id="bannerMain"></div><div id="bannerSub"></div></div>
   <div id="pop"></div>
   <div id="mapWrap" style="display:none"><canvas id="mapCv" width="148" height="148"></canvas><div id="mapCap">🗺️ THE FIELD · N ↑</div></div>
-  <div id="verTag" class="pill">🧊 ZOMBIE v1.1 · FLOATING STICK + TRUE NORTH</div>
+  <div id="verTag" class="pill">🧊 ZOMBIE v1.2 · FIRST-PERSON + TV MODE</div>
   <div id="linkBadge" class="pill">🔗 LINK</div>
   <div id="teleOverlay"><div id="teleBody" class="mono"></div></div>
   <div id="pad" style="display:none"><div id="padKnob"></div></div>
@@ -305,7 +318,7 @@ function mkShadow(r, op){
   return el;
 }
 "use strict";
-// ================= ZOMBIE WORLD v1.1 =================
+// ================= ZOMBIE WORLD v1.2 =================
 // Composed from the library: meadow field blob + SKY & CLOCK layer + sealed link
 // + hash-chained records. House/graveyard/chest are MOVE library objects.
 const ZWORLD="uB8NNkBbtVzH1L35Sa6RjKKs9dkYx91rQP55Auu7X3I";
@@ -313,7 +326,7 @@ let ZMAN=null, MAN=null; const URLS={}, BUFFERS={};
 const state={ready:false, started:false, over:false, t:0, phase:"day", phaseT:120, nightN:0,
              waveLeft:0, spawnT:0, secs:0, runT0:0, drawN:0, seed:((Math.random()*1e9)|0),
              camYaw:Math.PI, camPitch:0.42, camDist:8.5, keys:{}, stick:{x:0,y:0,active:false,id:null},
-             charSel:"boy", goldSpawned:false, greenSpawned:false, redT:4, chestT:0, groanT:5, skyAcc:0};
+             charSel:"boy", goldSpawned:false, greenSpawned:false, redT:4, chestT:0, groanT:5, skyAcc:0, camFP:false, tvMode:false, fpHidden:null};
 let sceneEl, worldEl, camEl, terrainMesh=null;
 let nightEl=null, secretEl=null, moonEl=null;
 const PLAY_R=23, TREE_POS={x:7,z:-9}, TREE_R=2.6, GRAV=15.5, FENCE_Y=3.0, PHASE_LEN=120;
@@ -1219,6 +1232,12 @@ function cameraTick(){
   const tx=t.x, tz=t.z, ty=(t.y!==undefined?t.y:groundY2(t.x,t.z,99))+1.5;
   if(RP.active&&RP.camMode==="free"){ camEl.object3D.position.set(RP.free.x, RP.free.y||12, RP.free.z); camEl.object3D.lookAt(tx,ty-4,tz); return; }
   if(RP.active&&(RP.camMode==="p1"||RP.camMode==="p2")){ const s=t; camEl.object3D.position.set(s.x, (s.y||0)+2.2, s.z); const lx=s.x+Math.sin(s.rotY)*6, lz=s.z+Math.cos(s.rotY)*6; camEl.object3D.lookAt(lx,(s.y||0)+1.6,lz); return; }
+  if(state.camFP){ const f=t; const fy2=(f.y!==undefined?f.y:groundY2(f.x,f.z,99));
+    camEl.object3D.position.set(f.x, fy2+1.62, f.z);
+    camEl.object3D.lookAt(f.x+Math.sin(state.camYaw)*6, fy2+1.48, f.z+Math.cos(state.camYaw)*6);
+    if(f.el&&state.fpHidden!==f){ if(state.fpHidden&&state.fpHidden.el) state.fpHidden.el.setAttribute("visible","true"); f.el.setAttribute("visible","false"); state.fpHidden=f; }
+    return; }
+  if(state.fpHidden){ if(state.fpHidden.el) state.fpHidden.el.setAttribute("visible","true"); state.fpHidden=null; }
   const cx=tx-Math.sin(state.camYaw)*Math.cos(state.camPitch)*state.camDist;
   const cz=tz-Math.cos(state.camYaw)*Math.cos(state.camPitch)*state.camDist;
   const cy=ty+Math.sin(state.camPitch)*state.camDist;
@@ -1378,6 +1397,11 @@ function wire(){
   $("sndBtn").onclick=()=>{ SND.on=!SND.on; try{ localStorage.setItem("cube-snd-on",SND.on?"1":"0"); }catch(e){} $("sndBtn").textContent=SND.on?"🔊 SOUND ON":"🔇 SOUND OFF"; if(!SND.on) SND.musicStop(); };
   $("sndBtn").textContent=SND.on?"🔊 SOUND ON":"🔇 SOUND OFF";
   $("volRange").oninput=(e)=>{ SND.vol=+e.target.value/100; try{ localStorage.setItem("cube-snd-vol",""+SND.vol); }catch(e){} };
+  $("camBtn").onclick=()=>{ state.camFP=!state.camFP; $("camBtn").textContent=state.camFP?"🎯 1ST PERSON":"👁 3RD PERSON"; popText(state.camFP?"🎯 FIRST PERSON — through their eyes":"👁 THIRD PERSON — the wide view", 1500); };
+  $("tvBtn").onclick=()=>{ state.tvMode=!state.tvMode; document.body.classList.toggle("tvmode", state.tvMode); $("tvBtn").textContent=state.tvMode?"📺 TV: ON":"📺 TV MODE";
+    if(state.tvMode){ try{ document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen().catch(()=>{}); }catch(e){}
+      if(NET.room){ $("tvQr").style.display="block"; $("tvQrTxt").textContent="JOIN "+NET.room; try{ $("tvQrBox").innerHTML=""; new QRCode($("tvQrBox"),{text:location.origin+location.pathname+"?join="+NET.room, width:190, height:190}); }catch(e){} }
+    } else { $("tvQr").style.display="none"; try{ document.exitFullscreen&&document.fullscreenElement&&document.exitFullscreen().catch(()=>{}); }catch(e){} } };
   $("fireBtn").addEventListener("pointerdown",(e)=>{ e.preventDefault();
     if(RP.active) return;
     if(NET.role==="guest"){ NET.fireOut=1; }
@@ -1394,7 +1418,7 @@ function wire(){
   // drag look
   let drag=null;
   const padHome=()=>{ pad.style.left="16px"; pad.style.top=""; pad.style.bottom="22px"; };
-  $("stage").addEventListener("pointerdown",(e)=>{ if(e.target.closest(".sheet,.pill,#pad,#fireBtn,#rpBar,#mapWrap,#teleOverlay")) return;
+  $("stage").addEventListener("pointerdown",(e)=>{ if(e.target.closest(".sheet,.pill,#pad,#fireBtn,#camBtn,#tvBtn,#tvQr,#rpBar,#mapWrap,#teleOverlay")) return;
     if(state.started&&!RP.active&&e.clientX<window.innerWidth*0.45){ pad.style.left=(e.clientX-72)+"px"; pad.style.top=(e.clientY-72)+"px"; pad.style.bottom="auto"; state.stick.active=true; state.stick.id=e.pointerId; padMove(e); return; }
     drag={x:e.clientX,y:e.clientY,id:e.pointerId}; });
   $("stage").addEventListener("pointermove",(e)=>{ if(state.stick.active&&e.pointerId===state.stick.id){ padMove(e); return; } if(!drag||e.pointerId!==drag.id) return; state.camYaw-=(e.clientX-drag.x)*0.005; state.camPitch=Math.max(0.08,Math.min(1.25,state.camPitch+(e.clientY-drag.y)*0.004)); drag.x=e.clientX; drag.y=e.clientY; });
