@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>BUNNY CUBE v1.8.6 — BONK THE BULLIES (a 3D world from Walrus blobs)</title>
+<title>BUNNY CUBE v1.8.7 — BONK THE BULLIES (a 3D world from Walrus blobs)</title>
 <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/mqtt@5.10.1/dist/mqtt.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -154,12 +154,17 @@ grab apples, bonk them back. First to the banner takes the round.</p>
       <button class="lkBtn" id="matchWatch">🎞️ WATCH THE MATCH</button>
       <div id="matchWait" style="font-size:12.5px;opacity:.85;margin-top:9px"></div>
     </div>
+    <div id="boardPanel" style="display:none;position:absolute;inset:12px;z-index:12;background:rgba(8,10,18,.96);border:1.5px solid #ffd76a;border-radius:14px;padding:14px 16px;color:#f2ecd8;overflow-y:auto;text-align:left">
+      <div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:17px">🏆 HIGH SCORES</b><button class="lkBtn" id="boardClose">✕ CLOSE</button></div>
+      <div style="font-size:12px;opacity:.85;margin:4px 0 10px">Every record is a Walrus blob. Every blob replays. The chain re-verifies on this phone.</div>
+      <div id="boardBody" style="font-size:13.5px;line-height:1.55"></div>
+    </div>
     <div id="eatBox" style="display:none;position:absolute;left:50%;bottom:118px;transform:translateX(-50%);z-index:11;background:rgba(10,8,20,.93);border:1.5px solid #ffd76a;border-radius:16px;padding:14px 20px;text-align:center;color:#fdf6d8;max-width:88vw">
       <div style="font-size:15.5px;margin-bottom:10px">🍎 The tree of knowledge offers you an apple.<br><span style="font-size:13px;opacity:.9">Everyone must choose for themselves.</span></div>
       <button class="lkBtn" id="eatBtn" style="font-size:19px;padding:12px 26px">🍎 EAT APPLE</button>
     </div>
     <div id="pop"></div>
-    <div id="verTag">🧊 CUBE v1.8.6 · BONK THE BULLIES</div>
+    <div id="verTag">🧊 CUBE v1.8.7 · BONK THE BULLIES</div>
     <button id="tiltBtn">🧭 TILT</button>
     <div id="joy"><div id="joyKnob"></div></div>
     <div id="pad"><span class="pip pU">▲</span><span class="pip pD">▼</span><span class="pip pL">◀</span><span class="pip pR">▶</span><div id="padKnob"></div></div>
@@ -197,6 +202,7 @@ grab apples, bonk them back. First to the banner takes the round.</p>
         <button class="ssBtn small" id="howBtn">? HOW TO PLAY</button>
         <button class="ssBtn small" id="linkBtn">🔗 2-PLAYER LINK</button>
         <button class="ssBtn small" id="aboutBtn">📖 ABOUT &amp; PROOF</button>
+        <button class="ssBtn small" id="boardBtn">🏆 HIGH SCORES</button>
         <div class="ssNote">First to the banner takes the round · your 10 bonks win the meadow · their 3 bonks on you win it back.</div>
       </div>
       <div class="ssFoot">the film's own world, rebuilt from blobs<br>every object hash-verified in your browser</div>
@@ -1010,6 +1016,7 @@ async function sealTape(){
     const blobId=(j.newlyCreated&&j.newlyCreated.blobObject&&j.newlyCreated.blobObject.blobId)||(j.alreadyCertified&&j.alreadyCertified.blobObject&&j.alreadyCertified.blobObject.blobId);
     if(!blobId) throw new Error("no blobId in reply");
     NET.tapeBlob=blobId;
+    if(NET.matchOver && winChain.length){ const lr=winChain[winChain.length-1]; if(lr.match && !lr.tape){ lr.tape=blobId; saveWinChain(); } }
     if(NET.matchOver && NET.role==="host") mqSend("down",{type:"ev", tapeBlob:blobId});
     teleEvent("TAPE SOLIDIFIED","🎞️ the whole match is a blob now: "+blobId.slice(0,16)+"… · "+NET.lastTape.length+" frames · anyone can load it with LOAD TAPE");
     popText("🎞️ Replay sealed as a blob ✓", 2400);
@@ -1101,7 +1108,7 @@ function winHash(r){ const c={format:r.format, winner:r.winner, who:r.who, secs:
 function loadWinChain(){ try{ winChain=JSON.parse(localStorage.getItem("cube-wins-v1")||"[]"); }catch(e){ winChain=[]; } renderWinBook(); }
 function saveWinChain(){ try{ localStorage.setItem("cube-wins-v1", JSON.stringify(winChain)); }catch(e){} renderWinBook(); }
 function recordWin(part){
-  const rec={format:"cube-win/1", winner:part.winner, who:part.who, secs:part.secs, round:part.round, match:part.match?1:0, ts:Date.now(), prev:winChain.length?winChain[winChain.length-1].h:"GENESIS", blob:null};
+  const rec={format:"cube-win/1", winner:part.winner, who:part.who, secs:part.secs, round:part.round, match:part.match?1:0, h1:part.h1||0, h2:part.h2||0, ha:part.ha||0, n1:part.n1||"", n2:part.n2||"", tape:null, ts:Date.now(), prev:winChain.length?winChain[winChain.length-1].h:"GENESIS", blob:null};
   rec.h=winHash(rec);
   winChain.push(rec); saveWinChain();
   teleEvent("RECORD SEALED (local)","🏆 "+rec.winner+" · round "+rec.round+" · ⏱ "+rec.secs+" s · hash "+rec.h.slice(0,12)+"… · solidifying into a blob…");
@@ -1139,6 +1146,29 @@ function renderWinBook(){
   el.innerHTML="<b>Chain: "+winChain.length+" records · "+(intact?"✓ intact — every hash re-verified on this phone":"⚠ CHAIN BREAK")+"</b><br>"+
     (wins.length? wins.map((r,i)=>(i===0?"⚡ ":"")+(r.match?"🏆 ":"")+"<b>"+r.secs+" s</b> — "+r.winner+" · round "+r.round+" · "+(r.blob?"🧊 <span class='mono'>"+r.blob.slice(0,14)+"…</span>":"local · seals on next boot")).join("<br>") : "No player finishes yet — the bullies hold the book.");
 }
+// v1.8.7 THE SCOREBOARD (David, Nov 7 03:49): all recorded blobs + replays in one
+// place — fastest wins, hits as points (losses score too), and the endurance
+// equation: hits × seconds survived. Click a record, watch its match.
+function boardWatch(id){ $("boardPanel").style.display="none"; loadTapeBlob(id); }
+function renderBoard(){
+  const el=$("boardBody"); if(!el) return;
+  if(!winChain.length){ el.innerHTML="No finishes sealed yet — win or lose a round and the record is written: who, how fast, how many hits, all of it chained and solidified into a blob."; return; }
+  let intact=true, prev="GENESIS";
+  for(const r of winChain){ if(r.prev!==prev||winHash(r)!==r.h){ intact=false; break; } prev=r.h; }
+  const esc=s=>String(s||"").replace(/</g,"&lt;");
+  const when=ts=>{ const d=new Date(ts); return (d.getMonth()+1)+"/"+d.getDate()+" "+String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0"); };
+  const watch=r=>r.tape?' <button class="lkBtn" onclick="boardWatch(\''+r.tape+'\')">▶ WATCH</button>':"";
+  const blob=r=>r.blob?"🧊 <span class='mono'>"+r.blob.slice(0,12)+"…</span>":"local · seals on next boot";
+  const fastest=winChain.filter(r=>r.who!=="AI").slice().sort((a,b)=>a.secs-b.secs).slice(0,5);
+  const hits=winChain.slice().map(r=>({r, h:Math.max(r.h1||0, r.h2||0), who:(r.h2||0)>(r.h1||0)?(r.n2||"P2"):(r.n1||r.winner||"P1")})).filter(x=>x.h>0).sort((a,b)=>b.h-a.h).slice(0,5);
+  const endu=winChain.filter(r=>r.who==="AI").slice().map(r=>({r, h:(r.h1||0)+(r.h2||0), score:((r.h1||0)+(r.h2||0))*r.secs})).filter(x=>x.h>0).sort((a,b)=>b.score-a.score).slice(0,5);
+  let h="<b>Chain: "+winChain.length+" records · "+(intact?"✓ intact — every hash re-verified":"⚠ CHAIN BREAK")+"</b>";
+  h+="<br><br><b>⚡ FASTEST WINS</b><br>"+(fastest.length? fastest.map((r,i)=>(i===0?"⚡ ":"")+"<b>"+r.secs+" s</b> — "+esc(r.winner)+" · round "+r.round+(r.match?" · 🏆 match":"")+" · "+when(r.ts)+" · "+blob(r)+watch(r)).join("<br>") : "No player finishes yet.");
+  h+="<br><br><b>🎯 MOST HITS IN A ROUND</b> — hits are points, win or lose<br>"+(hits.length? hits.map(x=>"<b>"+x.h+" hits</b> — "+esc(x.who)+" · round "+x.r.round+" · "+(x.r.who==="AI"?"fell at "+x.r.secs+" s":"won in "+x.r.secs+" s")+" · "+when(x.r.ts)+watch(x.r)).join("<br>") : "No hits on record yet.");
+  h+="<br><br><b>🛡️ ENDURANCE</b> — losses, scored: <b>hits × seconds survived</b><br>"+(endu.length? endu.map(x=>"<b>"+x.score+" pts</b> — "+x.h+" hits × "+x.r.secs+" s · "+esc(x.r.n1||"P1")+(x.r.n2?" + "+esc(x.r.n2):"")+" · round "+x.r.round+" · "+when(x.r.ts)+watch(x.r)).join("<br>") : "No scored losses yet — the bullies haven't taken a round with hits on the board.");
+  h+="<br><br><b>📜 ALL RECORDS</b><br>"+winChain.slice().reverse().map(r=>(r.match?"🏆 ":"")+"<b>"+esc(r.winner)+"</b> · "+r.secs+" s · round "+r.round+" · hits "+(r.h1||0)+"/"+(r.h2||0)+" · "+when(r.ts)+" · "+blob(r)+watch(r)).join("<br>");
+  el.innerHTML=h;
+}
 function showMatchPanel(){
   const p=$("matchPanel"); if(!p) return;
   $("matchTitle").textContent="🏆🏆 MATCH — "+(NET.matchWinner||"")+" TAKES IT!";
@@ -1148,6 +1178,7 @@ function showMatchPanel(){
   p.style.display="block";
 }
 function endRound(playerWon, who){
+  const _rh1=state.bonks, _rh2=NET.guest.bonks, _rha=state.bonked;
   SND.play(playerWon?"win":"lose");
   if(NET.tape.length>10) NET.lastTape=NET.tape;
   NET.matchTape=(NET.matchTape||[]).concat(NET.tape);
@@ -1172,7 +1203,7 @@ function endRound(playerWon, who){
   const mKey=playerWon?(who||"P1"):"AI";
   NET.match[mKey]++;
   const mWon=NET.match[mKey]>=2;
-  if(NET.role!=="guest") recordWin({winner:wName, who:playerWon?(who||"P1"):"AI", secs, round:finRound, match:mWon});
+  if(NET.role!=="guest") recordWin({winner:wName, who:playerWon?(who||"P1"):"AI", secs, round:finRound, match:mWon, h1:_rh1, h2:_rh2, ha:_rha, n1:myName(), n2:NET.guest.name||""});
   if(mWon){
     NET.matchOver=true; const mName=playerWon?wName:"THE BULLIES"; NET.matchWinner=mName;
     state.started=false;
@@ -1613,7 +1644,7 @@ function onGuestMsg(t, m){
   else if(msg.type==="snap") applySnap(msg.core);
   else if(msg.type==="ev"){ if(msg.hit){ SND.play(msg.hit.target==="Bunny"?"thud":"bonk"); const hh=msg.hit; teleEvent("HIT PROVEN",(hh.by==="P2"?"YOUR apple":hh.by==="AI"?"A bully apple":"P1's apple")+" hit "+hh.target+" · count "+hh.n+" · host chain head "+(hh.h||"").slice(0,10)+"…"); if(hh.by==="P2"&&hh.target!=="Bunny") popText("🎯 YOUR HIT! "+hh.target+" bonked · #"+hh.n+" — in the seal ✓", 1800); } if(msg.pop) popText(msg.pop, 1500); if(msg.offer && !SEQ.offered){ SEQ.offered=true; seqGlow(); offerEat(); }
     if(msg.seqhit){ const sh=msg.seqhit; SND.play(sh.kind); if(sh.kind==="tree") popText(sh.step>=2?"🌳🌳 THE TREE IS WAITING — one rock, any rock! ("+sh.step+"/2)":"🌳 The tree stirs… ("+sh.step+"/2)", 2000); else if(!sh.offered && sh.step===0) popText("🪨 A rock too soon — the tree forgets.", 2000); else if(!sh.offered) popText("🪨 Stone on stone — a clean hit.", 1500); } if(msg.matchEnd){ NET.match={P1:msg.matchEnd.a, P2:msg.matchEnd.b, AI:msg.matchEnd.c}; NET.matchOver=true; NET.matchWinner=msg.matchEnd.winner; syncHUD(); showMatchPanel(); }
-  if(msg.tapeBlob){ NET.matchTapeBlob=msg.tapeBlob; teleEvent("MATCH TAPE","🎞️ the whole match, sealed as one blob: "+msg.tapeBlob.slice(0,16)+"… — WATCH THE MATCH loads it"); const wb=$("matchWatch"); if(wb) wb.textContent="🎞️ WATCH THE MATCH ✓"; if($("matchPanel").style.display!=="none") showMatchPanel(); }
+  if(msg.tapeBlob){ NET.matchTapeBlob=msg.tapeBlob; teleEvent("MATCH TAPE","🎞️ the whole match, sealed as one blob: "+msg.tapeBlob.slice(0,16)+"… — WATCH THE MATCH loads it"); const wb=$("matchWatch"); if(wb) wb.textContent="🎞️ WATCH THE MATCH ✓"; if($("matchPanel").style.display!=="none") showMatchPanel(); if(winChain.length){ const lr=winChain[winChain.length-1]; if(lr.match && !lr.tape){ lr.tape=msg.tapeBlob; saveWinChain(); } } }
   if(msg.matchReset){ NET.matchOver=false; NET.match={P1:0,P2:0,AI:0}; NET.matchTapeBlob=null; $("matchPanel").style.display="none"; syncHUD(); popText("🏆 NEW MATCH — first to 2 rounds takes it!", 2200); }
   if(msg.banner) showBanner(msg.banner[0], msg.banner[1], 3800); if(msg.win){ SND.play(msg.win.who==="P2"?"win":"lose"); appendWinRecord(msg.win); if(NET.tape.length>10) NET.lastTape=NET.tape; NET.tape=[]; NET.tapeBlob=null; renderReplayPanel(); if(msg.win.who==="P2") showBanner("🏆 YOU WIN THE MEADOW!", "⏱ "+msg.win.secs+" s · your name goes in the book — sealed as a blob", 4200); } }
 }
@@ -1829,6 +1860,8 @@ NET.simGuest=function(role){
 };
 window.__LINK=NET;
 $("aboutBtn").addEventListener("click",()=>{ $("aboutSheet").style.display="block"; });
+$("boardBtn").addEventListener("click",()=>{ renderBoard(); $("boardPanel").style.display="block"; });
+$("boardClose").addEventListener("click",()=>{ $("boardPanel").style.display="none"; });
 $("aboutClose").addEventListener("click",()=>{ $("aboutSheet").style.display="none"; });
 (function(){ const sh=$("aboutSheet"); if(sh) document.querySelectorAll("[data-about]").forEach(el=>sh.appendChild(el)); })();
 (function(){ const ni=$("nameInput"); if(ni){ ni.value=localStorage.getItem("cube-name")||""; ni.addEventListener("input",()=>{ try{ localStorage.setItem("cube-name", ni.value); }catch(e){} }); } loadWinChain(); setTimeout(()=>{ winChain.filter(r=>!r.blob).forEach(r=>sealWinBlob(r,false)); }, 6000);
