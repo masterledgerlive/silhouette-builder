@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>ZOMBIE WORLD v1.0 — SURVIVE THE NIGHTS (a world from Walrus blobs)</title>
+<title>ZOMBIE WORLD v1.1 — SURVIVE THE NIGHTS (a world from Walrus blobs)</title>
 <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/mqtt@5.10.1/dist/mqtt.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -13,6 +13,8 @@
   a-scene{position:absolute;inset:0}
   .pill{position:absolute;background:rgba(8,8,24,.82);border:1px solid #4a4a7a;border-radius:10px;padding:6px 10px;font-size:.85em;z-index:30}
   #verTag{left:10px;bottom:186px;color:#9a9ac0}
+  #zHunt{font-size:15px;font-weight:bold;color:#ffb36b;margin-top:2px;text-shadow:0 1px 6px #000}
+  #zHunt .arr{display:inline-block;font-size:19px;color:#ff5c5c;transition:transform .2s}
   #linkBadge{right:10px;top:10px;cursor:pointer;color:#ffd76b;font-weight:bold}
   #hud{position:absolute;top:10px;left:50%;transform:translateX(-50%);text-align:center;z-index:25;width:min(94vw,560px);pointer-events:none}
   #gameBar{display:flex;gap:5px;justify-content:center;flex-wrap:wrap;margin-bottom:4px}
@@ -30,7 +32,7 @@
   #mapCap{font-size:.68em;color:#c8c8e8;text-shadow:0 1px 4px #000}
   #pad{position:absolute;left:16px;bottom:22px;width:144px;height:144px;border-radius:50%;background:rgba(20,20,44,.5);border:2px solid rgba(150,150,220,.55);z-index:35;touch-action:none}
   #padKnob{position:absolute;left:50%;top:50%;width:58px;height:58px;border-radius:50%;background:rgba(120,120,200,.55);border:2px solid rgba(200,200,255,.7);transform:translate(-50%,-50%)}
-  #fireBtn{position:absolute;right:18px;bottom:158px;width:104px;height:104px;border-radius:50%;background:radial-gradient(circle at 35% 30%, #ff9a5c, #c33d12);border:3px solid #ffd76b;color:#fff;font-weight:bold;font-size:.95em;z-index:35;touch-action:none;box-shadow:0 4px 18px rgba(0,0,0,.5)}
+  #fireBtn{position:absolute;right:18px;bottom:24px;width:104px;height:104px;border-radius:50%;background:radial-gradient(circle at 35% 30%, #ff9a5c, #c33d12);border:3px solid #ffd76b;color:#fff;font-weight:bold;font-size:.95em;z-index:35;touch-action:none;box-shadow:0 4px 18px rgba(0,0,0,.5)}
   #fireBtn small{display:block;font-size:.62em;font-weight:normal}
   #scare{position:absolute;inset:0;z-index:60;display:none;pointer-events:none;background:radial-gradient(circle, transparent 30%, rgba(160,0,0,.55) 78%, rgba(90,0,0,.9) 100%)}
   #scareFace{position:absolute;left:50%;top:46%;transform:translate(-50%,-50%);font-size:11em;filter:drop-shadow(0 0 24px #000)}
@@ -68,11 +70,12 @@
   <div id="hud" style="display:none">
     <div id="gameBar"></div>
     <div id="counts">🧟 ZOMBIE WORLD</div>
+    <div id="zHunt">🧟 all quiet</div>
   </div>
   <div id="banner" style="display:none"><div id="bannerMain"></div><div id="bannerSub"></div></div>
   <div id="pop"></div>
   <div id="mapWrap" style="display:none"><canvas id="mapCv" width="148" height="148"></canvas><div id="mapCap">🗺️ THE FIELD · N ↑</div></div>
-  <div id="verTag" class="pill">🧊 ZOMBIE v1.0 · SURVIVE THE NIGHTS</div>
+  <div id="verTag" class="pill">🧊 ZOMBIE v1.1 · FLOATING STICK + TRUE NORTH</div>
   <div id="linkBadge" class="pill">🔗 LINK</div>
   <div id="teleOverlay"><div id="teleBody" class="mono"></div></div>
   <div id="pad" style="display:none"><div id="padKnob"></div></div>
@@ -302,7 +305,7 @@ function mkShadow(r, op){
   return el;
 }
 "use strict";
-// ================= ZOMBIE WORLD v1.0 =================
+// ================= ZOMBIE WORLD v1.1 =================
 // Composed from the library: meadow field blob + SKY & CLOCK layer + sealed link
 // + hash-chained records. House/graveyard/chest are MOVE library objects.
 const ZWORLD="uB8NNkBbtVzH1L35Sa6RjKKs9dkYx91rQP55Auu7X3I";
@@ -586,13 +589,13 @@ function applySky(){
 let bannerTO=null, popTO=null;
 function showBanner(main, sub, ms){ const b=$("banner"); $("bannerMain").textContent=main; $("bannerSub").textContent=sub||""; b.style.display="block"; clearTimeout(bannerTO); if(ms) bannerTO=setTimeout(()=>{ b.style.display="none"; }, ms); }
 function popText(txt, ms){ const p=$("pop"); p.textContent=txt; p.style.display="block"; clearTimeout(popTO); popTO=setTimeout(()=>{ p.style.display="none"; }, ms||2200); }
-function zsnd(name){
+function zsnd(name, mul){
   if(!SND.ctx||!SND.on) return;
   try{
     if(name==="rifle"){ SND.noise(0.13,3200,300,0.28); SND.tone(160,55,0.14,"square",0.2); }
     else if(name==="boom"){ SND.noise(0.5,900,60,0.4); SND.tone(90,30,0.5,"sine",0.4); }
     else if(name==="scare"){ SND.tone(95,38,0.55,"sawtooth",0.32); SND.noise(0.42,2400,180,0.22); }
-    else if(name==="groan"){ SND.tone(65+Math.random()*35,48,0.8,"sawtooth",0.06); }
+    else if(name==="groan"){ SND.tone(65+Math.random()*35,48,0.8,"sawtooth",Math.min(0.3,0.06*(mul||1))); }
     else if(name==="chest"){ [392,523,659,784].forEach((f,i)=>SND.tone(f,f,0.13,"triangle",0.15,i*0.07)); }
     else if(name==="bite"){ SND.tone(220,70,0.2,"square",0.22); SND.noise(0.16,1200,300,0.18); }
     else SND.play(name);
@@ -688,7 +691,7 @@ function phaseTick(dt){
   for(const a of [...ZAPPLES]) if(a.expireT!==undefined){ a.expireT-=dt; if(a.expireT<=0) removeApple(a); }
   state.chestT-=dt;
   if(state.chestT<=0&&!CHEST.active){ state.chestT=6; placeChest(); }
-  state.groanT-=dt; if(state.groanT<=0){ state.groanT=6+Math.random()*7; if(ZOMBIES.some(z=>!z.dead)) zsnd("groan"); }
+  state.groanT-=dt; if(state.groanT<=0){ state.groanT=6+Math.random()*7; if(ZOMBIES.some(z=>!z.dead)){ let nd2=1e9; const me2=P1; if(me2) for(const zn of ZOMBIES){ if(zn.dead) continue; nd2=Math.min(nd2,Math.hypot(zn.x-me2.x,zn.z-me2.z)); } zsnd("groan", nd2<1e8 ? Math.max(0.4, 2.2-nd2/11) : 1); } }
 }
 // ---------- chest & weapons ----------
 const WEAPONS=[{kind:"rifle",icon:"🔫",name:"RIFLE",ammo:6},{kind:"rocket",icon:"🚀",name:"ROCKET",ammo:3},{kind:"dynamite",icon:"🧨",name:"DYNAMITE",ammo:1}];
@@ -697,6 +700,7 @@ function placeChest(){
   CHEST.x=spots[i][0]; CHEST.z=spots[i][1]; CHEST.y=groundY2(CHEST.x,CHEST.z,99); CHEST.active=true;
   chestEl.setAttribute("position",CHEST.x+" "+CHEST.y+" "+CHEST.z); chestEl.setAttribute("visible","true");
   teleEvent("CHEST","appeared at "+CHEST.x+","+CHEST.z);
+  if(state.started){ popText("🧰 A WEAPON CHEST appeared — gold square on your map!", 2800); zsnd("chest"); }
 }
 function openChest(s){
   const w=WEAPONS[Math.floor(drawRand("weapon")*WEAPONS.length)];
@@ -706,7 +710,7 @@ function openChest(s){
   teleEvent("CHEST OPEN",s.name+" drew "+w.kind);
   if(s===P1||NET.role==="guest") updateFireBtn();
 }
-const PROJ=[], PLANTED=[];
+const PROJ=[], PLANTED=[], TRACERS=[];
 function killZombie(zn, by){
   if(zn.dead) return; zn.dead=true; zn.deadT=2.2;
   if(by){ by.kills++; }
@@ -724,7 +728,9 @@ function explode(x,z,r,by, hurt){
   teleEvent("EXPLOSION","r="+r+" at "+x.toFixed(0)+","+z.toFixed(0));
 }
 function fireWeapon(s){
-  if(!s||s.dead||!s.weapon||s.ammo<=0) return;
+  if(!s||s.dead) return;
+  if(!s.weapon){ popText("🖐 "+s.name+" — empty hands! Find the 🧰 CHEST (gold square on your map)", 1800); return; }
+  if(s.ammo<=0) return;
   s.ammo--;
   const ry=s.rotY;
   if(s.weapon==="rifle"){
@@ -733,6 +739,12 @@ function fireWeapon(s){
     for(const zn of ZOMBIES){ if(zn.dead||zn.rise>0) continue; const dx=zn.x-s.x, dz=zn.z-s.z, d=Math.hypot(dx,dz); if(d>16) continue;
       let ang=Math.atan2(dx,dz)-ry; while(ang>Math.PI)ang-=2*Math.PI; while(ang<-Math.PI)ang+=2*Math.PI;
       if(Math.abs(ang)<0.35&&d<bd){ bd=d; best=zn; } }
+    const tx2=best?best.x:s.x+Math.sin(ry)*16, tz2=best?best.z:s.z+Math.cos(ry)*16;
+    const tdx=tx2-s.x, tdz=tz2-s.z, tl=Math.hypot(tdx,tdz)||0.1;
+    const tel=document.createElement("a-box"); tel.setAttribute("width","0.07"); tel.setAttribute("height","0.07"); tel.setAttribute("depth",""+tl.toFixed(2));
+    tel.setAttribute("material","color: #ffe9a3; emissive: #ffb02a; emissiveIntensity: 2.4; transparent: true; opacity: 0.9");
+    tel.setAttribute("position",(s.x+tdx/2)+" "+((s.y||0)+1.35)+" "+(s.z+tdz/2)); tel.setAttribute("rotation","0 "+(Math.atan2(tdx,tdz)*180/Math.PI)+" 0");
+    worldEl.appendChild(tel); TRACERS.push({el:tel, ttl:0.13});
     if(best){ killZombie(best, s); popText("🔫 "+s.name+" — dead on the line ("+bd.toFixed(0)+" m)", 1400); teleEvent("RIFLE HIT",s.name+" dropped zombie #"+best.id); }
     else popText("🔫 "+s.name+" — the line was empty", 1200);
   } else if(s.weapon==="rocket"){
@@ -853,7 +865,7 @@ function localWish(){
   if(state.stick.active){ x+=state.stick.x; z+=state.stick.y; }
   const m=Math.hypot(x,z); if(m<0.05) return {x:0,z:0};
   const s=Math.sin(state.camYaw), c=Math.cos(state.camYaw);
-  return {x:(x*c - z*s)/Math.max(1,m)*Math.min(1,m), z:(x*s + z*c)/Math.max(1,m)*Math.min(1,m)};
+  return {x:(-x*c - z*s)/Math.max(1,m)*Math.min(1,m), z:(x*s - z*c)/Math.max(1,m)*Math.min(1,m)};
 }
 function myFigure(){ if(NET.role==="guest") return NET.guest.role==="zombie" ? (NET.guest.zombieMirror||null) : P2; return P1; }
 function updateFireBtn(){
@@ -1231,8 +1243,8 @@ function drawMap(){
   c.strokeStyle="#b8ffc8"; c.beginPath(); c.arc((TREE_POS.x+27)*S,(TREE_POS.z+27)*S,4.6*S,0,7); c.stroke();
   c.fillStyle="#ffd76b"; c.beginPath(); c.arc(27*S,40*S,3,0,7); c.fill();
   if(CHEST.active){ c.fillStyle="#ffb36b"; c.fillRect((CHEST.x+27)*S-3,(CHEST.z+27)*S-3,6,6); }
-  for(const a of ZAPPLES){ c.fillStyle=a.kind==="gold"?"#ffd76b":a.kind==="green"?"#51ff7a":"#ff5c5c"; c.beginPath(); c.arc((a.x+27)*S,(a.z+27)*S,2.4,0,7); c.fill(); }
-  for(const zn of ZOMBIES){ if(zn.dead) continue; c.fillStyle=zn.player?"#ff2a6b":"#c22"; c.beginPath(); c.arc((zn.x+27)*S,(zn.z+27)*S,2.4,0,7); c.fill(); }
+  for(const a of ZAPPLES){ c.fillStyle=a.kind==="gold"?"#ffd76b":a.kind==="green"?"#51ff7a":"#ff5c5c"; c.beginPath(); c.arc((a.x+27)*S,(a.z+27)*S,3.1,0,7); c.fill(); }
+  for(const zn of ZOMBIES){ if(zn.dead) continue; c.fillStyle=zn.player?"#ff2a6b":"#c22"; c.beginPath(); c.arc((zn.x+27)*S,(zn.z+27)*S,3.6,0,7); c.fill(); }
   for(const s of survivors){ if(!s.el) continue; c.fillStyle=s===P1?"#fff":"#7dd8ff"; c.beginPath(); c.arc((s.x+27)*S,(s.z+27)*S,3,0,7); c.fill(); }
 }
 let hudT=0;
@@ -1246,6 +1258,13 @@ function hudTick(dt){
     const mm=String(Math.floor(Math.max(0,state.phaseT)/60)), ss=String(Math.floor(Math.max(0,state.phaseT)%60)).padStart(2,"0");
     $("counts").textContent=(state.phase==="night"?"🌙 NIGHT "+Math.max(1,state.nightN):"☀️ DAY "+(state.nightN+1))+" · "+mm+":"+ss+" · 🧟 "+ZOMBIES.filter(z=>!z.dead).length+" alive"+(state.waveLeft?" · +"+state.waveLeft+" rising":"")+(state.over?" · 💀 RUN OVER":"");
     drawMap();
+    const me=myFigure()||P1; let nz=null, nd=1e9;
+    if(me){ for(const zn of ZOMBIES){ if(zn.dead||zn.rise>0) continue; const d=Math.hypot(zn.x-me.x, zn.z-me.z); if(d<nd){ nd=d; nz=zn; } } }
+    if(nz){ const dx=nz.x-me.x, dz=nz.z-me.z, s2=Math.sin(state.camYaw), c2=Math.cos(state.camYaw);
+      const ang=Math.atan2(dx*(-c2)+dz*s2, dx*s2+dz*c2)*180/Math.PI;
+      $("zHunt").innerHTML="🧟 NEAREST "+nd.toFixed(0)+" m <span class='arr' style='transform:rotate("+ang.toFixed(0)+"deg)'>⬆</span>"+(nd<6?" · IT'S COMING":"");
+      $("zHunt").style.color=nd<6?"#ff5c5c":"#ffb36b";
+    } else $("zHunt").textContent="🧟 all quiet — for now";
   }
   $("linkBadge").textContent= NET.role==="solo" ? "🔗 LINK" : (NET.role==="host" ? "📡 ROOM "+NET.room+" · seals ✓"+NET.sealsOk : "🔗 "+(NET.room||"")+" · seals ✓"+NET.sealsOk+" ↷"+NET.gaps);
 }
@@ -1261,6 +1280,7 @@ function tickLoop(now){
     else guestTick(dt);
     netTick(dt);
   }
+  for(let i=TRACERS.length-1;i>=0;i--){ TRACERS[i].ttl-=dt; if(TRACERS[i].ttl<=0){ const e2=TRACERS[i].el; if(e2&&e2.parentNode) e2.parentNode.removeChild(e2); TRACERS.splice(i,1); } }
   placeAll(); cameraTick(); hudTick(dt);
 }
 requestAnimationFrame(tickLoop);
@@ -1373,9 +1393,13 @@ function wire(){
   pad.addEventListener("pointerup",padEnd); pad.addEventListener("pointercancel",padEnd);
   // drag look
   let drag=null;
-  $("stage").addEventListener("pointerdown",(e)=>{ if(e.target.closest(".sheet,.pill,#pad,#fireBtn,#rpBar,#mapWrap,#teleOverlay")) return; drag={x:e.clientX,y:e.clientY,id:e.pointerId}; });
-  $("stage").addEventListener("pointermove",(e)=>{ if(!drag||e.pointerId!==drag.id) return; state.camYaw-=(e.clientX-drag.x)*0.005; state.camPitch=Math.max(0.08,Math.min(1.25,state.camPitch+(e.clientY-drag.y)*0.004)); drag.x=e.clientX; drag.y=e.clientY; });
-  $("stage").addEventListener("pointerup",()=>{ drag=null; }); $("stage").addEventListener("pointercancel",()=>{ drag=null; });
+  const padHome=()=>{ pad.style.left="16px"; pad.style.top=""; pad.style.bottom="22px"; };
+  $("stage").addEventListener("pointerdown",(e)=>{ if(e.target.closest(".sheet,.pill,#pad,#fireBtn,#rpBar,#mapWrap,#teleOverlay")) return;
+    if(state.started&&!RP.active&&e.clientX<window.innerWidth*0.45){ pad.style.left=(e.clientX-72)+"px"; pad.style.top=(e.clientY-72)+"px"; pad.style.bottom="auto"; state.stick.active=true; state.stick.id=e.pointerId; padMove(e); return; }
+    drag={x:e.clientX,y:e.clientY,id:e.pointerId}; });
+  $("stage").addEventListener("pointermove",(e)=>{ if(state.stick.active&&e.pointerId===state.stick.id){ padMove(e); return; } if(!drag||e.pointerId!==drag.id) return; state.camYaw-=(e.clientX-drag.x)*0.005; state.camPitch=Math.max(0.08,Math.min(1.25,state.camPitch+(e.clientY-drag.y)*0.004)); drag.x=e.clientX; drag.y=e.clientY; });
+  const stageUp=(e)=>{ if(e.pointerId===state.stick.id){ state.stick.active=false; state.stick.x=0; state.stick.y=0; knob.style.transform="translate(-50%,-50%)"; padHome(); } drag=null; };
+  $("stage").addEventListener("pointerup",stageUp); $("stage").addEventListener("pointercancel",stageUp);
   window.addEventListener("keydown",(e)=>{ const k=e.key.toLowerCase(); state.keys[k]=true;
     if(k===" "){ e.preventDefault(); if(NET.role==="guest") NET.fireOut=1; else if(P1){ P1.fireQ=1; P1.fireRy=P1.rotY; } }
     if(["arrowup","arrowdown","arrowleft","arrowright"].includes(k)) e.preventDefault(); });
