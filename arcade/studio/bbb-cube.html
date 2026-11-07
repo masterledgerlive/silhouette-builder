@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>BUNNY CUBE v1.8.3 — BONK THE BULLIES (a 3D world from Walrus blobs)</title>
+<title>BUNNY CUBE v1.8.4 — BONK THE BULLIES (a 3D world from Walrus blobs)</title>
 <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/mqtt@5.10.1/dist/mqtt.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -155,7 +155,7 @@ grab apples, bonk them back. First to the banner takes the round.</p>
       <div id="matchWait" style="font-size:12.5px;opacity:.85;margin-top:9px"></div>
     </div>
     <div id="pop"></div>
-    <div id="verTag">🧊 CUBE v1.8.3 · BONK THE BULLIES</div>
+    <div id="verTag">🧊 CUBE v1.8.4 · BONK THE BULLIES</div>
     <button id="tiltBtn">🧭 TILT</button>
     <div id="joy"><div id="joyKnob"></div></div>
     <div id="pad"><span class="pip pU">▲</span><span class="pip pD">▼</span><span class="pip pL">◀</span><span class="pip pR">▶</span><div id="padKnob"></div></div>
@@ -334,6 +334,21 @@ const NET={role:"solo", room:null, mq:null, up:false, urlIdx:0,
                  lastSnapHash:"", lastRender:0, mode:"off"},
            lobby:{seen:{}, timer:0, listening:false}};
 const PLAY_R=23, TREE_POS={x:7,z:-9}, TREE_R=2.6, GRAV=15.5;
+// v1.8.4 SOLIDS + LAND FENCE (David, Nov 7): rocks are SOLID — a boundary circle
+// nothing walks through (digging or blasting through is a later feature, not now);
+// the blue beyond the land is fenced (stepping onto ground that falls away, or
+// below the land's floor height, is refused with a slide along the edge). Falling
+// off becomes a losing rule later, by his word — for now, nobody steps off.
+const COLLIDERS=[];
+let FENCE_Y=3.0;
+function pushOut(o,cx,cz,cr){ const dx=o.x-cx, dz=o.z-cz, d=Math.hypot(dx,dz); if(d<=0.001){ o.x=cx+cr; o.z=cz; return; } if(d<cr){ o.x=cx+dx/d*cr; o.z=cz+dz/d*cr; } }
+function solidPush(o){ const rr=Math.hypot(o.x,o.z); if(rr>PLAY_R){ o.x*=PLAY_R/rr; o.z*=PLAY_R/rr; } pushOut(o,TREE_POS.x,TREE_POS.z,TREE_R); for(const c of COLLIDERS) pushOut(o,c.x,c.z,c.r); }
+function solidStep(o,nx,nz){
+  const gy0=groundY(o.x,o.z);
+  const bad=(x,z)=>{ const gy=groundY(x,z); return gy<gy0-2.2 || gy<FENCE_Y; };
+  if(bad(nx,nz)){ if(!bad(nx,o.z)) nz=o.z; else if(!bad(o.x,nz)) nx=o.x; else { nx=o.x; nz=o.z; } }
+  o.x=nx; o.z=nz; solidPush(o);
+}
 let sceneEl, worldEl, bunnyEl, camEl, terrainMesh=null;
 let camObj=null, _camLeveled=false;                       // the PerspectiveCamera child of camEl (v1.2)
 let _guardTick=0, _guardLiftLogged=false, _guardMissLogged=false;  // camera self-healing guard (v1.2)
@@ -611,7 +626,7 @@ function placeWorld(){
   for(let i=0;i<16;i++){ const p=scatterPos(rng,2,22), g=mkEntity(worldEl,URLS.grass,1.6+rng()*1.3); P(g,p.x,p.z,rng()*180); }
   for(let i=0;i<8;i++){ const p=scatterPos(rng,2,19), f=mkEntity(worldEl,URLS.flower1,1.5+rng()*0.6); P(f,p.x,p.z,rng()*180); }
   for(let i=0;i<6;i++){ const p=scatterPos(rng,2,19), f=mkEntity(worldEl,URLS.flower2,1.5+rng()*0.6); P(f,p.x,p.z,rng()*180); }
-  for(let i=0;i<6;i++){ const p=scatterPos(rng,6,21), r=mkEntity(worldEl,URLS.rock,0.8+rng()*0.7); P(r,p.x,p.z,rng()*180); }
+  for(let i=0;i<6;i++){ const p=scatterPos(rng,6,21), sc=0.8+rng()*0.7, r=mkEntity(worldEl,URLS.rock,sc); P(r,p.x,p.z,rng()*180); COLLIDERS.push({x:p.x, z:p.z, r:sc*0.95+0.2}); }
   for(let i=0;i<8;i++){ const p=scatterPos(rng,2,20), a=mkEntity(worldEl,URLS.acorn,1.6); P(a,p.x,p.z,rng()*180); }
   // pickable apples: 12 scattered + a welcoming 3 by the door
   for(let i=0;i<12;i++){ const p=scatterPos(rng,3,20); addGroundApple(p.x,p.z,true); }
@@ -797,7 +812,7 @@ function bonkBunny(a){
   if(state.bonked>=3) endRound(false,"AI");
 }
 const WIN_PUBLISHER="https://publisher.walrus-testnet.walrus.space/v1/blobs?epochs=30";
-const RP={active:false, frames:[], i:0, playing:false, speed:1, acc:0, verified:0, label:"REPLAY", camMode:"follow", view:null, free:{x:0,z:0}, yawEntry:0};
+const RP={active:false, frames:[], i:0, playing:false, speed:1, acc:0, verified:0, links:0, label:"REPLAY", camMode:"follow", view:null, free:{x:0,z:0}, yawEntry:0};
 let rpGuestEl=null, rpGuestLabel=null;
 function renderReplayPanel(){
   const info=$("rpInfo"), w=$("rpWatch"), s=$("rpSeal");
@@ -811,9 +826,13 @@ function renderReplayPanel(){
   }
 }
 function verifyTape(frames){
-  let prev="GENESIS", ok=0;
-  for(const f of frames){ if(f.prev!==prev) break; if(snapHash(f)!==f.h) break; prev=f.h; ok++; }
-  return ok;
+  // content truth per frame + how much of the chain still links end to end.
+  // A frame dropped in transit (a guest's copy) shows as a link gap — named in
+  // the count, never hidden; a TAMPERED frame fails its own hash and breaks
+  // the link streak from that point, which is exactly what evidence should do.
+  let prev="GENESIS", ok=0, links=0;
+  for(const f of frames){ if(snapHash(f)===f.h){ ok++; if(f.prev===prev) links++; prev=f.h; } }
+  RP.links=links; return ok;
 }
 async function sealTape(){
   if(!NET.lastTape) return;
@@ -869,7 +888,7 @@ function startReplay(frames, label){
   $("rpBar").style.display="block"; $("rpPlayBtn").textContent="⏸ PAUSE";
   $("rpScrub").max=frames.length-1; $("rpScrub").value=0;
   RP.camMode="follow"; const _cs=$("rpCam"); if(_cs) _cs.value="follow";
-  teleEvent("REPLAY",RP.label+" · "+frames.length+" frames · seals verified "+RP.verified+"/"+frames.length+" before rolling");
+  teleEvent("REPLAY",RP.label+" · "+frames.length+" frames · seals verified "+RP.verified+"/"+frames.length+" · chain links "+(RP.links||0)+" before rolling");
   rpPlace(frames[0]);
 }
 function placeReplayGuest(gst){
@@ -1326,10 +1345,7 @@ function hostGuestTick(dt){
   const wx=g.wish.x, wz=g.wish.z, mag=Math.hypot(wx,wz), moving=mag>0.08;
   if(moving){
     const s=6.2/Math.max(1,mag);
-    g.x+=wx*s*dt; g.z+=wz*s*dt; g.rotY=Math.atan2(wx,wz); g.hop+=dt*9.5;
-    const rr=Math.hypot(g.x,g.z); if(rr>PLAY_R){ g.x*=PLAY_R/rr; g.z*=PLAY_R/rr; }
-    const td=Math.hypot(g.x-TREE_POS.x, g.z-TREE_POS.z);
-    if(td<TREE_R && td>0.001){ const p=(TREE_R-td); g.x+=(g.x-TREE_POS.x)/td*p; g.z+=(g.z-TREE_POS.z)/td*p; }
+    solidStep(g, g.x+wx*s*dt, g.z+wz*s*dt); g.rotY=Math.atan2(wx,wz); g.hop+=dt*9.5;
     for(const a of apples){
       if(a.st!=="ground") continue;
       if(Math.hypot(a.p.x-g.x, a.p.z-g.z)<1.05 && (state.t-(a.restAt===undefined?-10:a.restAt))>=1.0){
@@ -1429,7 +1445,7 @@ function onGuestMsg(t, m){
   else if(msg.type==="ev"){ if(msg.hit){ SND.play(msg.hit.target==="Bunny"?"thud":"bonk"); const hh=msg.hit; teleEvent("HIT PROVEN",(hh.by==="P2"?"YOUR apple":hh.by==="AI"?"A bully apple":"P1's apple")+" hit "+hh.target+" · count "+hh.n+" · host chain head "+(hh.h||"").slice(0,10)+"…"); if(hh.by==="P2"&&hh.target!=="Bunny") popText("🎯 YOUR HIT! "+hh.target+" bonked · #"+hh.n+" — in the seal ✓", 1800); } if(msg.pop) popText(msg.pop, 1500); if(msg.matchEnd){ NET.match={P1:msg.matchEnd.a, P2:msg.matchEnd.b, AI:msg.matchEnd.c}; NET.matchOver=true; NET.matchWinner=msg.matchEnd.winner; syncHUD(); showMatchPanel(); }
   if(msg.tapeBlob){ NET.matchTapeBlob=msg.tapeBlob; teleEvent("MATCH TAPE","🎞️ the whole match, sealed as one blob: "+msg.tapeBlob.slice(0,16)+"… — WATCH THE MATCH loads it"); const wb=$("matchWatch"); if(wb) wb.textContent="🎞️ WATCH THE MATCH ✓"; if($("matchPanel").style.display!=="none") showMatchPanel(); }
   if(msg.matchReset){ NET.matchOver=false; NET.match={P1:0,P2:0,AI:0}; NET.matchTapeBlob=null; $("matchPanel").style.display="none"; syncHUD(); popText("🏆 NEW MATCH — first to 2 rounds takes it!", 2200); }
-  if(msg.banner) showBanner(msg.banner[0], msg.banner[1], 3800); if(msg.win){ SND.play(msg.win.who==="P2"?"win":"lose"); appendWinRecord(msg.win); if(msg.win.who==="P2") showBanner("🏆 YOU WIN THE MEADOW!", "⏱ "+msg.win.secs+" s · your name goes in the book — sealed as a blob", 4200); } }
+  if(msg.banner) showBanner(msg.banner[0], msg.banner[1], 3800); if(msg.win){ SND.play(msg.win.who==="P2"?"win":"lose"); appendWinRecord(msg.win); if(NET.tape.length>10) NET.lastTape=NET.tape; NET.tape=[]; NET.tapeBlob=null; renderReplayPanel(); if(msg.win.who==="P2") showBanner("🏆 YOU WIN THE MEADOW!", "⏱ "+msg.win.secs+" s · your name goes in the book — sealed as a blob", 4200); } }
 }
 function applySnap(core){
   const v0=performance.now();
@@ -1437,6 +1453,7 @@ function applySnap(core){
   NET.tele.verifyMs=performance.now()-v0;
   if(!okSnap){ NET.sealsBad++; teleEvent("SEAL BROKEN","snapshot #"+(core&&core.n)+" failed its hash/chain check — REFUSED, not drawn"); netBadge(); return; }
   NET.sealsOk++;
+  if(NET.role==="guest" && state.started && NET.tape.length<6000) NET.tape.push(core);   // v1.8.4: P2's own tape — the frames she verified, hers to replay + seal
   const nowP=performance.now();
   if(NET.tele.lastSnapRecv) NET.tele.snapIntervalMs=nowP-NET.tele.lastSnapRecv;
   NET.tele.lastSnapRecv=nowP;
@@ -1716,6 +1733,7 @@ function updateBully(b, dt){
   }
   const rr2=Math.hypot(b.x,b.z);
   if(rr2>21){ b.x*=21/rr2; b.z*=21/rr2; }
+  solidPush(b);   // v1.8.4: rocks + tree are solid for bullies too
   const gy2=groundY(b.x,b.z);
   b.el.setAttribute("position",b.x+" "+(gy2+hopY)+" "+b.z);
   b.el.setAttribute("rotation","0 "+(b.rotY*180/Math.PI)+" 0");
@@ -1768,14 +1786,9 @@ function tickLoop(now){
     }
   }
   if(moving){
-    state.bunnyPos.x+=mx*dt; state.bunnyPos.z+=mz*dt;
+    solidStep(state.bunnyPos, state.bunnyPos.x+mx*dt, state.bunnyPos.z+mz*dt);
     state.hopPhase+=dt*9.5;
-  }
-  // soft boundary + tree collision
-  const rr=Math.hypot(state.bunnyPos.x,state.bunnyPos.z);
-  if(rr>PLAY_R){ state.bunnyPos.x*=PLAY_R/rr; state.bunnyPos.z*=PLAY_R/rr; }
-  const td=Math.hypot(state.bunnyPos.x-TREE_POS.x, state.bunnyPos.z-TREE_POS.z);
-  if(td<TREE_R&&td>0.001){ const push=(TREE_R-td); state.bunnyPos.x+=(state.bunnyPos.x-TREE_POS.x)/td*push; state.bunnyPos.z+=(state.bunnyPos.z-TREE_POS.z)/td*push; }
+  } else solidPush(state.bunnyPos);
   const gy=groundY(state.bunnyPos.x,state.bunnyPos.z);
   state.bunnyPos.y=gy;   // Bunny stands exactly on the sampled surface, every frame
   let hop=moving?Math.abs(Math.sin(state.hopPhase))*0.30:Math.sin(t*1.8)*0.03;
