@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>BUNNY CUBE v1.8.4 — BONK THE BULLIES (a 3D world from Walrus blobs)</title>
+<title>BUNNY CUBE v1.8.5 — BONK THE BULLIES (a 3D world from Walrus blobs)</title>
 <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/mqtt@5.10.1/dist/mqtt.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -154,8 +154,12 @@ grab apples, bonk them back. First to the banner takes the round.</p>
       <button class="lkBtn" id="matchWatch">🎞️ WATCH THE MATCH</button>
       <div id="matchWait" style="font-size:12.5px;opacity:.85;margin-top:9px"></div>
     </div>
+    <div id="eatBox" style="display:none;position:absolute;left:50%;bottom:118px;transform:translateX(-50%);z-index:11;background:rgba(10,8,20,.93);border:1.5px solid #ffd76a;border-radius:16px;padding:14px 20px;text-align:center;color:#fdf6d8;max-width:88vw">
+      <div style="font-size:15.5px;margin-bottom:10px">🍎 The tree of knowledge offers you an apple.<br><span style="font-size:13px;opacity:.9">Everyone must choose for themselves.</span></div>
+      <button class="lkBtn" id="eatBtn" style="font-size:19px;padding:12px 26px">🍎 EAT APPLE</button>
+    </div>
     <div id="pop"></div>
-    <div id="verTag">🧊 CUBE v1.8.4 · BONK THE BULLIES</div>
+    <div id="verTag">🧊 CUBE v1.8.5 · BONK THE BULLIES</div>
     <button id="tiltBtn">🧭 TILT</button>
     <div id="joy"><div id="joyKnob"></div></div>
     <div id="pad"><span class="pip pU">▲</span><span class="pip pD">▼</span><span class="pip pL">◀</span><span class="pip pR">▶</span><div id="padKnob"></div></div>
@@ -187,6 +191,7 @@ grab apples, bonk them back. First to the banner takes the round.</p>
       <div class="ssMenu">
         <div class="ssName">🏷️ YOUR NAME&nbsp; <input id="nameInput" maxlength="14" placeholder="BUNNY" autocomplete="off"></div>
         <div class="ssName">🔊 SOUND&nbsp; <button class="lkBtn" id="sndBtn" type="button">SOUND ON</button>&nbsp; <input id="sndVol" type="range" min="0" max="100" value="80" style="width:110px;vertical-align:middle"></div>
+        <div class="ssName">🌌 SKY&nbsp; <button class="lkBtn" id="nightBtn" type="button">☀️ DAY</button></div>
         <button class="ssBtn" id="playBtn"><span class="tri">▶</span> PLAY</button>
         <button class="ssBtn small" id="howBtn">? HOW TO PLAY</button>
         <button class="ssBtn small" id="linkBtn">🔗 2-PLAYER LINK</button>
@@ -534,6 +539,12 @@ function buildScene(){
   // hero tree + cast receive models as they stream in; positions set in placeWorld()
   window._dyn={};
   _dyn.tree=mkEntity(worldEl, URLS.tree, 1); _dyn.tree.setAttribute("shadow","cast: true; receive: false");
+  glowRing=document.createElement("a-entity");
+  glowRing.setAttribute("geometry",{primitive:"ring", radiusInner:TREE_R+0.35, radiusOuter:TREE_R+0.9});
+  glowRing.setAttribute("rotation","-90 0 0");
+  glowRing.setAttribute("position",TREE_POS.x+" "+(groundY(TREE_POS.x,TREE_POS.z)+0.14)+" "+TREE_POS.z);
+  glowRing.setAttribute("visible","false");
+  worldEl.appendChild(glowRing);
   bunnyEl=mkEntity(worldEl, URLS.bunny, 1); bunnyEl.setAttribute("shadow","cast: true");
   _dyn.frank=mkEntity(worldEl, URLS.frank, 1.6);
   _dyn.rinky=mkEntity(worldEl, URLS.rinky, 1.8);
@@ -710,7 +721,7 @@ function dropFromTree(){
 function launchApple(a, from, vel, kind){
   a.el.setAttribute("visible","true");
   a.fid=++NET.flyN;
-  a.p.copy(from); a.vel.copy(vel); a.bounces=0; a.kind=kind; a.st="flying";
+  a.p.copy(from); a.vel.copy(vel); a.bounces=0; a.kind=kind; a.st="flying"; a.age=0;
   a.el.setAttribute("position",from.x+" "+from.y+" "+from.z);
 }
 // v1.8.3 GAME SOUND (David, Nov 7 00:04 — the Cube was silent; he is pretty deaf,
@@ -736,6 +747,85 @@ const SND={ctx:null, on:localStorage.getItem("cube-snd-on")!=="0", vol:+(localSt
     this.mus={g, iv, cur}; },
   musicStop(){ const m=this.mus; if(!m) return; this.mus=null; clearInterval(m.iv); (m.cur||[]).forEach(o=>{ try{ o.stop(); }catch(_){} }); try{ m.g.disconnect(); }catch(_){} }
 };
+// v1.8.5 THE STAR SECRET (David, Nov 7 02:15–02:18 — for Krystian, Koda & Kai):
+// tree → tree → rock, same round, ANY player's apples count (a family trigger,
+// host-tracked, progress sealed in every snapshot). The sequence does not force
+// the sky: it raises an OFFER, and every player chooses for themselves —
+// 🍎 EAT APPLE is the final step, and the night (and the words written in it)
+// comes only to those who bite. The public night sky is innocent; the
+// constellation is not in it. Out-of-order rock = the tree forgets; a new
+// round = the tree forgets. Once offered, the offer stands for the session.
+const STAR_MSG="i love you Krystian, Kai, & Koda you bit into the tree of knowledge! Love always, Your DA! Remember God first! #whospink?";
+const SEQ={step:0, offered:false};
+let nightEl=null, secretEl=null, glowRing=null, skyNight=false, skySecret=false;
+function seqGlow(){
+  if(!glowRing) return;
+  const o=SEQ.offered?0.95:(SEQ.step===2?0.65:(SEQ.step===1?0.32:0));
+  glowRing.setAttribute("material",{color:"#ffd76a", transparent:true, opacity:o, side:"double", shader:"flat"});
+  glowRing.setAttribute("visible", o>0?"true":"false");
+}
+function seqHit(kind, src){
+  if(SEQ.offered || NET.role==="guest") return;
+  if(kind==="tree"){
+    if(SEQ.step<2){ SEQ.step++; burst(TREE_POS.x, groundY(TREE_POS.x,TREE_POS.z)+3.4, TREE_POS.z); SND.play("pickup");
+      teleEvent("STAR SEQUENCE","🌳 an apple bites the tree ("+SEQ.step+"/2) · thrown by "+(src||"P1"));
+      popText(SEQ.step===1?"🌳 The tree stirs… something is waiting (1/2)":"🌳🌳 The tree is WAITING. One rock. Any rock. (2/2)", 2400); }
+  } else {
+    if(SEQ.step>=2){ SEQ.offered=true; burst(TREE_POS.x, groundY(TREE_POS.x,TREE_POS.z)+4.2, TREE_POS.z); SND.play("win");
+      teleEvent("STAR SEQUENCE","🪨 THE ROCK — the sequence is complete. The offer rises for everyone; each must choose.");
+      popText("✨ The sequence is complete — the tree offers an apple…", 2800);
+      offerEat(); if(NET.role==="host") mqSend("down",{type:"ev", offer:1});
+    } else if(SEQ.step>0){ const was=SEQ.step; SEQ.step=0;
+      teleEvent("STAR SEQUENCE","🪨 a rock too soon — the tree forgets (was "+was+"/2). Tree, tree, then a rock.");
+      popText("🪨 Too soon — the tree forgets. Tree, tree… then a rock.", 2400); }
+  }
+  seqGlow();
+}
+function seqImpact(a){
+  const gyT=groundY(TREE_POS.x,TREE_POS.z);
+  if(Math.hypot(a.p.x-TREE_POS.x, a.p.z-TREE_POS.z)<TREE_R+0.3 && a.p.y<gyT+8.5){ seqHit("tree", a.src); a.p.y=groundY(a.p.x,a.p.z)+0.16; landApple(a); return true; }
+  for(const c of COLLIDERS){ if(Math.hypot(a.p.x-c.x, a.p.z-c.z)<c.r+0.3 && a.p.y<groundY(c.x,c.z)+2.8){ seqHit("rock", a.src); a.p.y=groundY(a.p.x,a.p.z)+0.16; landApple(a); return true; } }
+  return false;
+}
+function buildSky(){
+  if(nightEl) return;
+  const sc=sceneEl.object3D;
+  const pts=[];
+  for(let i=0;i<750;i++){ const th=Math.random()*Math.PI*2, ph=Math.acos(Math.random()*0.92), r=260;
+    pts.push(r*Math.sin(ph)*Math.cos(th), r*Math.cos(ph)+4, r*Math.sin(ph)*Math.sin(th)); }
+  const starGeo=new THREE.BufferGeometry();
+  starGeo.setAttribute("position", new THREE.Float32BufferAttribute(pts,3));
+  nightEl=new THREE.Points(starGeo, new THREE.PointsMaterial({color:0xcfe0ff, size:1.9, sizeAttenuation:false, transparent:true, opacity:0.95, fog:false}));
+  nightEl.visible=false; sc.add(nightEl);
+  const cv=document.createElement("canvas"); cv.width=1400; cv.height=620;
+  const cx2=cv.getContext("2d"); cx2.fillStyle="#000"; cx2.fillRect(0,0,1400,620);
+  cx2.fillStyle="#fff"; cx2.textAlign="center"; cx2.font="800 92px system-ui, sans-serif";
+  ["I LOVE YOU","KRYSTIAN, KAI & KODA","YOU BIT INTO THE","TREE OF KNOWLEDGE!","LOVE ALWAYS, YOUR DA!","REMEMBER GOD FIRST!","#WHOSPINK?"].forEach((ln,i)=>cx2.fillText(ln, 700, 108+i*76));
+  const img=cx2.getImageData(0,0,1400,620).data; const sp=[];
+  for(let y=0;y<620;y+=6) for(let x=0;x<1400;x+=6){ if(img[(y*1400+x)*4+3]>120) sp.push(((x-700)/1400)*300, 118-(y/620)*118, -195-(Math.abs(x-700)/1400)*22); }
+  const sg=new THREE.BufferGeometry(); sg.setAttribute("position", new THREE.Float32BufferAttribute(sp,3));
+  secretEl=new THREE.Points(sg, new THREE.PointsMaterial({color:0xffe9a8, size:2.6, sizeAttenuation:false, transparent:true, opacity:0.98, fog:false}));
+  secretEl.visible=false; sc.add(secretEl);
+  teleEvent("STAR SKY","🌌 the night dome is built · "+sp.length+" stars spell the words — visible only to those who bite");
+}
+function setSky(night, secret){
+  buildSky(); skyNight=night; skySecret=secret;
+  sceneEl.setAttribute("background","color: "+(night?"#060a1d":"#9fd0f2"));
+  sceneEl.setAttribute("fog","type: linear; color: "+(night?"#0a1030":"#b5d9f2")+"; near: "+(night?30:38)+"; far: "+(night?260:120));
+  if(nightEl) nightEl.visible=night;
+  if(secretEl) secretEl.visible=night&&secret;
+  const nb=$("nightBtn"); if(nb) nb.textContent=night?"🌌 NIGHT":"☀️ DAY";
+}
+function offerEat(){ const b=$("eatBox"); if(b) b.style.display="block"; }
+function eatNow(){
+  const b=$("eatBox"); if(b) b.style.display="none";
+  localStorage.setItem("cube-star-found","1");
+  setSky(true, true);
+  showBanner("🌌✨ THE SKY OPENS", STAR_MSG, 7000);
+  SND.play("win");
+  teleEvent("THE CHOICE","🍎 "+myName()+" bit the apple — night falls, and the words are in the stars");
+  if(NET.role==="guest") mqSend("up",{type:"eat"});
+}
 // v1.8.3 BOW-DRAW AIM (David, Nov 6 23:43): hold to draw — zoom, true arc, power.
 // The preview integrates the SAME gravity + velocity formula as the real launch,
 // so the line you see is the flight you get. Quick tap (<180 ms) = the classic lob.
@@ -989,6 +1079,7 @@ function endRound(playerWon, who){
   const finRound=state.round;
   const wName=playerWon?(who==="P2"?(NET.guest.name||"BUNNY 2"):myName()):"THE BULLIES";
   state.bonks=0; state.bonked=0; NET.guest.bonks=0;
+  if(!SEQ.offered && SEQ.step!==0){ SEQ.step=0; seqGlow(); teleEvent("STAR SEQUENCE","the round turned — the tree forgets. The sequence restarts."); }
   state.roundT0=state.t;
   if(playerWon){
     state.round++;
@@ -1306,6 +1397,7 @@ function onHostMsg(t, m){
   let msg; try{ msg=JSON.parse(m.toString()); }catch(e){ return; }
   if(msg.type==="join"){ teleEvent("JOIN KNOCK",(msg.role||"?")+" asked to enter room "+NET.room); setupGuest(msg.role, msg.name); }
   else if(msg.type==="ping"){ mqSend("down",{type:"pong", id:msg.id, t:msg.t, ht:Date.now(), snap:NET.snapN}); }
+  else if(msg.type==="eat"){ teleEvent("THE CHOICE","🍎 "+(NET.guest.name||"P2")+" bit the apple — her sky turns to night"); popText("🍎 "+(NET.guest.name||"P2")+" CHOSE — she bit the apple!", 2600); }
   else if(msg.type==="in" && NET.guest.joined){
     NET.tele.inputs++;
     NET.tele.pendingInputPerf=performance.now();
@@ -1384,7 +1476,7 @@ function hostGuestTick(dt){
 }
 function buildCore(){
   const bp=state.bunnyPos, g=NET.guest;
-  const core={v:1, n:++NET.snapN, t:+state.t.toFixed(2), w:Date.now(), round:state.round, bonks:state.bonks, bonked:state.bonked, match:{a:NET.match.P1, b:NET.match.P2, c:NET.match.AI},
+  const core={v:1, n:++NET.snapN, t:+state.t.toFixed(2), w:Date.now(), round:state.round, bonks:state.bonks, bonked:state.bonked, match:{a:NET.match.P1, b:NET.match.P2, c:NET.match.AI}, seq:SEQ.step, offer:SEQ.offered?1:0,
     host:{x:+bp.x.toFixed(2), z:+bp.z.toFixed(2), r:+state.bunnyRotY.toFixed(2), c:state.carried},
     guest:{x:+g.x.toFixed(2), z:+g.z.toFixed(2), r:+g.rotY.toFixed(2), c:g.carried, b:g.bonks, role:g.role},
     bullies:bullies.map(b=>[b.key, +b.x.toFixed(2), +b.z.toFixed(2), +b.rotY.toFixed(2)]),
@@ -1442,7 +1534,7 @@ function onGuestMsg(t, m){
     renderTele();
   }
   else if(msg.type==="snap") applySnap(msg.core);
-  else if(msg.type==="ev"){ if(msg.hit){ SND.play(msg.hit.target==="Bunny"?"thud":"bonk"); const hh=msg.hit; teleEvent("HIT PROVEN",(hh.by==="P2"?"YOUR apple":hh.by==="AI"?"A bully apple":"P1's apple")+" hit "+hh.target+" · count "+hh.n+" · host chain head "+(hh.h||"").slice(0,10)+"…"); if(hh.by==="P2"&&hh.target!=="Bunny") popText("🎯 YOUR HIT! "+hh.target+" bonked · #"+hh.n+" — in the seal ✓", 1800); } if(msg.pop) popText(msg.pop, 1500); if(msg.matchEnd){ NET.match={P1:msg.matchEnd.a, P2:msg.matchEnd.b, AI:msg.matchEnd.c}; NET.matchOver=true; NET.matchWinner=msg.matchEnd.winner; syncHUD(); showMatchPanel(); }
+  else if(msg.type==="ev"){ if(msg.hit){ SND.play(msg.hit.target==="Bunny"?"thud":"bonk"); const hh=msg.hit; teleEvent("HIT PROVEN",(hh.by==="P2"?"YOUR apple":hh.by==="AI"?"A bully apple":"P1's apple")+" hit "+hh.target+" · count "+hh.n+" · host chain head "+(hh.h||"").slice(0,10)+"…"); if(hh.by==="P2"&&hh.target!=="Bunny") popText("🎯 YOUR HIT! "+hh.target+" bonked · #"+hh.n+" — in the seal ✓", 1800); } if(msg.pop) popText(msg.pop, 1500); if(msg.offer && !SEQ.offered){ SEQ.offered=true; seqGlow(); offerEat(); } if(msg.matchEnd){ NET.match={P1:msg.matchEnd.a, P2:msg.matchEnd.b, AI:msg.matchEnd.c}; NET.matchOver=true; NET.matchWinner=msg.matchEnd.winner; syncHUD(); showMatchPanel(); }
   if(msg.tapeBlob){ NET.matchTapeBlob=msg.tapeBlob; teleEvent("MATCH TAPE","🎞️ the whole match, sealed as one blob: "+msg.tapeBlob.slice(0,16)+"… — WATCH THE MATCH loads it"); const wb=$("matchWatch"); if(wb) wb.textContent="🎞️ WATCH THE MATCH ✓"; if($("matchPanel").style.display!=="none") showMatchPanel(); }
   if(msg.matchReset){ NET.matchOver=false; NET.match={P1:0,P2:0,AI:0}; NET.matchTapeBlob=null; $("matchPanel").style.display="none"; syncHUD(); popText("🏆 NEW MATCH — first to 2 rounds takes it!", 2200); }
   if(msg.banner) showBanner(msg.banner[0], msg.banner[1], 3800); if(msg.win){ SND.play(msg.win.who==="P2"?"win":"lose"); appendWinRecord(msg.win); if(NET.tape.length>10) NET.lastTape=NET.tape; NET.tape=[]; NET.tapeBlob=null; renderReplayPanel(); if(msg.win.who==="P2") showBanner("🏆 YOU WIN THE MEADOW!", "⏱ "+msg.win.secs+" s · your name goes in the book — sealed as a blob", 4200); } }
@@ -1461,6 +1553,8 @@ function applySnap(core){
   if(NET.sealsOk===1) teleEvent("SEAL VERIFIED","snapshot #"+core.n+" · sha256 "+core.h.slice(0,12)+"… · prev link ✓ · verified in "+NET.tele.verifyMs.toFixed(2)+" ms");
   state.round=core.round; state.bonks=core.bonks; state.bonked=core.bonked;
   if(core.match){ NET.match={P1:core.match.a, P2:core.match.b, AI:core.match.c}; const hm=$("hudMatch"); if(hm) hm.textContent=core.match.a+"–"+core.match.b+(core.match.c?" · AI "+core.match.c:""); }
+  if(typeof core.seq==="number" && core.seq!==SEQ.step){ SEQ.step=core.seq; seqGlow(); }
+  if(core.offer && !SEQ.offered){ SEQ.offered=true; seqGlow(); offerEat(); popText("✨ The sequence is complete — the tree offers an apple…", 2800); }
   if(typeof NET.lastCarried==="number" && core.guest.c>NET.lastCarried) SND.play("pickup"); NET.lastCarried=core.guest.c; state.carried=core.guest.c; syncHUD();
   if(core.fly) placeGuestFlyers(core.fly);
   if(core.guest && typeof core.guest.b==="number" && core.guest.b>NET.myBonks){ NET.myBonks=core.guest.b; teleEvent("YOUR BONKS — IN THE SEAL","snapshot #"+core.n+" carries your bonk count: "+NET.myBonks+" · hash "+core.h.slice(0,10)+"…"); }
@@ -1670,6 +1764,8 @@ $("aboutClose").addEventListener("click",()=>{ $("aboutSheet").style.display="no
   if(sb) sb.addEventListener("click",()=>{ SND.on=!SND.on; localStorage.setItem("cube-snd-on",SND.on?"1":"0"); SND.init(); if(SND.on){ SND.musicStart(); SND.play("pickup"); } else SND.musicStop(); sndLabel(); });
   if(sv) sv.addEventListener("input",()=>{ SND.vol=+sv.value/100; localStorage.setItem("cube-snd-vol",String(SND.vol)); if(SND.mus) SND.mus.g.gain.value=0.55*SND.vol; });
   sndLabel();
+  const eb=$("eatBtn"); if(eb) eb.addEventListener("click", eatNow);
+  const nb2=$("nightBtn"); if(nb2) nb2.addEventListener("click",()=>{ if(skyNight) setSky(false,false); else setSky(true, localStorage.getItem("cube-star-found")==="1"); });
   const ma=$("matchAgain"), mw=$("matchWatch");
   if(ma) ma.addEventListener("click",()=>{ if(NET.role==="guest") return;
     NET.match={P1:0,P2:0,AI:0}; NET.matchOver=false; NET.matchTape=[]; NET.matchWinner=""; NET.matchTapeBlob=null;
@@ -1893,6 +1989,8 @@ function tickLoop(now){
     } else if(a.st==="flying"){
       a.vel.y-=GRAV*dt;
       a.p.addScaledVector(a.vel,dt);
+      a.age=(a.age||0)+dt;
+      if(a.age>0.12 && NET.role!=="guest" && seqImpact(a)) continue;
       if(a.kind==="throw"){
         for(const b of bullies){
           const gyB=groundY(b.x,b.z);
