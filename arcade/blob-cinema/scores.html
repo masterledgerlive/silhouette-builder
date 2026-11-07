@@ -29,6 +29,7 @@ input,select{background:#0b0b1a;border:1px solid #33336a;color:#e8e8ff;border-ra
 <script src="../arcade-shared/kk-slap.js"></script>
 <script src="../arcade-shared/kk-rally.js"></script>
 <h1>🏆 HALL OF SCORES <span class="lbl">verified human gameplay — camera + screen, sealed in blobs</span></h1>
+<p class="lbl">🎮 <b>BY GAME:</b> <a href="#cubePanel">🐰 Bunny Cube</a> · <a href="#slapPanel">✋ FIRST SLAP</a> · <a href="#rallyPanel">🏓 FIRST RALLY</a></p>
 <p class="lbl"><a href="./reblob.html">📚 library</a> · <a href="./live.html">🔴 go live</a> · <a href="../system.html">🗺 the whole system</a> · <a href="../builder.html">🛠 builder walkthrough</a> · <a href="../">🕹 arcade</a></p>
 
 <div class="panel">
@@ -41,7 +42,7 @@ input,select{background:#0b0b1a;border:1px solid #33336a;color:#e8e8ff;border-ra
   <table id="all"><tr><th>PLAYER</th><th>GAME</th><th>SCORE</th><th>STATUS</th><th></th></tr></table>
 </div>
 
-<div class="panel">
+<div class="panel" id="slapPanel">
   <h2 style="margin:0 0 8px">⛓ BLOB SCORE CHAIN — FIRST SLAP <span class="lbl">the highscores root · scores that survive in blobs, not in a browser</span></h2>
   <p class="lbl">Machine <b>FIRST-SLAP-001</b> (first node, born Oct 27 2026) keeps its Top 10 in a Walrus blob chain: every verified score reblobs a new head linked to the previous one, back to genesis. This panel walks the chain to genesis and <b>replays every run</b> — the side verifier / score keeper. If a link is missing or a replay fails, the chain does not pass.</p>
   <div class="lbl">head blob: <span class="mono" id="chainHead">—</span></div>
@@ -59,6 +60,18 @@ input,select{background:#0b0b1a;border:1px solid #33336a;color:#e8e8ff;border-ra
   <div id="rallyOut" style="margin-top:8px"></div>
   <canvas id="rallyCanvas" width="480" height="360" style="background:#0b0b1a;border:2px solid #26264d;border-radius:12px;width:100%;max-width:480px;display:none;margin:8px auto"></canvas>
   <div id="rallyWatchMsg" class="lbl" style="text-align:center"></div>
+</div>
+
+<div class="panel" id="cubePanel">
+  <h2 style="margin:0 0 8px">🐰 BLOB RECORDS — BUNNY CUBE <span class="lbl">every record a Walrus blob · verified right here · <a href="../studio/bbb-cube.html" style="color:var(--blue)">play the Cube →</a></span></h2>
+  <p class="lbl">This game's board, separated from every other game. Records are fetched from their blobs and <b>hash-verified in your browser</b> — fastest wins, hits as points, endurance (hits × seconds), and <b>every record ever added</b>, not a top-3. Records carrying a match tape replay with one click. Add yours: on the Cube's own 🏆 board, each record shows its blob id — paste it here and it joins the Hall (kept alive by the reblob keeper).</p>
+  <div id="cubeHallBoards" class="lbl">loading records from their blobs…</div>
+  <details style="margin-top:8px"><summary style="cursor:pointer">📜 ALL BUNNY CUBE RECORDS (every one)</summary><div id="cubeHallAll" style="max-height:420px;overflow-y:auto;margin-top:6px"></div></details>
+  <div style="margin-top:10px">
+    <input id="cubeRecInput" placeholder="record blob id (from the Cube's 🏆 board)" style="width:340px">
+    <button class="btn go" onclick="addCubeRecord()">➕ add record</button>
+    <span id="cubeRecMsg" class="lbl"></span>
+  </div>
 </div>
 
 <div class="panel">
@@ -325,5 +338,68 @@ try{ if(new URLSearchParams(location.search).get('rhead')){ setTimeout(()=>{ ver
 body{padding-bottom:70px}
 </style>
 
+
+<script>
+const _enc=new TextEncoder();
+function sha256hex(data){
+  var K=[0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2];
+  var H=[0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19];
+  var l=data.length, padLen=(((l+9+63)>>6)<<6), m=new Uint8Array(padLen);
+  m.set(data); m[l]=0x80;
+  var dv=new DataView(m.buffer), bitLen=l*8;
+  dv.setUint32(padLen-4, bitLen>>>0); dv.setUint32(padLen-8, Math.floor(bitLen/4294967296));
+  var w=new Uint32Array(64);
+  function rotr(x,n){return (x>>>n)|(x<<(32-n));}
+  for(var off=0;off<padLen;off+=64){
+    for(var i=0;i<16;i++) w[i]=dv.getUint32(off+i*4);
+    for(var i=16;i<64;i++){ var s0=rotr(w[i-15],7)^rotr(w[i-15],18)^(w[i-15]>>>3), s1=rotr(w[i-2],17)^rotr(w[i-2],19)^(w[i-2]>>>10); w[i]=(w[i-16]+s0+w[i-7]+s1)|0; }
+    var a=H[0],b=H[1],c=H[2],d=H[3],e=H[4],f=H[5],g=H[6],h=H[7];
+    for(var i=0;i<64;i++){ var S1=rotr(e,6)^rotr(e,11)^rotr(e,25), ch=(e&f)^(~e&g), t1=(h+S1+ch+K[i]+w[i])|0, S0=rotr(a,2)^rotr(a,13)^rotr(a,22), mj=(a&b)^(a&c)^(b&c), t2=(S0+mj)|0; h=g;g=f;f=e;e=(d+t1)|0;d=c;c=b;b=a;a=(t1+t2)|0; }
+    H[0]=(H[0]+a)|0;H[1]=(H[1]+b)|0;H[2]=(H[2]+c)|0;H[3]=(H[3]+d)|0;H[4]=(H[4]+e)|0;H[5]=(H[5]+f)|0;H[6]=(H[6]+g)|0;H[7]=(H[7]+h)|0;
+  }
+  var out=""; for(var i=0;i<8;i++) out+=("0000000"+(H[i]>>>0).toString(16)).slice(-8);
+  return out;
+}
+function winHash(r){ const c={format:r.format, winner:r.winner, who:r.who, secs:r.secs, round:r.round, ts:r.ts, prev:r.prev}; return sha256hex(_enc.encode(JSON.stringify(c))); }
+const CUBE_SEED=["PJBuzw0GA2rtbGKGpQP8m9imSh8LCe9eaOSkaoKjFdM"];
+const CUBE_LADDER=["https://walrus-testnet.blockscope.net/v1/blobs/","https://aggregator.walrus-testnet.walrus.space/v1/blobs/"];
+function cubeIds(){ let extra=[]; try{ extra=JSON.parse(localStorage.getItem("hall-cube-records")||"[]"); }catch(e){} return Array.from(new Set(CUBE_SEED.concat(extra))); }
+async function cubeFetch(id){
+  for(const base of CUBE_LADDER){ try{ const r=await fetch(base+id); if(r.ok) return await r.json(); }catch(e){} }
+  return null;
+}
+async function renderCubeHall(){
+  const boards=document.getElementById("cubeHallBoards"), all=document.getElementById("cubeHallAll");
+  const ids=cubeIds(); const recs=[];
+  for(const id of ids){ const j=await cubeFetch(id); if(j&&j.format==="cube-win/1") recs.push({id, r:j, ok:winHash(j)===j.h}); }
+  if(!recs.length){ boards.innerHTML="No records could be recalled right now — the blobs may be between reblob cycles (the keeper renews them)."; all.innerHTML=""; return; }
+  const esc=s=>String(s||"").replace(/</g,"&lt;");
+  const when=ts=>{ const d=new Date(ts); return (d.getMonth()+1)+"/"+d.getDate()+" "+String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0"); };
+  const watch=r=>r.tape?' <a class="btn" href="../studio/bbb-cube.html?replay='+r.tape+'">▶ WATCH</a>':"";
+  const line=x=>"<b>"+esc(x.r.winner)+"</b> · "+x.r.secs+" s · round "+x.r.round+" · hits "+(x.r.h1||0)+"/"+(x.r.h2||0)+" · "+when(x.r.ts)+" · "+(x.ok?'<span class="badge v">✓ HASH VERIFIED</span>':'<span class="badge u">✗ HASH FAILS</span>')+" · <span class='mono'>"+x.id.slice(0,12)+"…</span>"+watch(x.r);
+  const fastest=recs.filter(x=>x.r.who!=="AI").slice().sort((a,b)=>a.r.secs-b.r.secs).slice(0,5);
+  const hits=recs.slice().map(x=>({x, h:Math.max(x.r.h1||0, x.r.h2||0)})).filter(o=>o.h>0).sort((a,b)=>b.h-a.h).slice(0,5);
+  const endu=recs.filter(x=>x.r.who==="AI").map(x=>({x, h:(x.r.h1||0)+(x.r.h2||0), score:((x.r.h1||0)+(x.r.h2||0))*x.r.secs})).filter(o=>o.h>0).sort((a,b)=>b.score-a.score).slice(0,5);
+  boards.innerHTML="<b>⚡ FASTEST WINS</b><br>"+(fastest.length?fastest.map(line).join("<br>"):"none yet")
+    +"<br><br><b>🎯 MOST HITS</b><br>"+(hits.length?hits.map(o=>"<b>"+o.h+" hits</b> — "+line(o.x)).join("<br>"):"none yet")
+    +"<br><br><b>🛡️ ENDURANCE</b> (hits × seconds)<br>"+(endu.length?endu.map(o=>"<b>"+o.score+" pts</b> — "+line(o.x)).join("<br>"):"none yet")
+    +"<br><br><span class='lbl'>seed record = the pipeline proof (first win record solidified end-to-end, test round, Nov 6) — the format every real record follows.</span>";
+  all.innerHTML=recs.slice().sort((a,b)=>b.r.ts-a.r.ts).map(line).join("<br>");
+}
+async function addCubeRecord(){
+  const inp=document.getElementById("cubeRecInput"), msg=document.getElementById("cubeRecMsg");
+  const id=inp.value.trim(); if(!id) return;
+  msg.textContent="fetching + verifying…";
+  const j=await cubeFetch(id);
+  if(!j||j.format!=="cube-win/1"){ msg.textContent="✗ that blob is not a Bunny Cube record (or unreachable right now)."; return; }
+  if(winHash(j)!==j.h){ msg.textContent="✗ the record's hash does not verify — not admitted."; return; }
+  let extra=[]; try{ extra=JSON.parse(localStorage.getItem("hall-cube-records")||"[]"); }catch(e){}
+  if(!extra.includes(id)) extra.push(id);
+  localStorage.setItem("hall-cube-records", JSON.stringify(extra));
+  inp.value=""; msg.textContent="✓ verified and admitted to the Hall.";
+  renderCubeHall();
+}
+renderCubeHall();
+</script>
 </body>
 </html>
