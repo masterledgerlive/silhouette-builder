@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>BUNNY CUBE v1.9.0 — BONK THE BULLIES (a 3D world from Walrus blobs)</title>
+<title>BUNNY CUBE v1.9.1 — BONK THE BULLIES (a 3D world from Walrus blobs)</title>
 <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/mqtt@5.10.1/dist/mqtt.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -166,13 +166,14 @@ grab apples, bonk them back. First to the banner takes the round.</p>
       <button class="lkBtn" id="eatBtn" style="font-size:19px;padding:12px 26px">🍎 EAT APPLE</button>
     </div>
     <div id="pop"></div>
-    <div id="verTag">🧊 CUBE v1.9.0 · BONK THE BULLIES</div>
+    <div id="verTag">🧊 CUBE v1.9.1 · FINALIZE</div>
     <button id="tiltBtn">🧭 TILT</button>
     <div id="joy"><div id="joyKnob"></div></div>
     <div id="pad"><span class="pip pU">▲</span><span class="pip pD">▼</span><span class="pip pL">◀</span><span class="pip pR">▶</span><div id="padKnob"></div></div>
     <button id="throwBtn">🍎<br>THROW</button>
     <div id="mapBox"><canvas id="mapCv" width="148" height="148"></canvas><div id="mapCap">🗺️ THE MEADOW · N ↑</div></div>
     <div id="linkBadge"></div>
+    <div style="font-size:.78em;color:#9fd8a8;margin:6px 0">🌐 PROVENANCE: the meadow (15 MB of models) loads from Walrus blobs, sha256-verified in this browser. GitHub Pages serves only this HTML envelope — the world, the scores and the replays live on the blob network.</div>
     <div id="linkStats"></div>
     <div id="startScreen">
       <div class="ssTitle">BUNNY <span class="red">CUBE</span></div>
@@ -197,6 +198,7 @@ grab apples, bonk them back. First to the banner takes the round.</p>
       </div>
       <div class="ssMenu">
         <div class="ssName">🏷️ YOUR NAME&nbsp; <input id="nameInput" maxlength="14" placeholder="BUNNY" autocomplete="off"></div>
+        <div style="font-size:.72em;color:#9fd8a8;max-width:340px;margin:2px auto 0">🌐 THIS WORLD RIDES IN FROM THE <b>WALRUS BLOB NETWORK</b> — 14 BLOBS, HASH-VERIFIED ON THIS PHONE BEFORE THE MEADOW OPENS. THIS PAGE IS ONLY THE ENVELOPE.</div>
         <div class="ssName">🔊 SOUND&nbsp; <button class="lkBtn" id="sndBtn" type="button">SOUND ON</button>&nbsp; <input id="sndVol" type="range" min="0" max="100" value="80" style="width:110px;vertical-align:middle"></div>
         <div class="ssName">🌌 SKY&nbsp; <button class="lkBtn" id="nightBtn" type="button">☀️ DAY</button></div>
         <div class="ssName">🕐 CLOCK&nbsp; <button class="lkBtn" id="cycBtn" type="button">CYCLE OFF</button></div>
@@ -1692,7 +1694,7 @@ function setupGuestSelf(role){
 function onGuestMsg(t, m){
   NET.tele.bytesDown+=(m&&m.length)||0; NET.tele.msgsDown++;
   let msg; try{ msg=JSON.parse(m.toString()); }catch(e){ return; }
-  if(msg.type==="welcome"){ NET.welcomed=true; setupGuestSelf(msg.role); $("hostBtn").style.display="none"; $("panelPlay").style.display="block"; $("panelPlay").textContent="✓ JOINED — VERIFIED · ▶ PLAY"; netStatus("You're in ✓ — playing as "+msg.role+". Press PLAY when the host does."); popText("🔗 You're in! Press PLAY ▶", 2400); teleEvent("WELCOME","host answered · you are "+msg.role+" · seal stream incoming"); }
+  if(msg.type==="welcome"){ NET.welcomed=true; setupGuestSelf(msg.role); $("hostBtn").style.display="none"; $("panelPlay").style.display="block"; $("panelPlay").textContent="✓ JOINED — VERIFIED · ▶ PLAY"; netStatus("You're in ✓ — playing as "+msg.role+". Press PLAY when the host does."); popText("🔗 You're in! Press PLAY ▶", 2400); setTimeout(()=>{ if(NET.role==="guest") popText("🌐 WORLD VERIFIED FROM THE BLOB NETWORK — ON THIS PHONE ✓", 3400); }, 2600); teleEvent("PROVENANCE","world = 14 Walrus blobs, sha256-verified on this phone · the page is only the envelope"); teleEvent("WELCOME","host answered · you are "+msg.role+" · seal stream incoming"); }
   else if(msg.type==="pong"){
     const now=Date.now(), rtt=now-(+msg.t||now);
     NET.tele.rttMs=rtt;
