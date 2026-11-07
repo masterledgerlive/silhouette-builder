@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>BUNNY CUBE v1.8.2 — BONK THE BULLIES (a 3D world from Walrus blobs)</title>
+<title>BUNNY CUBE v1.8.3 — BONK THE BULLIES (a 3D world from Walrus blobs)</title>
 <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/mqtt@5.10.1/dist/mqtt.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -140,15 +140,22 @@ grab apples, bonk them back. First to the banner takes the round.</p>
   <div id="stage">
     <div id="hud">
       <div id="story">🍎 THE BULLIES are pelting Bunny — bonk them back!</div>
-      <div id="counts">🍎 <b id="hudCarry">0</b> carried · 🎯 <b id="hudBonk">0</b>/10 bonks · 💥 <b id="hudBonked">0</b>/3 bonked · 🏁 ROUND <b id="hudRound">1</b></div>
+      <div id="counts">🍎 <b id="hudCarry">0</b> carried · 🎯 <b id="hudBonk">0</b>/10 bonks · 💥 <b id="hudBonked">0</b>/3 bonked · 🏁 ROUND <b id="hudRound">1</b> · 🏆 MATCH <b id="hudMatch">0–0</b></div>
       <div id="objective">🎯 <b id="objName">—</b> · <span id="objDist">–</span>m <span id="objArrow">▲</span> <span style="color:#9fb4c8;font-weight:400">nearest bully — the map knows</span></div>
     </div>
     <div id="bootStat">recalling the meadow from the blobs…</div>
     <div id="hint">📱 Control pad (bottom-left): hold + push up = hop forward, slide left/right = steer · right thumb drag on the meadow = look around · 🧭 TILT = pivot by tilting your phone · 🍎 button = throw.<br>Desktop: WASD / arrows + mouse drag to look · SPACE or the apple button to throw.</div>
     <div id="flash"></div>
     <div id="banner"><div id="bannerMain"></div><div id="bannerSub"></div></div>
+    <div id="matchPanel" style="display:none;position:absolute;left:50%;top:42%;transform:translate(-50%,-50%);z-index:11;background:rgba(5,8,14,.93);border:1.5px solid #ffd76a;border-radius:16px;padding:18px 22px;text-align:center;color:#eaf4ff;max-width:88vw">
+      <div id="matchTitle" style="font-size:21px;font-weight:800">🏆🏆 MATCH</div>
+      <div id="matchSub" style="font-size:13.5px;opacity:.92;margin:6px 0 12px"></div>
+      <button class="lkBtn" id="matchAgain">▶ PLAY AGAIN</button>
+      <button class="lkBtn" id="matchWatch">🎞️ WATCH THE MATCH</button>
+      <div id="matchWait" style="font-size:12.5px;opacity:.85;margin-top:9px"></div>
+    </div>
     <div id="pop"></div>
-    <div id="verTag">🧊 CUBE v1.8.2 · BONK THE BULLIES</div>
+    <div id="verTag">🧊 CUBE v1.8.3 · BONK THE BULLIES</div>
     <button id="tiltBtn">🧭 TILT</button>
     <div id="joy"><div id="joyKnob"></div></div>
     <div id="pad"><span class="pip pU">▲</span><span class="pip pD">▼</span><span class="pip pL">◀</span><span class="pip pR">▶</span><div id="padKnob"></div></div>
@@ -179,6 +186,7 @@ grab apples, bonk them back. First to the banner takes the round.</p>
       </div>
       <div class="ssMenu">
         <div class="ssName">🏷️ YOUR NAME&nbsp; <input id="nameInput" maxlength="14" placeholder="BUNNY" autocomplete="off"></div>
+        <div class="ssName">🔊 SOUND&nbsp; <button class="lkBtn" id="sndBtn" type="button">SOUND ON</button>&nbsp; <input id="sndVol" type="range" min="0" max="100" value="80" style="width:110px;vertical-align:middle"></div>
         <button class="ssBtn" id="playBtn"><span class="tri">▶</span> PLAY</button>
         <button class="ssBtn small" id="howBtn">? HOW TO PLAY</button>
         <button class="ssBtn small" id="linkBtn">🔗 2-PLAYER LINK</button>
@@ -194,6 +202,11 @@ grab apples, bonk them back. First to the banner takes the round.</p>
   <span id="rpInfo2">🎞️ REPLAY</span><br>
   <button class="lkBtn" id="rpPlayBtn">⏸ PAUSE</button>
   <input id="rpScrub" type="range" min="0" max="10" value="0" style="width:180px;vertical-align:middle">
+  <select id="rpCam" style="background:#101b30;color:#eaf4ff;border:1px solid rgba(255,255,255,.35);border-radius:8px;padding:5px 6px;font-size:13px;vertical-align:middle">
+    <option value="follow">👁 FOLLOW</option><option value="p1">🐰 P1 EYES</option><option value="p2">🐰 P2 EYES</option>
+    <option value="frank">🎭 FRANK</option><option value="rinky">🎭 RINKY</option><option value="gamera">🎭 GAMERA</option>
+    <option value="free">🕊 FREE ROAM</option>
+  </select>
   <button class="lkBtn" id="rpExit">✕ EXIT</button>
 </div>
 <div id="aboutSheet"><button id="aboutClose" class="lkBtn">✕ CLOSE</button><div class="panel"><h2>🏆 MEADOW RECORDS — FASTEST FINISHES</h2><div id="winBook" class="small">No finishes sealed yet — win a round and the record is solidified into a Walrus blob, name and time and all, chained so nobody can rewrite it.</div></div><div class="panel"><h2>🎞️ MATCH REPLAY — THE TAPE IS THE PROOF</h2><div class="small" id="rpInfo">No tape yet — finish a round and the whole match is here, sealed frame by sealed frame.</div><div style="margin-top:8px"><button class="lkBtn" id="rpWatch" style="display:none">▶ WATCH LAST MATCH</button> <button class="lkBtn" id="rpSeal" style="display:none">🧊 SEAL TAPE AS BLOB</button></div><div class="small" style="margin-top:8px">Open a sealed tape from its blob: <input id="rpBlobId" placeholder="tape blob id" style="background:rgba(5,8,14,.85);border:1px solid rgba(255,255,255,.4);border-radius:7px;color:#fff;padding:6px 8px;width:200px"> <button class="lkBtn" id="rpLoad">LOAD TAPE</button></div></div></div>
@@ -312,8 +325,8 @@ const NET={role:"solo", room:null, mq:null, up:false, urlIdx:0,
            hostT:{x:0,z:10.5,r:Math.PI}, hostC:{x:0,z:10.5,r:Math.PI},
            selfT:{x:2.5,z:13,r:Math.PI}, selfC:{x:2.5,z:13,r:Math.PI}, selfInit:false,
            tape:[], lastTape:null, tapeBlob:null, soloTapeT:0, flyN:0, gFly:{}, myBonks:0, predFly:null,
-           bT:{}, snapN:0, lastHash:"GENESIS", sealsOk:0, sealsBad:0,
-           snapTimer:0, inputTimer:0, joinTimer:0, welcomed:false, throwOut:0,
+           bT:{}, snapN:0, lastHash:"GENESIS", sealsOk:0, sealsBad:0, gaps:0, match:{P1:0,P2:0,AI:0}, matchOver:false, matchWinner:"", matchTape:[], matchTapeBlob:null,
+           snapTimer:0, inputTimer:0, joinTimer:0, welcomed:false, throwOut:0, throwAim:null,
            meEl:null, hostEl:null, sim:null, simLast:"GENESIS",
            tele:{events:[], bytesUp:0, bytesDown:0, msgsUp:0, msgsDown:0, inputs:0,
                  pendingInputPerf:0, lastInputAppliedMs:null, lastSnapRecv:0, snapIntervalMs:null,
@@ -628,6 +641,7 @@ function syncHUD(){
   $("hudBonk").textContent=state.bonks;
   $("hudBonked").textContent=state.bonked;
   $("hudRound").textContent=state.round;
+  const hm=$("hudMatch"); if(hm) hm.textContent=NET.match.P1+"–"+NET.match.P2+(NET.match.AI?" · AI "+NET.match.AI:"");
 }
 let bannerTO=null, popTO=null;
 function showBanner(main, sub, ms){
@@ -684,20 +698,65 @@ function launchApple(a, from, vel, kind){
   a.p.copy(from); a.vel.copy(vel); a.bounces=0; a.kind=kind; a.st="flying";
   a.el.setAttribute("position",from.x+" "+from.y+" "+from.z);
 }
-function throwApple(){
+// v1.8.3 GAME SOUND (David, Nov 7 00:04 — the Cube was silent; he is pretty deaf,
+// so captions stay first-class and sound NEVER carries information alone).
+// All synthesized in WebAudio: zero audio assets. Per his spatial-sound law, sound
+// is an EVENT — each device renders the events it witnesses, in its own mix.
+const SND={ctx:null, on:localStorage.getItem("cube-snd-on")!=="0", vol:+(localStorage.getItem("cube-snd-vol")||"0.8"), mus:null,
+  init(){ if(this.ctx){ if(this.ctx.state==="suspended") this.ctx.resume(); return; } try{ this.ctx=new (window.AudioContext||window.webkitAudioContext)(); }catch(_){ this.ctx=null; } },
+  tone(f0,f1,dur,type,g0,when){ if(!this.ctx||!this.on) return; const t=this.ctx.currentTime+(when||0); const o=this.ctx.createOscillator(), g=this.ctx.createGain(); o.type=type||"sine"; o.frequency.setValueAtTime(Math.max(30,f0),t); o.frequency.exponentialRampToValueAtTime(Math.max(30,f1),t+dur); g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(Math.max(0.001,(g0||0.2)*this.vol),t+0.015); g.gain.exponentialRampToValueAtTime(0.0001,t+dur); o.connect(g); g.connect(this.ctx.destination); o.start(t); o.stop(t+dur+0.05); },
+  noise(dur,fFrom,fTo,g0){ if(!this.ctx||!this.on) return; const t=this.ctx.currentTime; const len=Math.max(1,(dur*this.ctx.sampleRate)|0); const buf=this.ctx.createBuffer(1,len,this.ctx.sampleRate); const d=buf.getChannelData(0); for(let i=0;i<len;i++) d[i]=Math.random()*2-1; const s=this.ctx.createBufferSource(); s.buffer=buf; const f=this.ctx.createBiquadFilter(); f.type="bandpass"; f.Q.value=1.1; f.frequency.setValueAtTime(fFrom,t); f.frequency.exponentialRampToValueAtTime(Math.max(40,fTo),t+dur); const g=this.ctx.createGain(); g.gain.setValueAtTime(Math.max(0.001,(g0||0.15)*this.vol),t); g.gain.exponentialRampToValueAtTime(0.0001,t+dur); s.connect(f); f.connect(g); g.connect(this.ctx.destination); s.start(t); s.stop(t+dur+0.02); },
+  play(name){ if(!this.ctx||!this.on) return;
+    if(name==="pickup"){ this.tone(880,1320,0.12,"sine",0.16); this.tone(1320,1760,0.10,"sine",0.09,0.05); }
+    else if(name==="throw"){ this.noise(0.18,1400,300,0.11); }
+    else if(name==="bonk"){ this.tone(300,60,0.16,"square",0.18); this.noise(0.08,900,200,0.13); }
+    else if(name==="thud"){ this.tone(140,45,0.25,"sine",0.28); this.noise(0.12,500,120,0.11); }
+    else if(name==="win"){ [523,659,784,1046].forEach((f,i)=>this.tone(f,f,0.16,"triangle",0.16,i*0.09)); }
+    else if(name==="lose"){ [392,330,262,196].forEach((f,i)=>this.tone(f,f*0.97,0.18,"triangle",0.13,i*0.10)); } },
+  musicStart(){ if(!this.ctx||this.mus) return; const g=this.ctx.createGain(); g.gain.value=0.0001; g.connect(this.ctx.destination);
+    const chords=[[220,261.63,329.63],[174.61,220,261.63],[196,246.94,293.66],[164.81,196,246.94]]; let ci=0, cur=[];
+    const mk=()=>{ cur=chords[ci].map(f=>{ const o=this.ctx.createOscillator(); o.type="sine"; o.frequency.value=f; const og=this.ctx.createGain(); og.gain.value=0.045; o.connect(og); og.connect(g); o.start(); return o; }); if(this.mus) this.mus.cur=cur; };
+    mk(); g.gain.linearRampToValueAtTime(0.55*this.vol, this.ctx.currentTime+2.5);
+    const iv=setInterval(()=>{ cur.forEach(o=>{ try{ o.stop(); }catch(_){} }); ci=(ci+1)%chords.length; mk(); }, 8000);
+    this.mus={g, iv, cur}; },
+  musicStop(){ const m=this.mus; if(!m) return; this.mus=null; clearInterval(m.iv); (m.cur||[]).forEach(o=>{ try{ o.stop(); }catch(_){} }); try{ m.g.disconnect(); }catch(_){} }
+};
+// v1.8.3 BOW-DRAW AIM (David, Nov 6 23:43): hold to draw — zoom, true arc, power.
+// The preview integrates the SAME gravity + velocity formula as the real launch,
+// so the line you see is the flight you get. Quick tap (<180 ms) = the classic lob.
+const AIM={on:false, t0:0, power:0, dots:[]};
+function aimVel(pw, ry){ const hs=6.5+8.5*pw, vs=3.2+3.4*pw; return {x:Math.sin(ry)*hs, y:vs, z:Math.cos(ry)*hs}; }
+function aimPower(){ return AIM.on ? Math.min(1,(performance.now()-AIM.t0)/1100) : 0; }
+function aimDotsInit(){ if(AIM.dots.length||!worldEl) return; for(let i=0;i<22;i++){ const d=document.createElement("a-entity"); d.setAttribute("geometry","primitive: sphere; radius: 0.09"); d.setAttribute("material","color: #ffe9a8; emissive: #ffca55; emissiveIntensity: 0.9; transparent: true; opacity: 0.9"); d.setAttribute("visible","false"); worldEl.appendChild(d); AIM.dots.push(d); } }
+function aimDraw(){
+  const pw=aimPower(); AIM.power=pw;
+  const bp=state.bunnyPos, gy=groundY(bp.x,bp.z), v=aimVel(pw, state.bunnyRotY);
+  let x=bp.x, y=gy+2.6, z=bp.z, vx=v.x, vy=v.y, vz=v.z; const dt=0.06;
+  aimDotsInit();
+  for(let i=0;i<AIM.dots.length;i++){ vy-=GRAV*dt; x+=vx*dt; y+=vy*dt; z+=vz*dt; const d=AIM.dots[i];
+    if(y<groundY(x,z)+0.12) d.setAttribute("visible","false");
+    else { d.setAttribute("visible","true"); d.setAttribute("position",x+" "+y+" "+z); } }
+  if(camEl) camEl.setAttribute("camera",{fov:58-24*pw});
+  const btn=$("throwBtn"); if(btn) btn.style.background="conic-gradient(rgba(255,202,85,.85) "+(pw*360)+"deg, rgba(20,28,44,.92) 0deg)";
+}
+function aimHide(){ for(const d of AIM.dots) d.setAttribute("visible","false"); if(camEl) camEl.setAttribute("camera",{fov:58}); const btn=$("throwBtn"); if(btn) btn.style.background=""; AIM.on=false; AIM.power=0; }
+function throwApple(pw, ry){
   if(!state.ready) return;
   if(!state.started) return;
-  if(NET.role==="guest"){ NET.throwOut=1;
-    if(NET.meRole==="bunny2" && state.carried>0 && !NET.predFly){ const bp=state.bunnyPos, gy=groundY(bp.x,bp.z); const el=mkEntity(worldEl, URLS.apple, 1.15); el.setAttribute("visible","true"); const fx=Math.sin(state.bunnyRotY), fz=Math.cos(state.bunnyRotY); NET.predFly={el, x:bp.x, y:gy+2.6, z:bp.z, vel:{x:fx*9.5, y:4.6, z:fz*9.5}, dead:0}; el.setAttribute("position",bp.x+" "+(gy+2.6)+" "+bp.z); }
+  if(typeof pw!=="number") pw=0.55;
+  const useRy=(typeof ry==="number")?ry:state.bunnyRotY;
+  if(NET.role==="guest"){ NET.throwOut=1; NET.throwAim={ry:useRy, pw};
+    if(NET.meRole==="bunny2" && state.carried>0 && !NET.predFly){ const bp=state.bunnyPos, gy=groundY(bp.x,bp.z); const el=mkEntity(worldEl, URLS.apple, 1.15); el.setAttribute("visible","true"); const v=aimVel(pw, useRy); NET.predFly={el, x:bp.x, y:gy+2.6, z:bp.z, vel:{x:v.x, y:v.y, z:v.z}, dead:0}; el.setAttribute("position",bp.x+" "+(gy+2.6)+" "+bp.z); SND.play("throw"); }
     return; }
   if(state.throwCd>0) return;
   if(state.carried<=0){ popText("No apples! Hop onto a 🍎 to pick one up", 1600); return; }
   state.throwCd=0.22;
   state.carried--;
   const bp=state.bunnyPos, gy=groundY(bp.x,bp.z);
-  const fwd=new THREE.Vector3(Math.sin(state.bunnyRotY),0,Math.cos(state.bunnyRotY));
-  launchApple(getFlyer(), new THREE.Vector3(bp.x, gy+2.6, bp.z),
-              new THREE.Vector3(fwd.x*9.5, 4.6, fwd.z*9.5), "throw");
+  const v=aimVel(pw, useRy);
+  const fa=getFlyer(); launchApple(fa, new THREE.Vector3(bp.x, gy+2.6, bp.z),
+              new THREE.Vector3(v.x, v.y, v.z), "throw");
+  teleEvent("THROW EXEC","P1 apple away · power "+(pw*100).toFixed(0)+"% · facing "+(useRy*180/Math.PI).toFixed(0)+"°"); SND.play("throw");
   syncHUD();
 }
 function lobFrom(b){
@@ -720,6 +779,7 @@ function landApple(a){
 function bonkBully(b, a){
   const byP2=!!(a&&a.src==="P2");
   if(byP2) NET.guest.bonks++; else state.bonks++;
+  SND.play("bonk");
   burst(b.x, groundY(b.x,b.z)+b.h+0.7, b.z);
   b.spinT=0.7;
   popText("🎯 BONK! "+b.name+" sees stars!"+(byP2?" · P2 scores #"+NET.guest.bonks:" · your #"+state.bonks), 1300); netEvPop(byP2?"🎯 P2 HIT! "+b.name+" bonked (#"+NET.guest.bonks+")":"🎯 P1 HIT! "+b.name+" bonked (#"+state.bonks+")"); if(NET.role==="host") mqSend("down",{type:"ev", hit:{by:byP2?"P2":"P1", target:b.name, n:byP2?NET.guest.bonks:state.bonks, h:NET.lastHash}}); teleEvent(byP2?"P2 HIT":"P1 HIT", b.name+" bonked · apple kind="+(a?a.kind:"?")+" · strike zone: within 1.05 of center, height window "+(b.h+0.6).toFixed(1)+" · bonks="+(byP2?NET.guest.bonks:state.bonks));
@@ -729,6 +789,7 @@ function bonkBully(b, a){
 }
 function bonkBunny(a){
   state.bonked++;
+  SND.play("thud");
   state.flashT=0.45; state.wobbleT=0.55;
   popText("💥 BONKED! The bullies got you!", 1300); netEvPop((a&&a.src==="P2")?"💥 P2 HIT BUNNY!":"💥 BONKED! Bunny got hit!"); if(NET.role==="host") mqSend("down",{type:"ev", hit:{by:(a&&a.src==="P2")?"P2":"AI", target:"Bunny", n:state.bonked, h:NET.lastHash}}); teleEvent((a&&a.src==="P2")?"P2 HIT":"AI HIT", "Bunny bonked · apple kind="+(a?a.kind:"?")+" · strike zone: within 1.0 of center, below 2.45 · bonked="+state.bonked);
   a.p.set(state.bunnyPos.x+0.5, groundY(state.bunnyPos.x,state.bunnyPos.z)+0.16, state.bunnyPos.z+0.4);
@@ -736,7 +797,7 @@ function bonkBunny(a){
   if(state.bonked>=3) endRound(false,"AI");
 }
 const WIN_PUBLISHER="https://publisher.walrus-testnet.walrus.space/v1/blobs?epochs=30";
-const RP={active:false, frames:[], i:0, playing:false, speed:1, acc:0, verified:0, label:"REPLAY"};
+const RP={active:false, frames:[], i:0, playing:false, speed:1, acc:0, verified:0, label:"REPLAY", camMode:"follow", view:null, free:{x:0,z:0}, yawEntry:0};
 let rpGuestEl=null, rpGuestLabel=null;
 function renderReplayPanel(){
   const info=$("rpInfo"), w=$("rpWatch"), s=$("rpSeal");
@@ -764,6 +825,7 @@ async function sealTape(){
     const blobId=(j.newlyCreated&&j.newlyCreated.blobObject&&j.newlyCreated.blobObject.blobId)||(j.alreadyCertified&&j.alreadyCertified.blobObject&&j.alreadyCertified.blobObject.blobId);
     if(!blobId) throw new Error("no blobId in reply");
     NET.tapeBlob=blobId;
+    if(NET.matchOver && NET.role==="host") mqSend("down",{type:"ev", tapeBlob:blobId});
     teleEvent("TAPE SOLIDIFIED","🎞️ the whole match is a blob now: "+blobId.slice(0,16)+"… · "+NET.lastTape.length+" frames · anyone can load it with LOAD TAPE");
     popText("🎞️ Replay sealed as a blob ✓", 2400);
   }catch(e){ teleEvent("TAPE LOCAL ONLY","tape seal failed ("+e.message+") — the tape still watches from this phone"); }
@@ -778,6 +840,27 @@ async function loadTapeBlob(id){
     startReplay(tape.frames, "BLOB TAPE "+id.slice(0,10)+"…");
   }catch(e){ popText("🎞️ Tape load failed: "+e.message, 2600); }
 }
+// v1.8.3 REPLAY CAMERAS (David, Nov 6 23:56): the tape is sealed STATE, not video —
+// so the viewer may stand anywhere: follow, any seat's eyes (with free-look on top),
+// or a free-roam anchor walked with the pad. The camera never touches the record.
+function rpSetCam(mode){
+  RP.camMode=mode; RP.yawEntry=state.camYaw;
+  if(mode==="free") RP.free={x:state.bunnyPos.x, z:state.bunnyPos.z};
+  const sel=$("rpCam"); if(sel) sel.value=mode;
+  teleEvent("REPLAY CAMERA","mode → "+mode+(mode==="free"?" · pad walks the anchor, drag looks":""));
+}
+function rpCamApply(){
+  const m=RP.camMode; if(m==="follow"||m==="free"||!RP.view||!camObj) return;
+  let A=null, eye=2.3;
+  if(m==="p1") A=RP.view.host;
+  else if(m==="p2") A=RP.view.guest;
+  else { A=RP.view.bullies[m]; const b=bullies.find(q=>q.key===m); eye=(b?b.h:2.2)+0.55; }
+  if(!A) return;
+  const gyA=groundY(A.x,A.z);
+  camEl.object3D.position.set(A.x, gyA+eye, A.z);
+  const yaw=A.r+(state.camYaw-RP.yawEntry);
+  camObj.lookAt(A.x+Math.sin(yaw)*10, gyA+eye+(0.42-state.camPitch)*6, A.z+Math.cos(yaw)*10);
+}
 function startReplay(frames, label){
   if(!frames || frames.length<2){ popText("🎞️ That tape is too short to play", 2200); return; }
   RP.verified=verifyTape(frames);
@@ -785,6 +868,7 @@ function startReplay(frames, label){
   $("aboutSheet").style.display="none"; $("startScreen").style.display="none";
   $("rpBar").style.display="block"; $("rpPlayBtn").textContent="⏸ PAUSE";
   $("rpScrub").max=frames.length-1; $("rpScrub").value=0;
+  RP.camMode="follow"; const _cs=$("rpCam"); if(_cs) _cs.value="follow";
   teleEvent("REPLAY",RP.label+" · "+frames.length+" frames · seals verified "+RP.verified+"/"+frames.length+" before rolling");
   rpPlace(frames[0]);
 }
@@ -798,6 +882,8 @@ function placeReplayGuest(gst){
   if(rpGuestLabel) rpGuestLabel.setAttribute("position", gst.x+" "+(groundY(gst.x,gst.z)+3.1)+" "+gst.z);
 }
 function rpPlace(f){
+  RP.view={host:{x:f.host.x, z:f.host.z, r:f.host.r}, guest:(f.guest&&typeof f.guest.x==="number")?{x:f.guest.x, z:f.guest.z, r:f.guest.r}:null, bullies:{}};
+  if(f.bullies) for(const row of f.bullies) RP.view.bullies[row[0]]={x:row[1], z:row[2], r:row[3]};
   if(f.fly) placeGuestFlyers(f.fly); else placeGuestFlyers([]);
   for(const fid in NET.gFly){ const gf=NET.gFly[fid]; gf.x=gf.tx; gf.y=gf.ty; gf.z=gf.tz; gf.el.setAttribute("position",gf.x+" "+gf.y+" "+gf.z); }
   if(!f) return;
@@ -810,6 +896,13 @@ function rpPlace(f){
   $("rpScrub").value=RP.i;
 }
 function rpTick(dt){
+  if(RP.active && RP.camMode==="free"){
+    const sy2=Math.sin(state.camYaw), cy2=Math.cos(state.camYaw);
+    const fwd={x:-sy2, z:-cy2}, rgt={x:cy2, z:-sy2};
+    RP.free.x+=(fwd.x*(-state.stick.y)+rgt.x*state.stick.x)*7*dt;
+    RP.free.z+=(fwd.z*(-state.stick.y)+rgt.z*state.stick.x)*7*dt;
+    const rr=Math.hypot(RP.free.x,RP.free.z); if(rr>PLAY_R+6){ RP.free.x*=(PLAY_R+6)/rr; RP.free.z*=(PLAY_R+6)/rr; }
+  }
   if(!RP.active || !RP.playing || RP.frames.length<2) return;
   RP.acc+=dt*RP.speed;
   const cur=RP.frames[RP.i], nxt=RP.frames[Math.min(RP.i+1, RP.frames.length-1)];
@@ -822,7 +915,7 @@ function winHash(r){ const c={format:r.format, winner:r.winner, who:r.who, secs:
 function loadWinChain(){ try{ winChain=JSON.parse(localStorage.getItem("cube-wins-v1")||"[]"); }catch(e){ winChain=[]; } renderWinBook(); }
 function saveWinChain(){ try{ localStorage.setItem("cube-wins-v1", JSON.stringify(winChain)); }catch(e){} renderWinBook(); }
 function recordWin(part){
-  const rec={format:"cube-win/1", winner:part.winner, who:part.who, secs:part.secs, round:part.round, ts:Date.now(), prev:winChain.length?winChain[winChain.length-1].h:"GENESIS", blob:null};
+  const rec={format:"cube-win/1", winner:part.winner, who:part.who, secs:part.secs, round:part.round, match:part.match?1:0, ts:Date.now(), prev:winChain.length?winChain[winChain.length-1].h:"GENESIS", blob:null};
   rec.h=winHash(rec);
   winChain.push(rec); saveWinChain();
   teleEvent("RECORD SEALED (local)","🏆 "+rec.winner+" · round "+rec.round+" · ⏱ "+rec.secs+" s · hash "+rec.h.slice(0,12)+"… · solidifying into a blob…");
@@ -858,10 +951,20 @@ function renderWinBook(){
   for(const r of winChain){ if(r.prev!==prev||winHash(r)!==r.h){ intact=false; break; } prev=r.h; }
   const wins=winChain.filter(r=>r.who!=="AI").slice().sort((a,b)=>a.secs-b.secs);
   el.innerHTML="<b>Chain: "+winChain.length+" records · "+(intact?"✓ intact — every hash re-verified on this phone":"⚠ CHAIN BREAK")+"</b><br>"+
-    (wins.length? wins.map((r,i)=>(i===0?"⚡ ":"")+"<b>"+r.secs+" s</b> — "+r.winner+" · round "+r.round+" · "+(r.blob?"🧊 <span class='mono'>"+r.blob.slice(0,14)+"…</span>":"local · seals on next boot")).join("<br>") : "No player finishes yet — the bullies hold the book.");
+    (wins.length? wins.map((r,i)=>(i===0?"⚡ ":"")+(r.match?"🏆 ":"")+"<b>"+r.secs+" s</b> — "+r.winner+" · round "+r.round+" · "+(r.blob?"🧊 <span class='mono'>"+r.blob.slice(0,14)+"…</span>":"local · seals on next boot")).join("<br>") : "No player finishes yet — the bullies hold the book.");
+}
+function showMatchPanel(){
+  const p=$("matchPanel"); if(!p) return;
+  $("matchTitle").textContent="🏆🏆 MATCH — "+(NET.matchWinner||"")+" TAKES IT!";
+  $("matchSub").textContent="Best of three · final — you "+NET.match.P1+" · P2 "+NET.match.P2+(NET.match.AI?" · bullies "+NET.match.AI:"")+" · every round sealed in the book · the whole match on one tape";
+  $("matchAgain").style.display=NET.role==="guest"?"none":"";
+  $("matchWait").textContent=NET.role==="guest"?(NET.matchTapeBlob?"the match tape is a blob now — watch it here, or wait for the host's next match":"the host starts the next match — the tape is sealing…"):"";
+  p.style.display="block";
 }
 function endRound(playerWon, who){
+  SND.play(playerWon?"win":"lose");
   if(NET.tape.length>10) NET.lastTape=NET.tape;
+  NET.matchTape=(NET.matchTape||[]).concat(NET.tape);
   NET.tape=[]; NET.tapeBlob=null; renderReplayPanel();
   const secs=state.roundT0?+(state.t-state.roundT0).toFixed(1):0;
   const finRound=state.round;
@@ -878,7 +981,20 @@ function endRound(playerWon, who){
     bullies.forEach(b=>{ b.celebT=1.5; });
     showBanner("🍎 THE BULLIES WIN THIS ROUND", "Bunny shakes it off. Grab some apples and bonk them back!", 3800); netEvBanner("🍎 THE BULLIES WIN THIS ROUND", "Bunny shakes it off — bonk them back!");
   }
-  if(NET.role!=="guest") recordWin({winner:wName, who:playerWon?(who||"P1"):"AI", secs, round:finRound});
+  // BEST OF THREE (David, Nov 7): first side to 2 round-wins takes the match.
+  const mKey=playerWon?(who||"P1"):"AI";
+  NET.match[mKey]++;
+  const mWon=NET.match[mKey]>=2;
+  if(NET.role!=="guest") recordWin({winner:wName, who:playerWon?(who||"P1"):"AI", secs, round:finRound, match:mWon});
+  if(mWon){
+    NET.matchOver=true; const mName=playerWon?wName:"THE BULLIES"; NET.matchWinner=mName;
+    state.started=false;
+    if(NET.matchTape && NET.matchTape.length>10){ NET.lastTape=NET.matchTape; renderReplayPanel(); }
+    showBanner("🏆🏆 MATCH — "+mName+" TAKES IT!", "Best of three · "+NET.match.P1+"–"+NET.match.P2+(NET.match.AI?" · bullies "+NET.match.AI:"")+" · the whole match is sealing as one tape blob…", 6000);
+    if(NET.role==="host") mqSend("down",{type:"ev", matchEnd:{winner:mName, a:NET.match.P1, b:NET.match.P2, c:NET.match.AI}});
+    if(NET.lastTape && NET.lastTape.length>10) sealTape();
+    showMatchPanel();
+  }
   state.lobTimer=3.2;
   syncHUD();
 }
@@ -890,8 +1006,15 @@ window.addEventListener("keydown",e=>{
 });
 window.addEventListener("keyup",e=>{ state.keys[e.code]=false; });
 let lastTapThrow=0;
-$("throwBtn").addEventListener("touchstart",e=>{ e.preventDefault(); lastTapThrow=performance.now(); throwApple(); },{passive:false});
-$("throwBtn").addEventListener("click",()=>{ if(performance.now()-lastTapThrow>350) throwApple(); });
+let throwPtr=null;
+$("throwBtn").addEventListener("pointerdown",e=>{ e.preventDefault(); if(throwPtr!==null) return; throwPtr=e.pointerId; try{ e.target.setPointerCapture(e.pointerId); }catch(_){}
+  if(state.started && state.carried>0){ AIM.on=true; AIM.t0=performance.now(); } },{passive:false});
+function throwRelease(e){ if(e.pointerId!==throwPtr) return; throwPtr=null;
+  const held=AIM.on?(performance.now()-AIM.t0):0;
+  const pw=AIM.on?(held<180?0.55:aimPower()):0.55;
+  aimHide(); throwApple(pw); }
+$("throwBtn").addEventListener("pointerup",throwRelease);
+$("throwBtn").addEventListener("pointercancel",throwRelease);
 $("tiltBtn").addEventListener("click", async ()=>{
   if(state.tiltOn){ state.tiltOn=false; $("tiltBtn").classList.remove("on"); $("tiltBtn").textContent="🧭 TILT"; return; }
   if(window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission==="function"){
@@ -984,6 +1107,7 @@ padEl.addEventListener("pointercancel",padRelease);
 // A real front door, like the pictures he sent: black menu over the living
 // world, a PLAY button, and a map so he can FIND the players.
 $("playBtn").addEventListener("click",()=>{
+  SND.init(); if(SND.on) SND.musicStart();
   if(state.started) return;
   state.started=true;
   if(!state.roundT0) state.roundT0=state.t;
@@ -1062,15 +1186,23 @@ const LOBBY_TOPIC="kodakai/cube/v1/lobby";
 const _enc=new TextEncoder();
 function snapHash(core){ const c={...core}; delete c.h; return sha256hex(_enc.encode(JSON.stringify(c))); }
 function verifySnap(core, chain){
-  if(!core || snapHash(core)!==core.h) return false;
-  if(chain.lastHash!=="GENESIS" && core.prev!==chain.lastHash) return false;
+  if(!core || snapHash(core)!==core.h) return false;   // content proof is absolute: a hash-broken snap is refused, always
+  if(chain.lastHash!=="GENESIS" && core.prev!==chain.lastHash){
+    // SEAL GAP — the P2 freeze (David, Nov 7): the relay dropped snapshot(s), so prev
+    // could never match again and EVERY later snap was refused — her world froze
+    // while her inputs still flowed. A snapshot is COMPLETE state and this one's own
+    // hash verifies, so adopting it loses nothing and invents nothing. The gap is
+    // named, counted, and shown in the proof overlay — never hidden.
+    chain.gaps=(chain.gaps||0)+1; chain.lastGapN=core.n;
+    teleEvent("SEAL GAP — RESYNCED","snapshot #"+core.n+" is hash-true but its prev is not our head — the relay dropped snapshot(s); adopted the sealed state · gap #"+chain.gaps+" on the record");
+  }
   chain.lastHash=core.h; return true;
 }
 function netStatus(t){ const el=$("linkStatus"); if(el) el.innerHTML=t; }
 function netBadge(){
   const b=$("linkBadge"); if(!b) return;
   if(NET.role==="host"){ b.style.display="block"; b.textContent="🔗 HOST · room "+NET.room+(NET.guest.joined?" · P2 in as "+NET.guest.role+" ✓":" · waiting for P2…"); }
-  else if(NET.role==="guest"){ b.style.display="block"; b.textContent="🔗 GUEST · room "+NET.room+" · seals ✓ "+NET.sealsOk+(NET.sealsBad?" · ⚠ "+NET.sealsBad+" broken":" · chain intact"); }
+  else if(NET.role==="guest"){ b.style.display="block"; b.textContent="🔗 GUEST · room "+NET.room+" · seals ✓ "+NET.sealsOk+(NET.sealsBad?" · ⚠ "+NET.sealsBad+" broken":"")+(NET.gaps?" · ↷ "+NET.gaps+" gap"+(NET.gaps>1?"s":"")+" resynced":(NET.sealsBad?"":" · chain intact")); }
   else b.style.display="none";
 }
 function fmtMs(x){ return (x===null||x===undefined) ? "—" : Math.round(x)+" ms"; }
@@ -1159,7 +1291,7 @@ function onHostMsg(t, m){
     NET.tele.inputs++;
     NET.tele.pendingInputPerf=performance.now();
     NET.guest.wish.x=+msg.wx||0; NET.guest.wish.z=+msg.wz||0;
-    if(msg.th){ NET.guest.throwQ=1; teleEvent("THROW WHISPER","P2's throw bit arrived · wish ("+(+msg.wx||0)+", "+(+msg.wz||0)+")"); }
+    if(msg.th){ NET.guest.throwQ=1; NET.guest.throwAim=(typeof msg.apw==="number")?{ry:+msg.ary||0, pw:msg.apw}:null; teleEvent("THROW WHISPER","P2's throw arrived · wish ("+(+msg.wx||0)+", "+(+msg.wz||0)+")"+(NET.guest.throwAim?" · AIMED power "+(NET.guest.throwAim.pw*100).toFixed(0)+"%":"")); }
     NET.guest.lastIn=state.t;
   }
 }
@@ -1201,7 +1333,7 @@ function hostGuestTick(dt){
     for(const a of apples){
       if(a.st!=="ground") continue;
       if(Math.hypot(a.p.x-g.x, a.p.z-g.z)<1.05 && (state.t-(a.restAt===undefined?-10:a.restAt))>=1.0){
-        a.st="gone"; a.el.setAttribute("visible","false"); g.carried++; teleEvent("PICKUP","P2 grabbed 🍎 #"+g.carried+" at ("+g.x.toFixed(1)+", "+g.z.toFixed(1)+") · rest rule ≥1.0 s + step rule ✓"); break;
+        a.st="gone"; a.el.setAttribute("visible","false"); g.carried++; SND.play("pickup"); teleEvent("PICKUP","P2 grabbed 🍎 #"+g.carried+" at ("+g.x.toFixed(1)+", "+g.z.toFixed(1)+") · rest rule ≥1.0 s + step rule ✓"); break;
       }
     }
   }
@@ -1212,8 +1344,9 @@ function hostGuestTick(dt){
       g.throwCd=0.25; g.carried--;
       const gy=groundY(g.x,g.z);
       if(g.role==="bunny2"){
-        const fx=Math.sin(g.rotY), fz=Math.cos(g.rotY);
-        const fa=getFlyer(); fa.src="P2"; launchApple(fa, new THREE.Vector3(g.x, gy+2.6, g.z), new THREE.Vector3(fx*9.5, 4.6, fz*9.5), "throw"); teleEvent("THROW EXEC","P2 (Bunny Two) apple away · facing "+(g.rotY*180/Math.PI).toFixed(0)+"°");
+        const aim=g.throwAim; g.throwAim=null;
+        const ry2=aim?aim.ry:g.rotY, pw2=aim?aim.pw:0.55, v2=aimVel(pw2, ry2);
+        const fa=getFlyer(); fa.src="P2"; launchApple(fa, new THREE.Vector3(g.x, gy+2.6, g.z), new THREE.Vector3(v2.x, v2.y, v2.z), "throw"); teleEvent("THROW EXEC","P2 (Bunny Two) apple away · "+(aim?("AIMED · power "+(pw2*100).toFixed(0)+"% · facing "+(ry2*180/Math.PI).toFixed(0)+"°"):("classic lob · facing "+(g.rotY*180/Math.PI).toFixed(0)+"°")));
       } else {
         const bp=state.bunnyPos, gyP=groundY(bp.x,bp.z), h=g.bully?g.bully.h:2.2;
         const from=new THREE.Vector3(g.x, gy+h+0.55, g.z);
@@ -1235,7 +1368,7 @@ function hostGuestTick(dt){
 }
 function buildCore(){
   const bp=state.bunnyPos, g=NET.guest;
-  const core={v:1, n:++NET.snapN, t:+state.t.toFixed(2), w:Date.now(), round:state.round, bonks:state.bonks, bonked:state.bonked,
+  const core={v:1, n:++NET.snapN, t:+state.t.toFixed(2), w:Date.now(), round:state.round, bonks:state.bonks, bonked:state.bonked, match:{a:NET.match.P1, b:NET.match.P2, c:NET.match.AI},
     host:{x:+bp.x.toFixed(2), z:+bp.z.toFixed(2), r:+state.bunnyRotY.toFixed(2), c:state.carried},
     guest:{x:+g.x.toFixed(2), z:+g.z.toFixed(2), r:+g.rotY.toFixed(2), c:g.carried, b:g.bonks, role:g.role},
     bullies:bullies.map(b=>[b.key, +b.x.toFixed(2), +b.z.toFixed(2), +b.rotY.toFixed(2)]),
@@ -1293,7 +1426,10 @@ function onGuestMsg(t, m){
     renderTele();
   }
   else if(msg.type==="snap") applySnap(msg.core);
-  else if(msg.type==="ev"){ if(msg.hit){ const hh=msg.hit; teleEvent("HIT PROVEN",(hh.by==="P2"?"YOUR apple":hh.by==="AI"?"A bully apple":"P1's apple")+" hit "+hh.target+" · count "+hh.n+" · host chain head "+(hh.h||"").slice(0,10)+"…"); if(hh.by==="P2"&&hh.target!=="Bunny") popText("🎯 YOUR HIT! "+hh.target+" bonked · #"+hh.n+" — in the seal ✓", 1800); } if(msg.pop) popText(msg.pop, 1500); if(msg.banner) showBanner(msg.banner[0], msg.banner[1], 3800); if(msg.win){ appendWinRecord(msg.win); if(msg.win.who==="P2") showBanner("🏆 YOU WIN THE MEADOW!", "⏱ "+msg.win.secs+" s · your name goes in the book — sealed as a blob", 4200); } }
+  else if(msg.type==="ev"){ if(msg.hit){ SND.play(msg.hit.target==="Bunny"?"thud":"bonk"); const hh=msg.hit; teleEvent("HIT PROVEN",(hh.by==="P2"?"YOUR apple":hh.by==="AI"?"A bully apple":"P1's apple")+" hit "+hh.target+" · count "+hh.n+" · host chain head "+(hh.h||"").slice(0,10)+"…"); if(hh.by==="P2"&&hh.target!=="Bunny") popText("🎯 YOUR HIT! "+hh.target+" bonked · #"+hh.n+" — in the seal ✓", 1800); } if(msg.pop) popText(msg.pop, 1500); if(msg.matchEnd){ NET.match={P1:msg.matchEnd.a, P2:msg.matchEnd.b, AI:msg.matchEnd.c}; NET.matchOver=true; NET.matchWinner=msg.matchEnd.winner; syncHUD(); showMatchPanel(); }
+  if(msg.tapeBlob){ NET.matchTapeBlob=msg.tapeBlob; teleEvent("MATCH TAPE","🎞️ the whole match, sealed as one blob: "+msg.tapeBlob.slice(0,16)+"… — WATCH THE MATCH loads it"); const wb=$("matchWatch"); if(wb) wb.textContent="🎞️ WATCH THE MATCH ✓"; if($("matchPanel").style.display!=="none") showMatchPanel(); }
+  if(msg.matchReset){ NET.matchOver=false; NET.match={P1:0,P2:0,AI:0}; NET.matchTapeBlob=null; $("matchPanel").style.display="none"; syncHUD(); popText("🏆 NEW MATCH — first to 2 rounds takes it!", 2200); }
+  if(msg.banner) showBanner(msg.banner[0], msg.banner[1], 3800); if(msg.win){ SND.play(msg.win.who==="P2"?"win":"lose"); appendWinRecord(msg.win); if(msg.win.who==="P2") showBanner("🏆 YOU WIN THE MEADOW!", "⏱ "+msg.win.secs+" s · your name goes in the book — sealed as a blob", 4200); } }
 }
 function applySnap(core){
   const v0=performance.now();
@@ -1307,7 +1443,8 @@ function applySnap(core){
   if(core.w){ const d=Date.now()-(core.w+NET.tele.offsetMs); if(d>-5000&&d<60000) NET.tele.snapDelayMs=Math.max(0,d); }
   if(NET.sealsOk===1) teleEvent("SEAL VERIFIED","snapshot #"+core.n+" · sha256 "+core.h.slice(0,12)+"… · prev link ✓ · verified in "+NET.tele.verifyMs.toFixed(2)+" ms");
   state.round=core.round; state.bonks=core.bonks; state.bonked=core.bonked;
-  state.carried=core.guest.c; syncHUD();
+  if(core.match){ NET.match={P1:core.match.a, P2:core.match.b, AI:core.match.c}; const hm=$("hudMatch"); if(hm) hm.textContent=core.match.a+"–"+core.match.b+(core.match.c?" · AI "+core.match.c:""); }
+  if(typeof NET.lastCarried==="number" && core.guest.c>NET.lastCarried) SND.play("pickup"); NET.lastCarried=core.guest.c; state.carried=core.guest.c; syncHUD();
   if(core.fly) placeGuestFlyers(core.fly);
   if(core.guest && typeof core.guest.b==="number" && core.guest.b>NET.myBonks){ NET.myBonks=core.guest.b; teleEvent("YOUR BONKS — IN THE SEAL","snapshot #"+core.n+" carries your bonk count: "+NET.myBonks+" · hash "+core.h.slice(0,10)+"…"); }
   if(NET.role==="guest") $("hudBonk").textContent=NET.myBonks;
@@ -1396,8 +1533,8 @@ function sendInput(){
       const m=Math.hypot(wx,wz); if(m>1){ wx/=m; wz/=m; }
     }
   }
-  mqSend("up",{type:"in", wx:+wx.toFixed(2), wz:+wz.toFixed(2), th:NET.throwOut});
-  NET.throwOut=0;
+  mqSend("up",{type:"in", wx:+wx.toFixed(2), wz:+wz.toFixed(2), th:NET.throwOut, ary:NET.throwAim?+NET.throwAim.ry.toFixed(2):null, apw:NET.throwAim?+NET.throwAim.pw.toFixed(2):null});
+  NET.throwOut=0; NET.throwAim=null;
 }
 function netTick(dt){
   if(NET.role==="solo" && state.started){
@@ -1510,6 +1647,22 @@ $("aboutClose").addEventListener("click",()=>{ $("aboutSheet").style.display="no
   const rl=$("rpLoad"); if(rl) rl.addEventListener("click",()=>{ const v=$("rpBlobId").value.trim(); if(v) loadTapeBlob(v); });
   const pb=$("rpPlayBtn"); if(pb) pb.addEventListener("click",()=>{ if(RP.i>=RP.frames.length-1) RP.i=0; RP.playing=!RP.playing; pb.textContent=RP.playing?"⏸ PAUSE":"▶ PLAY"; });
   const sc=$("rpScrub"); if(sc) sc.addEventListener("input",()=>{ RP.i=+sc.value; RP.playing=false; if(pb) pb.textContent="▶ PLAY"; rpPlace(RP.frames[RP.i]); });
+  const rc=$("rpCam"); if(rc) rc.addEventListener("change",()=>rpSetCam(rc.value));
+  const sb=$("sndBtn"), sv=$("sndVol");
+  const sndLabel=()=>{ if(sb) sb.textContent=SND.on?"🔊 SOUND ON":"🔇 SOUND OFF"; if(sv) sv.value=Math.round(SND.vol*100); };
+  if(sb) sb.addEventListener("click",()=>{ SND.on=!SND.on; localStorage.setItem("cube-snd-on",SND.on?"1":"0"); SND.init(); if(SND.on){ SND.musicStart(); SND.play("pickup"); } else SND.musicStop(); sndLabel(); });
+  if(sv) sv.addEventListener("input",()=>{ SND.vol=+sv.value/100; localStorage.setItem("cube-snd-vol",String(SND.vol)); if(SND.mus) SND.mus.g.gain.value=0.55*SND.vol; });
+  sndLabel();
+  const ma=$("matchAgain"), mw=$("matchWatch");
+  if(ma) ma.addEventListener("click",()=>{ if(NET.role==="guest") return;
+    NET.match={P1:0,P2:0,AI:0}; NET.matchOver=false; NET.matchTape=[]; NET.matchWinner=""; NET.matchTapeBlob=null;
+    state.round=1; state.bonks=0; state.bonked=0; NET.guest.bonks=0; state.roundT0=state.t; state.started=true;
+    $("matchPanel").style.display="none"; syncHUD();
+    if(NET.role==="host") mqSend("down",{type:"ev", matchReset:1});
+    popText("🏆 NEW MATCH — first to 2 rounds takes it!", 2200); });
+  if(mw) mw.addEventListener("click",()=>{ $("matchPanel").style.display="none";
+    if(NET.role==="guest"){ if(NET.matchTapeBlob) loadTapeBlob(NET.matchTapeBlob); else popText("🎞️ The match tape is still sealing…", 1800); }
+    else if(NET.lastTape) startReplay(NET.lastTape, "🏆 THE MATCH"); });
   const rx=$("rpExit"); if(rx) rx.addEventListener("click",()=>{ location.href=location.pathname; });
   renderReplayPanel();
   const rpq=new URLSearchParams(location.search).get("replay"); if(rpq) setTimeout(()=>loadTapeBlob(rpq), 5000);
@@ -1639,10 +1792,12 @@ function tickLoop(now){
   if(bunnyShadow) bunnyShadow.setAttribute("position",state.bunnyPos.x+" "+(gy+0.04)+" "+state.bunnyPos.z);
   // camera follow — snapped on the first frame, then lerped, and HARD-clamped
   // above the terrain at its own footprint so it can never dive under the meadow
+  const _anch=(RP.active&&RP.camMode==="free")?RP.free:state.bunnyPos;
+  const _anchGy=(RP.active&&RP.camMode==="free")?groundY(_anch.x,_anch.z):gy;
   const camTarget=new THREE.Vector3(
-    state.bunnyPos.x+Math.sin(state.camYaw)*state.camDist*Math.cos(state.camPitch),
-    gy+1.9+Math.sin(state.camPitch)*state.camDist,
-    state.bunnyPos.z+Math.cos(state.camYaw)*state.camDist*Math.cos(state.camPitch));
+    _anch.x+Math.sin(state.camYaw)*state.camDist*Math.cos(state.camPitch),
+    _anchGy+1.9+Math.sin(state.camPitch)*state.camDist,
+    _anch.z+Math.cos(state.camYaw)*state.camDist*Math.cos(state.camPitch));
   const co=camEl.object3D.position;
   if(state.camSnap){ co.copy(camTarget); state.camSnap=false; }
   else co.lerp(camTarget,Math.min(1,dt*6));
@@ -1656,8 +1811,9 @@ function tickLoop(now){
   const cw=camObj?camObj.getWorldPosition(_cwV):co;
   const camFloor=groundY(cw.x,cw.z)+1.0;
   if(cw.y<camFloor) co.y+=camFloor-cw.y;
-  if(camObj) camObj.lookAt(state.bunnyPos.x, gy+1.8, state.bunnyPos.z);
-  else camEl.object3D.lookAt(state.bunnyPos.x, gy+1.8, state.bunnyPos.z);
+  if(camObj) camObj.lookAt(_anch.x, _anchGy+1.8, _anch.z);
+  else camEl.object3D.lookAt(_anch.x, _anchGy+1.8, _anch.z);
+  if(RP.active) rpCamApply();
   // v1.3 — if the active camera is ever not ours, take the seat back; the
   // first time it holds, print the receipt in the log for anyone to see.
   if(camObj&&sceneEl&&sceneEl.camera!==camObj) claimCamera();
@@ -1719,7 +1875,7 @@ function tickLoop(now){
       // apple that bonks Bunny — or lands at his feet — no longer vacuums
       // straight into his paws; it drops, rests, and is pickable normally after.
       if(dd<1.05 && moving && (state.t-(a.restAt===undefined?-10:a.restAt))>=1.0){ // v1.3: rest AND a step
-        a.st="carried"; a.el.setAttribute("visible","false"); state.carried++;
+        a.st="carried"; a.el.setAttribute("visible","false"); state.carried++; SND.play("pickup");
         syncHUD(); }
     } else if(a.st==="flying"){
       a.vel.y-=GRAV*dt;
@@ -1778,7 +1934,7 @@ function tickLoop(now){
   // door ring slow spin + clouds drift
   if(_dyn.doorRing) _dyn.doorRing.rotation.z+=dt*0.5;
   if(_dyn.clouds) _dyn.clouds.forEach((c,i)=>{ const o=c.object3D; o.position.x+=Math.sin(t*0.05+i)*0.0015; });
-  netTick(dt); rpTick(dt);
+  netTick(dt); rpTick(dt); if(AIM.on) aimDraw();
   if((_mapTick++ % 5)===0) drawMap();
   // labels face the camera (bully labels ride in the same list, positions already updated)
   const cp=camEl.object3D.position;
