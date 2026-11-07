@@ -25,7 +25,8 @@ input,select{background:#0b0b1a;border:1px solid #33336a;color:#e8e8ff;border-ra
 </head>
 <body>
 <div style="position:sticky;top:0;z-index:999;background:#0d0d22;border-bottom:2px solid #ffd76b;padding:8px 10px;text-align:center;font-family:system-ui,sans-serif">
-<a href="/arcade/studio/bbb-cube.html" style="color:#ffd76b;font-weight:bold;text-decoration:none;font-size:1.05em;animation:kkblink 1.1s steps(2,start) infinite">🆕✨ TRY OUR NEW GAME — 🐰 BUNNY CUBE ✨</a>
+<a href="/arcade/studio/zombie-player.html" style="color:#ffd76b;font-weight:bold;text-decoration:none;font-size:1.05em;animation:kkblink 1.1s steps(2,start) infinite">🆕✨ TRY OUR NEW GAME — 🧟 ZOMBIE WORLD ✨</a>
+<span style="color:#9a9ac0"> · </span><a href="/arcade/studio/bbb-cube.html" style="color:#e8e8ff;text-decoration:none">🐰 Bunny Cube</a>
 <span style="color:#9a9ac0"> · </span><a href="/arcade/" style="color:#e8e8ff;text-decoration:none">🏠 Home &amp; Full Catalog</a>
 <span style="color:#9a9ac0"> · </span><a href="/arcade/games/first-slap/" style="color:#e8e8ff;text-decoration:none">✋ The First Blob Game</a>
 <span style="color:#9a9ac0"> · </span><a href="/arcade/blob-cinema/scores.html" style="color:#e8e8ff;text-decoration:none">🏆 Hall of Scores</a>
@@ -39,7 +40,7 @@ input,select{background:#0b0b1a;border:1px solid #33336a;color:#e8e8ff;border-ra
 <script src="../arcade-shared/kk-slap.js"></script>
 <script src="../arcade-shared/kk-rally.js"></script>
 <h1>🏆 HALL OF SCORES <span class="lbl">verified human gameplay — camera + screen, sealed in blobs</span></h1>
-<p class="lbl">🎮 <b>BY GAME:</b> <a href="#cubePanel">🐰 Bunny Cube</a> · <a href="#slapPanel">✋ FIRST SLAP</a> · <a href="#rallyPanel">🏓 FIRST RALLY</a></p>
+<p class="lbl">🎮 <b>BY GAME:</b> <a href="#cubePanel">🐰 Bunny Cube</a> · <a href="#zombiePanel">🧟 Zombie World</a> · <a href="#slapPanel">✋ FIRST SLAP</a> · <a href="#rallyPanel">🏓 FIRST RALLY</a></p>
 <p class="lbl"><a href="./reblob.html">📚 library</a> · <a href="./live.html">🔴 go live</a> · <a href="../system.html">🗺 the whole system</a> · <a href="../builder.html">🛠 builder walkthrough</a> · <a href="../">🕹 arcade</a></p>
 
 <div class="panel">
@@ -81,6 +82,18 @@ input,select{background:#0b0b1a;border:1px solid #33336a;color:#e8e8ff;border-ra
     <input id="cubeRecInput" placeholder="record blob id (from the Cube's 🏆 board)" style="width:340px">
     <button class="btn go" onclick="addCubeRecord()">➕ add record</button>
     <span id="cubeRecMsg" class="lbl"></span>
+  </div>
+</div>
+
+<div class="panel" id="zombiePanel">
+  <h2 style="margin:0 0 8px">🧟 BLOB RECORDS — ZOMBIE WORLD <span class="lbl">every record a Walrus blob · verified right here · <a href="../studio/zombie-player.html" style="color:var(--blue)">play Zombie World →</a></span></h2>
+  <p class="lbl">Survival records, separated by game like all the others: <b>nights survived</b>, <b>kills</b>, <b>endurance</b> (kills × seconds) — and the <b>zombie board</b>: fastest takedown by a player who <i>was</i> the zombie. Records fetch from their blobs and hash-verify in your browser (format <span class="mono">zombie-run/1</span>). Paste a record blob id from the game's 🏆 board to add it here. Landing from the game? Use a <span class="mono">#zombie=id1,id2</span> link — ids in the address are admitted and verified the same way.</p>
+  <div id="zombieHallBoards" class="lbl">loading records from their blobs…</div>
+  <details style="margin-top:8px"><summary style="cursor:pointer">📜 ALL ZOMBIE WORLD RECORDS (every one)</summary><div id="zombieHallAll" style="max-height:420px;overflow-y:auto;margin-top:6px"></div></details>
+  <div style="margin-top:10px">
+    <input id="zombieRecInput" placeholder="record blob id (from Zombie World's 🏆 board)" style="width:340px">
+    <button class="btn go" onclick="addZombieRecord()">➕ add record</button>
+    <span id="zombieRecMsg" class="lbl"></span>
   </div>
 </div>
 
@@ -411,6 +424,41 @@ async function addCubeRecord(){
   inp.value=""; msg.textContent="✓ verified and admitted to the Hall.";
   renderCubeHall();
 }
+function zHash(r){ const s=["zombie-run/1",r.side,r.nights,r.k1,r.k2,r.secs,r.ts,r.prev,r.zt||0].join("|"); return sha256hex(_enc.encode(s)); }
+function zombieIds(){ let extra=[]; try{ extra=JSON.parse(localStorage.getItem("hall-zombie-records")||"[]"); }catch(e){}
+  try{ const h=(location.hash||"").match(/#zombie=([A-Za-z0-9_,-]+)/); if(h){ const inc=h[1].split(",").filter(x=>x.length>20); if(inc.length){ extra=Array.from(new Set(extra.concat(inc))); localStorage.setItem("hall-zombie-records", JSON.stringify(extra)); const m=document.getElementById("zombieRecMsg"); if(m) m.textContent="📥 "+inc.length+" record(s) arrived from your game — verified below as they load."; } } }catch(e){}
+  return extra; }
+async function renderZombieHall(){
+  const boards=document.getElementById("zombieHallBoards"), all=document.getElementById("zombieHallAll");
+  const ids=zombieIds();
+  if(!ids.length){ boards.innerHTML="No records in the Hall yet — survive a night in <a href='../studio/zombie-player.html' style='color:var(--blue)'>Zombie World</a>, then paste the record blob id from its 🏆 board."; all.innerHTML=""; return; }
+  const recs=[];
+  for(const id of ids){ const j=await cubeFetch(id); if(j&&j.format==="zombie-run/1") recs.push({id, r:j, ok:zHash(j)===j.h}); }
+  const good=recs.filter(x=>x.ok), bad=recs.length-good.length;
+  const surv=good.filter(x=>x.r.side!=="zombie"), zom=good.filter(x=>x.r.side==="zombie");
+  const row=(x,main)=>"<div style='padding:4px 0;border-bottom:1px solid #2a2a4d'>"+main+"<br><span class='lbl'>"+new Date(x.r.ts).toLocaleDateString()+" · blob <span class='mono'>"+x.id.slice(0,12)+"…</span>"+(x.r.tape?" · <a href='../studio/zombie-player.html?replay="+x.r.tape+"' style='color:var(--blue)'>▶ WATCH</a>":"")+"</span></div>";
+  boards.innerHTML="<div>⛓️ "+good.length+" record(s) hash-verified ✓"+(bad?" · ⚠ "+bad+" failed verification and were refused":"")+"</div>"
+    +"<div style='margin-top:6px'><b>🌙 MOST NIGHTS</b><br>"+(surv.slice().sort((a,b)=>b.r.nights-a.r.nights).slice(0,5).map(x=>row(x,"🌙 <b>"+x.r.nights+" nights</b> · "+(x.r.n1||"P1")+" · "+x.r.secs+"s")).join("")||"<span class='lbl'>none yet</span>")+"</div>"
+    +"<div style='margin-top:6px'><b>🧟 MOST KILLS</b><br>"+(surv.slice().sort((a,b)=>(b.r.k1+b.r.k2)-(a.r.k1+a.r.k2)).slice(0,5).map(x=>row(x,"🧟 <b>"+(x.r.k1+x.r.k2)+" kills</b> · "+(x.r.n1||"P1"))).join("")||"<span class='lbl'>none yet</span>")+"</div>"
+    +"<div style='margin-top:6px'><b>🛡️ ENDURANCE</b><br>"+(surv.slice().sort((a,b)=>(b.r.k1+b.r.k2)*b.r.secs-(a.r.k1+a.r.k2)*a.r.secs).slice(0,5).map(x=>row(x,"🛡️ <b>"+((x.r.k1+x.r.k2)*x.r.secs)+" pts</b> · "+(x.r.k1+x.r.k2)+" × "+x.r.secs+"s")).join("")||"<span class='lbl'>none yet</span>")+"</div>"
+    +"<div style='margin-top:6px'><b>☠️ ZOMBIE BOARD — FASTEST TAKEDOWN</b><br>"+(zom.slice().sort((a,b)=>a.r.zt-b.r.zt).slice(0,5).map(x=>row(x,"☠️ <b>"+x.r.zt+"s</b> · "+(x.r.n2||"the zombie"))).join("")||"<span class='lbl'>no zombie-player wins yet</span>")+"</div>";
+  all.innerHTML=good.slice().reverse().map(x=>row(x,(x.r.side==="zombie"?"☠️ zombie win · ":"🧟 ")+"<b>"+x.r.nights+" nights</b> · "+(x.r.k1+x.r.k2)+" kills · "+x.r.secs+"s")).join("")||"<span class='lbl'>none</span>";
+}
+async function addZombieRecord(){
+  const inp=document.getElementById("zombieRecInput"), msg=document.getElementById("zombieRecMsg");
+  const id=(inp.value||"").trim(); if(!id){ msg.textContent="paste a blob id first"; return; }
+  msg.textContent="fetching + verifying…";
+  const j=await cubeFetch(id);
+  if(!j||j.format!=="zombie-run/1"){ msg.textContent="✗ that blob is not a zombie-run/1 record."; return; }
+  if(zHash(j)!==j.h){ msg.textContent="✗ the record's hash does not verify — not admitted."; return; }
+  let extra=[]; try{ extra=JSON.parse(localStorage.getItem("hall-zombie-records")||"[]"); }catch(e){}
+  if(!extra.includes(id)) extra.push(id);
+  localStorage.setItem("hall-zombie-records", JSON.stringify(extra));
+  msg.textContent="✓ verified + admitted to the Hall."; inp.value="";
+  renderZombieHall();
+}
+renderZombieHall();
+
 renderCubeHall();
 </script>
 </body>
