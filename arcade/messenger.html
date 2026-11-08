@@ -73,6 +73,15 @@
   #msToast{position:fixed;left:50%;transform:translateX(-50%);bottom:262px;z-index:90;background:#1b2b1e;border:1.5px solid #3ec97f;color:#d9ffe6;font-size:16.5px;padding:10px 18px;border-radius:12px;display:none;max-width:92vw;text-align:center}
   #proof{margin:22px 4px 0;font-size:11.5px;color:#68788f;line-height:1.7;text-align:center;word-break:break-all}
   .visitbtn{width:100%;min-height:62px;font-size:20px;margin-top:8px}
+  #msGuestLine{margin:8px 0 0;padding:10px 12px;border:1.5px solid #3ec97f;border-radius:12px;background:#0f2a1c;color:#b9f4cd;font-size:18px;text-align:center}
+  #msVisitStatus{font-size:18px;color:#ffe9a8;line-height:1.45}
+  .homebtn{display:block;text-align:center;background:#7a5b12;border:1.5px solid #ffd76a;color:#ffe9a8;border-radius:14px;min-height:64px;line-height:64px;font-size:19px;text-decoration:none;margin-top:10px;padding:0 8px}
+  .ms-open-row{display:flex;align-items:center;gap:10px;width:100%;min-height:68px;background:#16233c;border:1px solid #39507a;border-radius:12px;padding:10px 12px;margin:8px 0;text-align:left}
+  .ms-open-row .who{flex:1;min-width:0}
+  .ms-open-row .nm{font-size:21px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ms-open-row .meta{font-size:15px;color:#9fb6cc;margin-top:2px}
+  .ms-open-row .go{font-size:19px;color:#3ec97f;white-space:nowrap}
+  .ms-open-row.here{opacity:.6}
 </style>
 </head>
 <body>
@@ -80,13 +89,22 @@
 <p class="sub">Video calls that live in the blob network — no account, no install.<br/>A code is all it takes.</p>
 
 <div id="msState">waking the messenger…</div>
+<div id="msGuestLine" style="display:none"></div>
 <div id="msStage"></div>
+
+<div class="card" id="msHomeCard" style="display:none;border-color:#ffd76a">
+  <h2>📍 YOU CAME IN THROUGH A POINTER</h2>
+  <p>You're visiting through a blob pointer — it proved the point! For calls, use this page's home address (cameras work there):</p>
+  <a class="homebtn" id="msHomeBtn" href="#">🏠 OPEN MY HOME ADDRESS — SAME ROOM</a>
+  <p>The compass button can't carry a blob page to Safari (that's the error you saw) — this gold button can.</p>
+</div>
 
 <div class="card" id="visitCard" style="display:none">
   <h2>👋 YOU'RE VISITING</h2>
   <p>You came in through a link — you're in room <b id="msVisitCode"></b>. Say hello below: 🎙 for your voice, 📷 for your face.</p>
+  <p id="msVisitStatus"></p>
   <button class="visitbtn" id="msSaveVisit">💾 SAVE THIS ROOM AS A CONTACT</button>
-  <button class="visitbtn" id="msGoHome">🏠 GO TO MY OWN ROOM</button>
+  <button class="visitbtn" id="msGoHome">🏠 LEAVE — BACK TO MY ROOM</button>
 </div>
 
 <div class="card">
@@ -120,8 +138,15 @@
   <button class="savebtn" id="msSaveContact">➕ SAVE CONTACT</button>
 </div>
 
+<div class="card">
+  <h2>👀 WHO'S OPEN NOW</h2>
+  <div id="msOpenList"></div>
+  <div class="empty" id="msOpenEmpty">Nobody's door is open right now — flip your 📣 OPEN and friends can find you here.</div>
+</div>
+
 <div id="proof">Loaded by a pointer · code poured from a blob and hash-checked · calls ride as separate tracks · saved calls are sealed jars<br/>
-page pin <span id="msPinPage"></span> · engine: BLOB COMMS plugin <span id="msPinPlugin"></span></div>
+page pin <span id="msPinPage"></span> · engine: BLOB COMMS plugin <span id="msPinPlugin"></span><br/>
+home: arcade.highscores.live/arcade/messenger.html — add it to your home screen from Safari</div>
 
 <div id="callBar">
   <div class="togs">
@@ -159,7 +184,7 @@ page pin <span id="msPinPage"></span> · engine: BLOB COMMS plugin <span id="msP
 
 <script>
 /* ================================================================
-   BLOB MESSENGER v0.1 "FIRST CALL" — the flagship face of the blob
+   BLOB MESSENGER v0.2 "THE OPEN DOOR" — the flagship face of the blob
    engine. The page supplies presentation + contacts; the ENGINE is
    the BLOB COMMS plugin, recalled by its blob and verified by its
    sha256 before a line of it runs (the loader pattern).
@@ -169,13 +194,21 @@ page pin <span id="msPinPage"></span> · engine: BLOB COMMS plugin <span id="msP
    package-record.json updated, fetch-back byte-identical), so this
    page pins v1.1 — blob WtXn5JHP…, sha 38a0f49c… — and inherits its
    media-context banner instead of growing a second one.
+   v0.2 "THE OPEN DOOR" (David's phone report, Nov 8 11:52): WHO'S
+   OPEN is a first-class, grandma-sized section driven by the plugin's
+   FIND beacons; joining an open door is a VISIT — a knock on the
+   room's talk topic, the owner's welcome, a came-to-visit line — all
+   at the MESSENGER layer (the plugin file is untouched); and a
+   blob:-born page wears a home-address card whose gold button carries
+   the room to the page's https home (a sheet's compass can't carry a
+   blob page to Safari — WebKitBlobResource error 1).
    ================================================================ */
 (function(){
 'use strict';
 var PLUGIN_BLOB='WtXn5JHPjgtFLDuVK3iLTMKKdCYTcHe9UruLxzdEe_4';
 var PLUGIN_SHA='38a0f49c11b05944612b85f62813be79aceeab08e8e39dc6dfa0f26214b12fc1';
-var MS_PAGE_BLOB='oKhSz8dW1zjWkfZXCo9cn47N2tR48xqgHjiFdEgqM8o';   /* QR pin — candidate blob, two-step (the Cube's pattern) */
-var MS_PAGE_SHA='d83eed2bea5eda6a63db587c5d0439c899bf56c033ef1926a45fb8c8d184c71e';     /* QR pin — sha256 of the candidate bytes */
+var MS_PAGE_BLOB='-qaRryk4jDy97qXx3z5waoz3aGfEKTfDekVxS50pBtw';   /* QR pin — candidate blob, two-step (the Cube's pattern) */
+var MS_PAGE_SHA='d9b64fbf6e880134da9b67f5eaf7493ce56fc4997a536a2c45c2faea4bef5b68';     /* QR pin — sha256 of the candidate bytes */
 var PAGES_URL='https://arcade.highscores.live/arcade/messenger.html';
 var LOADER='https://arcade.highscores.live/arcade/blob-loader.html';
 var MIRRORS=['https://aggregator.walrus-testnet.walrus.space','https://walrus-testnet.blockscope.net'];
@@ -242,13 +275,101 @@ function renderContacts(){
     var cd=document.createElement('div'); cd.className='cd'; cd.textContent=c.code;
     who.appendChild(nm); who.appendChild(cd);
     var call=document.createElement('button'); call.className='call'; call.textContent='📞 CALL';
-    call.addEventListener('click', function(){ if(handle) handle.join(c.code); });
+    call.addEventListener('click', function(){ setPendingVisit(c.code); if(handle) handle.join(c.code); });
     var del=document.createElement('button'); del.className='del'; del.textContent='✕'; del.title='forget '+c.name;
     del.addEventListener('click', function(){ var l=loadContacts(); l.splice(idx,1); saveContacts(l); renderContacts(); });
     row.appendChild(who); row.appendChild(call); row.appendChild(del);
     box.appendChild(row);
   });
 }
+
+/* ----- v0.2: WHO'S OPEN + THE INVITE BOND -----
+   The game's ritual in messenger shape, at the MESSENGER layer over
+   the plugin's own topics — the plugin file is not forked. WHO'S OPEN
+   renders the plugin's FIND beacons (S.openRooms) grandma-sized.
+   A join that comes from an open row, a contact tap, or a QR/link
+   arrival at a known host's code is a VISIT: this page publishes
+   {type:'visit-knock'} on the room's talk topic; the room's owner
+   (the page whose own code IS the room) answers {type:'visit-welcome'}
+   and wears a "came to visit" line; the visitor's card names the host.
+   No answer in ~6.5s is also a truth, said plainly. The plugin's own
+   router ignores both message types; a second listener rides the same
+   mqtt client through the _s test hook. */
+var VISIT_KEY='messenger-pending-visit';
+var visit={ phase:'idle', knocked:false, knockAt:0, hostName:'', mqHooked:false };
+function talkTopic(code){ return 'kodakai/comms/v1/messenger/'+code+'/talk'; }
+function hostNameFor(code){
+  var cs=loadContacts(); for(var i=0;i<cs.length;i++) if(cs[i].code===code) return cs[i].name;
+  if(handle && handle._s && handle._s.openRooms.has(code)) return handle._s.openRooms.get(code).hostName;
+  return '';
+}
+function setPendingVisit(code){ try{ sessionStorage.setItem(VISIT_KEY, JSON.stringify({code:code, ts:Date.now()})); }catch(e){} }
+function takePendingVisit(code){
+  try{ var v=JSON.parse(sessionStorage.getItem(VISIT_KEY)||'null');
+    if(v && v.code===code && Date.now()-v.ts<120000){ sessionStorage.removeItem(VISIT_KEY); return true; } }catch(e){}
+  return false;
+}
+function renderOpenRooms(){
+  if(!handle || !handle._s) return;
+  var rooms=[...handle._s.openRooms.values()].sort(function(a,b){ return b.ts-a.ts; });
+  var box=$('msOpenList'); if(!box) return;
+  $('msOpenEmpty').style.display=rooms.length?'none':'block';
+  var sig=rooms.map(function(r){ return r.code+':'+r.hostName+':'+r.count+':'+(r.live?1:0); }).join('|');
+  if(sig===renderOpenRooms._sig) return; renderOpenRooms._sig=sig;
+  box.innerHTML='';
+  rooms.forEach(function(r){
+    var here=r.code===room;
+    var row=document.createElement('button'); row.className='ms-open-row'+(here?' here':''); row.dataset.code=r.code;
+    var who=document.createElement('div'); who.className='who';
+    var nm=document.createElement('div'); nm.className='nm'; nm.textContent='\u{1F3E0} '+r.hostName;
+    var meta=document.createElement('div'); meta.className='meta';
+    meta.textContent=r.code+' · \u{1F465} '+r.count+(r.live?' · \u{1F399} live':'')+(here?' · (you are here)':'');
+    who.appendChild(nm); who.appendChild(meta); row.appendChild(who);
+    if(!here){
+      var go=document.createElement('div'); go.className='go'; go.textContent='VISIT \u{25B8}'; row.appendChild(go);
+      row.addEventListener('click', function(){ setPendingVisit(r.code); if(handle) handle.join(r.code); });
+    }
+    box.appendChild(row);
+  });
+}
+function visitStatus(txt){ var el=$('msVisitStatus'); if(el) el.textContent=txt; }
+function hookMq(){
+  if(visit.mqHooked || !handle || !handle._s || !handle._s.mq) return;
+  visit.mqHooked=true;
+  var myTopic=talkTopic(room);
+  handle._s.mq.on('message', function(t, payload){
+    if(t!==myTopic) return;
+    var m; try{ m=JSON.parse(payload.toString()); }catch(e){ return; }
+    if(!m || m.tid===handle.tid) return;
+    if(m.type==='visit-knock' && room===myCode){
+      try{ handle._s.mq.publish(myTopic, JSON.stringify({type:'visit-welcome', tid:handle.tid, to:m.tid, hostName:handle.state().name, count:handle.state().peers+1})); }catch(e){}
+      var gl=$('msGuestLine'); if(gl){ gl.style.display='block'; gl.textContent='\u{1F44B} '+(m.name||'A friend')+' came to visit'; }
+      toast('\u{1F44B} '+(m.name||'A friend')+' came to visit', 3200);
+    }
+    else if(m.type==='visit-welcome' && m.to===handle.tid && visiting && visit.phase!=='in'){
+      visit.phase='in'; visit.hostName=m.hostName||visit.hostName;
+      visitStatus('You\'re visiting '+(visit.hostName||'your host')+' — say hi! \u{1F44B}');
+    }
+  });
+}
+function knockOnce(){
+  visit.phase='knocking'; visit.knocked=true; visit.knockAt=Date.now();
+  var hn=hostNameFor(room); if(hn) visit.hostName=hn;
+  visitStatus('\u{1F6AA} Knocking on '+(visit.hostName||'the door')+'…');
+  try{ handle._s.mq.publish(talkTopic(room), JSON.stringify({type:'visit-knock', tid:handle.tid, name:handle.state().name})); }catch(e){}
+}
+function visitTick(){
+  hookMq(); renderOpenRooms();
+  if(!visiting || visit.phase==='in') return;
+  if(!visit.knocked){
+    if(handle && handle._s && handle._s.connected && (takePendingVisit(room) || hostNameFor(room))) knockOnce();
+  } else if(visit.phase==='knocking' && Date.now()-visit.knockAt>6500){
+    visit.phase='unanswered';
+    visitStatus('Nobody answered — they may have stepped away. You can wait here, or head home.');
+  }
+}
+window.__ms.visit=function(){ return {phase:visit.phase, knocked:visit.knocked, hostName:visit.hostName}; };
+window.__ms.openRooms=function(){ return (handle&&handle._s)?[...handle._s.openRooms.values()]:[]; };
 
 /* ----- QR (my link is the portal-form loader link, pinned two-step) ----- */
 function renderMyQr(){
@@ -347,7 +468,12 @@ function wire(){
   $('msBtnHear').addEventListener('click', function(){ if(handle) handle.toggleHear(); });
   $('msBtnChat').addEventListener('click', function(){ if(handle && handle._el && handle._el.sChat) handle._el.sChat.click(); });
   $('msBtnJar').addEventListener('click', function(){ if(handle) handle.toggleJar(); });
+  if(location.protocol==='blob:'){
+    $('msHomeCard').style.display='block';
+    $('msHomeBtn').href=PAGES_URL+'?room='+room;
+  }
   renderContacts();
+  setInterval(visitTick, 700);
   /* keep the big face of the messenger in sync with the engine */
   setInterval(function(){
     if(!handle) return;
