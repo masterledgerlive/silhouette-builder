@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<link rel="manifest" href="manifest.webmanifest"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="theme-color" content="#0b0e1a"/>
+<link rel="apple-touch-icon" href="icons/icon-180.png"/>
+<title>💬 BLOB MESSENGER — video calls in the blob network</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:#0b0e1a;color:#f2ecd8;font-family:Georgia,'Times New Roman',serif;padding:14px 14px 320px;max-width:640px;margin:0 auto}
+  h1{font-size:30px;margin:6px 0 2px;letter-spacing:.5px;color:#ffd76a;font-weight:normal;text-align:center}
+  .sub{text-align:center;color:#9fb6cc;font-size:15.5px;line-height:1.5;margin:0 8px 10px}
+  #msState{margin:10px 0;padding:14px 12px;border:2px solid #39507a;border-radius:14px;background:#101a30;font-size:21px;line-height:1.35;text-align:center;min-height:64px}
+  #msState.in{border-color:#3ec97f;background:#0f2a1c;color:#b9f4cd}
+  .card{background:#11182b;border:1.5px solid #2c3350;border-radius:16px;padding:16px 14px;margin:14px 0}
+  .card h2{margin:0 0 8px;font-size:19px;color:#7fd4ff;font-weight:normal;letter-spacing:.5px}
+  .card p{font-size:15.5px;line-height:1.5;color:#cfd8ea;margin:6px 0}
+  label.lbl{display:block;font-size:14px;color:#9fb6cc;letter-spacing:1px;margin:10px 0 4px}
+  input[type=text]{width:100%;background:#0d0f1a;border:1.5px solid #39507a;border-radius:12px;color:#fff;padding:12px;font-family:inherit}
+  #msName{font-size:22px}
+  #msMyCode{font-size:52px;letter-spacing:8px;text-align:center;color:#ffd76a;padding:8px 0 2px;font-weight:bold}
+  .btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+  button{font-family:inherit;cursor:pointer;border-radius:14px;border:1.5px solid #8a6d2f;background:#1a2438;color:#f2ecd8}
+  button.on{background:#7a5b12;border-color:#ffd76a;color:#ffe9a8}
+  .sharebtn{flex:1 1 30%;min-height:64px;font-size:19px;padding:10px 6px}
+  #msOpenBtn.on{background:#14532d;border-color:#3ec97f;color:#b9f4cd}
+  #msCodeIn{font-size:30px;letter-spacing:5px;text-transform:uppercase;text-align:center}
+  .joinbtn{flex:1;min-height:68px;font-size:24px;background:#14532d;border-color:#3ec97f;color:#d9ffe6}
+  .scanbtn{min-height:68px;font-size:24px;padding:0 18px}
+  .ms-contact{display:flex;align-items:center;gap:10px;min-height:76px;background:#16233c;border:1px solid #39507a;border-radius:12px;padding:8px 10px;margin:8px 0}
+  .ms-contact .who{flex:1;min-width:0}
+  .ms-contact .nm{font-size:21px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ms-contact .cd{font-size:15px;color:#9fb6cc;letter-spacing:2px}
+  .ms-contact .call{min-height:58px;font-size:19px;padding:0 16px;background:#14532d;border-color:#3ec97f;color:#d9ffe6}
+  .ms-contact .del{min-height:58px;width:52px;font-size:18px;color:#c9a7ff}
+  .savebtn{width:100%;min-height:60px;font-size:20px;margin-top:10px}
+  .empty{font-size:16.5px;color:#9fb6cc;line-height:1.55;padding:8px 2px}
+  #msStage{height:10px;transition:height .3s}
+  body.stage-on #msStage{height:min(68vw,340px)}
+  /* the plugin's face dock, restyled into the call stage: faces LARGE,
+     self small — the engine is the plugin's; only the frame is ours */
+  #msMount .bc-dock{position:fixed;top:132px;left:0;right:0;bottom:auto;flex-direction:row;flex-wrap:wrap;justify-content:center;align-items:flex-start;gap:10px;z-index:30;padding:0 10px}
+  #msMount .bc-tile{width:min(62vw,320px);border-width:2px;border-radius:14px}
+  #msMount .bc-tile video{width:100%;height:auto;aspect-ratio:4/3}
+  #msMount .bc-tile.bc-self{width:min(28vw,132px)}
+  #msMount .bc-tilecap{font-size:14.5px;padding:5px 2px}
+  #callBar{position:fixed;left:0;right:0;bottom:66px;z-index:45;background:rgba(8,10,18,.96);border-top:1.5px solid #2c3350;padding:10px 10px 8px;max-width:640px;margin:0 auto}
+  #callBar .togs{display:flex;gap:10px;justify-content:space-between}
+  .tog{flex:1;height:72px;min-width:64px;font-size:31px;border-radius:16px}
+  .tog.on{background:#7a5b12;border-color:#ffd76a}
+  .tog small{display:block;font-size:11.5px;letter-spacing:1px;color:#9fb6cc;margin-top:2px}
+  #msBtnJar{width:100%;height:64px;margin-top:10px;font-size:21px;border-radius:16px}
+  #msBtnJar.on{background:#5b1212;border-color:#ff7a6a;color:#ffd9d2}
+  #consent{font-size:13.5px;color:#9fb6cc;line-height:1.5;margin:8px 2px 0;text-align:center}
+  #msJarLine{font-size:14px;color:#ffb0a5;text-align:center;min-height:18px;margin-top:4px}
+  .overlay{position:fixed;inset:0;z-index:80;background:rgba(4,5,10,.94);display:none;align-items:center;justify-content:center;padding:16px}
+  .overlay.open{display:flex}
+  .sheet{background:#11182b;border:1.5px solid #ffd76a;border-radius:16px;padding:18px 14px;max-width:400px;width:100%;text-align:center;max-height:92vh;overflow-y:auto}
+  .sheet h2{color:#ffd76a;font-weight:normal;margin:0 0 6px;font-size:21px}
+  .sheet p{color:#cfd8ea;font-size:15px;line-height:1.5}
+  #msQrBox{background:#fff;border-radius:12px;padding:12px;width:216px;margin:10px auto}
+  #msQrBox canvas,#msQrBox img{width:192px!important;height:192px!important;image-rendering:pixelated}
+  #msQrPayload{font-size:10.5px;color:#7e8aa0;word-break:break-all;line-height:1.5;text-align:left}
+  .closebtn{width:100%;min-height:58px;font-size:20px;margin-top:12px}
+  #msScanVid{width:100%;border-radius:12px;background:#000;aspect-ratio:4/3}
+  #msToast{position:fixed;left:50%;transform:translateX(-50%);bottom:262px;z-index:90;background:#1b2b1e;border:1.5px solid #3ec97f;color:#d9ffe6;font-size:16.5px;padding:10px 18px;border-radius:12px;display:none;max-width:92vw;text-align:center}
+  #proof{margin:22px 4px 0;font-size:11.5px;color:#68788f;line-height:1.7;text-align:center;word-break:break-all}
+  .visitbtn{width:100%;min-height:62px;font-size:20px;margin-top:8px}
+</style>
+</head>
+<body>
+<h1>💬 BLOB MESSENGER</h1>
+<p class="sub">Video calls that live in the blob network — no account, no install.<br/>A code is all it takes.</p>
+
+<div id="msState">waking the messenger…</div>
+<div id="msStage"></div>
+
+<div class="card" id="visitCard" style="display:none">
+  <h2>👋 YOU'RE VISITING</h2>
+  <p>You came in through a link — you're in room <b id="msVisitCode"></b>. Say hello below: 🎙 for your voice, 📷 for your face.</p>
+  <button class="visitbtn" id="msSaveVisit">💾 SAVE THIS ROOM AS A CONTACT</button>
+  <button class="visitbtn" id="msGoHome">🏠 GO TO MY OWN ROOM</button>
+</div>
+
+<div class="card">
+  <h2>🏷 YOU</h2>
+  <label class="lbl" for="msName">YOUR NAME</label>
+  <input type="text" id="msName" maxlength="18" placeholder="your name"/>
+  <label class="lbl">YOUR CODE — give it to anyone who should reach you</label>
+  <div id="msMyCode">·····</div>
+  <div class="btnrow">
+    <button class="sharebtn" id="msQrBtn">▦ SHOW MY QR</button>
+    <button class="sharebtn" id="msCopyBtn">🔗 COPY MY LINK</button>
+    <button class="sharebtn" id="msOpenBtn">📣 OPEN</button>
+  </div>
+  <p>📣 OPEN lists your door so friends can find you. Off is fine too — your code still works for anyone who has it.</p>
+</div>
+
+<div class="card">
+  <h2>📞 CALL SOMEBODY</h2>
+  <label class="lbl" for="msCodeIn">THEIR CODE</label>
+  <input type="text" id="msCodeIn" maxlength="8" placeholder="CODE"/>
+  <div class="btnrow">
+    <button class="joinbtn" id="msJoinBtn">📞 JOIN THEM</button>
+    <button class="scanbtn" id="msScanBtn" title="scan a QR code">📷 SCAN</button>
+  </div>
+  <label class="lbl">PEOPLE YOU CALL — one tap, forever</label>
+  <div id="msContacts"></div>
+  <div class="empty" id="msContactsEmpty">Nobody saved yet. Save Grandma's code once — then it's one tap forever.</div>
+  <label class="lbl" for="msCName">SAVE A PERSON</label>
+  <input type="text" id="msCName" maxlength="24" placeholder="their name — Grandma, David…"/>
+  <input type="text" id="msCCode" maxlength="8" placeholder="their code" style="margin-top:8px;font-size:22px;letter-spacing:3px;text-transform:uppercase"/>
+  <button class="savebtn" id="msSaveContact">➕ SAVE CONTACT</button>
+</div>
+
+<div id="proof">Loaded by a pointer · code poured from a blob and hash-checked · calls ride as separate tracks · saved calls are sealed jars<br/>
+page pin <span id="msPinPage"></span> · engine: BLOB COMMS plugin <span id="msPinPlugin"></span></div>
+
+<div id="callBar">
+  <div class="togs">
+    <button class="tog" id="msBtnMic">🎙<small>VOICE</small></button>
+    <button class="tog" id="msBtnFace">📷<small>FACE</small></button>
+    <button class="tog" id="msBtnHear">🔊<small>HEAR</small></button>
+    <button class="tog" id="msBtnChat">💬<small>CHAT</small></button>
+  </div>
+  <button id="msBtnJar">🫙 SAVE THIS CALL</button>
+  <div id="consent">Only saves when you turn it on. The badge shows while it saves.<br/>Nobody else can save your face without the badge.</div>
+  <div id="msJarLine"></div>
+</div>
+
+<div class="overlay" id="msQrSheet">
+  <div class="sheet">
+    <h2>▦ MY QR</h2>
+    <p>Point any camera at it — the Messenger opens with your code already filled in.</p>
+    <div id="msQrBox"></div>
+    <div id="msQrPayload"></div>
+    <button class="closebtn" id="msQrClose">✕ CLOSE</button>
+  </div>
+</div>
+
+<div class="overlay" id="msScanSheet">
+  <div class="sheet">
+    <h2>📷 SCAN A CODE</h2>
+    <video id="msScanVid" playsinline muted></video>
+    <p id="msScanMsg">looking for a QR code…</p>
+    <button class="closebtn" id="msScanClose">✕ CANCEL</button>
+  </div>
+</div>
+
+<div id="msToast"></div>
+<div id="msMount"></div>
+
+<script>
+/* ================================================================
+   BLOB MESSENGER v0.1 "FIRST CALL" — the flagship face of the blob
+   engine. The page supplies presentation + contacts; the ENGINE is
+   the BLOB COMMS plugin, recalled by its blob and verified by its
+   sha256 before a line of it runs (the loader pattern).
+   PIN NOTE: the task brief pinned plugin v1
+   (jpy2FG1X…, sha 041c2644…); plugin v1.1 "THE WAY OUT" had already
+   landed in ~/workspace/blob-comms (pour receipt pour-comms-v11.json,
+   package-record.json updated, fetch-back byte-identical), so this
+   page pins v1.1 — blob WtXn5JHP…, sha 38a0f49c… — and inherits its
+   media-context banner instead of growing a second one.
+   ================================================================ */
+(function(){
+'use strict';
+var PLUGIN_BLOB='WtXn5JHPjgtFLDuVK3iLTMKKdCYTcHe9UruLxzdEe_4';
+var PLUGIN_SHA='38a0f49c11b05944612b85f62813be79aceeab08e8e39dc6dfa0f26214b12fc1';
+var MS_PAGE_BLOB='oKhSz8dW1zjWkfZXCo9cn47N2tR48xqgHjiFdEgqM8o';   /* QR pin — candidate blob, two-step (the Cube's pattern) */
+var MS_PAGE_SHA='d83eed2bea5eda6a63db587c5d0439c899bf56c033ef1926a45fb8c8d184c71e';     /* QR pin — sha256 of the candidate bytes */
+var PAGES_URL='https://arcade.highscores.live/arcade/messenger.html';
+var LOADER='https://arcade.highscores.live/arcade/blob-loader.html';
+var MIRRORS=['https://aggregator.walrus-testnet.walrus.space','https://walrus-testnet.blockscope.net'];
+function sha256hex(data){ /* pure-JS SHA-256 (FIPS 180-4) — crypto.subtle is undefined on http pages */
+  var K=[0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2];
+  var H=[0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19];
+  var bytes=data instanceof Uint8Array?data:new TextEncoder().encode(String(data));
+  var bitLen=bytes.length*8, withOne=bytes.length+1, pad=(56-(withOne%64)+64)%64, total=withOne+pad+8;
+  var msg=new Uint8Array(total); msg.set(bytes); msg[bytes.length]=0x80;
+  var dv=new DataView(msg.buffer); dv.setUint32(total-4,bitLen>>>0); dv.setUint32(total-8,Math.floor(bitLen/4294967296));
+  var W=new Uint32Array(64); function rr(x,n){return (x>>>n)|(x<<(32-n));}
+  for(var off=0;off<total;off+=64){
+    var i; for(i=0;i<16;i++) W[i]=dv.getUint32(off+i*4);
+    for(i=16;i<64;i++){ var s0=rr(W[i-15],7)^rr(W[i-15],18)^(W[i-15]>>>3), s1=rr(W[i-2],17)^rr(W[i-2],19)^(W[i-2]>>>10); W[i]=(W[i-16]+s0+W[i-7]+s1)|0; }
+    var a=H[0],b=H[1],c=H[2],d=H[3],e=H[4],f=H[5],g=H[6],h=H[7];
+    for(i=0;i<64;i++){ var S1=rr(e,6)^rr(e,11)^rr(e,25), ch=(e&f)^(~e&g), t1=(h+S1+ch+K[i]+W[i])|0, S0=rr(a,2)^rr(a,13)^rr(a,22), mj=(a&b)^(a&c)^(b&c), t2=(S0+mj)|0; h=g;g=f;f=e;e=(d+t1)|0;d=c;c=b;b=a;a=(t1+t2)|0; }
+    H=[(H[0]+a)|0,(H[1]+b)|0,(H[2]+c)|0,(H[3]+d)|0,(H[4]+e)|0,(H[5]+f)|0,(H[6]+g)|0,(H[7]+h)|0];
+  }
+  return H.map(function(x){return ('00000000'+(x>>>0).toString(16)).slice(-8);}).join('');
+}
+function cleanCode(s){ return (String(s||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,8)) || ''; }
+function $(id){ return document.getElementById(id); }
+var qs=new URLSearchParams(location.search);
+
+/* ----- identity: my code is my room; it persists so people can reach me ----- */
+var CODE_ALPHABET='ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+function genCode(){ var s=''; for(var i=0;i<5;i++) s+=CODE_ALPHABET[Math.floor(Math.random()*CODE_ALPHABET.length)]; return s; }
+var myCode=''; try{ myCode=cleanCode(localStorage.getItem('messenger-my-code')); }catch(e){}
+if(!myCode){ myCode=genCode(); try{ localStorage.setItem('messenger-my-code', myCode); }catch(e){} }
+var room=cleanCode(qs.get('room')) || myCode;
+var visiting = room!==myCode;
+var savedName=''; try{ savedName=localStorage.getItem('messenger-name')||''; }catch(e){}
+var qsName=(qs.get('name')||'').slice(0,18);
+if(qsName) savedName=qsName;
+try{ if(savedName) localStorage.setItem('blobcomms-name', savedName); }catch(e){}
+
+function loaderLink(code){ return LOADER+'?g='+MS_PAGE_BLOB+'&h='+MS_PAGE_SHA+'&n='+encodeURIComponent('💬 BLOB MESSENGER')+'&room='+code; }
+
+var toastT=null;
+function toast(msg, ms){ var t=$('msToast'); t.textContent=msg; t.style.display='block'; clearTimeout(toastT); toastT=setTimeout(function(){ t.style.display='none'; }, ms||2600); }
+
+window.__ms={ evts:[], myCode:myCode, room:room, qrPayload:'', pagePin:{blob:MS_PAGE_BLOB, sha:MS_PAGE_SHA},
+  pluginPin:{blob:PLUGIN_BLOB, sha:PLUGIN_SHA}, handle:function(){ return handle; },
+  state:function(){ return handle?handle.state():null; },
+  contacts:function(){ return loadContacts(); } };
+
+var handle=null;
+function renderState(st, count){
+  var el=$('msState');
+  if(st==='in'){ el.textContent='✓ YOU\'RE IN — room '+room+' · '+count+' here'; el.classList.add('in'); }
+  else { el.textContent='You\'re the first one here — share your code or QR to bring them in'; el.classList.remove('in'); }
+}
+
+/* ----- contacts ----- */
+function loadContacts(){ try{ var v=JSON.parse(localStorage.getItem('messenger-contacts')||'[]'); return Array.isArray(v)?v:[]; }catch(e){ return []; } }
+function saveContacts(list){ try{ localStorage.setItem('messenger-contacts', JSON.stringify(list)); }catch(e){} }
+function renderContacts(){
+  var list=loadContacts(), box=$('msContacts'); box.innerHTML='';
+  $('msContactsEmpty').style.display=list.length?'none':'block';
+  list.forEach(function(c, idx){
+    var row=document.createElement('div'); row.className='ms-contact';
+    var who=document.createElement('div'); who.className='who';
+    var nm=document.createElement('div'); nm.className='nm'; nm.textContent=c.name;
+    var cd=document.createElement('div'); cd.className='cd'; cd.textContent=c.code;
+    who.appendChild(nm); who.appendChild(cd);
+    var call=document.createElement('button'); call.className='call'; call.textContent='📞 CALL';
+    call.addEventListener('click', function(){ if(handle) handle.join(c.code); });
+    var del=document.createElement('button'); del.className='del'; del.textContent='✕'; del.title='forget '+c.name;
+    del.addEventListener('click', function(){ var l=loadContacts(); l.splice(idx,1); saveContacts(l); renderContacts(); });
+    row.appendChild(who); row.appendChild(call); row.appendChild(del);
+    box.appendChild(row);
+  });
+}
+
+/* ----- QR (my link is the portal-form loader link, pinned two-step) ----- */
+function renderMyQr(){
+  var payload=loaderLink(myCode);
+  window.__ms.qrPayload=payload;
+  var box=$('msQrBox'); box.innerHTML='';
+  try{ if(window.QRCode) new QRCode(box, {text:payload, width:192, height:192, correctLevel:QRCode.CorrectLevel.M}); }catch(e){}
+  setTimeout(function(){
+    if(box.children.length===0){
+      var im=document.createElement('img'); im.alt='join QR'; im.width=192; im.height=192;
+      im.src='https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=12&data='+encodeURIComponent(payload);
+      box.appendChild(im);
+    }
+  }, 1400);
+  $('msQrPayload').textContent=payload;
+}
+
+/* ----- scan (affordance: real where BarcodeDetector exists, honest where not) ----- */
+var scanStream=null, scanTimer=null;
+function stopScan(){
+  if(scanTimer) clearInterval(scanTimer); scanTimer=null;
+  if(scanStream){ scanStream.getTracks().forEach(function(t){ t.stop(); }); scanStream=null; }
+  $('msScanSheet').classList.remove('open');
+}
+async function startScan(){
+  $('msScanSheet').classList.add('open');
+  var msg=$('msScanMsg');
+  if(!('BarcodeDetector' in window) || !navigator.mediaDevices){
+    msg.textContent='This browser can\'t scan inside the page. Point the Camera app at their QR instead — it opens right here, with the code filled in.';
+    return;
+  }
+  try{
+    scanStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});
+    var vid=$('msScanVid'); vid.srcObject=scanStream; await vid.play();
+    var det=new BarcodeDetector({formats:['qr_code']});
+    msg.textContent='looking for a QR code…';
+    scanTimer=setInterval(async function(){
+      try{
+        var codes=await det.detect(vid);
+        if(codes && codes.length){
+          var raw=codes[0].rawValue||''; var code='';
+          try{ code=cleanCode(new URL(raw).searchParams.get('room')); }catch(e){}
+          if(!code) code=cleanCode(raw);
+          stopScan();
+          if(code){ $('msCodeIn').value=code; toast('code found: '+code+' — tap JOIN THEM'); }
+        }
+      }catch(e){}
+    }, 450);
+  }catch(e){ msg.textContent='The camera refused here. Point the Camera app at their QR instead — it opens right here.'; }
+}
+
+/* ----- wire the page ----- */
+function wire(){
+  $('msMyCode').textContent=myCode;
+  $('msPinPage').textContent=MS_PAGE_BLOB.slice(0,12)+'… / '+MS_PAGE_SHA.slice(0,12)+'…';
+  $('msPinPlugin').textContent=PLUGIN_BLOB.slice(0,12)+'… / '+PLUGIN_SHA.slice(0,12)+'…';
+  var nm=$('msName'); nm.value=savedName||'';
+  nm.addEventListener('change', function(){
+    var v=nm.value.trim().slice(0,18); nm.value=v;
+    try{ localStorage.setItem('messenger-name', v); localStorage.setItem('blobcomms-name', v); }catch(e){}
+    if(handle && handle._el && handle._el.name){ handle._el.name.value=v; handle._el.name.dispatchEvent(new Event('change')); }
+  });
+  if(visiting){
+    $('visitCard').style.display='block';
+    $('msVisitCode').textContent=room;
+    $('msCodeIn').value=room;
+    $('msGoHome').addEventListener('click', function(){ if(handle) handle.join(myCode); });
+    $('msSaveVisit').addEventListener('click', function(){ $('msCCode').value=room; $('msCName').focus(); $('msCName').scrollIntoView({block:'center'}); });
+  }
+  $('msQrBtn').addEventListener('click', function(){ renderMyQr(); $('msQrSheet').classList.add('open'); });
+  $('msQrClose').addEventListener('click', function(){ $('msQrSheet').classList.remove('open'); });
+  $('msCopyBtn').addEventListener('click', function(){
+    var link=loaderLink(myCode);
+    if(navigator.clipboard) navigator.clipboard.writeText(link).then(function(){ toast('🔗 your link is copied — send it to anyone'); }, function(){ toast(link); });
+    else toast(link);
+  });
+  $('msOpenBtn').addEventListener('click', function(){ if(handle) handle.setOpen(!handle.state().open); });
+  $('msJoinBtn').addEventListener('click', function(){
+    var v=cleanCode($('msCodeIn').value);
+    if(!v){ toast('type their code first — it\'s on their screen, big letters'); return; }
+    if(v===room){ toast('you\'re already in room '+v); return; }
+    if(handle) handle.join(v);
+  });
+  $('msScanBtn').addEventListener('click', startScan);
+  $('msScanClose').addEventListener('click', stopScan);
+  $('msSaveContact').addEventListener('click', function(){
+    var name=$('msCName').value.trim().slice(0,24), code=cleanCode($('msCCode').value);
+    if(!name || !code){ toast('a contact needs a name AND their code'); return; }
+    var list=loadContacts().filter(function(c){ return c.code!==code; });
+    list.push({name:name, code:code}); saveContacts(list); renderContacts();
+    $('msCName').value=''; $('msCCode').value='';
+    toast('💾 '+name+' saved — one tap to call, forever');
+  });
+  $('msBtnMic').addEventListener('click', function(){ if(handle) handle.toggleMic(); });
+  $('msBtnFace').addEventListener('click', function(){ if(handle) handle.toggleFace(); });
+  $('msBtnHear').addEventListener('click', function(){ if(handle) handle.toggleHear(); });
+  $('msBtnChat').addEventListener('click', function(){ if(handle && handle._el && handle._el.sChat) handle._el.sChat.click(); });
+  $('msBtnJar').addEventListener('click', function(){ if(handle) handle.toggleJar(); });
+  renderContacts();
+  /* keep the big face of the messenger in sync with the engine */
+  setInterval(function(){
+    if(!handle) return;
+    var st=handle.state(); if(!st) return;
+    renderState(st.joinState, st.peers+1);
+    $('msBtnMic').classList.toggle('on', !!st.micOn);
+    $('msBtnFace').classList.toggle('on', !!st.faceOn);
+    $('msBtnHear').classList.toggle('on', !!st.hearOn);
+    $('msBtnJar').classList.toggle('on', !!st.jarOn);
+    $('msBtnJar').textContent=st.jarOn?'🫙 SAVING… TAP TO SEAL IT':'🫙 SAVE THIS CALL';
+    $('msOpenBtn').classList.toggle('on', !!st.open);
+    $('msOpenBtn').textContent=st.open?'📣 OPEN ✓':'📣 OPEN';
+    document.body.classList.toggle('stage-on', st.peers>=1 || st.faceOn);
+    var jl=$('msJarLine');
+    if(st.jarOn) jl.textContent='🫙 saving this call — the badge is on, everyone can see it';
+    else if(st.lastJar && st.lastJar.recordBlob) jl.textContent='🫙 last call saved · jar '+String(st.lastJar.recordBlob).slice(0,14)+'… · '+Math.round((st.lastJar.durMs||0)/1000)+'s of talk, sealed';
+  }, 800);
+}
+
+/* ----- the loader pattern: recall the engine by blob, verify, inject ----- */
+window.__msReady=(async function(){
+  var bytes=null, lastErr=null;
+  for(var mi=0; mi<MIRRORS.length && !bytes; mi++){
+    try{
+      var r=await fetch(MIRRORS[mi]+'/v1/blobs/'+PLUGIN_BLOB);
+      if(!r.ok) throw new Error('mirror '+r.status);
+      var buf=new Uint8Array(await r.arrayBuffer());
+      if(sha256hex(buf)!==PLUGIN_SHA) throw new Error('sha mismatch — refused');
+      bytes=buf;
+    }catch(e){ lastErr=e; }
+  }
+  if(!bytes) throw lastErr||new Error('plugin blob unreachable');
+  var url=URL.createObjectURL(new Blob([bytes],{type:'text/javascript'}));
+  await new Promise(function(res, rej){ var s=document.createElement('script'); s.src=url; s.onload=res; s.onerror=rej; document.head.appendChild(s); });
+  handle=window.BlobComms.mount($('msMount'), {
+    ns:'messenger',
+    canonical:PAGES_URL,
+    room:room,
+    name:savedName||undefined,
+    onPeerStream:function(tid, stream, info){ window.__ms.evts.push({ev:'peerStream', tid:tid, self:!!info.self, hasAudio:info.hasAudio, hasVideo:info.hasVideo}); },
+    onPeerGone:function(tid){ window.__ms.evts.push({ev:'peerGone', tid:tid}); },
+    onJoinState:function(st, count){ renderState(st, count); }
+  });
+  wire();
+  renderState(handle.state().joinState, handle.state().peers+1);
+  return handle;
+})();
+})();
+</script>
+</body>
+</html>
