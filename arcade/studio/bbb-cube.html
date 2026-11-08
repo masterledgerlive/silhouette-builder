@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>BUNNY CUBE v1.9.1 — BONK THE BULLIES (a 3D world from Walrus blobs)</title>
+<title>BUNNY CUBE v1.9.2 — BONK THE BULLIES + BLOB TALK (a 3D world from Walrus blobs)</title>
 <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/mqtt@5.10.1/dist/mqtt.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -36,6 +36,14 @@
   #bannerSub{font-size:16px;color:#ffe9a8;text-shadow:0 1px 8px rgba(0,0,0,.8);margin-top:4px;font-weight:600}
   #pop{position:absolute;left:50%;top:56%;transform:translate(-50%,-50%);z-index:8;display:none;text-align:center;
        pointer-events:none;font-size:21px;font-weight:800;color:#ffd76a;text-shadow:0 2px 10px rgba(0,0,0,.75)}
+  #talkBar{position:absolute;left:50%;transform:translateX(-50%);bottom:8px;z-index:37;width:min(430px,94vw)}
+  #chatBox{background:rgba(8,8,20,.88);border:1px solid rgba(150,150,220,.5);border-radius:12px;padding:8px;margin-bottom:6px}
+  #chatLog{max-height:108px;overflow-y:auto;font-size:13px;color:#e8ecff;text-align:left;line-height:1.45}
+  #chatRow{display:flex;gap:6px;margin-top:6px}
+  #chatIn{flex:1;background:#141428;color:#fff;border:1px solid #445;border-radius:8px;padding:8px;font-size:14px}
+  #chatSend{background:#2a2a55;color:#cfe0ff;border:1px solid #667;border-radius:8px;padding:8px 12px;font-weight:bold}
+  #talkRow{display:flex;gap:6px;justify-content:center}
+  #talkRow button{background:rgba(20,20,44,.78);color:#e8ecff;border:2px solid rgba(150,150,220,.55);border-radius:999px;padding:8px 13px;font-weight:bold;font-size:13px}
   #verTag{position:absolute;left:10px;bottom:186px;z-index:5;display:none;background:rgba(7,10,16,.5);border:1px solid rgba(255,215,106,.4);
           color:#ffd76a;border-radius:8px;padding:3px 9px;font-size:12px;font-weight:700;pointer-events:none}
   #tiltBtn{position:absolute;right:14px;top:12px;z-index:6;display:none;padding:10px 14px;border-radius:22px;
@@ -166,7 +174,12 @@ grab apples, bonk them back. First to the banner takes the round.</p>
       <button class="lkBtn" id="eatBtn" style="font-size:19px;padding:12px 26px">🍎 EAT APPLE</button>
     </div>
     <div id="pop"></div>
-    <div id="verTag">🧊 CUBE v1.9.1 · FINALIZE</div>
+    <div id="talkBar" style="display:none">
+      <div id="chatBox" style="display:none"><div id="chatLog"></div><div id="chatRow"><input id="chatIn" maxlength="120" placeholder="💬 say it…" autocomplete="off"><button id="chatSend">SEND</button></div></div>
+      <div id="talkRow"><button id="chatTog">💬 CHAT</button><button id="micBtn">🎙 MIC OFF</button><button id="hearBtn">🔊 HEAR ON</button></div>
+    </div>
+    <audio id="talkAudio" autoplay></audio>
+    <div id="verTag">🧊 CUBE v1.9.2 · BLOB TALK</div>
     <button id="tiltBtn">🧭 TILT</button>
     <div id="joy"><div id="joyKnob"></div></div>
     <div id="pad"><span class="pip pU">▲</span><span class="pip pD">▼</span><span class="pip pL">◀</span><span class="pip pR">▶</span><div id="padKnob"></div></div>
@@ -666,7 +679,7 @@ function placeWorld(){
   $("hud").style.display="block"; $("hint").style.display="block"; $("throwBtn").style.display="block";
   $("tiltBtn").style.display="block"; $("verTag").style.display="block"; $("pad").style.display="block";
   $("mapBox").style.display="block"; $("startScreen").style.display="block"; $("bootStat").style.display="none";
-  syncHUD();
+  syncHUD(); wireTalk();
   // v1.5: the grab-a-🍎 pop fires on the PLAY press, not over the start menu
 }
 </script>
@@ -1347,7 +1360,7 @@ function onUp(e){
   }
   delete pointers[e.pointerId];
 }
-window.addEventListener("pointerdown",e=>{ if(e.target.closest("#stage")) onDown(e); });
+window.addEventListener("pointerdown",e=>{ if(e.target.closest("#talkBar")) return; if(e.target.closest("#stage")) onDown(e); });
 window.addEventListener("pointermove",onMove);
 window.addEventListener("pointerup",onUp); window.addEventListener("pointercancel",onUp);
 // ---------- v1.4: the fixed control pad (David's ask, Nov 6) ----------
@@ -1542,6 +1555,32 @@ function mqSend(dir, obj){ mqPub(mqTopic(dir), obj); }
 function netEvPop(t){ if(NET.role==="host") mqSend("down",{type:"ev", pop:t}); }
 function netEvBanner(m,s){ if(NET.role==="host") mqSend("down",{type:"ev", banner:[m,s]}); }
 
+// ----- BLOB TALK: voice + text on the room's own radio (v1.9.2) -----
+const TALK={pc:null, mic:null, micOn:false, hear:true, id:"t"+Math.random().toString(36).slice(2,9)};
+function talkTopic(){ return mqTopic("talk"); }
+function talkUi(){ const el=$("talkBar"); if(el) el.style.display=(NET.role!=="solo"&&!!NET.room)?"block":"none"; }
+function addChat(from, text, mine){ const log=$("chatLog"); if(!log) return; const d=document.createElement("div"); const b=document.createElement("b"); b.textContent=(mine?"YOU":from)+":"; d.appendChild(b); d.appendChild(document.createTextNode(" "+text)); log.appendChild(d); while(log.children.length>30) log.removeChild(log.firstChild); log.scrollTop=1e6; if(!mine) popText("💬 "+from+": "+text.slice(0,60), 2400); }
+function talkSendChat(){ const inp=$("chatIn"); const t=(inp.value||"").trim(); if(!t||!NET.room) return; inp.value=""; mqPub(talkTopic(), {type:"chat", tid:TALK.id, from:myName(), text:t}); addChat(myName(), t, true); }
+async function talkEnsurePc(){ if(TALK.pc) return TALK.pc; const pc=new RTCPeerConnection({iceServers:[{urls:"stun:stun.l.google.com:19302"}]}); TALK.pc=pc;
+  pc.onicecandidate=(e)=>{ if(e.candidate) mqPub(talkTopic(), {type:"rtc-ice", tid:TALK.id, cand:e.candidate.toJSON()}); };
+  pc.ontrack=(e)=>{ const a=$("talkAudio"); if(a&&e.streams&&e.streams[0]){ a.srcObject=e.streams[0]; a.volume=TALK.hear?1:0; popText("🔊 voice connected — they're on the meadow radio", 2400); } };
+  pc.onnegotiationneeded=async ()=>{ if(TALK._off) return; TALK._off=true; try{ const off=await pc.createOffer(); await pc.setLocalDescription(off); mqPub(talkTopic(), {type:"rtc-offer", tid:TALK.id, sdp:pc.localDescription}); }catch(e){} TALK._off=false; };
+  return pc; }
+async function talkMicToggle(){ try{
+    if(!TALK.mic){ const st=await navigator.mediaDevices.getUserMedia({audio:true}); TALK.mic=st; const pc=await talkEnsurePc(); for(const tr of st.getAudioTracks()) pc.addTrack(tr, st); }
+    TALK.micOn=!TALK.micOn; for(const tr of TALK.mic.getTracks()) tr.enabled=TALK.micOn;
+    $("micBtn").textContent=TALK.micOn?"🎙 MIC ON":"🎙 MIC OFF"; popText(TALK.micOn?"🎙 you're live on the meadow radio":"🎙 mic off", 1800);
+  }catch(e){ popText("🎙 mic blocked — the browser needs your permission", 2600); } }
+async function onTalkMsg(t, m){ if(!NET.room||t!==talkTopic()) return; let msg; try{ msg=JSON.parse(m.toString()); }catch(e){ return; } if(msg.tid===TALK.id) return;
+  if(msg.type==="chat"){ addChat(msg.from||"BUNNY", msg.text||"", false); return; }
+  if(msg.type==="rtc-offer"){ try{ const pc=await talkEnsurePc(); if(pc.signalingState!=="stable"){ if(NET.role!=="host") return; await pc.setLocalDescription({type:"rollback"}); } await pc.setRemoteDescription(new RTCSessionDescription(msg.sdp)); if(!pc.getTransceivers().some(tr=>tr.receiver&&tr.receiver.track.kind==="audio")) pc.addTransceiver("audio",{direction:"recvonly"}); const ans=await pc.createAnswer(); await pc.setLocalDescription(ans); mqPub(talkTopic(), {type:"rtc-answer", tid:TALK.id, sdp:pc.localDescription}); }catch(e){} return; }
+  if(msg.type==="rtc-answer"){ if(TALK.pc&&TALK.pc.signalingState==="have-local-offer"){ try{ await TALK.pc.setRemoteDescription(new RTCSessionDescription(msg.sdp)); }catch(e){} } return; }
+  if(msg.type==="rtc-ice"){ if(TALK.pc&&msg.cand){ try{ await TALK.pc.addIceCandidate(new RTCIceCandidate(msg.cand)); }catch(e){} } return; } }
+function wireTalk(){ const ct=$("chatTog"), cs=$("chatSend"), ci=$("chatIn"), mb=$("micBtn"), hb=$("hearBtn"); if(!ct||ct._w) return; ct._w=1;
+  ct.onclick=()=>{ const b=$("chatBox"); const open=b.style.display!=="block"; b.style.display=open?"block":"none"; ct.textContent=open?"💬 HIDE":"💬 CHAT"; if(open) ci.focus(); };
+  cs.onclick=talkSendChat; ci.addEventListener("keydown",(e)=>{ if(e.key==="Enter") talkSendChat(); e.stopPropagation(); });
+  mb.onclick=talkMicToggle;
+  hb.onclick=()=>{ TALK.hear=!TALK.hear; const a=$("talkAudio"); if(a) a.volume=TALK.hear?1:0; hb.textContent=TALK.hear?"🔊 HEAR ON":"🔇 MUTED"; }; }
 // ----- host side -----
 function hostRoom(){
   if(NET.role!=="solo") return;
@@ -1549,7 +1588,7 @@ function hostRoom(){
   NET.room=Array.from({length:5},()=>"ABCDEFGHJKMNPQRSTUVWXYZ23456789"[Math.floor(Math.random()*31)]).join("");
   NET.role="host";
   mqConnect(()=>{
-    NET.mq.subscribe(mqTopic("up")); NET.mq.on("message",onHostMsg);
+    NET.mq.subscribe(mqTopic("up")); NET.mq.subscribe(mqTopic("talk")); NET.mq.on("message",onHostMsg); NET.mq.on("message",onTalkMsg); talkUi();
     $("hostInfo").style.display="block"; $("roomCode").textContent=NET.room;
     ["joinDiv","joinCode","roleSel","joinBtn","lobbyDiv","lobbyBtn","lobbyList"].forEach(id=>{ const e=$(id); if(e) e.style.display="none"; });
     $("joinLink").textContent=location.origin+location.pathname+"?room="+NET.room;
@@ -1671,7 +1710,7 @@ function joinRoom(){
   NET.room=code; NET.role="guest"; NET.meRole=$("roleSel").value;
   setTeleMode("off");
   mqConnect(()=>{
-    NET.mq.subscribe(mqTopic("down")); NET.mq.on("message",onGuestMsg);
+    NET.mq.subscribe(mqTopic("down")); NET.mq.subscribe(mqTopic("talk")); NET.mq.on("message",onGuestMsg); NET.mq.on("message",onTalkMsg); talkUi();
     mqSend("up",{type:"join", role:NET.meRole, name:myName()});
     netStatus("Joining room "+code+" as "+NET.meRole+"… the game re-asks every few seconds until the host answers.");
     netBadge();
