@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>ZOMBIE WORLD v1.2 — SURVIVE THE NIGHTS (a world from Walrus blobs)</title>
+<title>ZOMBIE WORLD v1.3 — SURVIVE THE NIGHTS (a world from Walrus blobs)</title>
 <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/mqtt@5.10.1/dist/mqtt.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -17,6 +17,9 @@
   #zHunt .arr{display:inline-block;font-size:19px;color:#ff5c5c;transition:transform .2s}
   #camBtn{position:absolute;right:10px;top:248px;z-index:36;background:rgba(20,20,44,.72);color:#cfe0ff;border:2px solid rgba(150,150,220,.6);border-radius:999px;padding:9px 13px;font-weight:bold;font-size:13px}
   #tvBtn{position:absolute;right:10px;top:294px;z-index:36;background:rgba(20,20,44,.72);color:#ffe9a3;border:2px solid rgba(255,215,107,.55);border-radius:999px;padding:9px 13px;font-weight:bold;font-size:13px}
+  #viewBtn{position:absolute;right:10px;top:340px;z-index:36;background:rgba(20,20,44,.72);color:#b8ffc8;border:2px solid rgba(120,255,160,.5);border-radius:999px;padding:9px 13px;font-weight:bold;font-size:13px}
+  body.tvmode #viewBtn{font-size:19px;padding:14px 18px;top:auto;bottom:18px;right:18px}
+  body.tvmode #tvBtn{font-size:19px;padding:14px 18px}
   #tvQr{position:absolute;left:14px;bottom:14px;z-index:34}
   .tvQrCard{background:rgba(8,8,20,.82);border:2px solid #ffd76b;border-radius:16px;padding:12px;text-align:center;color:#fff;max-width:250px}
   #tvQrTxt{font-size:26px;font-weight:bold;letter-spacing:2px;margin-top:6px}
@@ -83,12 +86,13 @@
     <div id="zHunt">🧟 all quiet</div>
     <button id="camBtn">👁 3RD PERSON</button>
     <button id="tvBtn">📺 TV MODE</button>
+    <button id="viewBtn">🎥 VIEW: YOU</button>
   </div>
   <div id="tvQr" style="display:none"><div class="tvQrCard"><div id="tvQrBox"></div><div id="tvQrTxt"></div><div class="tvQrSub">📱 phones: scan — or type the code — and drive from your couch</div></div></div>
   <div id="banner" style="display:none"><div id="bannerMain"></div><div id="bannerSub"></div></div>
   <div id="pop"></div>
   <div id="mapWrap" style="display:none"><canvas id="mapCv" width="148" height="148"></canvas><div id="mapCap">🗺️ THE FIELD · N ↑</div></div>
-  <div id="verTag" class="pill">🧊 ZOMBIE v1.2 · FIRST-PERSON + TV MODE</div>
+  <div id="verTag" class="pill">🧊 ZOMBIE v1.3 · TV, LIVE VIEWS + WATCHERS</div>
   <div id="linkBadge" class="pill">🔗 LINK</div>
   <div id="teleOverlay"><div id="teleBody" class="mono"></div></div>
   <div id="pad" style="display:none"><div id="padKnob"></div></div>
@@ -106,8 +110,9 @@
       <button class="ssBtn" id="charGirl" style="flex:1">👧 GIRL</button>
     </div>
     <button class="ssBtn" id="playBtn">▶ PLAY</button>
+    <button class="ssBtn" id="tvBtnStart">📺 TV MODE — BIG SCREEN + JOIN QR</button>
     <button class="ssBtn small" id="boardBtn">🏆 HIGH SCORES</button>
-    <button class="ssBtn small" id="linkBtn">🔗 2-PLAYER LINK</button>
+    <button class="ssBtn" id="linkBtn">👥 2-PLAYER — HOST / JOIN · QR CODE</button>
     <button class="ssBtn small" id="howBtn">? HOW TO PLAY</button>
     <button class="ssBtn small" id="aboutBtn">📖 ABOUT &amp; PROOF</button>
     <div style="display:flex;gap:8px;align-items:center;justify-content:center;margin-top:6px">
@@ -139,7 +144,7 @@
     <div id="qrBox"></div>
     <div style="font-size:.78em;color:#9fd8a8;margin:6px 0">🌐 PROVENANCE: the field (the meadow's terrain blob) loads from Walrus and is sha256-verified in this browser. GitHub Pages serves only this HTML envelope — the world, the scores and the replays live on the blob network.</div>
     <div style="margin:8px 0">JOIN AS&nbsp;
-      <select id="roleSel"><option value="survivor">🧑 Survivor (co-op)</option><option value="zombie">🧟 A ZOMBIE (versus)</option></select>
+      <select id="roleSel"><option value="survivor">🧑 Survivor (co-op)</option><option value="zombie">🧟 A ZOMBIE (versus)</option><option value="watch">👀 JUST WATCH — TV / spectator</option></select>
     </div>
     <div style="display:flex;gap:8px"><input id="joinCode" placeholder="ROOM CODE" maxlength="5" style="flex:1;background:#0a0a20;color:#ffe9a8;border:1px solid #4a4a7a;border-radius:7px;padding:10px;text-transform:uppercase">
     <button class="ssBtn small" id="joinBtn" style="flex:1;margin:0">🔑 JOIN</button></div>
@@ -318,7 +323,7 @@ function mkShadow(r, op){
   return el;
 }
 "use strict";
-// ================= ZOMBIE WORLD v1.2 =================
+// ================= ZOMBIE WORLD v1.3 =================
 // Composed from the library: meadow field blob + SKY & CLOCK layer + sealed link
 // + hash-chained records. House/graveyard/chest are MOVE library objects.
 const ZWORLD="uB8NNkBbtVzH1L35Sa6RjKKs9dkYx91rQP55Auu7X3I";
@@ -326,7 +331,7 @@ let ZMAN=null, MAN=null; const URLS={}, BUFFERS={};
 const state={ready:false, started:false, over:false, t:0, phase:"day", phaseT:120, nightN:0,
              waveLeft:0, spawnT:0, secs:0, runT0:0, drawN:0, seed:((Math.random()*1e9)|0),
              camYaw:Math.PI, camPitch:0.42, camDist:8.5, keys:{}, stick:{x:0,y:0,active:false,id:null},
-             charSel:"boy", goldSpawned:false, greenSpawned:false, redT:4, chestT:0, groanT:5, skyAcc:0, camFP:false, tvMode:false, fpHidden:null};
+             charSel:"boy", goldSpawned:false, greenSpawned:false, redT:4, chestT:0, groanT:5, skyAcc:0, camFP:false, tvMode:false, fpHidden:null, viewMode:"self"};
 let sceneEl, worldEl, camEl, terrainMesh=null;
 let nightEl=null, secretEl=null, moonEl=null;
 const PLAY_R=23, TREE_POS={x:7,z:-9}, TREE_R=2.6, GRAV=15.5, FENCE_Y=3.0, PHASE_LEN=120;
@@ -1135,7 +1140,7 @@ function netTick(dt){
     NET.inputTimer-=dt;
     if(NET.inputTimer<=0){ NET.inputTimer=0.1;
       const fire=NET.fireOut?1:0; NET.fireOut=0;
-      mqPub(mqTopic("up"), {type:"in", wx:+NET.guest.wish.x.toFixed(2), wz:+NET.guest.wish.z.toFixed(2), fire, fry:+((P2?P2.rotY:state.camYaw)).toFixed(2)});
+      if(NET.guest.role!=="watch") mqPub(mqTopic("up"), {type:"in", wx:+NET.guest.wish.x.toFixed(2), wz:+NET.guest.wish.z.toFixed(2), fire, fry:+((P2?P2.rotY:state.camYaw)).toFixed(2)});
     }
     if(!NET.welcomed){ NET.joinT-=dt; if(NET.joinT<=0){ NET.joinT=3; mqPub(mqTopic("up"), {type:"join", role:NET.guest.role, name:state.name, char:state.charSel}); } }
   } else if(state.started&&!state.over){
@@ -1168,6 +1173,7 @@ function onLobby(msg){
   d.appendChild(b); el.appendChild(d);
 }
 function onUp(msg){
+  if(msg.type==="join"&&msg.role==="watch"){ sendEv({welcome:1, role:"watch"}); teleEvent("WATCH",(msg.name||"A SCREEN")+" is watching"); popText("👀 "+(msg.name||"A SCREEN")+" is watching — say hi to the TV!", 2600); return; }
   if(msg.type==="join"){
     NET.guest.joined=true; NET.guest.role=msg.role||"survivor"; NET.guest.name=(msg.name||"PLAYER 2").toUpperCase(); NET.guest.char=msg.char||"boy";
     if(state.started&&NET.guest.role==="survivor"&&!P2) addGuestSurvivor();
@@ -1184,7 +1190,7 @@ function onUp(msg){
 function onDown(msg){
   if(msg.type==="snap"){ applySnap(msg.core); return; }
   if(msg.type==="ev"){
-    if(msg.welcome){ NET.welcomed=true; $("hostBtn").style.display="none"; $("panelPlay").style.display="block"; $("panelPlay").textContent="✓ JOINED — VERIFIED · ▶ PLAY";
+    if(msg.welcome&&!(msg.role==="watch"&&NET.guest.role!=="watch")){ NET.welcomed=true; $("hostBtn").style.display="none"; $("panelPlay").style.display="block"; $("panelPlay").textContent="✓ JOINED — VERIFIED · ▶ PLAY";
       $("linkStatus").textContent="You're in ✓ — playing as "+NET.guest.role+". Press PLAY when the host does.";
       popText("🔗 You're in! Press PLAY ▶", 2400);
       setTimeout(()=>{ if(NET.role==="guest") popText("🌐 WORLD VERIFIED FROM THE BLOB NETWORK — ON THIS PHONE ✓", 3400); }, 2600);
@@ -1228,7 +1234,15 @@ function camTarget(){
 }
 function cameraTick(){
   if(!camEl) return;
-  const t=camTarget(); if(!t) return;
+  let t=camTarget();
+  if(!RP.active){
+    if(state.viewMode==="wide"){ camEl.object3D.position.set(14,27,30); camEl.object3D.lookAt(0,8.5,-2); if(state.fpHidden){ if(state.fpHidden.el) state.fpHidden.el.setAttribute("visible","true"); state.fpHidden=null; } return; }
+    if(state.viewMode==="zombie"){ let zn=null, nd=1e9; const ref=t||{x:0,z:0}; for(const z2 of ZOMBIES){ if(z2.dead||z2.rise>0) continue; const d=Math.hypot(z2.x-ref.x, z2.z-ref.z); if(d<nd){ nd=d; zn=z2; } }
+      if(zn){ const zy=(zn.y!==undefined?zn.y:zn.gy); camEl.object3D.position.set(zn.x, zy+1.35, zn.z); camEl.object3D.lookAt(zn.x+Math.sin(zn.rotY)*6, zy+1.1, zn.z+Math.cos(zn.rotY)*6); if(state.fpHidden){ if(state.fpHidden.el) state.fpHidden.el.setAttribute("visible","true"); state.fpHidden=null; } return; } }
+    if(state.viewMode==="partner"){ const pt = NET.role==="guest" ? P1 : P2; if(pt) t=pt; }
+    if(NET.role==="guest"&&NET.guest.role==="watch"&&state.viewMode==="self"&&P1) t=P1;
+  }
+  if(!t) return;
   const tx=t.x, tz=t.z, ty=(t.y!==undefined?t.y:groundY2(t.x,t.z,99))+1.5;
   if(RP.active&&RP.camMode==="free"){ camEl.object3D.position.set(RP.free.x, RP.free.y||12, RP.free.z); camEl.object3D.lookAt(tx,ty-4,tz); return; }
   if(RP.active&&(RP.camMode==="p1"||RP.camMode==="p2")){ const s=t; camEl.object3D.position.set(s.x, (s.y||0)+2.2, s.z); const lx=s.x+Math.sin(s.rotY)*6, lz=s.z+Math.cos(s.rotY)*6; camEl.object3D.lookAt(lx,(s.y||0)+1.6,lz); return; }
@@ -1378,7 +1392,7 @@ function wire(){
   $("hostBtn").onclick=()=>{ setName(); NET.role="host"; NET.room=Math.random().toString(36).slice(2,7).toUpperCase();
     $("linkStatus").innerHTML="📡 Hosting room <b>"+NET.room+"</b> — send the code (or the QR) to your player 2, anywhere on Earth.";
     try{ $("qrBox").innerHTML=""; new QRCode($("qrBox"),{text:location.origin+location.pathname+"?join="+NET.room, width:110, height:110}); }catch(e){}
-    ensureMq(); teleEvent("ROOM OPEN",NET.room); };
+    ensureMq(); teleEvent("ROOM OPEN",NET.room); if(state.tvMode){ $("tvQr").style.display="block"; $("tvQrTxt").textContent="JOIN "+NET.room; try{ $("tvQrBox").innerHTML=""; new QRCode($("tvQrBox"),{text:location.origin+location.pathname+"?join="+NET.room, width:190, height:190}); }catch(e){} } };
   $("joinBtn").onclick=()=>{ setName(); const code=($("joinCode").value||"").trim().toUpperCase(); if(code.length<4){ popText("type the room code first",1800); return; }
     NET.role="guest"; NET.guest.role=$("roleSel").value; NET.room=code; NET.welcomed=false; ensureMq();
     $("linkStatus").textContent="🔑 knocking on room "+code+" as "+NET.guest.role+"…"; };
@@ -1398,10 +1412,15 @@ function wire(){
   $("sndBtn").textContent=SND.on?"🔊 SOUND ON":"🔇 SOUND OFF";
   $("volRange").oninput=(e)=>{ SND.vol=+e.target.value/100; try{ localStorage.setItem("cube-snd-vol",""+SND.vol); }catch(e){} };
   $("camBtn").onclick=()=>{ state.camFP=!state.camFP; $("camBtn").textContent=state.camFP?"🎯 1ST PERSON":"👁 3RD PERSON"; popText(state.camFP?"🎯 FIRST PERSON — through their eyes":"👁 THIRD PERSON — the wide view", 1500); };
-  $("tvBtn").onclick=()=>{ state.tvMode=!state.tvMode; document.body.classList.toggle("tvmode", state.tvMode); $("tvBtn").textContent=state.tvMode?"📺 TV: ON":"📺 TV MODE";
+  const toggleTV=()=>{ state.tvMode=!state.tvMode; document.body.classList.toggle("tvmode", state.tvMode);
+    $("tvBtn").textContent=state.tvMode?"📺 TV: ON":"📺 TV MODE"; const tsb=$("tvBtnStart"); if(tsb) tsb.textContent=state.tvMode?"📺 TV MODE: ON — BIG SCREEN LIVE":"📺 TV MODE — BIG SCREEN + JOIN QR";
     if(state.tvMode){ try{ document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen().catch(()=>{}); }catch(e){}
+      if(NET.role==="solo"){ $("hostBtn").click(); }
       if(NET.room){ $("tvQr").style.display="block"; $("tvQrTxt").textContent="JOIN "+NET.room; try{ $("tvQrBox").innerHTML=""; new QRCode($("tvQrBox"),{text:location.origin+location.pathname+"?join="+NET.room, width:190, height:190}); }catch(e){} }
     } else { $("tvQr").style.display="none"; try{ document.exitFullscreen&&document.fullscreenElement&&document.exitFullscreen().catch(()=>{}); }catch(e){} } };
+  $("tvBtn").onclick=toggleTV; $("tvBtnStart").onclick=toggleTV;
+  const VIEWS=[["self","🎥 VIEW: YOU"],["partner","🎥 VIEW: PARTNER"],["zombie","🎥 VIEW: 🧟 ZOMBIE"],["wide","🎥 VIEW: 🌎 WIDE"]];
+  $("viewBtn").onclick=()=>{ const i=(VIEWS.findIndex(v=>v[0]===state.viewMode)+1)%VIEWS.length; state.viewMode=VIEWS[i][0]; $("viewBtn").textContent=VIEWS[i][1]; popText(VIEWS[i][1]+" — any screen can watch from any eyes, live", 1600); };
   $("fireBtn").addEventListener("pointerdown",(e)=>{ e.preventDefault();
     if(RP.active) return;
     if(NET.role==="guest"){ NET.fireOut=1; }
@@ -1418,7 +1437,7 @@ function wire(){
   // drag look
   let drag=null;
   const padHome=()=>{ pad.style.left="16px"; pad.style.top=""; pad.style.bottom="22px"; };
-  $("stage").addEventListener("pointerdown",(e)=>{ if(e.target.closest(".sheet,.pill,#pad,#fireBtn,#camBtn,#tvBtn,#tvQr,#rpBar,#mapWrap,#teleOverlay")) return;
+  $("stage").addEventListener("pointerdown",(e)=>{ if(e.target.closest(".sheet,.pill,#pad,#fireBtn,#camBtn,#tvBtn,#tvQr,#viewBtn,#rpBar,#mapWrap,#teleOverlay")) return;
     if(state.started&&!RP.active&&e.clientX<window.innerWidth*0.45){ pad.style.left=(e.clientX-72)+"px"; pad.style.top=(e.clientY-72)+"px"; pad.style.bottom="auto"; state.stick.active=true; state.stick.id=e.pointerId; padMove(e); return; }
     drag={x:e.clientX,y:e.clientY,id:e.pointerId}; });
   $("stage").addEventListener("pointermove",(e)=>{ if(state.stick.active&&e.pointerId===state.stick.id){ padMove(e); return; } if(!drag||e.pointerId!==drag.id) return; state.camYaw-=(e.clientX-drag.x)*0.005; state.camPitch=Math.max(0.08,Math.min(1.25,state.camPitch+(e.clientY-drag.y)*0.004)); drag.x=e.clientX; drag.y=e.clientY; });
