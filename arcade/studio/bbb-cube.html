@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>BUNNY CUBE v1.9.4 — BONK THE BULLIES + BLOB TALK + THE LIVE SHOW (a 3D world from Walrus blobs)</title>
+<title>BUNNY CUBE v1.9.5 — BONK THE BULLIES + BLOB TALK + THE LIVE SHOW + ON AIR (a 3D world from Walrus blobs)</title>
 <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/mqtt@5.10.1/dist/mqtt.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -49,6 +49,8 @@
   #jarBox .jrow{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid rgba(150,150,220,.18)}
   #jarBox button{background:#2a2a55;color:#cfe0ff;border:1px solid #667;border-radius:8px;padding:4px 10px;font-weight:bold}
   #jarBtn.rec{background:#7a1622;color:#fff;border-color:#ff8f8f;animation:jarPulse 1.1s infinite}
+  #airBtn.on{background:#8a1030;color:#fff;border-color:#ff8fc8;animation:jarPulse 1.1s infinite}
+  #airInd{display:none;background:rgba(52,6,36,.92);border:1px solid rgba(255,120,200,.8);color:#ffd9f2;border-radius:10px;padding:6px 9px;margin-bottom:6px;font-size:13px;font-weight:700;text-align:center}
   #faceBox{position:absolute;right:10px;top:64px;z-index:10;display:flex;flex-direction:column;gap:6px;align-items:flex-end;pointer-events:none}
   .faceTile{width:118px;background:rgba(5,8,14,.85);border:1.5px solid rgba(255,215,106,.8);border-radius:12px;padding:4px;pointer-events:auto}
   .faceTile video{width:100%;height:88px;object-fit:cover;border-radius:8px;background:#000;display:block}
@@ -180,6 +182,7 @@ grab apples, bonk them back. First to the banner takes the round.</p>
       <div id="matchSub" style="font-size:13.5px;opacity:.92;margin:6px 0 12px"></div>
       <button class="lkBtn" id="matchAgain">▶ PLAY AGAIN</button>
       <button class="lkBtn" id="matchWatch">🎞️ WATCH THE MATCH</button>
+      <a class="lkBtn" id="matchHall" href="../blob-cinema/scores.html" style="text-decoration:none">🌐 HALL — WIN + THE SHOW</a>
       <div id="matchWait" style="font-size:12.5px;opacity:.85;margin-top:9px"></div>
     </div>
     <div id="boardPanel" style="display:none;position:absolute;inset:12px;z-index:12;background:rgba(8,10,18,.96);border:1.5px solid #ffd76a;border-radius:14px;padding:14px 16px;color:#f2ecd8;overflow-y:auto;text-align:left">
@@ -195,9 +198,10 @@ grab apples, bonk them back. First to the banner takes the round.</p>
     <div id="pop"></div>
     <div id="talkBar" style="display:none">
       <div id="jarInd"></div>
+      <div id="airInd"></div>
       <div id="chatBox" style="display:none"><div id="chatLog"></div><div id="chatRow"><input id="chatIn" maxlength="120" placeholder="💬 say it…" autocomplete="off"><button id="chatSend">SEND</button></div></div>
       <div id="jarBox" style="display:none"><div style="font-weight:700;margin-bottom:2px">🫙 TALK JARS — this room's voices, kept as their own track</div><div id="jarList"></div></div>
-      <div id="talkRow"><button id="chatTog">💬 CHAT</button><button id="micBtn">🎙 MIC OFF</button><button id="hearBtn">🔊 HEAR ON</button><button id="faceBtn">📷 FACE OFF</button><button id="maskBtn">🎭 MASK</button><button id="jarBtn">● JAR</button><button id="jarListBtn">🫙 <span id="jarCount">0</span></button></div>
+      <div id="talkRow"><button id="chatTog">💬 CHAT</button><button id="micBtn">🎙 MIC OFF</button><button id="hearBtn">🔊 HEAR ON</button><button id="faceBtn">📷 FACE OFF</button><button id="maskBtn">🎭 MASK</button><button id="jarBtn">● JAR</button><button id="jarListBtn">🫙 <span id="jarCount">0</span></button><button id="airBtn">📡 ON AIR</button></div>
     </div>
     <audio id="talkAudio" autoplay></audio>
     <div id="faceBox">
@@ -206,7 +210,7 @@ grab apples, bonk them back. First to the banner takes the round.</p>
       <video id="jarVid" style="display:none" playsinline controls></video>
     </div>
     <div id="showBox"></div>
-    <div id="verTag">🧊 CUBE v1.9.4 · THE LIVE SHOW</div>
+    <div id="verTag">🧊 CUBE v1.9.5 · ON AIR</div>
     <button id="tiltBtn">🧭 TILT</button>
     <div id="joy"><div id="joyKnob"></div></div>
     <div id="pad"><span class="pip pU">▲</span><span class="pip pD">▼</span><span class="pip pL">◀</span><span class="pip pR">▶</span><div id="padKnob"></div></div>
@@ -1270,11 +1274,14 @@ function renderBoard(){
   h+="<br><br><b>📜 ALL RECORDS</b><br>"+winChain.slice().reverse().map(r=>(r.match?"🏆 ":"")+"<b>"+esc(r.winner)+"</b> · "+r.secs+" s · round "+r.round+" · hits "+(r.h1||0)+"/"+(r.h2||0)+((r.kb||r.outs!==undefined)?" · bonked "+((r.h1||0)+(r.h2||0))+"/9":"")+((r.a1||r.a2)?" · 🍎 "+((r.a1||0)+(r.a2||0))+" picked":"")+" · "+when(r.ts)+" · "+blob(r)+watch(r)).join("<br>");
   el.innerHTML=h;
 }
+function jarRecordIds(){ return jarShelf().map(en=>en.recordBlob).filter(Boolean); }
+function hallUrl(){ const ids=winChain.filter(r=>r.blob).map(r=>r.blob); let u="../blob-cinema/scores.html#cube="+ids.join(","); const j=jarRecordIds(); if(j.length) u+="&jars="+j.join(","); return u; }
 function showMatchPanel(){
   const p=$("matchPanel"); if(!p) return;
   $("matchTitle").textContent="🏆🏆 MATCH — "+(NET.matchWinner||"")+" TAKES IT!";
   $("matchSub").textContent="Best of three · final — you "+NET.match.P1+" · P2 "+NET.match.P2+(NET.match.AI?" · bullies "+NET.match.AI:"")+" · every round sealed in the book · the whole match on one tape";
   $("matchAgain").style.display=NET.role==="guest"?"none":"";
+  const mh=$("matchHall"); if(mh) mh.href=hallUrl();
   $("matchWait").textContent=NET.role==="guest"?(NET.matchTapeBlob?"the match tape is a blob now — watch it here, or wait for the host's next match":"the host starts the next match — the tape is sealing…"):"";
   p.style.display="block";
 }
@@ -1593,9 +1600,9 @@ function netEvBanner(m,s){ if(NET.role==="host") mqSend("down",{type:"ev", banne
 // network (the loader hash-checks before it opens anything), never on a stale
 // Pages copy. Re-pinned at ship time: g = this version's first PUT blob,
 // h = sha256 of the bytes that blob names.
-const PAGE_BLOB="q43FVwe7g7lYlwf4gNYkTDLk6yMb6jGnPhBctrSMiY8";
-const PAGE_SHA="c9f4e81cee0a6e8ebd56431d8700ab5d2e57cea39586b27d1e59799e9b00943b";
-function jarQrText(room){ return "https://arcade.highscores.live/arcade/blob-loader.html?g="+PAGE_BLOB+"&h="+PAGE_SHA+"&n="+encodeURIComponent("BUNNY CUBE v1.9.4")+"&room="+room+"&join="+room; }
+const PAGE_BLOB="h2dKPAnTRjfjOHJZaYsg3wy4-JTVst-lq-tSCpcuvWc";
+const PAGE_SHA="e9872b5e098df53e3f55831f45b536dc6c3867acff7d651d9499e0021372402d";
+function jarQrText(room){ return "https://arcade.highscores.live/arcade/blob-loader.html?g="+PAGE_BLOB+"&h="+PAGE_SHA+"&n="+encodeURIComponent("BUNNY CUBE v1.9.5")+"&room="+room+"&join="+room; }
 window.__CHATSEALS=[];
 const TALK={pc:null, mic:null, micOn:false, hear:true, remote:null, id:"t"+Math.random().toString(36).slice(2,9)};
 function talkTopic(){ return mqTopic("talk"); }
@@ -1649,6 +1656,8 @@ async function talkResurrect(why){
 async function onTalkMsg(t, m){ if(!NET.room||t!==talkTopic()) return; let msg; try{ msg=JSON.parse(m.toString()); }catch(e){ return; } if(msg.tid===TALK.id) return;
   if(msg.type==="face"){ FACE.remoteOn=!!msg.on; if(!FACE.remoteOn){ const rv=$("faceRemoteVid"); if(rv) rv.srcObject=null; } faceTiles(); facePlaneVis(); popText(msg.on?"📷 "+(msg.from||"they")+" turned their face on — say hi":"📷 "+(msg.from||"they")+" turned their face off", 2000); return; }
   if(msg.type==="jar"){ const ind=$("jarInd"); if(msg.on){ if(ind){ ind.style.display="block"; ind.textContent="● "+(msg.from||"A PLAYER")+" is jarring this room"+(msg.video?" (face + voice)":"")+" — the show is being kept as its own track"; } popText("● "+(msg.from||"a player")+" opened a jar on this room", 2200); } else if(ind){ ind.style.display="none"; ind.textContent=""; } return; }
+  if(msg.type==="onair"){ const ind=$("airInd"); if(msg.on){ if(ind){ ind.style.display="block"; ind.textContent="📡 "+(msg.from||"THE HOST")+" is ON AIR — this room is pouring a show"; } popText("📡 "+(msg.from||"the host")+" is ON AIR", 2200); } else if(ind){ ind.style.display="none"; ind.textContent=""; } return; }
+  if(msg.type==="seg"){ return; }
   if(msg.type==="echo"){ const rec=__CHATSEALS.find(r=>r.mine&&r.tid===msg.of&&r.seal===msg.seal); if(rec&&!rec.echoed){ rec.echoed=true; rec.echoBy=msg.by||""; if(rec.el&&rec.el.parentNode){ const sp=document.createElement("span"); sp.textContent=" \u2713\u2713"; sp.style.color="#9fe8a8"; sp.style.fontWeight="800"; rec.el.appendChild(sp); } } return; }
   if(msg.type==="chat"){ const from=msg.from||"BUNNY", text=msg.text||""; let mismatch=false, ok=false; if(msg.seal){ ok=(chatSeal(msg.tid||"", from, text)===msg.seal); mismatch=!ok; } const el=addChat(from, text, false, {tid:msg.tid, seal:msg.seal||null, mismatch}); __CHATSEALS.push({tid:msg.tid, from, text, seal:msg.seal||null, mine:false, echoed:false, mismatch, el}); if(msg.seal&&ok){ mqPub(talkTopic(), {type:"echo", tid:TALK.id, of:msg.tid, seal:msg.seal, by:myName()}); } else if(msg.seal&&mismatch){ popText("\u26a0 a chat line arrived with a broken seal — marked, never silently trusted", 3200); } return; }
   if(msg.type==="rtc-offer"){ try{ const pc=await talkEnsurePc(); if(pc.signalingState!=="stable"){ if(NET.role!=="host") return; await pc.setLocalDescription({type:"rollback"}); } await pc.setRemoteDescription(new RTCSessionDescription(msg.sdp)); if(!pc.getTransceivers().some(tr=>tr.receiver&&tr.receiver.track.kind==="audio")) pc.addTransceiver("audio",{direction:"recvonly"}); if(!pc.getTransceivers().some(tr=>tr.receiver&&tr.receiver.track.kind==="video")) pc.addTransceiver("video",{direction:"recvonly"}); const ans=await pc.createAnswer(); await pc.setLocalDescription(ans); mqPub(talkTopic(), {type:"rtc-answer", tid:TALK.id, sdp:pc.localDescription}); }catch(e){} return; }
@@ -1660,7 +1669,7 @@ function wireTalk(){ const ct=$("chatTog"), cs=$("chatSend"), ci=$("chatIn"), mb
   mb.onclick=talkMicToggle;
   hb.onclick=()=>{ TALK.hear=!TALK.hear; const a=$("talkAudio"); if(a) a.volume=TALK.hear?1:0; hb.textContent=TALK.hear?"🔊 HEAR ON":"🔇 MUTED"; };
   const ta=$("talkAudio"); if(ta&&!ta._pg){ ta._pg=1; ta.addEventListener("pause", ()=>{ if(TALK.hear&&TALK.remote){ try{ const p=ta.play(); if(p&&p.catch) p.catch(()=>{}); }catch(e){} } }); }
-  const jb=$("jarBtn"), jl=$("jarListBtn"); if(jb) jb.onclick=jarToggle; if(jl) jl.onclick=()=>{ const b=$("jarBox"); b.style.display=b.style.display==="block"?"none":"block"; renderJarList(); }; const fb=$("faceBtn"), mk=$("maskBtn"); if(fb) fb.onclick=faceToggle; if(mk) mk.onclick=()=>{ FACE.mask=!FACE.mask; faceUi(); popText(FACE.mask?"🎭 faces ride the characters":"🎭 face cards off — tiles only", 1600); }; faceUi(); renderJarList(); }
+  const jb=$("jarBtn"), jl=$("jarListBtn"); if(jb) jb.onclick=jarToggle; const ab=$("airBtn"); if(ab) ab.onclick=onairToggle; if(jl) jl.onclick=()=>{ const b=$("jarBox"); b.style.display=b.style.display==="block"?"none":"block"; renderJarList(); }; const fb=$("faceBtn"), mk=$("maskBtn"); if(fb) fb.onclick=faceToggle; if(mk) mk.onclick=()=>{ FACE.mask=!FACE.mask; faceUi(); popText(FACE.mask?"🎭 faces ride the characters":"🎭 face cards off — tiles only", 1600); }; faceUi(); renderJarList(); onairUi(); }
 
 // ----- TALK JARS (v1.9.3): the room's voices kept as a SEPARATE TRACK -----
 // David's law: your voice is your blob, you hold the key — and the room always
@@ -1669,7 +1678,7 @@ function wireTalk(){ const ct=$("chatTog"), cs=$("chatSend"), ci=$("chatIn"), mb
 // on THIS phone only (my mic + their voice), the audio seals as its own blob,
 // and a voice-jar/1 record pins it to the seal chain's current anchor. The
 // track never muxes into the game tape; it stands beside it, named by its hash.
-const JAR={on:false, rec:null, chunks:[], ctx:null, mime:"", t0:0, held:null, mixed:false, dest:null, remoteSrc:null, remoteFor:null, kind:"voice-jar/1", mark0:null, mark1:null};
+const JAR={on:false, rec:null, cur:null, chunks:[], ctx:null, mime:"", t0:0, held:null, mixed:false, dest:null, remoteSrc:null, remoteFor:null, kind:"voice-jar/1", mark0:null, mark1:null, segMode:false};
 
 function jarPlugRemote(){
   if(!JAR.ctx||!JAR.dest) return;
@@ -1684,10 +1693,10 @@ function jarVideoMime(){ const cand=["video/webm;codecs=vp8,opus","video/webm","
 function jarTapeMark(){ const inSess=!!(NET.room||state.started||RP.active); return {tick:(inSess&&typeof NET.snapN==="number")?NET.snapN:null, ms:inSess?Math.round(state.t*1000):null}; }
 function walrusPut(bytes){ return fetch(WIN_PUBLISHER,{method:"PUT", body:bytes}).then(async r=>{ if(!r.ok) throw new Error("publisher "+r.status); const j=await r.json(); const id=(j.newlyCreated&&j.newlyCreated.blobObject&&j.newlyCreated.blobObject.blobId)||(j.alreadyCertified&&(j.alreadyCertified.blobId||(j.alreadyCertified.blobObject&&j.alreadyCertified.blobObject.blobId))); if(!id) throw new Error("no blobId in reply"); return id; }); }
 function jarUiBtn(){ const b=$("jarBtn"); if(!b) return; b.textContent=JAR.on?"⏺ JAR…":"● JAR"; b.classList.toggle("rec", JAR.on); }
-async function jarToggle(){ if(JAR.on){ jarStop(); } else { await jarStart(); } }
+async function jarToggle(){ if(ONAIR.on){ popText("📡 you're ON AIR — the show pours itself in segments; the jar button rests", 2600); return; } if(JAR.on){ jarStop(); } else { await jarStart(); } }
 async function jarStart(){
-  if(!window.MediaRecorder){ popText("🫙 this browser can't keep a jar — no MediaRecorder here", 2800); return; }
-  if(!TALK.mic){ popText("🫙 a jar keeps voices — tap 🎙 MIC first (that asks your permission), then ● JAR", 3200); return; }
+  if(!window.MediaRecorder){ popText("🫙 this browser can't keep a jar — no MediaRecorder here", 2800); return false; }
+  if(!TALK.mic){ popText("🫙 a jar keeps voices — tap 🎙 MIC first (that asks your permission), then ● JAR", 3200); return false; }
   try{
     if(!JAR.ctx) JAR.ctx=new (window.AudioContext||window.webkitAudioContext)();
     if(JAR.ctx.state==="suspended"){ try{ await JAR.ctx.resume(); }catch(e){} }
@@ -1695,64 +1704,161 @@ async function jarStart(){
     JAR.ctx.createMediaStreamSource(TALK.mic).connect(dest);
     JAR.mixed=false; JAR.remoteSrc=null; JAR.remoteFor=null;
     jarPlugRemote();
-    JAR.mark0=jarTapeMark();
+    // Per-recording context: a segment can close and seal while the NEXT
+    // segment is already recording — the two never share a chunk array.
+    const rc={chunks:[], chunksV:[], mime:"", mimeV:"", kind:"voice-jar/1", t0:Date.now(), mark0:jarTapeMark(), mark1:null, stops:1, seg:JAR.segMode};
+    JAR.cur=rc;
+    JAR.mark0=rc.mark0;
     const vTr=(FACE.on&&TALK.cam)?TALK.cam.getVideoTracks().filter(tr=>tr.readyState==="live"):[];
-    JAR.kind=vTr.length?"video-jar/1":"voice-jar/1";
+    rc.kind=vTr.length?"video-jar/1":"voice-jar/1";
+    JAR.kind=rc.kind;
     // David's track-separation law: the video rides right next to the audio,
     // timestamped together, but SEPARATE — never baked into one file, so the
     // edit stays a spatial scene across the voxel points. Face on -> TWO
     // recorders started on the same transport tick: video-only, audio-only.
     const mtA=jarMime(); const rec=new MediaRecorder(dest.stream, mtA?{mimeType:mtA}:undefined);
-    JAR.chunks=[]; JAR.rec=rec; JAR.mime=rec.mimeType||mtA||"audio/webm";
-    rec.ondataavailable=(e)=>{ if(e.data&&e.data.size) JAR.chunks.push(e.data); };
-    JAR.chunksV=[]; JAR.recV=null; JAR.mimeV=""; JAR._stops=1;
+    JAR.rec=rec; rc.mime=rec.mimeType||mtA||"audio/webm"; JAR.mime=rc.mime;
+    rec.ondataavailable=(e)=>{ if(e.data&&e.data.size) rc.chunks.push(e.data); };
     if(vTr.length){
       const mtV=jarVideoMime(); const recV=new MediaRecorder(new MediaStream(vTr), mtV?{mimeType:mtV}:undefined);
-      JAR.recV=recV; JAR.mimeV=recV.mimeType||mtV||"video/webm"; JAR._stops=2;
-      recV.ondataavailable=(e)=>{ if(e.data&&e.data.size) JAR.chunksV.push(e.data); };
-      recV.onstop=()=>{ if(--JAR._stops<=0) jarSeal(); };
+      JAR.recV=recV; rc.mimeV=recV.mimeType||mtV||"video/webm"; rc.stops=2;
+      recV.ondataavailable=(e)=>{ if(e.data&&e.data.size) rc.chunksV.push(e.data); };
+      recV.onstop=()=>{ if(--rc.stops<=0) jarSeal(rc); };
     }
-    rec.onstop=()=>{ if(--JAR._stops<=0) jarSeal(); };
-    JAR.t0=Date.now(); JAR.on=true; rec.start(1000); if(JAR.recV) JAR.recV.start(1000);
-    mqPub(talkTopic(), {type:"jar", tid:TALK.id, from:myName(), on:true, video:JAR.kind==="video-jar/1"});
-    jarUiBtn(); popText(JAR.kind==="video-jar/1"?"🫙 video jar open — face + voices kept as their own track, stamped to the tape":(JAR.mixed?"🫙 jar open — both voices are being kept, as their own track":"🫙 jar open — keeping this side's voice (theirs joins the mix when their voice connects)"), 2800);
-  }catch(e){ JAR.on=false; jarUiBtn(); popText("🫙 the jar wouldn't open ("+e.message+")", 2800); }
+    rec.onstop=()=>{ if(--rc.stops<=0) jarSeal(rc); };
+    JAR.t0=rc.t0; JAR.on=true; rec.start(1000); if(JAR.recV) JAR.recV.start(1000);
+    if(!rc.seg) mqPub(talkTopic(), {type:"jar", tid:TALK.id, from:myName(), on:true, video:rc.kind==="video-jar/1"});
+    jarUiBtn(); if(!rc.seg) popText(rc.kind==="video-jar/1"?"🫙 video jar open — face + voices kept as their own track, stamped to the tape":(JAR.mixed?"🫙 jar open — both voices are being kept, as their own track":"🫙 jar open — keeping this side's voice (theirs joins the mix when their voice connects)"), 2800);
+    return true;
+  }catch(e){ JAR.on=false; jarUiBtn(); popText("🫙 the jar wouldn't open ("+e.message+")", 2800); return false; }
 }
 function jarStop(){
-  if(!JAR.on) return; JAR.on=false; JAR.mark1=jarTapeMark();
-  mqPub(talkTopic(), {type:"jar", tid:TALK.id, from:myName(), on:false});
+  if(!JAR.on) return; JAR.on=false;
+  const rc=JAR.cur; if(rc) rc.mark1=jarTapeMark();
+  JAR.mark1=rc?rc.mark1:null;
+  if(!(rc&&rc.seg)) mqPub(talkTopic(), {type:"jar", tid:TALK.id, from:myName(), on:false});
   jarUiBtn();
   const rec=JAR.rec; JAR.rec=null;
   const recV=JAR.recV; JAR.recV=null;
   if(rec&&rec.state!=="inactive"){ try{ rec.stop(); }catch(e){} }
   if(recV&&recV.state!=="inactive"){ try{ recV.stop(); }catch(e){} }
 }
-async function jarSeal(){
-  const aBlob=new Blob(JAR.chunks, {type:JAR.mime}); JAR.chunks=[];
+async function jarSeal(rc){
+  if(!rc) return;
+  if(JAR.cur===rc) JAR.cur=null;
+  const aBlob=new Blob(rc.chunks, {type:rc.mime}); rc.chunks=[];
   const aBytes=new Uint8Array(await aBlob.arrayBuffer());
-  const parts=[{type:"audio", bytes:aBytes, mime:JAR.mime, sha256:sha256hex(aBytes), blob:null}];
-  if(JAR.kind==="video-jar/1"&&JAR.chunksV&&JAR.chunksV.length){
-    const vBlob=new Blob(JAR.chunksV, {type:JAR.mimeV}); JAR.chunksV=[];
+  const parts=[{type:"audio", bytes:aBytes, mime:rc.mime, sha256:sha256hex(aBytes), blob:null}];
+  if(rc.kind==="video-jar/1"&&rc.chunksV&&rc.chunksV.length){
+    const vBlob=new Blob(rc.chunksV, {type:rc.mimeV}); rc.chunksV=[];
     const vBytes=new Uint8Array(await vBlob.arrayBuffer());
-    parts.unshift({type:"video", bytes:vBytes, mime:JAR.mimeV, sha256:sha256hex(vBytes), blob:null});
+    parts.unshift({type:"video", bytes:vBytes, mime:rc.mimeV, sha256:sha256hex(vBytes), blob:null});
   }
   const main=parts[0];
-  const rec={kind:JAR.kind||"voice-jar/1", room:NET.room, from:myName(), startedAt:new Date(JAR.t0).toISOString(), durMs:Date.now()-JAR.t0, mime:main.mime, blob:null, sha256:main.sha256, tracks:parts.map(p=>({type:p.type, blob:null, sha256:p.sha256, mime:p.mime})), tapeTick0:JAR.mark0?JAR.mark0.tick:null, tapeMs0:JAR.mark0?JAR.mark0.ms:null, tapeTick1:JAR.mark1?JAR.mark1.tick:null, tapeMs1:JAR.mark1?JAR.mark1.ms:null, anchor:(typeof NET.snapN==="number")?{seq:NET.snapN, seal:NET.lastHash}:null};
-  JAR.held={parts, rec};
-  await jarPutHeld();
+  const tracks=parts.map(p=>({type:p.type, blob:null, sha256:p.sha256, mime:p.mime}));
+  let rec;
+  if(rc.seg){
+    rec={kind:"show-seg/1", room:NET.room, from:myName(), seq:ONAIR.seq, startedAt:new Date(rc.t0).toISOString(), durMs:Date.now()-rc.t0, mime:main.mime, blob:null, sha256:main.sha256, tracks:tracks, tapeMs0:rc.mark0?rc.mark0.ms:null, tapeMs1:rc.mark1?rc.mark1.ms:null, scoreStrip:onairScoreStrip()};
+  } else {
+    rec={kind:rc.kind||"voice-jar/1", room:NET.room, from:myName(), startedAt:new Date(rc.t0).toISOString(), durMs:Date.now()-rc.t0, mime:main.mime, blob:null, sha256:main.sha256, tracks:tracks, tapeTick0:rc.mark0?rc.mark0.tick:null, tapeMs0:rc.mark0?rc.mark0.ms:null, tapeTick1:rc.mark1?rc.mark1.tick:null, tapeMs1:rc.mark1?rc.mark1.ms:null, anchor:(typeof NET.snapN==="number")?{seq:NET.snapN, seal:NET.lastHash}:null};
+  }
+  const held={parts, rec};
+  if(rc.seg){
+    ONAIR.seq++;
+    jarPourSeg(held);
+    if(ONAIR.on){ onairSegStart(); } else { JAR.segMode=false; }
+  } else {
+    JAR.held=held;
+    await jarPutHeld();
+  }
+}
+async function jarPourOne(held){
+  for(let i=0;i<held.parts.length;i++){ const p=held.parts[i]; p.blob=await walrusPut(p.bytes); held.rec.tracks[i].blob=p.blob; }
+  const prim=held.rec.tracks.find(t=>t.type==="video")||held.rec.tracks.find(t=>t.type==="audio")||held.rec.tracks[0];
+  held.rec.blob=prim.blob; held.rec.sha256=prim.sha256; held.rec.mime=prim.mime;
+  const recBlob=await walrusPut(new TextEncoder().encode(JSON.stringify(held.rec)));
+  const shelf=jarShelf(); shelf.push(Object.assign({}, held.rec, {recordBlob:recBlob}));
+  try{ localStorage.setItem("cube-jars-v1", JSON.stringify(shelf)); }catch(e){}
+  return recBlob;
+}
+async function jarPourSeg(held){
+  ONAIR.pourQ.push(held);
+  if(ONAIR.pouring) return;
+  ONAIR.pouring=true;
+  try{
+    while(ONAIR.pourQ.length){
+      const h=ONAIR.pourQ.shift();
+      try{
+        const recBlob=await jarPourOne(h);
+        mqPub(talkTopic(), {type:"seg", rec:recBlob, seq:h.rec.seq});
+        renderJarList();
+        teleEvent("SHOW SEG","📡 segment "+h.rec.seq+" poured · record "+recBlob.slice(0,16)+"… · tracks "+h.rec.tracks.map(t=>t.type+":"+t.sha256.slice(0,8)).join(" + "));
+      }catch(e){
+        if(!JAR.held) JAR.held=h;
+        renderJarList();
+        popText("📡 a show segment didn't pour — it's held on this phone (🫙 JARS → RETRY)", 3600);
+      }
+    }
+  } finally { ONAIR.pouring=false; }
+}
+
+// ----- ON AIR (v1.9.5): the show leaves the room -----
+// David's broadcast layer — the GAME OF GAMES streaming face, not a Twitch
+// clone: while the host is ON AIR, the jar machinery runs in SEGMENT mode.
+// Every SEG_MS of tape time the current pour closes as a show-seg/1 record
+// (face track + voice track, separate blobs under one record, a score strip
+// riding along) and the room's talk topic announces it, so a watcher
+// anywhere can chase the pour segment by segment. The room stays the room;
+// the show is a layer that leaves it. Segments are shelf jars too — the
+// kind field tells them apart.
+const ONAIR={on:false, segMs:10000, seq:0, segT0:0, wall0:0, timer:null, pourQ:[], pouring:false};
+window.__ONAIR={setSegMs:(ms)=>{ if(typeof ms==="number"&&ms>=200) ONAIR.segMs=ms; return ONAIR.segMs; }, state:()=>({on:ONAIR.on, seq:ONAIR.seq, segMs:ONAIR.segMs, pouring:ONAIR.pouring, queued:ONAIR.pourQ.length})};
+function onairScoreStrip(){ return {p1Name:myName(), p1Score:state.bonks||0, p2Name:(NET.guest&&NET.guest.name)||"BUNNY 2", p2Score:NET.guest.bonks||0, round:state.round||1, clockSec:Math.round(state.t||0)}; }
+function onairNowMs(){ const m=jarTapeMark(); if(m&&typeof m.ms==="number") return m.ms; return Date.now()-ONAIR.wall0; }
+function onairUi(){ const b=$("airBtn"); if(!b) return; b.textContent=ONAIR.on?"📡 ON AIR…":"📡 ON AIR"; b.classList.toggle("on", ONAIR.on); }
+async function onairToggle(){ if(ONAIR.on){ onairStop(); } else { await onairStart(); } }
+async function onairStart(){
+  if(NET.role!=="host"){ popText("📡 only the host pours the show — the host's 📡 button runs the broadcast", 3000); return; }
+  if(!window.MediaRecorder){ popText("📡 this browser can't pour a show — no MediaRecorder here", 2800); return; }
+  if(!TALK.mic){ popText("📡 a show needs your voice — tap 🎙 MIC first (that asks your permission), then 📡 ON AIR", 3200); return; }
+  if(JAR.on){ popText("📡 a jar is open — close it first, then go ON AIR", 2600); return; }
+  ONAIR.on=true; ONAIR.seq=0; ONAIR.wall0=Date.now();
+  JAR.segMode=true;
+  mqPub(talkTopic(), {type:"onair", tid:TALK.id, from:myName(), on:true});
+  onairUi();
+  popText("📡 YOU ARE ON AIR — the show pours itself in segments; watchers chase the pour a few seconds behind", 3400);
+  teleEvent("ON AIR","📡 "+myName()+" is ON AIR in room "+NET.room+" · a segment every "+ONAIR.segMs+" ms of tape time");
+  await onairSegStart();
+  if(ONAIR.timer) clearInterval(ONAIR.timer);
+  ONAIR.timer=setInterval(onairTick, 200);
+}
+async function onairSegStart(){
+  if(!ONAIR.on) return;
+  const ok=await jarStart();
+  if(ok===false){ onairStop(true); return; }
+  ONAIR.segT0=onairNowMs();
+}
+function onairTick(){
+  if(!ONAIR.on||!JAR.on) return;
+  if(onairNowMs()-ONAIR.segT0>=ONAIR.segMs) jarStop();
+}
+function onairStop(silent){
+  if(!ONAIR.on) return;
+  ONAIR.on=false;
+  if(ONAIR.timer){ clearInterval(ONAIR.timer); ONAIR.timer=null; }
+  mqPub(talkTopic(), {type:"onair", tid:TALK.id, from:myName(), on:false});
+  onairUi();
+  if(JAR.on&&JAR.segMode) jarStop();
+  if(!silent) popText("📡 off air — the last segment is pouring", 2400);
+  teleEvent("ON AIR OFF","📡 broadcast stopped · "+ONAIR.seq+" segment(s) poured or pouring");
 }
 async function jarPutHeld(){
   const held=JAR.held; if(!held) return;
   try{
-    for(let i=0;i<held.parts.length;i++){ const p=held.parts[i]; p.blob=await walrusPut(p.bytes); held.rec.tracks[i].blob=p.blob; }
-    const prim=held.rec.tracks.find(t=>t.type===(held.rec.kind==="video-jar/1"?"video":"audio"))||held.rec.tracks[0];
-    held.rec.blob=prim.blob; held.rec.sha256=prim.sha256; held.rec.mime=prim.mime;
-    const blobId=prim.blob;
-    const recBlob=await walrusPut(new TextEncoder().encode(JSON.stringify(held.rec)));
-    const shelf=jarShelf(); shelf.push(Object.assign({}, held.rec, {recordBlob:recBlob}));
-    try{ localStorage.setItem("cube-jars-v1", JSON.stringify(shelf)); }catch(e){}
+    const recBlob=await jarPourOne(held);
+    const blobId=held.rec.blob;
     JAR.held=null; renderJarList();
-    addChat("🫙 JAR", (held.rec.kind==="video-jar/1"?"video":"voice")+" jar sealed — blob "+blobId.slice(0,10)+"… · record "+recBlob.slice(0,10)+"…", true);
+    addChat("🫙 JAR", (held.rec.kind==="show-seg/1"?"show segment":held.rec.kind==="video-jar/1"?"video":"voice")+" jar sealed — blob "+blobId.slice(0,10)+"… · record "+recBlob.slice(0,10)+"…", true);
     popText("🫙 Jar saved — "+blobId.slice(0,8)+"…", 2600);
     teleEvent("JAR SEALED","🫙 "+(held.rec.kind||"voice-jar/1")+" "+blobId.slice(0,16)+"… · "+(held.rec.durMs/1000).toFixed(1)+"s · tracks "+held.rec.tracks.map(t=>t.type+":"+t.sha256.slice(0,8)).join(" + ")+" · anchor seq "+(held.rec.anchor?held.rec.anchor.seq:"-"));
   }catch(e){
@@ -1767,7 +1873,7 @@ function renderJarList(){
   if(JAR.held){ const d=document.createElement("div"); d.className="jrow"; const sp=document.createElement("span"); sp.textContent="🫙 unsealed jar ("+(JAR.held.parts.reduce((a,p)=>a+p.bytes.length,0)/1024).toFixed(1)+" KB) — held on this phone"; const b=document.createElement("button"); b.textContent="RETRY"; b.onclick=()=>{ jarPutHeld(); }; d.appendChild(sp); d.appendChild(b); list.appendChild(d); }
   shelf.slice().reverse().forEach(en=>{
     const d=document.createElement("div"); d.className="jrow";
-    const sp=document.createElement("span"); sp.textContent=(en.kind==="video-jar/1"?"🎬 ":"🎙 ")+(en.from||"?")+" · "+new Date(en.startedAt).toLocaleTimeString()+" · "+(en.durMs/1000).toFixed(0)+"s · "+String(en.blob||"").slice(0,8)+"…";
+    const sp=document.createElement("span"); sp.textContent=(en.kind==="video-jar/1"?"🎬 ":en.kind==="show-seg/1"?"📡 ":"🎙 ")+(en.from||"?")+" · "+new Date(en.startedAt).toLocaleTimeString()+" · "+(en.durMs/1000).toFixed(0)+"s · "+String(en.blob||"").slice(0,8)+"…";
     const b=document.createElement("button"); b.textContent="▶ POUR"; b.onclick=()=>{ jarPlay(en, b); };
     d.appendChild(sp); d.appendChild(b); list.appendChild(d);
   });
@@ -1776,7 +1882,7 @@ function renderJarList(){
 async function jarPlay(en, btn){
   try{ if(btn) btn.textContent="⏳";
     const vTr=(en.tracks||[]).find(t=>t.type==="video"), aTr=(en.tracks||[]).find(t=>t.type==="audio");
-    if(en.kind==="video-jar/1"&&vTr&&aTr){
+    if((en.kind==="video-jar/1"||en.kind==="show-seg/1")&&vTr&&aTr){
       const v=$("jarVid"); if(!v) throw new Error("no video pour on this screen");
       const vb=await ladder(vTr.blob), ab=await ladder(aTr.blob);
       const a=new Audio(URL.createObjectURL(new Blob([ab.buf], {type:aTr.mime||"audio/webm"}))); a.volume=TALK.hear?1:0; window.__jarPlayedAudio=a;
@@ -1914,7 +2020,7 @@ function showBuildViewer(){
     const it={en, el:null, card:null, eye:true, ear:true, pan:null, gain:null, src:null, ready:false, spatial:false};
     SHOW.items.push(it);
     const chip=document.createElement("span"); chip.className="rpChip";
-    const nm=document.createElement("span"); nm.textContent=(en.kind==="video-jar/1"?"🎬 ":"🎙 ")+(en.from||"PLAYER");
+    const nm=document.createElement("span"); nm.textContent=(en.kind==="video-jar/1"?"🎬 ":en.kind==="show-seg/1"?"📡 ":"🎙 ")+(en.from||"PLAYER");
     const eb=document.createElement("button"); eb.textContent="👁"; eb.title="show / hide their face";
     const ab=document.createElement("button"); ab.textContent="👂"; ab.title="hear / mute their jar";
     eb.onclick=()=>{ it.eye=!it.eye; eb.classList.toggle("off",!it.eye); showCardVis(it); };
@@ -1926,7 +2032,7 @@ function showBuildViewer(){
 async function showLoadMedia(it, wrap){
   const en=it.en; if(!wrap) return;
   const card=document.createElement("div"); card.className="showCard"; it.card=card;
-  const cap=document.createElement("div"); cap.textContent=(en.kind==="video-jar/1"?"🎬 ":"🎙 ")+(en.from||"PLAYER")+" · "+new Date(en.startedAt).toLocaleTimeString();
+  const cap=document.createElement("div"); cap.textContent=(en.kind==="video-jar/1"?"🎬 ":en.kind==="show-seg/1"?"📡 ":"🎙 ")+(en.from||"PLAYER")+" · "+new Date(en.startedAt).toLocaleTimeString();
   card.appendChild(cap);
   const el=document.createElement("audio");
   el.preload="auto"; el.muted=!it.ear;
@@ -2426,7 +2532,7 @@ $("boardHallTop").addEventListener("click",()=>{ location.href="../blob-cinema/s
 $("boardHall").addEventListener("click",()=>{
   const ids=winChain.filter(r=>r.blob).map(r=>r.blob);
   if(!ids.length){ popText("no sealed records yet — finish a match first 🏆"); return; }
-  location.href="../blob-cinema/scores.html#cube="+ids.join(",");
+  location.href=hallUrl();
 });
 $("aboutClose").addEventListener("click",()=>{ $("aboutSheet").style.display="none"; });
 (function(){ const sh=$("aboutSheet"); if(sh) document.querySelectorAll("[data-about]").forEach(el=>sh.appendChild(el)); })();
