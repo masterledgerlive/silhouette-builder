@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>BUNNY CUBE v1.9.6 — BONK THE BULLIES + BLOB TALK + THE LIVE SHOW + ON AIR (a 3D world from Walrus blobs)</title>
+<title>BUNNY CUBE v1.9.7 — BONK THE BULLIES + BLOB TALK + THE LIVE SHOW + ON AIR (a 3D world from Walrus blobs)</title>
 <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/mqtt@5.10.1/dist/mqtt.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -210,7 +210,8 @@ grab apples, bonk them back. First to the banner takes the round.</p>
       <video id="jarVid" style="display:none" playsinline controls></video>
     </div>
     <div id="showBox"></div>
-    <div id="verTag">🧊 CUBE v1.9.6 · FACES THAT STAY</div>
+    <button id="joinDock" style="display:none;position:fixed;left:50%;transform:translateX(-50%);bottom:calc(100px + env(safe-area-inset-bottom));z-index:70;width:min(430px,94vw);min-height:68px;font-size:21px;font-weight:900;letter-spacing:.02em;color:#fff;background:#1faa3d;border:3px solid #baffc9;border-radius:16px;box-shadow:0 6px 24px rgba(0,0,0,.55);cursor:pointer;padding:10px 14px">🟢 JOIN THE GAME</button>
+    <div id="verTag">🧊 CUBE v1.9.7 · GRANDMA’S RUN</div>
     <button id="tiltBtn">🧭 TILT</button>
     <div id="joy"><div id="joyKnob"></div></div>
     <div id="pad"><span class="pip pU">▲</span><span class="pip pD">▼</span><span class="pip pL">◀</span><span class="pip pR">▶</span><div id="padKnob"></div></div>
@@ -225,20 +226,21 @@ grab apples, bonk them back. First to the banner takes the round.</p>
       <div id="howPanel">🕹️ <b>Pad</b> (bottom-left): push up = hop forward, slide = steer.<br>👀 Drag the meadow to look · 🍎 button throws.<br>🗺️ <b>The map</b> (top-right): ⚪ you · 🟠 <b>F</b>rank <b>R</b>inky <b>G</b>amera · 🔴 apples · 🌳 tree · 🟡 THE DOOR.<br>🎯 The gold line under your counts points at the nearest bully, with the distance.</div>
       <div id="linkPanel">
         <div style="font-weight:700;margin-bottom:4px">🔗 2-PLAYER LINK TEST</div>
+        <button class="lkBtn" id="panelPlay" style="display:none;width:100%;font-size:19px;font-weight:800;padding:14px;margin:4px 0 10px;background:#2e7d32;color:#fff;border-color:#4caf50">▶ PLAY — START THE ROUND</button>
+        <div id="roomRoster" style="display:none;margin:2px 0 8px;font-size:14.5px;line-height:1.45"></div>
+        <div id="joinDiv" style="margin:8px 0 2px">— or join a room —</div>
+        <input id="joinCode" placeholder="CODE" maxlength="5">
+        <select id="roleSel"><option value="bunny2">🐰 Bunny Two</option><option value="frank">😤 Frank — bad guy</option><option value="rinky">😤 Rinky — bad guy</option><option value="gamera">😤 Gamera — bad guy</option></select>
+        <button class="lkBtn" id="joinBtn">▶ JOIN</button>
         <button class="lkBtn" id="hostBtn">🏠 HOST A ROOM — you are Bunny</button>
         <div id="hostInfo" style="display:none;margin:4px 0">Room code: <b id="roomCode" style="font-size:21px;letter-spacing:.22em;color:#ffd76a"></b><br>
         <span class="small">Player 2 just scans this — it opens the BLOB LOADER, which fetches the game itself from the blob network, hash-checked, with the room code already in hand:</span>
         <div id="qrBox" style="margin:6px 0"></div>
         <span class="small">…or opens this link and taps JOIN:</span><br><span id="joinLink" class="mono" style="font-size:11px;word-break:break-all;color:#7ec3f2"></span></div>
-        <div id="joinDiv" style="margin:8px 0 2px">— or join a room —</div>
-        <input id="joinCode" placeholder="CODE" maxlength="5">
-        <select id="roleSel"><option value="bunny2">🐰 Bunny Two</option><option value="frank">😤 Frank — bad guy</option><option value="rinky">😤 Rinky — bad guy</option><option value="gamera">😤 Gamera — bad guy</option></select>
-        <button class="lkBtn" id="joinBtn">▶ JOIN</button>
         <div id="lobbyDiv" style="margin:10px 0 2px">— 🌍 anywhere test: open tables —</div>
         <button class="lkBtn" id="lobbyBtn">👀 LOOK FOR AN OPEN TABLE</button>
         <div id="lobbyList" class="small" style="margin-top:4px">Hosts announce their table here every few seconds — like a chess board waiting for a challenger. Tap one to join it from anywhere.</div>
         <div id="linkStatus" class="small" style="margin-top:8px">The relay passes only whispers — inputs, positions, seals. The world is already on both phones, from the blobs. The room code is the key: share it only with your player 2.</div>
-        <button class="lkBtn" id="panelPlay" style="display:none;width:100%;font-size:19px;font-weight:800;padding:14px;margin-top:10px;background:#2e7d32;color:#fff;border-color:#4caf50">▶ PLAY — START THE ROUND</button>
       </div>
       <div class="ssMenu">
         <div class="ssName">🏷️ YOUR NAME&nbsp; <input id="nameInput" maxlength="14" placeholder="BUNNY" autocomplete="off"></div>
@@ -1474,6 +1476,7 @@ $("playBtn").addEventListener("click",()=>{
   try{ const de=document.documentElement; if(de.requestFullscreen) de.requestFullscreen().catch(()=>{});
        if(screen.orientation && screen.orientation.lock) screen.orientation.lock("landscape").catch(()=>{}); }catch(e){}
   popText("🎬 ROUND "+state.round+" — grab a 🍎, bonk a bully!", 2600);
+  try{ for(const k of ["self","remote"]){ if(faceTrueStream(k)) faceBindTex(k); } faceEnsurePlaying("play"); facePlaneVis(); }catch(e){}
 });
 $("howBtn").addEventListener("click",()=>{
   const hp=$("howPanel");
@@ -1626,9 +1629,9 @@ function netEvBanner(m,s){ if(NET.role==="host") mqSend("down",{type:"ev", banne
 // network (the loader hash-checks before it opens anything), never on a stale
 // Pages copy. Re-pinned at ship time: g = this version's first PUT blob,
 // h = sha256 of the bytes that blob names.
-const PAGE_BLOB="i8HWl9PXfVtDb-tVyPSMJuBOtb-suwcgZ6AjBG9dw3o";
-const PAGE_SHA="82bedc5d6290511a5511abe1862371921cd243570c74c19b044dc93cc9b7d142";
-function jarQrText(room){ return "https://arcade.highscores.live/arcade/blob-loader.html?g="+PAGE_BLOB+"&h="+PAGE_SHA+"&n="+encodeURIComponent("BUNNY CUBE v1.9.6")+"&room="+room+"&join="+room; }
+const PAGE_BLOB="sDR2tq6aSZ6bEmEvezHwFR073eJNJpuAcEVqxQmQm7I";
+const PAGE_SHA="492e4b31000d6012e0ede6a13c07af46dfb2459a823f69e7d89e8e1e45f8d55c";
+function jarQrText(room){ return "https://arcade.highscores.live/arcade/blob-loader.html?g="+PAGE_BLOB+"&h="+PAGE_SHA+"&n="+encodeURIComponent("BUNNY CUBE v1.9.7")+"&room="+room+"&join="+room; }
 window.__CHATSEALS=[];
 const TALK={pc:null, mic:null, micOn:false, hear:true, remote:null, peerTid:null, watcher:false, _foreign:{}, id:"t"+Math.random().toString(36).slice(2,9)};
 function talkTopic(){ return mqTopic("talk"); }
@@ -1661,13 +1664,20 @@ function addChat(from, text, mine, meta){ const log=$("chatLog"); if(!log) retur
 function chatSeal(tid, from, text){ return sha256hex(new TextEncoder().encode(tid+"|"+from+"|"+text)); }
 function talkSendChat(){ const inp=$("chatIn"); const t=(inp.value||"").trim(); if(!t||!NET.room) return; inp.value=""; const from=myName(), seal=chatSeal(TALK.id, from, t); const el=addChat(from, t, true, {tid:TALK.id, seal}); __CHATSEALS.push({tid:TALK.id, from, text:t, seal, mine:true, echoed:false, echoBy:"", el}); mqPub(talkTopic(), {type:"chat", tid:TALK.id, from, seal, text:t}); }
 async function talkEnsurePc(){ if(TALK.pc&&(TALK.pc.signalingState==="closed"||TALK.pc.connectionState==="closed")){ try{ TALK.pc.close(); }catch(e){} TALK.pc=null; } if(TALK.pc) return TALK.pc; const pc=new RTCPeerConnection({iceServers:[{urls:"stun:stun.l.google.com:19302"}]}); TALK.pc=pc; talkWatchdog();
+  // v1.9.7 — a pc is SHARED infrastructure: whoever births it restores EVERY
+  // channel the user has switched on, so a toggle that finds the pc closed
+  // can never silently drop a sibling (a FACE press killing the mic, a MIC
+  // press stranding the camera). talkResurrect's own re-add dedups against
+  // this via its getSenders checks.
+  if(TALK.mic){ for(const tr of TALK.mic.getAudioTracks()){ try{ pc.addTrack(tr, TALK.mic); tr.enabled=TALK.micOn; }catch(e){} } }
+  if(FACE.on&&TALK.cam){ for(const tr of TALK.cam.getVideoTracks()){ try{ const sd0=pc.addTrack(tr, TALK.cam); if(sd0) TALK._vSender=sd0; }catch(e){} } }
   pc.oniceconnectionstatechange=()=>{ if(pc._dead) return; const st=pc.iceConnectionState; if(st==="disconnected") talkNoteDown("ice-disconnected"); else if(st==="failed") talkResurrect("ice-failed"); else if(st==="closed") talkResurrect("ice-closed"); else if((st==="connected"||st==="completed")&&TALK._down){ TALK._down=false; TALK.attempts=0; popText("link back", 1600); } };
   pc.onconnectionstatechange=()=>{ if(pc._dead) return; const st=pc.connectionState; if(st==="failed") talkResurrect("conn-failed"); else if(st==="closed") talkResurrect("conn-closed"); else if(st==="connected"&&TALK._down){ TALK._down=false; TALK.attempts=0; popText("link back", 1600); } };
   pc.onsignalingstatechange=()=>{ if(pc._dead) return; if(pc.signalingState==="closed") talkResurrect("sig-closed"); };
   pc.onicecandidate=(e)=>{ if(e.candidate) mqPub(talkTopic(), {type:"rtc-ice", tid:TALK.id, cand:e.candidate.toJSON()}); };
   pc.ontrack=(e)=>{ const tr=e.track; if(!tr) return;
     if(tr.kind==="video"){ const st=(e.streams&&e.streams[0])||new MediaStream([tr]); FACE.remoteStream=st; FACE.remoteOn=true; faceBindCopy("remote","tile",$("faceRemoteVid")); faceBindTex("remote"); faceWatchdogStart(); faceTiles(); tr.onunmute=()=>faceEnsurePlaying("unmute"); tr.onended=()=>{ FACE.remoteOn=false; faceTiles(); facePlaneVis(); }; popText("📷 their face is on the meadow", 2000); return; }
-    const a=$("talkAudio"); if(a&&e.streams&&e.streams[0]){ TALK.remote=e.streams[0]; a.srcObject=e.streams[0]; a.volume=TALK.hear?1:0; popText("🔊 voice connected — they're on the meadow radio", 2400); tr.onended=()=>{ talkResurrect("track-ended"); }; try{ if(JAR.on) jarPlugRemote(); }catch(_){} } };
+    const a=$("talkAudio"); if(a&&e.streams&&e.streams[0]){ TALK.remote=e.streams[0]; a.srcObject=e.streams[0]; a.volume=TALK.hear?1:0; popText("🔊 voice connected — they're on the meadow radio", 2400); tr.onended=()=>{ teleEvent("TALK","🔊 their voice track ended — that is THEIR toggle, not a broken link; the shared pc and the face channel are left exactly as they are (v1.9.7: a single track ending never rebuilds the pc)"); }; try{ if(JAR.on) jarPlugRemote(); }catch(_){} } };
   pc.onnegotiationneeded=async ()=>{ if(TALK._off||TALK.watcher) return; TALK._off=true; try{ const off=await pc.createOffer(); await pc.setLocalDescription(off); mqPub(talkTopic(), {type:"rtc-offer", tid:TALK.id, sdp:pc.localDescription}); }catch(e){} TALK._off=false; };
   return pc; }
 async function talkMicToggle(){ try{
@@ -1683,7 +1693,7 @@ async function talkMicToggle(){ try{
 // sharing the session). So a drop is treated as weather, not as an event:
 // the resurrection layer rebuilds the link itself, politely, with backoff,
 // and the wave is not lost -- a jar in progress re-plugs the new stream. -----
-function talkWanted(){ return !!(NET.room && (TALK.micOn || TALK.hear)); }
+function talkWanted(){ return !!(NET.room && (TALK.micOn || TALK.hear || FACE.on)); } // v1.9.7: FACE is a channel too — link supervision stays alive in a face-only state; one toggle never silently unwatches the others
 function talkNoteDown(why){ if(!talkWanted() || TALK._grace) return; popText("📻 link wobbling — holding…", 1500); TALK._grace=setTimeout(()=>{ TALK._grace=null; if(!TALK.pc) talkResurrect(why); else if(TALK.pc.iceConnectionState==="disconnected"||TALK.pc.iceConnectionState==="failed") talkResurrect(why); }, 2000); }
 function talkWatchdog(){ if(TALK._wd) return; TALK._wd=setInterval(()=>{ if(TALK._resing||!talkWanted()) return; const pc=TALK.pc; if(!pc){ talkResurrect("watchdog-nopc"); return; } const bad=(v)=>v==="closed"||v==="failed"; if(bad(pc.signalingState)||bad(pc.connectionState)||bad(pc.iceConnectionState)) talkResurrect("watchdog"); }, 3000); }
 async function talkResurrect(why){
@@ -1698,13 +1708,14 @@ async function talkResurrect(why){
   try{
     const pc=await talkEnsurePc();
     if(TALK.mic){ for(const tr of TALK.mic.getAudioTracks()){ if(!pc.getSenders().some(sd=>sd.track===tr)){ pc.addTrack(tr, TALK.mic); tr.enabled=TALK.micOn; } } }
-    if(FACE.on&&TALK.cam){ for(const tr of TALK.cam.getVideoTracks()){ if(!pc.getSenders().some(sd=>sd.track===tr)) pc.addTrack(tr, TALK.cam); } }
+    if(FACE.on&&TALK.cam){ for(const tr of TALK.cam.getVideoTracks()){ if(!pc.getSenders().some(sd=>sd.track===tr)){ const sd=pc.addTrack(tr, TALK.cam); if(sd) TALK._vSender=sd; } } }
     faceEnsurePlaying("resurrect");
     teleEvent("TALK RESURRECT", "📻 talk link rebuilt ("+why+", attempt "+TALK.attempts+") — his toggles untouched: mic "+(TALK.micOn?"ON":"off")+", hear "+(TALK.hear?"ON":"off"));
   }catch(e){}
   TALK._resing=false;
 }
 async function onTalkMsg(t, m){ if(!NET.room||t!==talkTopic()) return; let msg; try{ msg=JSON.parse(m.toString()); }catch(e){ return; } if(msg.tid===TALK.id) return;
+  if(msg.from&&(msg.type==="chat"||msg.type==="face")){ (TALK.peerNames||(TALK.peerNames={}))[msg.tid]=String(msg.from).slice(0,14); }
   if(msg.type==="face"){ const pr=FACE.peers[msg.tid]||(FACE.peers[msg.tid]={name:msg.from||"THEM", on:false}); const wasOn=pr.on; pr.on=!!msg.on; if(msg.from) pr.name=msg.from; if(TALK.peerTid&&msg.tid!==TALK.peerTid){ if(pr.on!==wasOn) popText("📷 "+pr.name+(pr.on?" turned their face on — they are watching, so their face stays on their own screen":" turned their face off"), 2400); return; } FACE.remoteOn=!!msg.on; if(!FACE.remoteOn){ faceDropCopy("remote","tile"); faceDropCopy("remote","tex"); const rv=$("faceRemoteVid"); if(rv) rv.srcObject=null; if(FACE.texEl.remote) FACE.texEl.remote.srcObject=null; } else faceEnsurePlaying("gossip"); faceTiles(); facePlaneVis(); popText(msg.on?"📷 "+(msg.from||"they")+" turned their face on — say hi":"📷 "+(msg.from||"they")+" turned their face off", 2000); return; }
   if(msg.type==="jar"){ const ind=$("jarInd"); if(msg.on){ if(ind){ ind.style.display="block"; ind.textContent="● "+(msg.from||"A PLAYER")+" is jarring this room"+(msg.video?" (face + voice)":"")+" — the show is being kept as its own track"; } popText("● "+(msg.from||"a player")+" opened a jar on this room", 2200); } else if(ind){ ind.style.display="none"; ind.textContent=""; } return; }
   if(msg.type==="coverage"&&msg.receipt){ const r=msg.receipt; teleEvent("COVERAGE","📡 coverage receipt from "+(msg.from||"the host")+" · "+r.segments+" segment(s) · tape ["+r.coveredFrom+"…"+r.coveredTo+"] ms · "+((r.gaps&&r.gaps.length)?("⚠ "+r.gaps.length+" gap(s) flagged · "+r.gapMs+" ms uncovered"):("full coverage ✓"))); return; }
@@ -2055,6 +2066,7 @@ function faceEnsurePlaying(why){
   for(const key of ["self","remote"]){
     const on=key==="self"?FACE.on:FACE.remoteOn; if(!on) continue;
     const tt=faceTrueTrack(key); if(!tt||tt.readyState!=="live") continue;
+    if(!FACE.tex[key]) faceBindTex(key);
     for(const consumer of ["tile","tex"]){
       const c=FACE.copies[key][consumer];
       const cel=consumer==="tile"?(key==="self"?$("faceSelfVid"):$("faceRemoteVid")):FACE.texEl[key];
@@ -2069,6 +2081,17 @@ function faceEnsurePlaying(why){
           continue;
         }
       } else if(FACE._stall[key+":"+consumer]) FACE._stall[key+":"+consumer]=0;
+      if(c&&cel&&cel.srcObject&&cel.readyState>=2&&!cel.paused){
+        const skf=key+":"+consumer, ctn=cel.currentTime;
+        if(!FACE._ctMap) FACE._ctMap={};
+        if(!FACE._frz) FACE._frz={};
+        const prv=FACE._ctMap[skf];
+        if(prv!==undefined&&Math.abs(ctn-prv)<0.01){
+          FACE._frz[skf]=(FACE._frz[skf]||0)+1;
+          if(FACE._frz[skf]>=2){ FACE._frz[skf]=0; faceBindCopy(key, consumer, cel); if(consumer==="tex") faceBindTex(key); teleEvent("COPYCAT","♻ a "+key+" "+consumer+" copy froze mid-stream while NOT paused (a starved copy — the field's silent freeze) — disposed and re-cloned from the true track ("+(why||"watchdog")+")"); }
+        } else FACE._frz[skf]=0;
+        FACE._ctMap[skf]=ctn;
+      }
       if(c&&c.track.readyState!=="live"){
         const el=consumer==="tile"?(key==="self"?$("faceSelfVid"):$("faceRemoteVid")):FACE.texEl[key];
         faceBindCopy(key, consumer, el);
@@ -2099,7 +2122,7 @@ async function faceToggle(){
   try{
     if(FACE.on){
       FACE.on=false;
-      if(TALK.pc){ for(const sd of [...TALK.pc.getSenders()]){ if(sd.track&&sd.track.kind==="video"){ try{ TALK.pc.removeTrack(sd); }catch(e){} } } }
+      if(TALK.pc){ const sd=(TALK._vSender&&TALK.pc.getSenders().includes(TALK._vSender))?TALK._vSender:TALK.pc.getSenders().find(s2=>s2.track&&s2.track.kind==="video"); if(sd){ let done=false; try{ const r=sd.replaceTrack(null); if(r&&r.catch) r.catch(()=>{ try{ TALK.pc.removeTrack(sd); }catch(e){} }); done=true; }catch(e){} if(!done){ try{ TALK.pc.removeTrack(sd); }catch(e){} } } }
       if(TALK.cam){ for(const tr of TALK.cam.getTracks()) tr.stop(); TALK.cam=null; }
       faceDropCopy("self","tile"); faceDropCopy("self","tex");
       const sv=$("faceSelfVid"); if(sv) sv.srcObject=null;
@@ -2111,7 +2134,7 @@ async function faceToggle(){
       const st=await navigator.mediaDevices.getUserMedia({video:{facingMode:"user"}});
       TALK.cam=st; FACE.on=true;
       const pc=await talkEnsurePc();
-      for(const tr of st.getVideoTracks()){ if(!pc.getSenders().some(sd=>sd.track===tr)) pc.addTrack(tr, st); }
+      for(const tr of st.getVideoTracks()){ if(pc.getSenders().some(sd=>sd.track===tr)) continue; const vs=(TALK._vSender&&pc.getSenders().includes(TALK._vSender)&&!TALK._vSender.track)?TALK._vSender:null; if(vs){ try{ const r=vs.replaceTrack(tr); if(r&&r.catch) r.catch(()=>{ try{ TALK._vSender=pc.addTrack(tr, st); }catch(e){} }); }catch(e){ try{ TALK._vSender=pc.addTrack(tr, st); }catch(e2){} } } else { try{ const sd2=pc.addTrack(tr, st); if(sd2) TALK._vSender=sd2; }catch(e){} } }
       if(!pc.getTransceivers().some(tr=>tr.receiver&&tr.receiver.track.kind==="audio")) pc.addTransceiver("audio",{direction:"recvonly"});
       faceBindCopy("self","tile",$("faceSelfVid"));
       faceBindTex("self");
@@ -2141,7 +2164,7 @@ function faceTexEl(key){
   // parked: tiny, ~invisible, off-viewport, but RENDERING — never
   // display:none (browsers freeze those) and never in the visible layout
   // (v1.9.5's detached source could surface as a stray face mid-meadow).
-  el.style.cssText="position:fixed;left:-64px;top:8px;width:16px;height:16px;opacity:0.02;pointer-events:none;z-index:-1";
+  el.style.cssText="position:fixed;left:-96px;top:8px;width:48px;height:48px;opacity:0.02;pointer-events:none;z-index:-1";
   document.body.appendChild(el);
   FACE.texEl[key]=el;
   return el;
@@ -2166,10 +2189,53 @@ function faceBindTex(key){
   }, 300);
   setTimeout(()=>clearInterval(iv), 8000);
 }
-function facePlaneVis(){
-  const sp=FACE.planes.self, rp=FACE.planes.remote;
-  if(sp) sp.setAttribute("visible", (FACE.mask&&FACE.on)?"true":"false");
-  if(rp) rp.setAttribute("visible", (FACE.mask&&FACE.remoteOn)?"true":"false");
+function facePresent(key){
+  if(key==="self") return NET.role!=="solo"||FACE.on;
+  if(NET.role==="host") return !!(NET.guest&&NET.guest.joined);
+  if(NET.role==="guest") return !!NET.welcomed;
+  return !!TALK.peerTid;
+}
+function faceNameTex(key){
+  let nm;
+  if(key==="self") nm=myName();
+  else if(NET.role==="host") nm=(NET.guest&&NET.guest.name)||"BUNNY 2";
+  else { const pn=peerName(NET.hostTid); nm=(pn&&pn!=="PLAYER 2")?pn:"BUNNY · P1"; }
+  nm=String(nm||"BUNNY").slice(0,14);
+  if(!FACE.nameTex) FACE.nameTex={};
+  if(!FACE.nameTexName) FACE.nameTexName={};
+  if(FACE.nameTex[key]&&FACE.nameTexName[key]===nm) return FACE.nameTex[key];
+  const cv=document.createElement("canvas"); cv.width=256; cv.height=304;
+  const g=cv.getContext("2d");
+  g.fillStyle="#1b2440"; g.fillRect(0,0,256,304);
+  g.strokeStyle="#ffd76a"; g.lineWidth=10; g.strokeRect(5,5,246,294);
+  g.textAlign="center";
+  g.fillStyle="#ffe9a8"; g.font="900 88px system-ui"; g.fillText("🐰",128,126);
+  g.fillStyle="#ffffff"; g.font="800 38px system-ui";
+  const words=nm.split(" "); const lines=[]; let line="";
+  for(const w of words){ const t=(line+" "+w).trim(); if(t.length>9&&line){ lines.push(line); line=w; } else line=t; }
+  if(line) lines.push(line);
+  lines.slice(0,3).forEach((L,i)=>g.fillText(L,128,198+i*44));
+  const tx=new THREE.CanvasTexture(cv); try{ tx.colorSpace=THREE.SRGBColorSpace; }catch(e){}
+  FACE.nameTex[key]=tx; FACE.nameTexName[key]=nm;
+  return tx;
+}
+function facePlaneState(){
+  for(const key of ["self","remote"]){
+    const el=FACE.planes[key]; if(!el) continue;
+    const on=key==="self"?FACE.on:FACE.remoteOn;
+    const vidOk=!!(on&&FACE.tex[key]&&FACE.texEl[key]&&FACE.tex[key].image===FACE.texEl[key]);
+    const vis=FACE.mask&&(vidOk||facePresent(key));
+    el.setAttribute("visible", vis?"true":"false");
+    if(!vis) continue;
+    const mesh=el.getObject3D&&el.getObject3D("mesh");
+    if(mesh){ const want=vidOk?FACE.tex[key]:faceNameTex(key); if(!mesh.material||mesh.material.map!==want) mesh.material=new THREE.MeshBasicMaterial({map:want}); }
+  }
+}
+function facePlaneVis(){ facePlaneState(); }
+function facePresenceTick(){
+  if(!state.ready||!FACE.mask) return;
+  for(const key of ["self","remote"]){ if(facePresent(key)&&!FACE.planes[key]) facePlane(key); }
+  facePlaneVis();
 }
 const _fv=new THREE.Vector3(), _fp=new THREE.Vector3();
 function faceCharEnt(key){
@@ -2188,8 +2254,8 @@ function faceRide(key){
 }
 function faceTick(){
   if(!FACE.mask||!state.ready) return;
-  if(FACE.on&&FACE.planes.self) faceRide("self");
-  if(FACE.remoteOn&&FACE.planes.remote) faceRide("remote");
+  if(FACE.planes.self&&(FACE.on||facePresent("self"))) faceRide("self");
+  if(FACE.planes.remote&&(FACE.remoteOn||facePresent("remote"))) faceRide("remote");
 }
 
 // ----- THE VIEWER: jars pinned to a tape become the show -----
@@ -2659,6 +2725,7 @@ function netTick(dt){
     }
   }
   if(NET.tele.mode!=="off" && performance.now()-NET.tele.lastRender>600){ NET.tele.lastRender=performance.now(); renderTele(); }
+  if(performance.now()-(NET._rosT||0)>1000){ NET._rosT=performance.now(); renderRoster(); joinDockUpdate(); try{ facePresenceTick(); }catch(e){} }
 }
 $("hostBtn").addEventListener("click",hostRoom);
 $("joinBtn").addEventListener("click",joinRoom);
@@ -2696,6 +2763,45 @@ function lobbyListen(){
   });
 }
 $("panelPlay").addEventListener("click",()=>{ $("linkPanel").style.display="none"; if(!state.started) $("playBtn").click(); });
+// ----- v1.9.7 · DEFECT 2 (the invisible join): waiting-room state awareness.
+// Grandma Suzie was CONNECTED and TALKING from Phoenix but never found the
+// green button (it sat at the bottom of a scrollable panel), so she never
+// took her seat and the game never started. Now: (1) an unseated guest gets
+// a GIANT docked JOIN THE GAME button that cannot scroll away, tapping it
+// re-sends the exact existing join knock; once seated it becomes the PLAY
+// button itself. (2) BOTH panels carry a roster that says plainly who is
+// "talking in the waiting room" vs "in the game", so the host can see a
+// guest is present-but-not-seated and talk them onto the green button.
+function peerName(tid){ if(!tid) return "PLAYER 2"; const p=FACE.peers&&FACE.peers[tid]; if(p&&p.name) return p.name; if(TALK.peerNames&&TALK.peerNames[tid]) return TALK.peerNames[tid]; return "PLAYER 2"; }
+function renderRoster(){
+  const el=$("roomRoster"); if(!el) return;
+  if(NET.role==="solo"||!NET.room){ if(el.style.display!=="none"){ el.style.display="none"; el.innerHTML=""; el._h=""; } return; }
+  const esc=t=>String(t).replace(/[&<>"]/g,"");
+  const rows=[];
+  if(NET.role==="host"){
+    rows.push("🏠 YOU — hosting this room");
+    if(NET.guest&&NET.guest.joined) rows.push("🎮 "+esc(NET.guest.name||"PLAYER 2")+" — IN THE GAME ✓");
+    else if(TALK.peerTid) rows.push("💬 "+esc(peerName(TALK.peerTid))+" — talking in the waiting room, NOT in the game yet · tell them: tap the big green 🟢 JOIN THE GAME button at the bottom of their screen");
+    else if(FACE.peers&&Object.keys(FACE.peers).length) rows.push("💬 someone is talking in the waiting room — not in the game yet");
+    else rows.push("… waiting for Player 2 — send them the code or the QR");
+  } else if(NET.role==="guest"){
+    rows.push(NET.welcomed?("🎮 YOU — IN THE GAME ✓ · playing as "+esc(NET.meRole||"bunny2")):("💬 YOU — in the waiting room"+(TALK.peerTid?", talking with the host":"")+" · not in the game yet"));
+    rows.push(NET.welcomed?"🏠 the host — you're both in ✓":"🏠 the host — tap the big green 🟢 JOIN THE GAME button below to take your seat");
+  }
+  const html=rows.map(r=>'<div style="padding:4px 2px;border-bottom:1px dashed rgba(255,255,255,.16)">'+r+"</div>").join("");
+  if(el._h!==html){ el._h=html; el.innerHTML=html; }
+  el.style.display="block";
+}
+function joinDockUpdate(){
+  const b=$("joinDock"); if(!b) return;
+  let mode="";
+  if(NET.role==="guest"&&NET.room&&!NET.watcher&&!state.started){ mode=NET.welcomed?(NET._dockDone?"":"in"):"join"; }
+  if(!mode){ if(b.style.display!=="none") b.style.display="none"; return; }
+  b.style.display="block";
+  if(mode==="join"){ const asking=TALK._dockAsk&&(Date.now()-TALK._dockAsk<4000); b.textContent=asking?"🟢 KNOCK SENT — the host is opening your seat…":"🟢 JOIN THE GAME"; b.style.background="#1faa3d"; }
+  else { b.textContent="✓ YOU'RE IN THE GAME — TAP TO PLAY ▶"; b.style.background="#2e7d32"; }
+}
+{ const jd=$("joinDock"); if(jd) jd.addEventListener("click",()=>{ if(NET.role!=="guest") return; if(!NET.welcomed){ TALK._dockAsk=Date.now(); try{ mqSend("up",{type:"join", role:NET.meRole, name:myName(), tid:TALK.id}); }catch(e){} popText("🟢 knock sent — the host is opening your seat…", 2400); joinDockUpdate(); } else { NET._dockDone=true; joinDockUpdate(); $("linkPanel").style.display="none"; if(!state.started) $("playBtn").click(); } }); }
 $("linkBtn").addEventListener("click",()=>{
   const p=$("linkPanel"), on=p.style.display==="block";
   p.style.display=on?"none":"block";
