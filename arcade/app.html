@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>GET THE ARCADE APP — Koda Kai Arcade</title>
+<link rel="manifest" href="manifest.webmanifest"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="theme-color" content="#0b0e1a"/>
+<link rel="apple-touch-icon" href="icons/icon-180.png"/>
+<link rel="icon" type="image/png" href="icons/icon-192.png"/>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;background:#0b0e1a;color:#e8e0c8;font-family:Georgia,serif;
+       padding:calc(18px + env(safe-area-inset-top)) 20px calc(28px + env(safe-area-inset-bottom));
+       max-width:640px;margin-left:auto;margin-right:auto;line-height:1.55}
+  h1{font-size:26px;font-weight:normal;letter-spacing:1px;color:#f5b942;text-align:center;margin:10px 0 4px}
+  .sub{text-align:center;color:#9fb6cc;font-size:14px;margin:0 0 20px}
+  .icon{display:block;margin:14px auto 4px;width:96px;height:96px;border-radius:22px}
+  .card{background:#12172b;border:1px solid #2a3358;border-radius:16px;padding:18px 18px 14px;margin:16px 0}
+  .card h2{font-size:19px;font-weight:normal;color:#ffd977;margin:0 0 8px}
+  .card p{margin:6px 0;font-size:16px}
+  .steps{font-size:17px;margin:8px 0 8px 22px;padding:0}
+  .steps li{margin:10px 0}
+  .btn{display:block;text-align:center;background:#f5b942;color:#0b0e1a;text-decoration:none;
+       font-size:18px;border-radius:12px;padding:14px 12px;margin:10px 0;border:none;width:100%;cursor:pointer;font-family:Georgia,serif}
+  .btn.ghost{background:transparent;color:#f5b942;border:1px solid #f5b942}
+  .pill{display:block;text-align:center;font-size:14px;color:#9fb6cc;border:1px solid #2a3358;
+        border-radius:999px;padding:6px 12px;margin:0 auto 6px;width:fit-content;max-width:100%}
+  #testOut{font-size:16px;margin-top:10px;white-space:pre-line}
+  #testVid{width:100%;border-radius:12px;margin-top:10px;display:none;background:#000}
+  .small{font-size:13px;color:#9fb6cc}
+  .hidden{display:none}
+</style>
+</head>
+<body>
+<img class="icon" src="icons/icon-192.png" alt="Arcade icon — gold wave on deep navy"/>
+<h1>GET THE ARCADE APP</h1>
+<p class="sub">One icon on your home screen. Inside it, the Arcade is a window of its own —<br/>and windows of our own are where cameras and microphones are allowed to work.</p>
+<span class="pill" id="wherePill">checking which window this is…</span>
+
+<div class="card hidden" id="stateSheet">
+  <h2>⚠ You’re in a preview window</h2>
+  <p>This page opened inside another app’s preview sheet. That kind of window <b>blocks cameras and microphones by rule</b> — no game or room can reach them from in here, and it isn’t the game’s fault.</p>
+  <p>First step: get this page into <b>Safari</b>. Tap the <b>compass icon</b> at the bottom of this sheet (or the Share button → “Open in Safari”). Then come back to this page there and follow the steps below.</p>
+</div>
+
+<div class="card hidden" id="stateBrowser">
+  <h2>Put the Arcade on your home screen</h2>
+  <p>You’re in a browser — good, this window can install the app. Three taps:</p>
+  <ol class="steps">
+    <li>Tap the <b>Share button</b> — the square with an arrow pointing up, at the bottom of Safari.</li>
+    <li>Scroll the list and tap <b>“Add to Home Screen.”</b></li>
+    <li>Tap <b>Add</b> in the top corner.</li>
+  </ol>
+  <p>Then close this tab and open the Arcade from the new <b>gold-wave icon</b> on your home screen. Inside it, your camera and mic work like they should — faces over avatars, voices in the room.</p>
+  <p class="small">On other phones/browsers the same door is usually in the ⋮ menu: “Add to Home screen” or “Install app.”</p>
+</div>
+
+<div class="card hidden" id="stateApp">
+  <h2>✓ You’re in the Arcade app</h2>
+  <p>This window is ours — standalone, off your home screen. Cameras and microphones are allowed in here (your phone will still ask once, per permission — tap Allow).</p>
+  <p>Prove it to yourself with the test below, then walk in:</p>
+  <a class="btn" href="https://arcade.highscores.live/arcade/room.html">🏛️ ENTER THE ROOM</a>
+  <a class="btn ghost" href="https://arcade.highscores.live/arcade/blob-loader.html?g=bsk6xDKhv4zX8-FGfiXtW9pQVQiIsgWS_uImpPveato&amp;h=77178b3900f6f41808e1010b968de7301df40e69a2928a65b08c04481934cee8&amp;n=BUNNY%20CUBE">🐰 BUNNY CUBE</a>
+  <a class="btn ghost" href="https://arcade.highscores.live/arcade/blob-comms-demo.html">📟 BLOB COMMS DEMO</a>
+</div>
+
+<div class="card" id="testCard">
+  <h2>🎥 Test this window</h2>
+  <p>Nothing is recorded or sent anywhere — this only asks your phone whether <i>this window</i> may see the camera and hear the mic, shows you your own face for a moment, and lets go.</p>
+  <button class="btn" id="testBtn" type="button">TEST CAMERA &amp; MIC</button>
+  <video id="testVid" autoplay playsinline muted></video>
+  <p id="testOut">Not tested yet.</p>
+</div>
+
+<p class="small" style="text-align:center">The Arcade app is a <i>window</i>, not an offline engine — the games and rooms still pour in over the blob network exactly as they do today. The window is what changes: it belongs to the Arcade, so no other app’s preview sheet can stand between you and your camera.</p>
+
+<script>
+(function(){
+'use strict';
+var standalone = (window.navigator.standalone === true) ||
+  (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
+var ua = navigator.userAgent || '';
+var ios = /iphone|ipad|ipod/i.test(ua);
+var hasSafariToken = /Safari\//.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS/.test(ua);
+var opaque = (location.protocol === 'blob:') || (window.location.origin === 'null');
+// Heuristic: an iOS page with no real Safari token, or an opaque origin,
+// is almost certainly an app sheet / webview, not a browser.
+var sheet = !standalone && (opaque || (ios && !hasSafariToken) ||
+  /(FBAN|FBAV|Instagram|Line|Twitter|MicroMessenger)/.test(ua));
+var pill = document.getElementById('wherePill');
+function show(id){ document.getElementById(id).classList.remove('hidden'); }
+if (standalone) {
+  pill.textContent = '✓ THIS WINDOW: the Arcade app (standalone)';
+  show('stateApp');
+} else if (sheet) {
+  pill.textContent = '⚠ THIS WINDOW: a preview sheet / webview — cameras blocked here';
+  show('stateSheet');
+} else {
+  pill.textContent = 'THIS WINDOW: a browser tab — install the app from here';
+  show('stateBrowser');
+}
+
+var out = document.getElementById('testOut');
+var vid = document.getElementById('testVid');
+var stream = null;
+document.getElementById('testBtn').addEventListener('click', async function(){
+  out.textContent = 'asking your phone…';
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    out.textContent = '📷 Camera: BLOCKED — this window does not offer media at all.\n🎙 Mic: BLOCKED — same reason.\nThis is the preview-window trap. Open this page in Safari (or in the Arcade app) and test again.';
+    return;
+  }
+  var lines = [];
+  try {
+    var vs = await navigator.mediaDevices.getUserMedia({video:true});
+    stream = vs; vid.srcObject = vs; vid.style.display = 'block';
+    lines.push('📷 Camera: WORKS ✓ — that is you, live, below.');
+    setTimeout(function(){ if (stream) { stream.getTracks().forEach(function(t){ t.stop(); }); vid.style.display='none'; } }, 6000);
+  } catch(e) {
+    lines.push('📷 Camera: REFUSED (' + (e && e.name || 'error') + ') — if you are in a preview window, that window is the wall. In Safari or the Arcade app, tap Allow when asked.');
+  }
+  try {
+    var as = await navigator.mediaDevices.getUserMedia({audio:true});
+    as.getTracks().forEach(function(t){ t.stop(); });
+    lines.push('🎙 Mic: WORKS ✓');
+  } catch(e) {
+    lines.push('🎙 Mic: REFUSED (' + (e && e.name || 'error') + ') — same rule as the camera.');
+  }
+  out.textContent = lines.join('\n');
+});
+})();
+</script>
+</body>
+</html>
