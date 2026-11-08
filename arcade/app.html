@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
-<title>GET THE ARCADE APP — Koda Kai Arcade</title>
+<title>THE PORTAL — Koda Kai Arcade</title>
 <link rel="manifest" href="manifest.webmanifest"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="mobile-web-app-capable" content="yes"/>
@@ -27,20 +27,220 @@
   .btn{display:block;text-align:center;background:#f5b942;color:#0b0e1a;text-decoration:none;
        font-size:18px;border-radius:12px;padding:14px 12px;margin:10px 0;border:none;width:100%;cursor:pointer;font-family:Georgia,serif}
   .btn.ghost{background:transparent;color:#f5b942;border:1px solid #f5b942}
+  .btn:disabled{opacity:.45;cursor:default}
   .pill{display:block;text-align:center;font-size:14px;color:#9fb6cc;border:1px solid #2a3358;
         border-radius:999px;padding:6px 12px;margin:0 auto 6px;width:fit-content;max-width:100%}
   #testOut{font-size:16px;margin-top:10px;white-space:pre-line}
   #testVid{width:100%;border-radius:12px;margin-top:10px;display:none;background:#000}
   .small{font-size:13px;color:#9fb6cc}
   .hidden{display:none}
+  .mono{font-family:ui-monospace,Menlo,Consolas,monospace;word-break:break-all}
+
+  /* ---------- mode bar ---------- */
+  .modebar{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 2px}
+  .modebtn{flex:1 1 70px;padding:12px 4px;border-radius:12px;border:1px solid #2a3358;background:#171d33;
+           color:#e8e0c8;font-family:Georgia,serif;font-size:16px;cursor:pointer}
+  .modebtn[aria-pressed="true"]{background:#f5b942;color:#0b0e1a;border-color:#f5b942;font-weight:bold}
+
+  /* ---------- the shelf of doors ---------- */
+  .doors{display:flex;flex-direction:column;gap:12px;margin-top:10px}
+  .door{display:flex;align-items:center;gap:14px;background:#171d33;border:1px solid #2a3358;border-radius:16px;
+        padding:14px 16px;text-decoration:none;color:#e8e0c8}
+  .door:active{background:#1e2745}
+  .door .dic{font-size:34px;line-height:1;flex:0 0 auto}
+  .door .dmain{flex:1 1 auto;min-width:0}
+  .door .dname{font-size:19px;color:#ffd977;letter-spacing:.5px}
+  .door .dline{font-size:14.5px;color:#c9d4e6}
+  .door .proof{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px;color:#7e8db0;margin-top:3px;word-break:break-all}
+  .door .dgo{font-size:22px;color:#f5b942;flex:0 0 auto}
+  #shelfCap{font-size:14px;color:#9fb6cc;margin:2px 0 0}
+
+  /* ---------- key door ---------- */
+  .layer{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border-radius:12px;border:1px solid #2a3358;margin:8px 0;background:#0e1322}
+  .layer .lic{font-size:24px;line-height:1.2}
+  .layer .lname{font-size:16px;color:#ffd977}
+  .layer .lline{font-size:14px;color:#c9d4e6}
+  .layer.locked{opacity:.55}
+  .wbtn{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:#171d33;color:#e8e0c8;
+        border:1px solid #f5b942;border-radius:12px;padding:12px 14px;margin:8px 0;cursor:pointer;font-family:Georgia,serif;font-size:16px}
+  .wbtn img{width:28px;height:28px;border-radius:6px}
+  #keyAddr{font-size:17px}
+  #receiptsCard .rc{font-size:12.5px;margin:10px 0}
+  #receiptsCard a{color:#f5b942}
+
+  /* ---------- GRANDMA mode: biggest type, biggest doors, no science ---------- */
+  body[data-mode="grandma"]{font-size:19px}
+  body[data-mode="grandma"] h1{font-size:32px}
+  body[data-mode="grandma"] .sub{font-size:17px}
+  body[data-mode="grandma"] .card h2{font-size:24px}
+  body[data-mode="grandma"] .card p{font-size:19px}
+  body[data-mode="grandma"] .door{min-height:84px;padding:20px 18px;gap:18px}
+  body[data-mode="grandma"] .door .dic{font-size:46px}
+  body[data-mode="grandma"] .door .dname{font-size:27px}
+  body[data-mode="grandma"] .door .dline{font-size:20px}
+  body[data-mode="grandma"] .door .dgo{font-size:30px}
+  body[data-mode="grandma"] .modebtn{font-size:20px;padding:16px 4px}
+  body[data-mode="grandma"] .btn{font-size:22px;padding:18px 12px}
+  body[data-mode="grandma"] .steps{font-size:20px}
+  body[data-mode="grandma"] .proof{display:none}
+  body[data-mode="grandma"] .science{display:none}
+  body[data-mode="grandma"] .small{font-size:15px}
+
+  /* ---------- KID mode: grandma sizes, bright accents, kid worlds first ---------- */
+  body[data-mode="kid"] .door{min-height:84px;padding:18px 16px;border-width:2px;border-color:var(--acc,#2a3358);
+       background:linear-gradient(135deg,#171d33 60%,rgba(245,185,66,.10))}
+  body[data-mode="kid"] .door .dic{font-size:44px}
+  body[data-mode="kid"] .door .dname{font-size:24px;color:#ffe9a8}
+  body[data-mode="kid"] .door .dline{font-size:18px}
+  body[data-mode="kid"] .modebtn{font-size:18px;padding:14px 4px}
+  body[data-mode="kid"] .proof{display:none}
+  body[data-mode="kid"] h1{color:#ffd23e}
+
+  /* ---------- proof lines: investor + geek only ---------- */
+  body[data-mode="grandma"] .proof, body[data-mode="kid"] .proof{display:none}
+  /* ---------- receipts: geek only ---------- */
+  #receiptsCard{display:none}
+  body[data-mode="geek"] #receiptsCard{display:block}
 </style>
 </head>
-<body>
+<body data-mode="investor">
 <img class="icon" src="icons/icon-192.png" alt="Arcade icon — gold wave on deep navy"/>
-<h1>GET THE ARCADE APP</h1>
-<p class="sub">One icon on your home screen. Inside it, the Arcade is a window of its own —<br/>and windows of our own are where cameras and microphones are allowed to work.</p>
+<h1>🚪 THE PORTAL</h1>
+<p class="sub">One door into our blob network. The web on one side, the blobs on the other —<br/>this page is the bridge, and every world we’ve built hangs on the shelf below.</p>
 <span class="pill" id="wherePill">checking which window this is…</span>
 
+<div class="card" id="modeCard">
+  <h2>👀 How should this page look?</h2>
+  <p>Same portal, four faces — big and plain, kid-first, the full investor face, or everything a geek could want. It remembers your pick.</p>
+  <div class="modebar" role="group" aria-label="Interface mode">
+    <button class="modebtn" type="button" data-setmode="grandma" aria-pressed="false">👵 GRANDMA</button>
+    <button class="modebtn" type="button" data-setmode="kid" aria-pressed="false">🧒 KID</button>
+    <button class="modebtn" type="button" data-setmode="investor" aria-pressed="true">📈 INVESTOR</button>
+    <button class="modebtn" type="button" data-setmode="geek" aria-pressed="false">🛠 GEEK</button>
+  </div>
+</div>
+
+<div class="card" id="shelfCard">
+  <h2>🚪 The shelf of doors</h2>
+  <p id="shelfCap">Every world we’ve built — the proof rides under each door.</p>
+  <div class="doors" id="doorList">
+    <a class="door" data-door="room" style="--acc:#ff9ecb" href="https://arcade.highscores.live/arcade/room.html">
+      <span class="dic">🏛️</span>
+      <span class="dmain"><span class="dname">THE ROOM</span><br/>
+      <span class="dline">A shared 3D room — walk in, talk, wear your face over your avatar.</span>
+      <span class="proof">v1.2 THE GAME’S DOOR · frozen sha 71ca52f4…</span></span>
+      <span class="dgo">›</span>
+    </a>
+    <a class="door" data-door="cube" style="--acc:#ffb3d9" href="https://arcade.highscores.live/arcade/blob-loader.html?g=bsk6xDKhv4zX8-FGfiXtW9pQVQiIsgWS_uImpPveato&amp;h=77178b3900f6f41808e1010b968de7301df40e69a2928a65b08c04481934cee8&amp;n=BUNNY%20CUBE">
+      <span class="dic">🐰</span>
+      <span class="dmain"><span class="dname">BUNNY CUBE</span><br/>
+      <span class="dline">A 3D meadow — throw apples, bonk the bullies, talk face to face.</span>
+      <span class="proof">v1.9.6 · blob bsk6xDKhv4zX8… · sha 77178b39…</span></span>
+      <span class="dgo">›</span>
+    </a>
+    <a class="door" data-door="zombie" style="--acc:#7ee787" href="https://arcade.highscores.live/arcade/blob-loader.html?g=Zq95-47oC4dYDPDXRJXAwYq3obuPIopBgLAqlFxfOIA&amp;h=0dec725145678238ac10dbed8cf0cf311eca17d6081a4d3f5cc882832f90bfc3&amp;n=ZOMBIE%20WORLD">
+      <span class="dic">🧟</span>
+      <span class="dmain"><span class="dname">ZOMBIE WORLD</span><br/>
+      <span class="dline">A 3D night field — board up the house and hold out till dawn, together.</span>
+      <span class="proof">v1.3 · blob Zq95-47oC4dYD… · sha 0dec7251…</span></span>
+      <span class="dgo">›</span>
+    </a>
+    <a class="door" data-door="builder" style="--acc:#ffd76a" href="https://arcade.highscores.live/arcade/blob-builder.html">
+      <span class="dic">🛠</span>
+      <span class="dmain"><span class="dname">THE BUILDER</span><br/>
+      <span class="dline">Drag pieces together and build a world of your own.</span>
+      <span class="proof">page blob mKxIcV5jNtot… · sha 128d3f4c…</span></span>
+      <span class="dgo">›</span>
+    </a>
+    <a class="door" data-door="comms" style="--acc:#6ee7ff" href="https://arcade.highscores.live/arcade/blob-comms-demo.html">
+      <span class="dic">📟</span>
+      <span class="dmain"><span class="dname">BLOB COMMS</span><br/>
+      <span class="dline">The talk layer by itself — voice, faces and chat that sit on any screen.</span>
+      <span class="proof">plugin blob jpy2FG1Xnbb8… · sha 041c2644…</span></span>
+      <span class="dgo">›</span>
+    </a>
+    <a class="door" data-door="hall" style="--acc:#f5b942" href="https://arcade.highscores.live/arcade/blob-cinema/scores.html">
+      <span class="dic">🏆</span>
+      <span class="dmain"><span class="dname">HALL OF SCORES</span><br/>
+      <span class="dline">Every high score ever set — with the replay that proves it.</span>
+      <span class="proof">hash-verified intake · the face proof rides beside the record</span></span>
+      <span class="dgo">›</span>
+    </a>
+    <a class="door" data-door="walkthrough" style="--acc:#b39df5" href="https://arcade.highscores.live/arcade/studio/blob-player.html">
+      <span class="dic">📈</span>
+      <span class="dmain"><span class="dname">INVESTOR WALKTHROUGH</span><br/>
+      <span class="dline">The whole machine, shown step by step — proof at every step.</span>
+      <span class="proof">Mother Reel root v9 -Pf5lfue… pinned inside</span></span>
+      <span class="dgo">›</span>
+    </a>
+    <a class="door" data-door="apphelp" style="--acc:#9fb6cc" href="#apphelp">
+      <span class="dic">📲</span>
+      <span class="dmain"><span class="dname">APP HELP</span><br/>
+      <span class="dline">Put this portal on your home screen, and test your camera.</span>
+      <span class="proof">the window science — why some windows block cameras</span></span>
+      <span class="dgo">›</span>
+    </a>
+  </div>
+</div>
+
+<div class="card" id="keyCard">
+  <h2>🔑 Your key opens your layers</h2>
+  <p>Worlds above are public — anyone walks in. But your <i>own</i> layers — your sealed blobs, your secrets — open only with <b>your</b> key, held by you. That is the whole design: everyone owns their data.</p>
+
+  <h2 style="font-size:17px;margin-top:14px">Connect a wallet you already have</h2>
+  <p class="small">Read-only: connecting shows this page your public address — the name on your key. Nothing is ever signed or sent from this page.</p>
+  <div id="walletList"></div>
+  <p id="walletState">Looking for wallets in this browser…</p>
+  <div id="walletAcct" class="hidden">
+    <p>🔓 Connected as<br/><button class="btn ghost" id="keyAddr" type="button" title="tap to show the full address"></button></p>
+    <p class="small" id="keyMeta"></p>
+    <button class="btn ghost" id="keyDisconnect" type="button">DISCONNECT</button>
+  </div>
+  <button class="btn ghost" id="walletRecheck" type="button">↻ LOOK AGAIN</button>
+
+  <div class="layer" style="margin-top:16px">
+    <span class="lic">🆕</span>
+    <span><span class="lname">MAKE YOUR KEY HERE — coming with the vault build</span><br/>
+    <span class="lline">Sign in with Google, no seed phrase to lose (zkLogin), your key encrypted in a vault on <b>your</b> device — nobody else can open your private layers, not even us. <i>Not built yet — it waits on one decision, and it will never be faked before it’s real.</i></span></span>
+  </div>
+
+  <h2 style="font-size:17px;margin-top:14px">What keys unlock</h2>
+  <div class="layer lrow">
+    <span class="lic">🟢</span>
+    <span><span class="lname">PUBLIC LAYERS — open now</span><br/>
+    <span class="lline">The shelf above: the Room, the games, the Hall. No key needed — walk in.</span></span>
+  </div>
+  <div class="layer lrow locked">
+    <span class="lic">🔒</span>
+    <span><span class="lname">PRIVATE LAYERS — your own sealed blobs</span><br/>
+    <span class="lline">Your saves, your rooms, your things — sealed so only your key opens them. Arrives with the vault build.</span></span>
+  </div>
+  <div class="layer lrow locked">
+    <span class="lic">🔒</span>
+    <span><span class="lname">SECRET LAYERS — the zero layer</span><br/>
+    <span class="lline">Secrets even we cannot read. A key-holder can ask small questions and get receipted answers — the contents never leave. Later.</span></span>
+  </div>
+</div>
+
+<div class="card" id="receiptsCard">
+  <h2>🧾 Receipts — the catalog cards</h2>
+  <p>Every build above is named in a manifest, and every manifest is a blob anyone can fetch and check. The catalog of catalogs:</p>
+  <p class="rc">MOTHER REEL root v9 — the recall root, names every manifest in the house<br/>
+  <span class="mono">-Pf5lfueNjU59iWgxkMoUW6GkOwUpPTb5ngLbfAngIo</span><br/>
+  <a href="https://walrus-testnet.blockscope.net/v1/blobs/-Pf5lfueNjU59iWgxkMoUW6GkOwUpPTb5ngLbfAngIo">fetch it ↗</a></p>
+  <p class="rc">GAMES TREASURY — the golden versions, blob + hash each<br/>
+  <span class="mono">uSMnZXeswIUNVJdX4yMjvcNp_7Z3CFnO2J-oYgg0QZ0</span><br/>
+  <a href="https://walrus-testnet.blockscope.net/v1/blobs/uSMnZXeswIUNVJdX4yMjvcNp_7Z3CFnO2J-oYgg0QZ0">fetch it ↗</a></p>
+  <p class="rc">SITE TREASURY — every runnable page of the arcade, blobbed (119/119)<br/>
+  <span class="mono">CgM9IlRIexHHiGsznHkzndTor49iyikzi_qyE6R-qMQ</span><br/>
+  <a href="https://walrus-testnet.blockscope.net/v1/blobs/CgM9IlRIexHHiGsznHkzndTor49iyikzi_qyE6R-qMQ">fetch it ↗</a></p>
+  <p class="rc">BLOB COMMS package record — the talk layer as a library object (kind: layer)<br/>
+  <span class="mono">Kx2JmON8pib1vQu_FhFfREMPNt4YSrYWmCayb1jd-VA</span><br/>
+  <a href="https://walrus-testnet.blockscope.net/v1/blobs/Kx2JmON8pib1vQu_FhFfREMPNt4YSrYWmCayb1jd-VA">fetch it ↗</a></p>
+  <p class="small">Mirror: walrus-testnet.blockscope.net — one of the public Walrus testnet mirrors. Testnet today; anchoring to mainnet is David’s press, never a silent move.</p>
+</div>
+
+<div id="apphelp">
 <div class="card hidden" id="stateSheet">
   <h2>⚠ You’re in a preview window</h2>
   <p>This page opened inside another app’s preview sheet. That kind of window <b>blocks cameras and microphones by rule</b> — no game or room can reach them from in here, and it isn’t the game’s fault.</p>
@@ -75,20 +275,21 @@
   <video id="testVid" autoplay playsinline muted></video>
   <p id="testOut">Not tested yet.</p>
 </div>
+</div>
 
-<p class="small" style="text-align:center">The Arcade app is a <i>window</i>, not an offline engine — the games and rooms still pour in over the blob network exactly as they do today. The window is what changes: it belongs to the Arcade, so no other app’s preview sheet can stand between you and your camera.</p>
+<p class="small science" style="text-align:center">The Arcade app is a <i>window</i>, not an offline engine — the games and rooms still pour in over the blob network exactly as they do today. The window is what changes: it belongs to the Arcade, so no other app’s preview sheet can stand between you and your camera.</p>
+<p class="small" style="text-align:center">PORTAL v0.1 “THE DOOR” — the shelf, the modes, and a read-only key door. Wallet creation (the vault build) is a later, separate ship.</p>
 
 <script>
 (function(){
 'use strict';
+/* ================= window detection + camera test (kept from the install page) ================= */
 var standalone = (window.navigator.standalone === true) ||
   (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
 var ua = navigator.userAgent || '';
 var ios = /iphone|ipad|ipod/i.test(ua);
 var hasSafariToken = /Safari\//.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS/.test(ua);
 var opaque = (location.protocol === 'blob:') || (window.location.origin === 'null');
-// Heuristic: an iOS page with no real Safari token, or an opaque origin,
-// is almost certainly an app sheet / webview, not a browser.
 var sheet = !standalone && (opaque || (ios && !hasSafariToken) ||
   /(FBAN|FBAV|Instagram|Line|Twitter|MicroMessenger)/.test(ua));
 var pill = document.getElementById('wherePill');
@@ -131,6 +332,173 @@ document.getElementById('testBtn').addEventListener('click', async function(){
   }
   out.textContent = lines.join('\n');
 });
+
+/* ================= interface density modes ================= */
+var DOOR_ORDER = {
+  investor: ['room','cube','zombie','builder','comms','hall','walkthrough','apphelp'],
+  geek:     ['room','cube','zombie','builder','comms','hall','walkthrough','apphelp'],
+  kid:      ['cube','zombie','room','comms','hall','builder','walkthrough','apphelp'],
+  grandma:  ['room','cube','zombie','apphelp']
+};
+var SHELF_CAP = {
+  investor: 'Every world we’ve built — the proof rides under each door.',
+  geek:     'Every world we’ve built — and the receipts are below the key door.',
+  kid:      'Kid worlds first — the rest is right below.',
+  grandma:  'The big doors. Tap one, and you’re in.'
+};
+var doorList = document.getElementById('doorList');
+var doorsByKey = {};
+Array.prototype.forEach.call(doorList.children, function(el){ doorsByKey[el.getAttribute('data-door')] = el; });
+var shelfCap = document.getElementById('shelfCap');
+var currentMode = 'investor';
+function applyMode(mode, save){
+  if (!DOOR_ORDER[mode]) mode = 'investor';
+  currentMode = mode;
+  document.body.setAttribute('data-mode', mode);
+  var order = DOOR_ORDER[mode];
+  var all = Object.keys(doorsByKey);
+  all.forEach(function(k){ doorsByKey[k].style.display = 'none'; });
+  order.forEach(function(k){
+    var el = doorsByKey[k];
+    if (el) { el.style.display = ''; doorList.appendChild(el); }
+  });
+  shelfCap.textContent = SHELF_CAP[mode] || SHELF_CAP.investor;
+  Array.prototype.forEach.call(document.querySelectorAll('.modebtn'), function(b){
+    b.setAttribute('aria-pressed', b.getAttribute('data-setmode') === mode ? 'true' : 'false');
+  });
+  if (save) { try { localStorage.setItem('portal-mode', mode); } catch(e){} }
+}
+Array.prototype.forEach.call(document.querySelectorAll('.modebtn'), function(b){
+  b.addEventListener('click', function(){ applyMode(b.getAttribute('data-setmode'), true); });
+});
+var savedMode = null;
+try { savedMode = localStorage.getItem('portal-mode'); } catch(e){}
+applyMode(savedMode || 'investor', false);
+
+/* ================= the key door — Wallet Standard discovery, READ-ONLY =================
+   Self-custody, connect/read only. This page holds no keys, asks for no
+   signing feature, and contains no transaction path at all: connecting a
+   wallet shows this page the wallet's PUBLIC address and nothing more. */
+var keyState = { wallet: null, account: null, showFull: false };
+var walletListEl = document.getElementById('walletList');
+var walletStateEl = document.getElementById('walletState');
+var walletAcctEl = document.getElementById('walletAcct');
+var keyAddrEl = document.getElementById('keyAddr');
+var keyMetaEl = document.getElementById('keyMeta');
+var found = {};  // name -> wallet
+
+function isSuiWallet(w){
+  return !!(w && w.name && Array.isArray(w.chains) &&
+    w.chains.some(function(c){ return String(c).indexOf('sui:') === 0; }) &&
+    w.features && w.features['standard:connect'] &&
+    typeof w.features['standard:connect'].connect === 'function');
+}
+function shortAddr(a){ return a.length > 14 ? a.slice(0, 8) + '…' + a.slice(-6) : a; }
+
+function renderWallets(){
+  walletListEl.innerHTML = '';
+  var names = Object.keys(found);
+  if (!names.length) {
+    walletStateEl.textContent = 'No wallet found in this browser — on a phone, open this page inside your wallet app’s own browser; on a computer, install a Sui wallet (Slush, Suiet, Martian) and tap LOOK AGAIN. The worlds above are open either way.';
+    return;
+  }
+  walletStateEl.textContent = 'Found ' + names.length + (names.length === 1 ? ' wallet' : ' wallets') + ' — tap one to connect (read-only):';
+  names.forEach(function(name){
+    var w = found[name];
+    var b = document.createElement('button');
+    b.type = 'button'; b.className = 'wbtn';
+    if (w.icon) {
+      var img = document.createElement('img');
+      img.src = w.icon; img.alt = '';
+      b.appendChild(img);
+    }
+    var s = document.createElement('span');
+    s.textContent = '🔑 ' + name + ' — connect';
+    b.appendChild(s);
+    b.addEventListener('click', function(){ connectWallet(w); });
+    walletListEl.appendChild(b);
+  });
+}
+function renderAccount(){
+  if (!keyState.account) { walletAcctEl.classList.add('hidden'); return; }
+  var a = keyState.account.address;
+  keyAddrEl.textContent = keyState.showFull ? a : shortAddr(a);
+  var chains = (keyState.account.chains || []).join(', ') || (keyState.wallet.chains || []).join(', ');
+  keyMetaEl.textContent = 'Held by ' + keyState.wallet.name + (chains ? ' · ' + chains : '') +
+    ' · this page can see the address and nothing else — the key itself never leaves your wallet.';
+  walletAcctEl.classList.remove('hidden');
+}
+async function connectWallet(w){
+  walletStateEl.textContent = 'Asking ' + w.name + ' to connect — it will show you exactly what it shares (your public address)…';
+  try {
+    var res = await w.features['standard:connect'].connect();
+    var acc = (res && res.accounts && res.accounts[0]) || (w.accounts && w.accounts[0]);
+    if (!acc) { walletStateEl.textContent = w.name + ' connected but shared no account — nothing was read.'; return; }
+    keyState.wallet = w; keyState.account = acc; keyState.showFull = false;
+    walletStateEl.textContent = '✓ Connected — read-only. Your public layers key:';
+    renderAccount();
+    try {
+      var ev = w.features['standard:events'];
+      if (ev && typeof ev.on === 'function') {
+        ev.on('change', function(props){
+          if (props && props.accounts) {
+            if (!props.accounts.length) { disconnectWallet(false); }
+            else if (keyState.wallet === w) { keyState.account = props.accounts[0]; renderAccount(); }
+          }
+        });
+      }
+    } catch(e){}
+  } catch(e) {
+    walletStateEl.textContent = 'Connect was refused by ' + w.name + ' — nothing was read, and nothing was ever going to be sent. (' + ((e && e.message) || e) + ')';
+  }
+}
+async function disconnectWallet(announce){
+  var w = keyState.wallet;
+  keyState.wallet = null; keyState.account = null;
+  walletAcctEl.classList.add('hidden');
+  if (w) {
+    try {
+      var d = w.features && w.features['standard:disconnect'];
+      if (d && typeof d.disconnect === 'function') await d.disconnect();
+    } catch(e){}
+  }
+  if (announce !== false) walletStateEl.textContent = 'Disconnected. This page forgets the address; your wallet keeps the key.';
+  renderWallets();
+}
+keyAddrEl.addEventListener('click', function(){
+  keyState.showFull = !keyState.showFull; renderAccount();
+});
+document.getElementById('keyDisconnect').addEventListener('click', function(){ disconnectWallet(true); });
+
+/* Wallet Standard handshake (the window events — no library, no SDK):
+   wallets announce by dispatching 'wallet-standard:register-wallet' whose
+   detail is a callback expecting our registry, and they listen for our
+   'wallet-standard:app-ready' dispatch, whose detail IS the registry. */
+var registry = {
+  register: function(){
+    for (var i = 0; i < arguments.length; i++) {
+      var w = arguments[i];
+      if (isSuiWallet(w) && !found[w.name]) { found[w.name] = w; renderWallets(); }
+    }
+  },
+  get: function(){ return Object.keys(found).map(function(k){ return found[k]; }); },
+  on: function(){ return function(){}; }
+};
+window.addEventListener('wallet-standard:register-wallet', function(ev){
+  try { if (ev && typeof ev.detail === 'function') ev.detail(registry); } catch(e){}
+});
+function announce(){
+  try { window.dispatchEvent(new CustomEvent('wallet-standard:app-ready', { detail: registry })); } catch(e){}
+}
+announce();
+setTimeout(announce, 600);
+setTimeout(function(){ if (!Object.keys(found).length && !keyState.account) renderWallets(); }, 1500);
+document.getElementById('walletRecheck').addEventListener('click', function(){
+  announce();
+  walletStateEl.textContent = 'Looking for wallets in this browser…';
+  setTimeout(function(){ if (!keyState.account) renderWallets(); }, 900);
+});
+renderWallets();
 })();
 </script>
 </body>
