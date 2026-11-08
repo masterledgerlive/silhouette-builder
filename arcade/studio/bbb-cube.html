@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>BUNNY CUBE v1.9.2 — BONK THE BULLIES + BLOB TALK (a 3D world from Walrus blobs)</title>
+<title>BUNNY CUBE v1.9.3 — BONK THE BULLIES + BLOB TALK + TALK JARS (a 3D world from Walrus blobs)</title>
 <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/mqtt@5.10.1/dist/mqtt.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -44,6 +44,12 @@
   #chatSend{background:#2a2a55;color:#cfe0ff;border:1px solid #667;border-radius:8px;padding:8px 12px;font-weight:bold}
   #talkRow{display:flex;gap:6px;justify-content:center}
   #talkRow button{background:rgba(20,20,44,.78);color:#e8ecff;border:2px solid rgba(150,150,220,.55);border-radius:999px;padding:8px 13px;font-weight:bold;font-size:13px}
+  #jarInd{display:none;background:rgba(60,8,8,.9);border:1px solid rgba(255,120,120,.75);color:#ffd9d9;border-radius:10px;padding:6px 9px;margin-bottom:6px;font-size:13px;font-weight:700;text-align:center}
+  #jarBox{background:rgba(8,8,20,.88);border:1px solid rgba(150,150,220,.5);border-radius:12px;padding:8px;margin-bottom:6px;color:#e8ecff;font-size:13px;text-align:left}
+  #jarBox .jrow{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid rgba(150,150,220,.18)}
+  #jarBox button{background:#2a2a55;color:#cfe0ff;border:1px solid #667;border-radius:8px;padding:4px 10px;font-weight:bold}
+  #jarBtn.rec{background:#7a1622;color:#fff;border-color:#ff8f8f;animation:jarPulse 1.1s infinite}
+  @keyframes jarPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.07)}}
   #verTag{position:absolute;left:10px;bottom:186px;z-index:5;display:none;background:rgba(7,10,16,.5);border:1px solid rgba(255,215,106,.4);
           color:#ffd76a;border-radius:8px;padding:3px 9px;font-size:12px;font-weight:700;pointer-events:none}
   #tiltBtn{position:absolute;right:14px;top:12px;z-index:6;display:none;padding:10px 14px;border-radius:22px;
@@ -107,7 +113,8 @@
   #linkStats b{color:#ffd76a}
   #lobbyList .row{display:flex;justify-content:space-between;align-items:center;gap:8px;background:rgba(255,255,255,.06);
        border:1px solid rgba(255,255,255,.16);border-radius:8px;padding:5px 8px;margin:4px 0}
-  #qrBox{background:#fff;border-radius:8px;padding:6px;width:144px}
+  #qrBox{background:#fff;border-radius:12px;padding:12px;width:216px}
+  #qrBox canvas, #qrBox img{width:192px !important;height:192px !important;image-rendering:pixelated}
   .small{font-size:12.5px;color:#9fb4c8}
   /* ---------- v1.7: clean full-screen game mode (David's phone verdict) ---------- */
   html,body{height:100%;overflow:hidden;overscroll-behavior:none}
@@ -175,11 +182,13 @@ grab apples, bonk them back. First to the banner takes the round.</p>
     </div>
     <div id="pop"></div>
     <div id="talkBar" style="display:none">
+      <div id="jarInd"></div>
       <div id="chatBox" style="display:none"><div id="chatLog"></div><div id="chatRow"><input id="chatIn" maxlength="120" placeholder="💬 say it…" autocomplete="off"><button id="chatSend">SEND</button></div></div>
-      <div id="talkRow"><button id="chatTog">💬 CHAT</button><button id="micBtn">🎙 MIC OFF</button><button id="hearBtn">🔊 HEAR ON</button></div>
+      <div id="jarBox" style="display:none"><div style="font-weight:700;margin-bottom:2px">🫙 TALK JARS — this room's voices, kept as their own track</div><div id="jarList"></div></div>
+      <div id="talkRow"><button id="chatTog">💬 CHAT</button><button id="micBtn">🎙 MIC OFF</button><button id="hearBtn">🔊 HEAR ON</button><button id="jarBtn">● JAR</button><button id="jarListBtn">🫙 <span id="jarCount">0</span></button></div>
     </div>
     <audio id="talkAudio" autoplay></audio>
-    <div id="verTag">🧊 CUBE v1.9.2 · BLOB TALK</div>
+    <div id="verTag">🧊 CUBE v1.9.3 · BLOB TALK + JARS</div>
     <button id="tiltBtn">🧭 TILT</button>
     <div id="joy"><div id="joyKnob"></div></div>
     <div id="pad"><span class="pip pU">▲</span><span class="pip pD">▼</span><span class="pip pL">◀</span><span class="pip pR">▶</span><div id="padKnob"></div></div>
@@ -196,7 +205,7 @@ grab apples, bonk them back. First to the banner takes the round.</p>
         <div style="font-weight:700;margin-bottom:4px">🔗 2-PLAYER LINK TEST</div>
         <button class="lkBtn" id="hostBtn">🏠 HOST A ROOM — you are Bunny</button>
         <div id="hostInfo" style="display:none;margin:4px 0">Room code: <b id="roomCode" style="font-size:21px;letter-spacing:.22em;color:#ffd76a"></b><br>
-        <span class="small">Same-room test — player 2 just scans this. The code carries the room + the world's address, not the world itself:</span>
+        <span class="small">Player 2 just scans this — it opens the BLOB LOADER, which fetches the game itself from the blob network, hash-checked, with the room code already in hand:</span>
         <div id="qrBox" style="margin:6px 0"></div>
         <span class="small">…or opens this link and taps JOIN:</span><br><span id="joinLink" class="mono" style="font-size:11px;word-break:break-all;color:#7ec3f2"></span></div>
         <div id="joinDiv" style="margin:8px 0 2px">— or join a room —</div>
@@ -1555,24 +1564,66 @@ function mqSend(dir, obj){ mqPub(mqTopic(dir), obj); }
 function netEvPop(t){ if(NET.role==="host") mqSend("down",{type:"ev", pop:t}); }
 function netEvBanner(m,s){ if(NET.role==="host") mqSend("down",{type:"ev", banner:[m,s]}); }
 
-// ----- BLOB TALK: voice + text on the room's own radio (v1.9.2) -----
-const TALK={pc:null, mic:null, micOn:false, hear:true, id:"t"+Math.random().toString(36).slice(2,9)};
+// ----- BLOB TALK: voice + text on the room's own radio (v1.9.2) · TALK JARS + LOADER QR (v1.9.3) -----
+// This build's own Walrus identity, dealt by the join QR: the QR carries the
+// BLOB LOADER deep link for the shipped bytes, so a scan lands on the blob
+// network (the loader hash-checks before it opens anything), never on a stale
+// Pages copy. Re-pinned at ship time: g = this version's first PUT blob,
+// h = sha256 of the bytes that blob names.
+const PAGE_BLOB="lNU_ob53_MoyoREihwYiIO6zicTkMPMUBcxBgjup56Y";
+const PAGE_SHA="8cefa166d34b28bf0400b49539c68a4b7a210ada8c2feec43799aaa1b9e71238";
+function jarQrText(room){ return "https://arcade.highscores.live/arcade/blob-loader.html?g="+PAGE_BLOB+"&h="+PAGE_SHA+"&n="+encodeURIComponent("BUNNY CUBE v1.9.3")+"&room="+room+"&join="+room; }
+window.__CHATSEALS=[];
+const TALK={pc:null, mic:null, micOn:false, hear:true, remote:null, id:"t"+Math.random().toString(36).slice(2,9)};
 function talkTopic(){ return mqTopic("talk"); }
 function talkUi(){ const el=$("talkBar"); if(el) el.style.display=(NET.role!=="solo"&&!!NET.room)?"block":"none"; }
-function addChat(from, text, mine){ const log=$("chatLog"); if(!log) return; const d=document.createElement("div"); const b=document.createElement("b"); b.textContent=(mine?"YOU":from)+":"; d.appendChild(b); d.appendChild(document.createTextNode(" "+text)); log.appendChild(d); while(log.children.length>30) log.removeChild(log.firstChild); log.scrollTop=1e6; if(!mine) popText("💬 "+from+": "+text.slice(0,60), 2400); }
-function talkSendChat(){ const inp=$("chatIn"); const t=(inp.value||"").trim(); if(!t||!NET.room) return; inp.value=""; mqPub(talkTopic(), {type:"chat", tid:TALK.id, from:myName(), text:t}); addChat(myName(), t, true); }
-async function talkEnsurePc(){ if(TALK.pc) return TALK.pc; const pc=new RTCPeerConnection({iceServers:[{urls:"stun:stun.l.google.com:19302"}]}); TALK.pc=pc;
+function addChat(from, text, mine, meta){ const log=$("chatLog"); if(!log) return null; const d=document.createElement("div"); const b=document.createElement("b"); b.textContent=(mine?"YOU":from)+":"; d.appendChild(b); d.appendChild(document.createTextNode(" "+text)); if(meta){ d.dataset.tid=meta.tid||""; d.dataset.seal=meta.seal||""; if(meta.mismatch){ const w=document.createElement("span"); w.textContent=" \u26a0 seal mismatch"; w.style.color="#ff9c9c"; w.style.fontWeight="800"; d.appendChild(w); } } log.appendChild(d); while(log.children.length>30) log.removeChild(log.firstChild); log.scrollTop=1e6; if(!mine) popText("💬 "+from+": "+text.slice(0,60), 2400); return d; }
+function chatSeal(tid, from, text){ return sha256hex(new TextEncoder().encode(tid+"|"+from+"|"+text)); }
+function talkSendChat(){ const inp=$("chatIn"); const t=(inp.value||"").trim(); if(!t||!NET.room) return; inp.value=""; const from=myName(), seal=chatSeal(TALK.id, from, t); const el=addChat(from, t, true, {tid:TALK.id, seal}); __CHATSEALS.push({tid:TALK.id, from, text:t, seal, mine:true, echoed:false, echoBy:"", el}); mqPub(talkTopic(), {type:"chat", tid:TALK.id, from, seal, text:t}); }
+async function talkEnsurePc(){ if(TALK.pc&&(TALK.pc.signalingState==="closed"||TALK.pc.connectionState==="closed")){ try{ TALK.pc.close(); }catch(e){} TALK.pc=null; } if(TALK.pc) return TALK.pc; const pc=new RTCPeerConnection({iceServers:[{urls:"stun:stun.l.google.com:19302"}]}); TALK.pc=pc; talkWatchdog();
+  pc.oniceconnectionstatechange=()=>{ if(pc._dead) return; const st=pc.iceConnectionState; if(st==="disconnected") talkNoteDown("ice-disconnected"); else if(st==="failed") talkResurrect("ice-failed"); else if(st==="closed") talkResurrect("ice-closed"); else if((st==="connected"||st==="completed")&&TALK._down){ TALK._down=false; TALK.attempts=0; popText("link back", 1600); } };
+  pc.onconnectionstatechange=()=>{ if(pc._dead) return; const st=pc.connectionState; if(st==="failed") talkResurrect("conn-failed"); else if(st==="closed") talkResurrect("conn-closed"); else if(st==="connected"&&TALK._down){ TALK._down=false; TALK.attempts=0; popText("link back", 1600); } };
+  pc.onsignalingstatechange=()=>{ if(pc._dead) return; if(pc.signalingState==="closed") talkResurrect("sig-closed"); };
   pc.onicecandidate=(e)=>{ if(e.candidate) mqPub(talkTopic(), {type:"rtc-ice", tid:TALK.id, cand:e.candidate.toJSON()}); };
-  pc.ontrack=(e)=>{ const a=$("talkAudio"); if(a&&e.streams&&e.streams[0]){ a.srcObject=e.streams[0]; a.volume=TALK.hear?1:0; popText("🔊 voice connected — they're on the meadow radio", 2400); } };
+  pc.ontrack=(e)=>{ const a=$("talkAudio"); if(a&&e.streams&&e.streams[0]){ TALK.remote=e.streams[0]; a.srcObject=e.streams[0]; a.volume=TALK.hear?1:0; popText("🔊 voice connected — they're on the meadow radio", 2400); if(e.track) e.track.onended=()=>{ talkResurrect("track-ended"); }; try{ if(JAR.on) jarPlugRemote(); }catch(_){} } };
   pc.onnegotiationneeded=async ()=>{ if(TALK._off) return; TALK._off=true; try{ const off=await pc.createOffer(); await pc.setLocalDescription(off); mqPub(talkTopic(), {type:"rtc-offer", tid:TALK.id, sdp:pc.localDescription}); }catch(e){} TALK._off=false; };
   return pc; }
 async function talkMicToggle(){ try{
     if(!TALK.mic){ const st=await navigator.mediaDevices.getUserMedia({audio:true}); TALK.mic=st; const pc=await talkEnsurePc(); for(const tr of st.getAudioTracks()) pc.addTrack(tr, st); }
     TALK.micOn=!TALK.micOn; for(const tr of TALK.mic.getTracks()) tr.enabled=TALK.micOn;
-    $("micBtn").textContent=TALK.micOn?"🎙 MIC ON":"🎙 MIC OFF"; popText(TALK.micOn?"🎙 you're live on the meadow radio":"🎙 mic off", 1800);
+    $("micBtn").textContent=TALK.micOn?"🎙 MIC ON":"🎙 MIC OFF"; TALK.attempts=0; TALK._gaveUp=0; popText(TALK.micOn?"🎙 you're live on the meadow radio":"🎙 mic off", 1800);
   }catch(e){ popText("🎙 mic blocked — the browser needs your permission", 2600); } }
+
+// ----- TALK RESILIENCE (v1.9.3, David's law): the voice sub-track NEVER
+// turns off except by the user's own mic/hear toggles. Nothing in this page
+// closes the peer connection or stops a track (audited); the drops seen on
+// phones ride in from the mobile audio session (input focus, WebAudio SND
+// sharing the session). So a drop is treated as weather, not as an event:
+// the resurrection layer rebuilds the link itself, politely, with backoff,
+// and the wave is not lost -- a jar in progress re-plugs the new stream. -----
+function talkWanted(){ return !!(NET.room && (TALK.micOn || TALK.hear)); }
+function talkNoteDown(why){ if(!talkWanted() || TALK._grace) return; popText("📻 link wobbling — holding…", 1500); TALK._grace=setTimeout(()=>{ TALK._grace=null; if(!TALK.pc) talkResurrect(why); else if(TALK.pc.iceConnectionState==="disconnected"||TALK.pc.iceConnectionState==="failed") talkResurrect(why); }, 2000); }
+function talkWatchdog(){ if(TALK._wd) return; TALK._wd=setInterval(()=>{ if(TALK._resing||!talkWanted()) return; const pc=TALK.pc; if(!pc){ talkResurrect("watchdog-nopc"); return; } const bad=(v)=>v==="closed"||v==="failed"; if(bad(pc.signalingState)||bad(pc.connectionState)||bad(pc.iceConnectionState)) talkResurrect("watchdog"); }, 3000); }
+async function talkResurrect(why){
+  if(TALK._resing || !talkWanted()) return;
+  TALK.attempts=(TALK.attempts||0)+1;
+  if(TALK.attempts>3){ if(!TALK._gaveUp){ TALK._gaveUp=1; popText("📻 link down — tap 🎙 to retry", 3600); } return; }
+  TALK._resing=true; TALK._down=true; TALK._gaveUp=0;
+  popText("📻 link rebuilding…", 1800);
+  const old=TALK.pc; TALK.pc=null; TALK.remote=null;
+  if(old){ old._dead=1; try{ old.onnegotiationneeded=null; old.onicecandidate=null; old.ontrack=null; old.oniceconnectionstatechange=null; old.onconnectionstatechange=null; old.close(); }catch(e){} }
+  await new Promise(r=>setTimeout(r, Math.min(500*TALK.attempts, 1500)));
+  try{
+    const pc=await talkEnsurePc();
+    if(TALK.mic){ for(const tr of TALK.mic.getAudioTracks()){ if(!pc.getSenders().some(sd=>sd.track===tr)){ pc.addTrack(tr, TALK.mic); tr.enabled=TALK.micOn; } } }
+    teleEvent("TALK RESURRECT", "📻 talk link rebuilt ("+why+", attempt "+TALK.attempts+") — his toggles untouched: mic "+(TALK.micOn?"ON":"off")+", hear "+(TALK.hear?"ON":"off"));
+  }catch(e){}
+  TALK._resing=false;
+}
 async function onTalkMsg(t, m){ if(!NET.room||t!==talkTopic()) return; let msg; try{ msg=JSON.parse(m.toString()); }catch(e){ return; } if(msg.tid===TALK.id) return;
-  if(msg.type==="chat"){ addChat(msg.from||"BUNNY", msg.text||"", false); return; }
+  if(msg.type==="jar"){ const ind=$("jarInd"); if(msg.on){ if(ind){ ind.style.display="block"; ind.textContent="● "+(msg.from||"A PLAYER")+" is jarring this room — the voices are being kept as a track"; } popText("● "+(msg.from||"a player")+" opened a jar on this room", 2200); } else if(ind){ ind.style.display="none"; ind.textContent=""; } return; }
+  if(msg.type==="echo"){ const rec=__CHATSEALS.find(r=>r.mine&&r.tid===msg.of&&r.seal===msg.seal); if(rec&&!rec.echoed){ rec.echoed=true; rec.echoBy=msg.by||""; if(rec.el&&rec.el.parentNode){ const sp=document.createElement("span"); sp.textContent=" \u2713\u2713"; sp.style.color="#9fe8a8"; sp.style.fontWeight="800"; rec.el.appendChild(sp); } } return; }
+  if(msg.type==="chat"){ const from=msg.from||"BUNNY", text=msg.text||""; let mismatch=false, ok=false; if(msg.seal){ ok=(chatSeal(msg.tid||"", from, text)===msg.seal); mismatch=!ok; } const el=addChat(from, text, false, {tid:msg.tid, seal:msg.seal||null, mismatch}); __CHATSEALS.push({tid:msg.tid, from, text, seal:msg.seal||null, mine:false, echoed:false, mismatch, el}); if(msg.seal&&ok){ mqPub(talkTopic(), {type:"echo", tid:TALK.id, of:msg.tid, seal:msg.seal, by:myName()}); } else if(msg.seal&&mismatch){ popText("\u26a0 a chat line arrived with a broken seal — marked, never silently trusted", 3200); } return; }
   if(msg.type==="rtc-offer"){ try{ const pc=await talkEnsurePc(); if(pc.signalingState!=="stable"){ if(NET.role!=="host") return; await pc.setLocalDescription({type:"rollback"}); } await pc.setRemoteDescription(new RTCSessionDescription(msg.sdp)); if(!pc.getTransceivers().some(tr=>tr.receiver&&tr.receiver.track.kind==="audio")) pc.addTransceiver("audio",{direction:"recvonly"}); const ans=await pc.createAnswer(); await pc.setLocalDescription(ans); mqPub(talkTopic(), {type:"rtc-answer", tid:TALK.id, sdp:pc.localDescription}); }catch(e){} return; }
   if(msg.type==="rtc-answer"){ if(TALK.pc&&TALK.pc.signalingState==="have-local-offer"){ try{ await TALK.pc.setRemoteDescription(new RTCSessionDescription(msg.sdp)); }catch(e){} } return; }
   if(msg.type==="rtc-ice"){ if(TALK.pc&&msg.cand){ try{ await TALK.pc.addIceCandidate(new RTCIceCandidate(msg.cand)); }catch(e){} } return; } }
@@ -1580,7 +1631,103 @@ function wireTalk(){ const ct=$("chatTog"), cs=$("chatSend"), ci=$("chatIn"), mb
   ct.onclick=()=>{ const b=$("chatBox"); const open=b.style.display!=="block"; b.style.display=open?"block":"none"; ct.textContent=open?"💬 HIDE":"💬 CHAT"; if(open) ci.focus(); };
   cs.onclick=talkSendChat; ci.addEventListener("keydown",(e)=>{ if(e.key==="Enter") talkSendChat(); e.stopPropagation(); });
   mb.onclick=talkMicToggle;
-  hb.onclick=()=>{ TALK.hear=!TALK.hear; const a=$("talkAudio"); if(a) a.volume=TALK.hear?1:0; hb.textContent=TALK.hear?"🔊 HEAR ON":"🔇 MUTED"; }; }
+  hb.onclick=()=>{ TALK.hear=!TALK.hear; const a=$("talkAudio"); if(a) a.volume=TALK.hear?1:0; hb.textContent=TALK.hear?"🔊 HEAR ON":"🔇 MUTED"; };
+  const ta=$("talkAudio"); if(ta&&!ta._pg){ ta._pg=1; ta.addEventListener("pause", ()=>{ if(TALK.hear&&TALK.remote){ try{ const p=ta.play(); if(p&&p.catch) p.catch(()=>{}); }catch(e){} } }); }
+  const jb=$("jarBtn"), jl=$("jarListBtn"); if(jb) jb.onclick=jarToggle; if(jl) jl.onclick=()=>{ const b=$("jarBox"); b.style.display=b.style.display==="block"?"none":"block"; renderJarList(); }; renderJarList(); }
+
+// ----- TALK JARS (v1.9.3): the room's voices kept as a SEPARATE TRACK -----
+// David's law: your voice is your blob, you hold the key — and the room always
+// KNOWS when a jar is open: jar:on / jar:off ride the talk topic, and every
+// other phone shows a standing indicator while a jar is open. The mix happens
+// on THIS phone only (my mic + their voice), the audio seals as its own blob,
+// and a voice-jar/1 record pins it to the seal chain's current anchor. The
+// track never muxes into the game tape; it stands beside it, named by its hash.
+const JAR={on:false, rec:null, chunks:[], ctx:null, mime:"", t0:0, held:null, mixed:false, dest:null, remoteSrc:null, remoteFor:null};
+
+function jarPlugRemote(){
+  if(!JAR.ctx||!JAR.dest) return;
+  const remote=TALK.remote||($("talkAudio")&&$("talkAudio").srcObject);
+  if(!remote||JAR.remoteFor===remote) return;
+  if(!remote.getAudioTracks||!remote.getAudioTracks().length) return;
+  try{ const src=JAR.ctx.createMediaStreamSource(remote); src.connect(JAR.dest); if(JAR.remoteSrc){ try{ JAR.remoteSrc.disconnect(); }catch(e){} } JAR.remoteSrc=src; JAR.remoteFor=remote; JAR.mixed=true; }catch(e){}
+}
+function jarShelf(){ try{ const s=JSON.parse(localStorage.getItem("cube-jars-v1")||"[]"); return Array.isArray(s)?s:[]; }catch(e){ return []; } }
+function jarMime(){ const cand=["audio/webm;codecs=opus","audio/mp4","audio/webm",""]; for(const m of cand){ if(!m) return ""; try{ if(MediaRecorder.isTypeSupported(m)) return m; }catch(e){} } return ""; }
+function walrusPut(bytes){ return fetch(WIN_PUBLISHER,{method:"PUT", body:bytes}).then(async r=>{ if(!r.ok) throw new Error("publisher "+r.status); const j=await r.json(); const id=(j.newlyCreated&&j.newlyCreated.blobObject&&j.newlyCreated.blobObject.blobId)||(j.alreadyCertified&&(j.alreadyCertified.blobId||(j.alreadyCertified.blobObject&&j.alreadyCertified.blobObject.blobId))); if(!id) throw new Error("no blobId in reply"); return id; }); }
+function jarUiBtn(){ const b=$("jarBtn"); if(!b) return; b.textContent=JAR.on?"⏺ JAR…":"● JAR"; b.classList.toggle("rec", JAR.on); }
+async function jarToggle(){ if(JAR.on){ jarStop(); } else { await jarStart(); } }
+async function jarStart(){
+  if(!window.MediaRecorder){ popText("🫙 this browser can't keep a jar — no MediaRecorder here", 2800); return; }
+  if(!TALK.mic){ popText("🫙 a jar keeps voices — tap 🎙 MIC first (that asks your permission), then ● JAR", 3200); return; }
+  try{
+    if(!JAR.ctx) JAR.ctx=new (window.AudioContext||window.webkitAudioContext)();
+    if(JAR.ctx.state==="suspended"){ try{ await JAR.ctx.resume(); }catch(e){} }
+    const dest=JAR.ctx.createMediaStreamDestination(); JAR.dest=dest;
+    JAR.ctx.createMediaStreamSource(TALK.mic).connect(dest);
+    JAR.mixed=false; JAR.remoteSrc=null; JAR.remoteFor=null;
+    jarPlugRemote();
+    const mt=jarMime(); const rec=new MediaRecorder(dest.stream, mt?{mimeType:mt}:undefined);
+    JAR.chunks=[]; JAR.rec=rec; JAR.mime=rec.mimeType||mt||"audio/webm";
+    rec.ondataavailable=(e)=>{ if(e.data&&e.data.size) JAR.chunks.push(e.data); };
+    rec.onstop=()=>{ jarSeal(); };
+    JAR.t0=Date.now(); JAR.on=true; rec.start(1000);
+    mqPub(talkTopic(), {type:"jar", tid:TALK.id, from:myName(), on:true});
+    jarUiBtn(); popText(JAR.mixed?"🫙 jar open — both voices are being kept, as their own track":"🫙 jar open — keeping this side's voice (theirs joins the mix when their voice connects)", 2800);
+  }catch(e){ JAR.on=false; jarUiBtn(); popText("🫙 the jar wouldn't open ("+e.message+")", 2800); }
+}
+function jarStop(){
+  if(!JAR.on) return; JAR.on=false;
+  mqPub(talkTopic(), {type:"jar", tid:TALK.id, from:myName(), on:false});
+  jarUiBtn();
+  const rec=JAR.rec; JAR.rec=null;
+  if(rec&&rec.state!=="inactive"){ try{ rec.stop(); }catch(e){} }
+}
+async function jarSeal(){
+  const blob=new Blob(JAR.chunks, {type:JAR.mime}); JAR.chunks=[];
+  const bytes=new Uint8Array(await blob.arrayBuffer());
+  const rec={kind:"voice-jar/1", room:NET.room, from:myName(), startedAt:new Date(JAR.t0).toISOString(), durMs:Date.now()-JAR.t0, mime:JAR.mime, blob:null, sha256:sha256hex(bytes), anchor:(typeof NET.snapN==="number")?{seq:NET.snapN, seal:NET.lastHash}:null};
+  JAR.held={bytes, rec};
+  await jarPutHeld();
+}
+async function jarPutHeld(){
+  const held=JAR.held; if(!held) return;
+  try{
+    const blobId=await walrusPut(held.bytes); held.rec.blob=blobId;
+    const recBlob=await walrusPut(new TextEncoder().encode(JSON.stringify(held.rec)));
+    const shelf=jarShelf(); shelf.push(Object.assign({}, held.rec, {recordBlob:recBlob}));
+    try{ localStorage.setItem("cube-jars-v1", JSON.stringify(shelf)); }catch(e){}
+    JAR.held=null; renderJarList();
+    addChat("🫙 JAR", "voice jar sealed — blob "+blobId.slice(0,10)+"… · record "+recBlob.slice(0,10)+"…", true);
+    popText("🫙 Jar saved — "+blobId.slice(0,8)+"…", 2600);
+    teleEvent("JAR SEALED","🫙 voice jar "+blobId.slice(0,16)+"… · "+(held.rec.durMs/1000).toFixed(1)+"s · sha "+held.rec.sha256.slice(0,10)+"… · anchor seq "+(held.rec.anchor?held.rec.anchor.seq:"-"));
+  }catch(e){
+    renderJarList();
+    popText("🫙 jar held on this phone — the network said no. Open 🫙 JARS and tap RETRY to seal it.", 4000);
+  }
+}
+function renderJarList(){
+  const list=$("jarList"), cnt=$("jarCount"); if(!list) return;
+  const shelf=jarShelf(); if(cnt) cnt.textContent=String(shelf.length+(JAR.held?1:0));
+  list.innerHTML="";
+  if(JAR.held){ const d=document.createElement("div"); d.className="jrow"; const sp=document.createElement("span"); sp.textContent="🫙 unsealed jar ("+(JAR.held.bytes.length/1024).toFixed(1)+" KB) — held on this phone"; const b=document.createElement("button"); b.textContent="RETRY"; b.onclick=()=>{ jarPutHeld(); }; d.appendChild(sp); d.appendChild(b); list.appendChild(d); }
+  shelf.slice().reverse().forEach(en=>{
+    const d=document.createElement("div"); d.className="jrow";
+    const sp=document.createElement("span"); sp.textContent=(en.from||"?")+" · "+new Date(en.startedAt).toLocaleTimeString()+" · "+(en.durMs/1000).toFixed(0)+"s · "+String(en.blob||"").slice(0,8)+"…";
+    const b=document.createElement("button"); b.textContent="▶ POUR"; b.onclick=()=>{ jarPlay(en, b); };
+    d.appendChild(sp); d.appendChild(b); list.appendChild(d);
+  });
+  if(!shelf.length&&!JAR.held){ const d=document.createElement("div"); d.textContent="No jars yet — tap ● JAR while you talk and the room's voices get kept."; list.appendChild(d); }
+}
+async function jarPlay(en, btn){
+  try{ if(btn) btn.textContent="⏳";
+    const {buf}=await ladder(en.blob);
+    const u=URL.createObjectURL(new Blob([buf], {type:en.mime||"audio/webm"}));
+    const a=new Audio(u); a.volume=TALK.hear?1:0; await a.play();
+    window.__jarPlayed=en.blob;
+    if(btn) btn.textContent="▶ POUR";
+  }catch(e){ popText("🫙 that jar didn't pour ("+e.message+")", 2600); if(btn) btn.textContent="▶ POUR"; }
+}
+
 // ----- host side -----
 function hostRoom(){
   if(NET.role!=="solo") return;
@@ -1591,9 +1738,9 @@ function hostRoom(){
     NET.mq.subscribe(mqTopic("up")); NET.mq.subscribe(mqTopic("talk")); NET.mq.on("message",onHostMsg); NET.mq.on("message",onTalkMsg); talkUi();
     $("hostInfo").style.display="block"; $("roomCode").textContent=NET.room;
     ["joinDiv","joinCode","roleSel","joinBtn","lobbyDiv","lobbyBtn","lobbyList"].forEach(id=>{ const e=$(id); if(e) e.style.display="none"; });
-    $("joinLink").textContent=location.origin+location.pathname+"?room="+NET.room;
-    try{ const qb=$("qrBox"); qb.innerHTML=""; if(window.QRCode) new QRCode(qb,{text:$("joinLink").textContent, width:132, height:132, correctLevel:QRCode.CorrectLevel.M}); }catch(e){}
-    setTimeout(()=>{ const qb=$("qrBox"); if(qb && qb.children.length===0){ const im=document.createElement("img"); im.alt="join QR"; im.width=148; im.height=148; im.src="https://api.qrserver.com/v1/create-qr-code/?size=148x148&data="+encodeURIComponent($("joinLink").textContent); qb.appendChild(im); } },1400);
+    $("joinLink").textContent=jarQrText(NET.room);
+    try{ const qb=$("qrBox"); qb.innerHTML=""; if(window.QRCode) new QRCode(qb,{text:jarQrText(NET.room), width:192, height:192, correctLevel:QRCode.CorrectLevel.M}); }catch(e){}
+    setTimeout(()=>{ const qb=$("qrBox"); if(qb && qb.children.length===0){ const im=document.createElement("img"); im.alt="join QR"; im.width=208; im.height=208; im.src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=12&data="+encodeURIComponent(jarQrText(NET.room)); qb.appendChild(im); } },1400);
     netStatus("Room open ✓ — you are the host: the meadow's truth lives on YOUR phone, the relay only ferries whispers. When she's in, both press PLAY.");
     netBadge();
     NET.tele.mode="mini"; teleEvent("ROOM OPEN","room "+NET.room+" · this phone is the server · table announced in the 🌍 lobby every 5 s"); renderTele();
