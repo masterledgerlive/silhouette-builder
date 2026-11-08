@@ -152,6 +152,8 @@ const ITEMS = {
     trigger:"seals every chat line; the other side echoes it back ✓✓ — a forged line gets a loud ⚠ and no echo", does:"per-line seals + echo receipts", needsTags:[], needsPkg:["talk"] },
   sky: { id:"sky", kind:"layer", emoji:"🌞", name:"SKY & CLOCK", blob:"9ytG2kDy2cAgc5ifMo2FdqjZ6Sq2Ejbh8B8xUs-m8FE",
     trigger:"a four-minute day over the world — sun, moon and words take turns holding the light; night changes the pressures", does:"day/night cycle + world pressures", needsTags:["sky"], needsPkg:[] },
+  comms: { id:"comms", kind:"layer", emoji:"📡", name:"BLOB COMMS", blob:"Kx2JmON8pib1vQu_FhFfREMPNt4YSrYWmCayb1jd-VA", worldOnly:true,
+    trigger:"a simple layover on any screen — room presence, voice, faces, sealed chat, FIND for open rooms, and voice jars, speaking our blob encoding", does:"voice + chat + presence + find + jars on any screen", needsTags:[], needsPkg:[] },
   /* ——— MECHANICS (mechanic/1 records, blobbed Nov 7–8) ——— */
   throw: { id:"throw", kind:"mechanic", emoji:"🍎", name:"THROW", blob:"FnOM7X5_B-nii9JDxWbTDCwFaQA65mlhjGc1xcTV6t8",
     trigger:"when a player lets go of the throw button, the held thing flies in an arc and bonks whatever it lands on", does:"lob a held item on an arc", needsTags:["held-items"], needsPkg:[] },
@@ -169,7 +171,7 @@ const ITEMS = {
 const SECTIONS = [
   { key:"world", title:"🌍 WORLDS — pick the place", ids:["meadow","zombie","safari","aquarium"] },
   { key:"character", title:"🧍 CHARACTERS — who plays", ids:["boy","girl","thezombie"] },
-  { key:"layer", title:"🧩 LAYERS — drape a power over the world", ids:["talk","jars","echo","sky"] },
+  { key:"layer", title:"🧩 LAYERS — drape a power over the world", ids:["talk","jars","echo","sky","comms"] },
   { key:"mechanic", title:"⚙️ MECHANICS — the verbs", ids:["throw","pickup","bonk","rise","bite","chestdraw"] }
 ];
 
@@ -202,6 +204,7 @@ function checkDrop(itemId, ref){
   }
   /* layers + mechanics */
   if(ref !== "world" && !String(ref).startsWith("occ:")) return { ok:false, why:"Drop " + it.name + " on the world card or on a character card." };
+  if(it.worldOnly && ref !== "world") return { ok:false, why:it.name + " drapes over a whole screen — drop it on the world, not on one character." };
   if(!W.accepts.includes(it.kind)) return { ok:false, why:W.name + " doesn't accept " + it.kind + "s yet." };
   if(attachedTo(ref, itemId)) return { ok:false, why:it.name + " is already on " + targetName(ref) + " — no doubles." };
   for(const p of (it.needsPkg || [])){
