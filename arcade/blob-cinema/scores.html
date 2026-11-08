@@ -21,6 +21,12 @@ tr.top10 td:first-child{color:var(--gold);font-weight:bold}
 .badge.u{background:#3a2a0f;border:1px solid var(--amber);color:var(--amber)}
 .badge.ai{background:#2a0f3a;border:1px solid #c86bff;color:#c86bff}
 input,select{background:#0b0b1a;border:1px solid #33336a;color:#e8e8ff;border-radius:6px;padding:8px;font-size:.9rem;margin:4px}
+.fp-chip{background:#14240f;border:1px solid var(--neon);color:var(--neon);border-radius:999px;padding:3px 12px;cursor:pointer;font-size:.78rem;margin:2px 2px 2px 6px;letter-spacing:.04em}
+.fp-chip.voice{background:#0f1c2a;border-color:var(--blue);color:var(--blue)}
+.jarPlayer{background:#0b0b1e;border:1px solid #33336a;border-radius:10px;padding:10px;margin:8px 0;max-width:460px;text-align:left}
+.jarPlayer video{width:100%;border-radius:8px;background:#000;display:block}
+.jarPlayer audio{width:100%;margin-top:6px}
+.jarPlayer .fp-x{float:right;background:#2a0f1c;border:1px solid var(--red);color:var(--red);border-radius:8px;padding:2px 10px;cursor:pointer}
 </style>
 </head>
 <body>
@@ -363,6 +369,151 @@ body{padding-bottom:70px}
 
 
 <script>
+// ---- FACE PROOF (David's standing design: a high score carries the player's
+// face + voice as proof — watch + hear the player right on their record) ----
+// Jar records (voice-jar/1 | video-jar/1 | show-seg/1) ride BESIDE a win/zombie
+// record, never inside its hashed fields: the record's own hash check is
+// untouched. The win hand-off link may carry &jars=<jarRecordBlobId,...>
+// (in the hash fragment or the query string); a record blob may also carry a
+// `jars` field of its own. Associations persist in localStorage
+// 'hall-jars-map' so a record keeps its face proof when the Hall re-renders
+// from its own shelf.
+const FP_KINDS={"voice-jar/1":1,"video-jar/1":1,"show-seg/1":1};
+const FP_LADDER=["https://aggregator.walrus-testnet.walrus.space/v1/blobs/","https://walrus-testnet.blockscope.net/v1/blobs/"];
+const FP={cache:{}};
+function FPesc(s){ return String(s==null?"":s).replace(/</g,"&lt;"); }
+function FPmap(){ try{ return JSON.parse(localStorage.getItem("hall-jars-map")||"{}"); }catch(e){ return {}; } }
+function FPsaveMap(m){ try{ localStorage.setItem("hall-jars-map",JSON.stringify(m)); }catch(e){} }
+function FPparseJarIds(){
+  const out=[];
+  const grab=s=>{ const m=String(s||"").match(/[#?&]jars=([A-Za-z0-9_,-]+)/); if(m) m[1].split(",").forEach(x=>{ x=x.trim(); if(x.length>20) out.push(x); }); };
+  try{ grab(location.hash); }catch(e){}
+  try{ grab(location.search); }catch(e){}
+  return Array.from(new Set(out));
+}
+function FPattach(recIds){
+  const jars=FPparseJarIds(); if(!jars.length||!recIds||!recIds.length) return;
+  const m=FPmap(); let changed=false;
+  for(const rid of recIds){ const cur=m[rid]||[]; for(const j of jars){ if(!cur.includes(j)){ cur.push(j); changed=true; } } m[rid]=cur; }
+  if(changed) FPsaveMap(m);
+}
+function FPjarsFor(recId, recJson){
+  const out=[]; const m=FPmap();
+  (m[recId]||[]).forEach(x=>out.push(x));
+  if(recJson&&Array.isArray(recJson.jars)) recJson.jars.forEach(x=>{ if(typeof x==="string"&&x.length>20) out.push(x); });
+  return Array.from(new Set(out));
+}
+async function FPfetch(id, asJson){
+  for(const base of FP_LADDER){
+    try{ const r=await fetch(base+id); if(r.ok) return asJson? await r.json() : await r.arrayBuffer(); }catch(e){}
+  }
+  return null;
+}
+async function FPjar(id){
+  if(id in FP.cache) return FP.cache[id];
+  const j=await FPfetch(id,true);
+  FP.cache[id]=(j&&FP_KINDS[j.kind])?j:null; // any other kind: refused, silently
+  return FP.cache[id];
+}
+function FPhasVideo(j){
+  if(!j) return false;
+  if(Array.isArray(j.tracks)&&j.tracks.some(t=>t&&t.type==="video"&&t.blob)) return true;
+  return j.kind!=="voice-jar/1" && !!j.blob && String(j.mime||"").indexOf("video")===0;
+}
+function FPtracks(j){
+  const out=[];
+  if(Array.isArray(j.tracks)) for(const t of j.tracks){ if(t&&t.blob&&(t.type==="video"||t.type==="audio")) out.push({type:t.type, blob:t.blob, sha256:t.sha256, mime:t.mime}); }
+  if(!out.length&&j.blob){
+    const isV=String(j.mime||"").indexOf("video")===0;
+    out.push({type:isV?"video":"audio", blob:j.blob, sha256:j.sha256, mime:j.mime});
+  }
+  return out;
+}
+function FPanchorLine(j){
+  let a="anchor not stamped";
+  if(j.anchor&&j.anchor.seq!==undefined&&j.anchor.seq!==null) a="anchor snapshot #"+j.anchor.seq;
+  else if(typeof j.tapeMs0==="number"&&typeof j.tapeMs1==="number") a="anchor tape "+(j.tapeMs0/1000).toFixed(1)+"s–"+(j.tapeMs1/1000).toFixed(1)+"s";
+  else if(j.anchor&&j.anchor.seal) a="anchor seal "+String(j.anchor.seal).slice(0,10)+"…";
+  return "pinned to the session tape — "+a+" · room "+(j.room||"—");
+}
+async function FPfill(){
+  const slots=document.querySelectorAll(".jarSlot:not([data-filled])");
+  for(const slot of slots){
+    slot.setAttribute("data-filled","1");
+    const jars=(slot.getAttribute("data-jars")||"").split(",").filter(x=>x.length>20);
+    for(const jid of jars){
+      const j=await FPjar(jid);
+      if(!j) continue;
+      const v=FPhasVideo(j);
+      const b=document.createElement("button");
+      b.className="fp-chip"+(v?"":" voice"); b.setAttribute("data-jar",jid);
+      b.textContent=(v?"🎬 FACE PROOF":"🎙 VOICE PROOF")+(j.from?" · "+FPesc(j.from):"");
+      b.title="watch + hear the player on this record — jar record "+jid.slice(0,12)+"…";
+      b.onclick=function(){ FPtoggle(b, jid); };
+      slot.appendChild(b);
+    }
+  }
+}
+function FPtoggle(btn, jid){ if(btn._pl) FPclose(btn); else FPopen(btn, jid); }
+function FPclose(btn){
+  const pl=btn._pl; if(!pl) return;
+  try{ pl.querySelectorAll("video,audio").forEach(el=>{ try{ el.pause(); }catch(e){} }); }catch(e){}
+  if(pl._urls) pl._urls.forEach(u=>{ try{ URL.revokeObjectURL(u); }catch(e){} });
+  pl.remove(); btn._pl=null;
+}
+async function FPopen(btn, jid){
+  const j=FP.cache[jid]; if(!j) return;
+  const slot=btn.closest(".jarSlot"); if(!slot) return;
+  const pl=document.createElement("div");
+  pl.className="jarPlayer"; pl.setAttribute("data-jar",jid);
+  const isV=FPhasVideo(j);
+  pl.innerHTML='<button class="fp-x" title="close the face-proof player">✕</button>'
+    +'<div style="font-size:1.02rem"><b>'+(isV?"🎬 THE FACE THAT SET THIS RECORD":"🎙 THE VOICE THAT SET THIS RECORD")+'</b> — '+FPesc(j.from||"player")+'</div>'
+    +'<div class="lbl">'+(isV?"face + voice, sealed as a jar beside the record":"voice, sealed as a jar beside the record")+(typeof j.durMs==="number"?' · '+(j.durMs/1000).toFixed(1)+'s':'')+' · jar record <span class="mono">'+jid.slice(0,12)+'…</span></div>'
+    +'<div class="lbl">'+FPesc(FPanchorLine(j))+'</div>'
+    +'<div class="lbl fp-status">fetching the jar’s tracks from their blobs…</div>'
+    +'<div class="fp-media"></div>';
+  slot.after(pl);
+  btn._pl=pl;
+  pl.querySelector(".fp-x").onclick=function(){ FPclose(btn); };
+  const media=pl.querySelector(".fp-media"), status=pl.querySelector(".fp-status");
+  const tracks=FPtracks(j);
+  if(!tracks.length){ status.textContent="⚠ this jar record names no playable tracks — nothing to pour."; return; }
+  const urls=[]; pl._urls=urls;
+  try{
+    const els=[], notes=[];
+    for(const t of tracks){
+      const buf=await FPfetch(t.blob,false);
+      if(!buf) throw new Error("the "+t.type+" track blob is unreachable");
+      if(t.sha256&&typeof sha256hex==="function"){
+        notes.push(t.type+" hash "+(sha256hex(new Uint8Array(buf))===t.sha256?"✓":"⚠ MISMATCH"));
+      }
+      const url=URL.createObjectURL(new Blob([buf],{type:t.mime||(t.type==="video"?"video/webm":"audio/webm")}));
+      urls.push(url);
+      const el=document.createElement(t.type==="video"?"video":"audio");
+      el.src=url; el.controls=true; el.setAttribute("playsinline","");
+      if(t.type==="video") el.muted=true; // the audio track carries the sound — tracks stay separate, never baked
+      el.setAttribute("data-track",t.type);
+      media.appendChild(el); els.push(el);
+      const g=document.createElement("div");
+      g.className="lbl mono"; g.style.cssText="font-size:.68rem;word-break:break-all;margin:2px 0 6px";
+      g.textContent="grab: "+t.blob; // the proof file itself, addressable by anyone
+      media.appendChild(g);
+    }
+    let held=false;
+    for(const el of els){ try{ await el.play(); }catch(e){ held=true; } }
+    status.textContent="▶ "+(tracks.length>1?"picture + sound poured as separate track blobs, started together":"voice poured from its own track blob")
+      +(notes.length?" · "+notes.join(" · "):"")
+      +(held?" · the browser held autoplay back — press ▶ on a track to start it.":"");
+  }catch(e){
+    status.textContent="⚠ face proof could not be poured right now: "+e.message+" — the blob may be between reblob cycles (the keeper renews them).";
+  }
+}
+window.FP=FP; window.FPattach=FPattach; window.FPjarsFor=FPjarsFor; window.FPfill=FPfill;
+setInterval(()=>{ try{ FPfill(); }catch(e){} }, 1500);
+</script>
+
+<script>
 const _enc=new TextEncoder();
 function sha256hex(data){
   var K=[0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2];
@@ -387,7 +538,7 @@ function winHash(r){ const c={format:r.format, winner:r.winner, who:r.who, secs:
 const CUBE_SEED=["PJBuzw0GA2rtbGKGpQP8m9imSh8LCe9eaOSkaoKjFdM"];
 const CUBE_LADDER=["https://walrus-testnet.blockscope.net/v1/blobs/","https://aggregator.walrus-testnet.walrus.space/v1/blobs/"];
 function cubeIds(){ let extra=[]; try{ extra=JSON.parse(localStorage.getItem("hall-cube-records")||"[]"); }catch(e){}
-  try{ const h=(location.hash||"").match(/#cube=([A-Za-z0-9_,-]+)/); if(h){ const inc=h[1].split(",").filter(x=>x.length>20); if(inc.length){ extra=Array.from(new Set(extra.concat(inc))); localStorage.setItem("hall-cube-records", JSON.stringify(extra)); const m=document.getElementById("cubeRecMsg"); if(m) m.textContent="📥 "+inc.length+" record(s) arrived from your Cube — verified below as they load."; } } }catch(e){}
+  try{ const h=(location.hash||"").match(/#cube=([A-Za-z0-9_,-]+)/); if(h){ const inc=h[1].split(",").filter(x=>x.length>20); if(inc.length){ extra=Array.from(new Set(extra.concat(inc))); localStorage.setItem("hall-cube-records", JSON.stringify(extra)); if(window.FPattach) FPattach(inc); const m=document.getElementById("cubeRecMsg"); if(m) m.textContent="📥 "+inc.length+" record(s) arrived from your Cube — verified below as they load."; } } }catch(e){}
   return Array.from(new Set(CUBE_SEED.concat(extra))); }
 async function cubeFetch(id){
   for(const base of CUBE_LADDER){ try{ const r=await fetch(base+id); if(r.ok) return await r.json(); }catch(e){} }
@@ -396,12 +547,12 @@ async function cubeFetch(id){
 async function renderCubeHall(){
   const boards=document.getElementById("cubeHallBoards"), all=document.getElementById("cubeHallAll");
   const ids=cubeIds(); const recs=[];
-  for(const id of ids){ const j=await cubeFetch(id); if(j&&j.format==="cube-win/1") recs.push({id, r:j, ok:winHash(j)===j.h}); }
+  for(const id of ids){ const j=await cubeFetch(id); if(j&&j.format==="cube-win/1") recs.push({id, r:j, ok:winHash(j)===j.h, jars:(window.FPjarsFor?FPjarsFor(id,j):[])}); }
   if(!recs.length){ boards.innerHTML="No records could be recalled right now — the blobs may be between reblob cycles (the keeper renews them)."; all.innerHTML=""; return; }
   const esc=s=>String(s||"").replace(/</g,"&lt;");
   const when=ts=>{ const d=new Date(ts); return (d.getMonth()+1)+"/"+d.getDate()+" "+String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0"); };
   const watch=r=>r.tape?' <a class="btn" href="../studio/bbb-cube.html?replay='+r.tape+'">▶ WATCH</a>':"";
-  const line=x=>"<b>"+esc(x.r.winner)+"</b> · "+x.r.secs+" s · round "+x.r.round+" · hits "+(x.r.h1||0)+"/"+(x.r.h2||0)+" · "+when(x.r.ts)+" · "+(x.ok?'<span class="badge v">✓ HASH VERIFIED</span>':'<span class="badge u">✗ HASH FAILS</span>')+" · <span class='mono'>"+x.id.slice(0,12)+"…</span>"+watch(x.r);
+  const line=x=>"<b>"+esc(x.r.winner)+"</b> · "+x.r.secs+" s · round "+x.r.round+" · hits "+(x.r.h1||0)+"/"+(x.r.h2||0)+" · "+when(x.r.ts)+" · "+(x.ok?'<span class="badge v">✓ HASH VERIFIED</span>':'<span class="badge u">✗ HASH FAILS</span>')+" · <span class='mono'>"+x.id.slice(0,12)+"…</span>"+watch(x.r)+(x.jars&&x.jars.length?'<span class="jarSlot" data-rec="'+x.id+'" data-jars="'+x.jars.join(",")+'"></span>':"");
   const fastest=recs.filter(x=>x.r.who!=="AI").slice().sort((a,b)=>a.r.secs-b.r.secs).slice(0,5);
   const hits=recs.slice().map(x=>({x, h:Math.max(x.r.h1||0, x.r.h2||0)})).filter(o=>o.h>0).sort((a,b)=>b.h-a.h).slice(0,5);
   const endu=recs.filter(x=>x.r.who==="AI").map(x=>({x, h:(x.r.h1||0)+(x.r.h2||0), score:((x.r.h1||0)+(x.r.h2||0))*x.r.secs})).filter(o=>o.h>0).sort((a,b)=>b.score-a.score).slice(0,5);
@@ -410,6 +561,7 @@ async function renderCubeHall(){
     +"<br><br><b>🛡️ ENDURANCE</b> (hits × seconds)<br>"+(endu.length?endu.map(o=>"<b>"+o.score+" pts</b> — "+line(o.x)).join("<br>"):"none yet")
     +"<br><br><span class='lbl'>seed record = the pipeline proof (first win record solidified end-to-end, test round, Nov 6) — the format every real record follows.</span>";
   all.innerHTML=recs.slice().sort((a,b)=>b.r.ts-a.r.ts).map(line).join("<br>");
+  if(window.FPfill) FPfill();
 }
 async function addCubeRecord(){
   const inp=document.getElementById("cubeRecInput"), msg=document.getElementById("cubeRecMsg");
@@ -421,28 +573,29 @@ async function addCubeRecord(){
   let extra=[]; try{ extra=JSON.parse(localStorage.getItem("hall-cube-records")||"[]"); }catch(e){}
   if(!extra.includes(id)) extra.push(id);
   localStorage.setItem("hall-cube-records", JSON.stringify(extra));
-  inp.value=""; msg.textContent="✓ verified and admitted to the Hall.";
+  inp.value=""; if(window.FPattach) FPattach([id]); msg.textContent="✓ verified and admitted to the Hall.";
   renderCubeHall();
 }
 function zHash(r){ const s=["zombie-run/1",r.side,r.nights,r.k1,r.k2,r.secs,r.ts,r.prev,r.zt||0].join("|"); return sha256hex(_enc.encode(s)); }
 function zombieIds(){ let extra=[]; try{ extra=JSON.parse(localStorage.getItem("hall-zombie-records")||"[]"); }catch(e){}
-  try{ const h=(location.hash||"").match(/#zombie=([A-Za-z0-9_,-]+)/); if(h){ const inc=h[1].split(",").filter(x=>x.length>20); if(inc.length){ extra=Array.from(new Set(extra.concat(inc))); localStorage.setItem("hall-zombie-records", JSON.stringify(extra)); const m=document.getElementById("zombieRecMsg"); if(m) m.textContent="📥 "+inc.length+" record(s) arrived from your game — verified below as they load."; } } }catch(e){}
+  try{ const h=(location.hash||"").match(/#zombie=([A-Za-z0-9_,-]+)/); if(h){ const inc=h[1].split(",").filter(x=>x.length>20); if(inc.length){ extra=Array.from(new Set(extra.concat(inc))); localStorage.setItem("hall-zombie-records", JSON.stringify(extra)); if(window.FPattach) FPattach(inc); const m=document.getElementById("zombieRecMsg"); if(m) m.textContent="📥 "+inc.length+" record(s) arrived from your game — verified below as they load."; } } }catch(e){}
   return extra; }
 async function renderZombieHall(){
   const boards=document.getElementById("zombieHallBoards"), all=document.getElementById("zombieHallAll");
   const ids=zombieIds();
   if(!ids.length){ boards.innerHTML="No records in the Hall yet — survive a night in <a href='../studio/zombie-player.html' style='color:var(--blue)'>Zombie World</a>, then paste the record blob id from its 🏆 board."; all.innerHTML=""; return; }
   const recs=[];
-  for(const id of ids){ const j=await cubeFetch(id); if(j&&j.format==="zombie-run/1") recs.push({id, r:j, ok:zHash(j)===j.h}); }
+  for(const id of ids){ const j=await cubeFetch(id); if(j&&j.format==="zombie-run/1") recs.push({id, r:j, ok:zHash(j)===j.h, jars:(window.FPjarsFor?FPjarsFor(id,j):[])}); }
   const good=recs.filter(x=>x.ok), bad=recs.length-good.length;
   const surv=good.filter(x=>x.r.side!=="zombie"), zom=good.filter(x=>x.r.side==="zombie");
-  const row=(x,main)=>"<div style='padding:4px 0;border-bottom:1px solid #2a2a4d'>"+main+"<br><span class='lbl'>"+new Date(x.r.ts).toLocaleDateString()+" · blob <span class='mono'>"+x.id.slice(0,12)+"…</span>"+(x.r.tape?" · <a href='../studio/zombie-player.html?replay="+x.r.tape+"' style='color:var(--blue)'>▶ WATCH</a>":"")+"</span></div>";
+  const row=(x,main)=>"<div style='padding:4px 0;border-bottom:1px solid #2a2a4d'>"+main+"<br><span class='lbl'>"+new Date(x.r.ts).toLocaleDateString()+" · blob <span class='mono'>"+x.id.slice(0,12)+"…</span>"+(x.r.tape?" · <a href='../studio/zombie-player.html?replay="+x.r.tape+"' style='color:var(--blue)'>▶ WATCH</a>":"")+"</span>"+(x.jars&&x.jars.length?'<span class="jarSlot" data-rec="'+x.id+'" data-jars="'+x.jars.join(",")+'"></span>':"")+"</div>";
   boards.innerHTML="<div>⛓️ "+good.length+" record(s) hash-verified ✓"+(bad?" · ⚠ "+bad+" failed verification and were refused":"")+"</div>"
     +"<div style='margin-top:6px'><b>🌙 MOST NIGHTS</b><br>"+(surv.slice().sort((a,b)=>b.r.nights-a.r.nights).slice(0,5).map(x=>row(x,"🌙 <b>"+x.r.nights+" nights</b> · "+(x.r.n1||"P1")+" · "+x.r.secs+"s")).join("")||"<span class='lbl'>none yet</span>")+"</div>"
     +"<div style='margin-top:6px'><b>🧟 MOST KILLS</b><br>"+(surv.slice().sort((a,b)=>(b.r.k1+b.r.k2)-(a.r.k1+a.r.k2)).slice(0,5).map(x=>row(x,"🧟 <b>"+(x.r.k1+x.r.k2)+" kills</b> · "+(x.r.n1||"P1"))).join("")||"<span class='lbl'>none yet</span>")+"</div>"
     +"<div style='margin-top:6px'><b>🛡️ ENDURANCE</b><br>"+(surv.slice().sort((a,b)=>(b.r.k1+b.r.k2)*b.r.secs-(a.r.k1+a.r.k2)*a.r.secs).slice(0,5).map(x=>row(x,"🛡️ <b>"+((x.r.k1+x.r.k2)*x.r.secs)+" pts</b> · "+(x.r.k1+x.r.k2)+" × "+x.r.secs+"s")).join("")||"<span class='lbl'>none yet</span>")+"</div>"
     +"<div style='margin-top:6px'><b>☠️ ZOMBIE BOARD — FASTEST TAKEDOWN</b><br>"+(zom.slice().sort((a,b)=>a.r.zt-b.r.zt).slice(0,5).map(x=>row(x,"☠️ <b>"+x.r.zt+"s</b> · "+(x.r.n2||"the zombie"))).join("")||"<span class='lbl'>no zombie-player wins yet</span>")+"</div>";
   all.innerHTML=good.slice().reverse().map(x=>row(x,(x.r.side==="zombie"?"☠️ zombie win · ":"🧟 ")+"<b>"+x.r.nights+" nights</b> · "+(x.r.k1+x.r.k2)+" kills · "+x.r.secs+"s")).join("")||"<span class='lbl'>none</span>";
+  if(window.FPfill) FPfill();
 }
 async function addZombieRecord(){
   const inp=document.getElementById("zombieRecInput"), msg=document.getElementById("zombieRecMsg");
@@ -454,7 +607,7 @@ async function addZombieRecord(){
   let extra=[]; try{ extra=JSON.parse(localStorage.getItem("hall-zombie-records")||"[]"); }catch(e){}
   if(!extra.includes(id)) extra.push(id);
   localStorage.setItem("hall-zombie-records", JSON.stringify(extra));
-  msg.textContent="✓ verified + admitted to the Hall."; inp.value="";
+  if(window.FPattach) FPattach([id]); msg.textContent="✓ verified + admitted to the Hall."; inp.value="";
   renderZombieHall();
 }
 renderZombieHall();
