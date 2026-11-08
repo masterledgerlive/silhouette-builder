@@ -3,8 +3,9 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>THE ROOM v0.2 — Arcades of Time Hangout</title>
+<title>THE ROOM v1.0 — THE LOBBY · Arcades of Time Hangout</title>
 <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mqtt@5.10.1/dist/mqtt.min.js"></script>
 <script src="arcade-shared/kk-rally.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
@@ -78,14 +79,14 @@
 </div>
 
 <div id="ui">
-  <h1>🕹️ THE ROOM — HANGOUT v0.2</h1>
+  <h1>🕹️ THE ROOM — THE LOBBY v1.0</h1>
   <p><b>Step into a cabinet's glowing circle</b> and stand 9 seconds — or click its screen — to step up and play. WASD to walk, drag to look. Big screen on the right wall: live matches, prediction board, reputation on the ding. Courts door on the left wall hot-jumps you to the seats.</p>
   <p>SKIN:
     <button class="sbtn on" data-skin="neon">NEON</button>
     <button class="sbtn" data-skin="wood">WOOD &amp; BRASS</button>
     <button class="sbtn" data-skin="space">DEEP SPACE</button>
   </p>
-  <p>Patrons with 🤖 are our agents playing <i>real engine matches</i> right now. Human presence is the next layer. <a href="blob-cinema/scores.html">Hall of Scores</a> · <a href="system.html">System Map</a></p>
+  <p>Patrons with 🤖 are our agents playing <i>real engine matches</i> right now. Humans — that is YOU, arriving through <b>THE LOBBY</b> bar up top: share your room code and friends stand here beside you, faces over their avatars, talking. The three doors on the left wall are portals — walk through together into Bunny Cube, Zombie World or the Builder, same room code, same party. <a href="blob-cinema/scores.html">Hall of Scores</a> · <a href="system.html">System Map</a></p>
   <p>STEP UP:
     <button class="sbtn" id="upRally">🏓 RALLY</button>
     <button class="sbtn" id="upSlap">✋ SLAP</button>
@@ -1428,6 +1429,790 @@ window.addEventListener('load', ()=>{
     } else { gBtn(sc, a); }
   }));
 });
+</script>
+
+<style>
+/* ================= THE LOBBY (v1.0) chrome ================= */
+#lbBar{position:fixed;top:52px;left:50%;transform:translateX(-50%);z-index:46;display:flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:center;max-width:97vw;background:rgba(10,10,20,.92);border:1.5px solid #ffd76a;border-radius:14px;padding:7px 10px;font-family:Georgia,serif;color:#e8e0c8;box-shadow:0 8px 30px rgba(0,0,0,.55)}
+#lbBar .lb-brand{color:#ffd76a;font-weight:bold;letter-spacing:1px;font-size:13.5px}
+#lbCode{color:#7fd4ff;font-weight:bold;font-size:15px;letter-spacing:2px}
+#lbBar input{background:#0d1526;color:#dfe9ff;border:1px solid #39507a;border-radius:6px;padding:5px 7px;font-family:inherit;font-size:12.5px}
+#lbName{width:104px}
+#lbJoinCode{width:64px;text-transform:uppercase}
+.lb-btn{background:#241b08;color:#ffd76a;border:1px solid #8a6d2f;border-radius:8px;padding:6px 10px;cursor:pointer;font-family:inherit;font-size:12.5px}
+.lb-btn.on{background:#ffd76a;color:#241b08}
+.lb-btn.lb-denied{background:#5a2432!important;color:#ffb3c0!important}
+#lbRec.on{background:#a31621;color:#fff;border-color:#ff5347}
+#lbCount{font-size:12.5px;color:#b9f4cd}
+#lbRoster{flex-basis:100%;text-align:center;font-size:11.5px;color:#9fb6cc}
+#lbPop{position:fixed;top:118px;left:50%;transform:translateX(-50%);z-index:48;max-width:92vw;text-align:center;font-family:Georgia,serif;font-size:19px;color:#fff;text-shadow:0 2px 10px #000,0 0 22px rgba(255,215,106,.35);opacity:0;transition:opacity .18s;pointer-events:none;line-height:1.35}
+#lbDock{position:fixed;right:10px;top:118px;z-index:42;display:flex;flex-direction:column;gap:8px}
+.lb-tile{width:132px;background:rgba(10,10,18,.9);border:1.5px solid #8a6d2f;border-radius:10px;overflow:hidden}
+.lb-tile video{width:132px;height:96px;object-fit:cover;display:block;background:#000}
+.lb-tile.lb-self{border-color:#7fd4ff}
+.lb-tilecap{font-family:Georgia,serif;font-size:11px;color:#ffd76a;text-align:center;padding:3px 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lb-texpark{position:fixed;left:-4px;top:-4px;width:16px;height:16px;opacity:.02;pointer-events:none}
+#lbChat{position:fixed;right:10px;bottom:88px;z-index:46;width:min(320px,92vw);height:264px;display:none;flex-direction:column;background:rgba(10,10,18,.95);border:1.5px solid #7a4fd0;border-radius:12px;overflow:hidden;font-family:Georgia,serif}
+#lbChatLog{flex:1;overflow-y:auto;padding:8px 10px;font-size:13px;line-height:1.5;color:#e8e0c8}
+.lb-line{margin:4px 0;word-wrap:break-word}
+.lb-seal{color:#3ec97f;font-style:normal;font-size:11.5px}
+#lbChatRow{display:flex;gap:6px;padding:7px;border-top:1px solid #2c3350}
+#lbChatIn{flex:1;background:#0d0f1a;border:1px solid #2c3350;border-radius:8px;color:#fff;padding:7px;font-family:inherit;font-size:13px}
+#lbTapeBox{flex-basis:100%;display:none;text-align:center;font-size:11.5px;color:#ffd76a;word-break:break-all}
+#lbSplash{position:fixed;inset:0;z-index:60;display:none;align-items:center;justify-content:center;background:rgba(4,4,10,.55)}
+#lbSplashCard{background:linear-gradient(180deg,#1c1430,#0d0a18);border:3px solid #ffd76a;border-radius:18px;padding:20px 22px;width:min(480px,92vw);text-align:center;font-family:Georgia,serif;color:#e8e0c8;box-shadow:0 0 60px rgba(255,215,106,.3)}
+#lbSplashTitle{font-size:22px;color:#ffd76a;letter-spacing:1px;margin:0 0 8px}
+#lbSplashBody{font-size:13.5px;line-height:1.55;color:#cfc4a0}
+#lbSplashGo{display:block;margin:14px 0 8px;background:#ffd76a;color:#241b08;border-radius:10px;padding:13px;font-size:16px;font-weight:bold;text-decoration:none}
+#lbSplashClose{background:#241b08;color:#ffd76a;border:1px solid #8a6d2f;border-radius:8px;padding:7px 14px;cursor:pointer;font-family:inherit}
+</style>
+<div id="lbBar">
+  <span class="lb-brand">🏠 THE LOBBY</span>
+  <span>room <span id="lbCode">····</span></span>
+  <button class="lb-btn" id="lbCopy" title="copy the room link">🔗 COPY LINK</button>
+  <input id="lbJoinCode" placeholder="CODE" maxlength="8"/><button class="lb-btn" id="lbJoin">JOIN</button>
+  <span>🏷</span><input id="lbName" maxlength="18"/>
+  <button class="lb-btn" id="lbMic">🎙 MIC</button>
+  <button class="lb-btn" id="lbHear">🔊 HEAR</button>
+  <button class="lb-btn" id="lbFace">📷 FACE</button>
+  <button class="lb-btn" id="lbChatBtn">💬 CHAT</button>
+  <button class="lb-btn" id="lbRec">🔴 ROOM REC</button>
+  <button class="lb-btn lb-portal-btn" data-portal="cube">🐰 CUBE</button>
+  <button class="lb-btn lb-portal-btn" data-portal="zombie">🧟 ZOMBIE</button>
+  <button class="lb-btn lb-portal-btn" data-portal="builder">🛠 BUILDER</button>
+  <span id="lbCount">👥 1 here</span>
+  <div id="lbRoster"></div>
+  <div id="lbTapeBox"></div>
+</div>
+<div id="lbPop"></div>
+<div id="lbDock"></div>
+<div id="lbTexPark"></div>
+<div id="lbChat">
+  <div id="lbChatLog"></div>
+  <div id="lbChatRow"><input id="lbChatIn" placeholder="say it to the room — sealed as you send" maxlength="300"/><button class="lb-btn" id="lbChatSend">SEND</button></div>
+</div>
+<div id="lbSplash"><div id="lbSplashCard">
+  <h2 id="lbSplashTitle">🚪 PORTAL</h2>
+  <p id="lbSplashBody"></p>
+  <a id="lbSplashGo" href="#">🚪 ENTER</a>
+  <button id="lbSplashClose">STAY IN THE LOBBY</button>
+</div></div>
+
+<script>
+// ================= THE LOBBY — ROOM v1.0 =================
+// David's commission (Nov 8 01:03 EST): the Arcade Room becomes the hangout —
+// everybody meets here, avatars walk with video faces on top, everyone talks
+// and chats, the whole hangout can be recorded as one stack, and the room is
+// the entry point: portals carry the party INTO the games together.
+// Built from the proven Cube packages (v1.9.6): MQTT gossip, per-peer talk
+// objects, the COPYCAT face method (true track is the key; every consumer
+// drinks from its own clone), echo-sealed chat, tape attachments + coverage.
+// Presence has NO host: the room's life is the gossip itself.
+(function(){
+'use strict';
+// ---------- pure-JS SHA-256 (FIPS 180-4; crypto.subtle is undefined on http) ----------
+function sha256hex(data){
+  const K=[0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2];
+  let H=[0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19];
+  const bytes = data instanceof Uint8Array ? data : new TextEncoder().encode(String(data));
+  const bitLen = bytes.length*8;
+  const withOne = bytes.length+1, pad = (56 - (withOne % 64) + 64) % 64, total = withOne + pad + 8;
+  const msg = new Uint8Array(total); msg.set(bytes); msg[bytes.length]=0x80;
+  const dv = new DataView(msg.buffer); dv.setUint32(total-4, bitLen>>>0); dv.setUint32(total-8, Math.floor(bitLen/4294967296));
+  const W = new Uint32Array(64);
+  const rr=(x,n)=>(x>>>n)|(x<<(32-n));
+  for(let off=0; off<total; off+=64){
+    for(let i=0;i<16;i++) W[i]=dv.getUint32(off+i*4);
+    for(let i=16;i<64;i++){ const s0=rr(W[i-15],7)^rr(W[i-15],18)^(W[i-15]>>>3), s1=rr(W[i-2],17)^rr(W[i-2],19)^(W[i-2]>>>10); W[i]=(W[i-16]+s0+W[i-7]+s1)|0; }
+    let [a,b,c,d,e,f,g,h]=H;
+    for(let i=0;i<64;i++){
+      const S1=rr(e,6)^rr(e,11)^rr(e,25), ch=(e&f)^(~e&g), t1=(h+S1+ch+K[i]+W[i])|0;
+      const S0=rr(a,2)^rr(a,13)^rr(a,22), mj=(a&b)^(a&c)^(b&c), t2=(S0+mj)|0;
+      h=g; g=f; f=e; e=(d+t1)|0; d=c; c=b; b=a; a=(t1+t2)|0;
+    }
+    H=[(H[0]+a)|0,(H[1]+b)|0,(H[2]+c)|0,(H[3]+d)|0,(H[4]+e)|0,(H[5]+f)|0,(H[6]+g)|0,(H[7]+h)|0];
+  }
+  return H.map(x=>('00000000'+(x>>>0).toString(16)).slice(-8)).join('');
+}
+// ---------- constants (the proven stack's own addresses) ----------
+const BROKER='wss://broker.emqx.io:8084/mqtt';
+const PUBLISHER='https://publisher.walrus-testnet.walrus.space/v1/blobs?epochs=30';
+const LOADER='https://arcade.highscores.live/arcade/blob-loader.html';
+const VOICE_CAP=4;           // honest cap: simultaneous talkers in the mesh
+let SEG_MS=10000;            // room-tape segment length (tape ms)
+const PALETTE=['#e2543e','#3e8ae2','#3ec97f','#e2b13e','#9a5de2','#e25d9e','#3ed0c9','#8a6d2f'];
+const PORTALS=[
+  {key:'cube',   icon:'🐰', name:'BUNNY CUBE',   sub:'the meadow, together', color:'#ff9ecb', z:-3.9, blob:'bsk6xDKhv4zX8-FGfiXtW9pQVQiIsgWS_uImpPveato', sha:'77178b3900f6f41808e1010b968de7301df40e69a2928a65b08c04481934cee8'},
+  {key:'zombie', icon:'🧟', name:'ZOMBIE WORLD', sub:'board up, together',   color:'#7ee787', z: 0.5, blob:'Zq95-47oC4dYDPDXRJXAwYq3obuPIopBgLAqlFxfOIA', sha:'0dec725145678238ac10dbed8cf0cf311eca17d6081a4d3f5cc882832f90bfc3'},
+  {key:'builder',icon:'🛠', name:'BUILDER',      sub:'compose a world',      color:'#ffd76a', z: 2.9, blob:'Moh3JnvaiQEJglcjfDNZSpJ2CwplVwUvvLdX95wzJ7M', sha:'6d3d1509248ec72fa9b0eefd467a5c9536fb9df33e0fac341d69e3915d089dea'}
+];
+// ---------- identity ----------
+const qs=new URLSearchParams(location.search);
+function cleanCode(s){ return (String(s||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,8)) || 'MAIN'; }
+const LOBBY={
+  code: cleanCode(qs.get('room') || 'MAIN'),
+  tid: 't'+Math.random().toString(36).slice(2,10),
+  name: 'GUEST', color:'#e2543e',
+  mq:null, connected:false,
+  micOn:false, hearOn:false, faceOn:false,
+  micStream:null, camStream:null,
+  peers:new Map(),   // tid -> peer object (figure + talk + media)
+  chatLog:[], seals:new Map(),
+  rec:null, lastTape:null,
+  portalDwell:{key:null, t:0}
+};
+try{ LOBBY.name = localStorage.getItem('lobby-name') || ('YOU-'+LOBBY.tid.slice(1,4).toUpperCase()); }catch(e){ LOBBY.name='YOU-'+LOBBY.tid.slice(1,4).toUpperCase(); }
+LOBBY.color = PALETTE[[...LOBBY.tid].reduce((a,c)=>a+c.charCodeAt(0),0)%PALETTE.length];
+const $=id=>document.getElementById(id);
+const cleanName=s=>String(s||'').replace(/[<>&"']/g,'').slice(0,18) || 'GUEST';
+function myPos(){
+  const cam=$('cam'); if(!cam) return {x:0,z:4.6,hd:0};
+  const p=cam.getAttribute('position')||{x:0,z:4.6}, r=cam.getAttribute('rotation')||{y:0};
+  return {x:+p.x.toFixed(2), z:+p.z.toFixed(2), hd:+((r.y||0)).toFixed(1)};
+}
+// ---------- popText captions (hearing law: nothing is audio-only) ----------
+let popTimer=null, popQueue=[];
+function popText(txt, ms){
+  popQueue.push({txt, ms:ms||2600});
+  if(!popTimer) nextPop();
+}
+function nextPop(){
+  const it=popQueue.shift(); const el=$('lbPop');
+  if(!it || !el){ popTimer=null; return; }
+  el.textContent=it.txt; el.style.opacity='1';
+  popTimer=setTimeout(()=>{ el.style.opacity='0'; popTimer=setTimeout(nextPop, 180); }, it.ms);
+}
+// ---------- blob pour ----------
+async function putBlob(body){
+  const r=await fetch(PUBLISHER,{method:'PUT', body});
+  if(!r.ok) throw new Error('publisher '+r.status);
+  const j=await r.json();
+  const id=(j.newlyCreated&&j.newlyCreated.blobObject&&j.newlyCreated.blobObject.blobId)||(j.alreadyCertified&&j.alreadyCertified.blobId);
+  if(!id) throw new Error('no blobId in publisher reply');
+  return id;
+}
+async function shaOfBlob(blob){ const buf=new Uint8Array(await blob.arrayBuffer()); return {sha256:sha256hex(buf), size:buf.length}; }
+// ---------- presence figures (makeFigure pattern: capsule body + head) ----------
+function makeFigure(peer){
+  const g=document.createElement('a-entity');
+  const body=document.createElement('a-cylinder');
+  body.setAttribute('radius','0.16'); body.setAttribute('height','0.85'); body.setAttribute('position','0 0.45 0');
+  body.setAttribute('color', peer.color);
+  const head=document.createElement('a-sphere');
+  head.setAttribute('radius','0.14'); head.setAttribute('position','0 1.02 0'); head.setAttribute('color','#e8c39e');
+  const label=document.createElement('a-text');
+  label.setAttribute('align','center'); label.setAttribute('width','2.3'); label.setAttribute('color','#fff');
+  label.setAttribute('position','0 1.38 0');
+  g.appendChild(body); g.appendChild(head); g.appendChild(label);
+  // the face card: a raw THREE plane riding a holder above the head (billboarded per tick)
+  const holder=new THREE.Object3D(); holder.position.set(0,1.05,0); g.object3D.add(holder);
+  const mesh=new THREE.Mesh(new THREE.PlaneGeometry(0.38,0.46), new THREE.MeshBasicMaterial({transparent:true, opacity:0, side:THREE.DoubleSide}));
+  holder.add(mesh);
+  document.querySelector('a-scene').appendChild(g);
+  peer.fig=g; peer.label=label; peer.faceHolder=holder; peer.faceMesh=mesh;
+  peer.tx=peer.x; peer.tz=peer.z; peer.thd=peer.hd;
+  g.setAttribute('position', peer.x+' 0 '+peer.z);
+  drawPeerLabel(peer);
+}
+function drawPeerLabel(peer){
+  if(peer.label) peer.label.setAttribute('value', cleanName(peer.name)+(peer.recOn?' •REC':''));
+}
+function dropFigure(peer){
+  if(peer.fig && peer.fig.parentNode) peer.fig.parentNode.removeChild(peer.fig);
+  peer.fig=null;
+}
+// ---------- peer lifecycle ----------
+function getPeer(tid){
+  let p=LOBBY.peers.get(tid);
+  if(!p){
+    p={tid, name:'GUEST', color:PALETTE[[...tid].reduce((a,c)=>a+c.charCodeAt(0),0)%PALETTE.length],
+       x:0, z:3, hd:0, faceOn:false, voiceOn:false, talkOn:false, recOn:false, lastSeen:Date.now(),
+       fig:null, label:null, faceHolder:null, faceMesh:null,
+       talk:null, tileWrap:null, tileEl:null, texEl:null, audEl:null, srcStream:null, texTex:null};
+    LOBBY.peers.set(tid, p);
+  }
+  return p;
+}
+function removePeer(tid){
+  const p=LOBBY.peers.get(tid); if(!p) return;
+  closePeerTalk(p); dropFigure(p);
+  if(p.tileWrap && p.tileWrap.parentNode) p.tileWrap.parentNode.removeChild(p.tileWrap);
+  LOBBY.peers.delete(tid);
+  if(LOBBY.rec) recEvent({ev:'leave', name:p.name});
+  roster();
+}
+// ---------- roster / bar ----------
+function roster(){
+  const n=LOBBY.peers.size+1;
+  const el=$('lbCount'); if(el) el.textContent='👥 '+n+' here';
+  const rb=$('lbRoster');
+  if(rb){
+    const names=[LOBBY.name+' (you)'+(LOBBY.rec&&LOBBY.rec.on?' 🔴':'')];
+    LOBBY.peers.forEach(p=> names.push(cleanName(p.name)+(p.recOn?' 🔴':'')));
+    rb.textContent=names.join(' · ');
+  }
+}
+// ---------- MQTT: the room's life is the gossip ----------
+function topic(kind){ return 'kodakai/room/v1/'+LOBBY.code+'/'+kind; }
+function publish(kind, obj){
+  if(!LOBBY.mq || !LOBBY.connected) return false;
+  try{ LOBBY.mq.publish(topic(kind), JSON.stringify(obj)); return true; }catch(e){ return false; }
+}
+function connectMQ(){
+  if(typeof mqtt==='undefined'){ popText('📡 presence offline — the mqtt library did not load; the room still works solo', 4000); return; }
+  const mq=mqtt.connect(BROKER, {clientId:'room-'+LOBBY.tid+'-'+Math.random().toString(36).slice(2,6), reconnectPeriod:3000, connectTimeout:8000});
+  LOBBY.mq=mq;
+  mq.on('connect', ()=>{
+    LOBBY.connected=true;
+    mq.subscribe(topic('presence')); mq.subscribe(topic('talk'));
+    gossipPresence(); roster();
+    popText('🏠 You are in room '+LOBBY.code+' — say the code out loud; anyone who enters it stands here with you', 3600);
+  });
+  mq.on('close', ()=>{ LOBBY.connected=false; });
+  mq.on('message', (t, payload)=>{
+    let m; try{ m=JSON.parse(payload.toString()); }catch(e){ return; }
+    if(!m || m.tid===LOBBY.tid) return;
+    if(t.endsWith('/presence')) onPresence(m);
+    else if(t.endsWith('/talk')) onTalkMsg(m);
+  });
+}
+function gossipPresence(){
+  const p=myPos();
+  publish('presence', {type:'presence', tid:LOBBY.tid, name:LOBBY.name, color:LOBBY.color,
+    x:p.x, z:p.z, hd:p.hd, face:LOBBY.faceOn?1:0, voice:(LOBBY.micOn||LOBBY.hearOn)?1:0,
+    talk:LOBBY.micOn?1:0, rec:(LOBBY.rec&&LOBBY.rec.on)?1:0, ts:Date.now()});
+}
+setInterval(gossipPresence, 200);
+function onPresence(m){
+  if(m.type==='bye'){ removePeer(m.tid); return; }
+  if(m.type!=='presence') return;
+  const isNew=!LOBBY.peers.has(m.tid);
+  const p=getPeer(m.tid);
+  const wasFace=p.faceOn, wasVoice=p.voiceOn;
+  p.name=cleanName(m.name||'GUEST'); if(m.color) p.color=m.color;
+  p.tx=+m.x||0; p.tz=+m.z||0; p.thd=+m.hd||0;
+  p.faceOn=!!m.face; p.voiceOn=!!m.voice; p.talkOn=!!m.talk;
+  const wasRec=p.recOn; p.recOn=!!m.rec; p.lastSeen=Date.now();
+  if(!p.fig){ p.x=p.tx; p.z=p.tz; makeFigure(p); }
+  if(isNew){ popText('👋 '+p.name+' walked in', 1800); if(LOBBY.rec) recEvent({ev:'join', name:p.name}); }
+  if(p.recOn && !wasRec) popText('🔴 '+p.name+' is recording this room', 2600);
+  if(p.recOn!==wasRec) drawPeerLabel(p);
+  maybeWire(p);
+  roster();
+}
+setInterval(()=>{ // stale peers leave quietly — 20s grace: backgrounded tabs
+  // and busy renderers starve timers, and a live peer connection is itself
+  // proof of presence (a 7s sweep tore down healthy talk pcs under load).
+  const now=Date.now();
+  [...LOBBY.peers.keys()].forEach(tid=>{ const p=LOBBY.peers.get(tid); if(!p) return;
+    const livePc=p.talk && p.talk.pc && p.talk.pc.connectionState!=='closed' && p.talk.pc.connectionState!=='failed';
+    if(now-p.lastSeen>20000 && !livePc){ DIAG.staleRemoved++; removePeer(tid); } });
+}, 1000);
+setInterval(()=>{ // figures walk to their gossiped places; face cards billboard to my eyes
+  const camObj=document.querySelector('a-scene') && document.querySelector('a-scene').camera;
+  LOBBY.peers.forEach(p=>{
+    if(!p.fig) return;
+    const cur=p.fig.getAttribute('position');
+    const nx=cur.x+(p.tx-cur.x)*0.3, nz=cur.z+(p.tz-cur.z)*0.3;
+    p.fig.setAttribute('position', nx+' 0 '+nz);
+    let dh=p.thd-(p.fig.getAttribute('rotation')||{y:0}).y;
+    while(dh>180) dh-=360; while(dh<-180) dh+=360;
+    p.fig.setAttribute('rotation', '0 '+(((p.fig.getAttribute('rotation')||{y:0}).y)+dh*0.3)+' 0');
+    if(p.faceHolder && camObj) p.faceHolder.lookAt(camObj.position.x, 1.05, camObj.position.z);
+  });
+}, 50);
+window.addEventListener('beforeunload', ()=>{ publish('presence', {type:'bye', tid:LOBBY.tid}); });
+// ---------- chat: echo-sealed, captioned (hearing law) ----------
+function chatLine(who, text, color, sealState){
+  const log=$('lbChatLog'); if(!log) return null;
+  const d=document.createElement('div'); d.className='lb-line';
+  const b=document.createElement('b'); b.textContent=who; b.style.color=color||'#ffd76a';
+  const s=document.createElement('span'); s.textContent=' '+text;
+  const mk=document.createElement('i'); mk.className='lb-seal'; mk.textContent=sealState||'';
+  d.appendChild(b); d.appendChild(s); d.appendChild(mk); log.appendChild(d);
+  log.scrollTop=log.scrollHeight;
+  return mk;
+}
+async function sendChat(text){
+  text=String(text||'').trim(); if(!text) return;
+  const seal=sha256hex(LOBBY.tid+'|'+LOBBY.name+'|'+text);
+  const mk=chatLine(LOBBY.name, text, '#7fd4ff', ' ✓');
+  LOBBY.seals.set(seal, mk);
+  LOBBY.chatLog.push({from:LOBBY.name, text, seal, sealed:false});
+  publish('talk', {type:'chat', tid:LOBBY.tid, from:LOBBY.name, text, seal});
+  if(LOBBY.rec) recEvent({ev:'chat', from:LOBBY.name, text, seal});
+}
+function onChat(m){
+  const expect=sha256hex(m.tid+'|'+m.from+'|'+m.text);
+  if(expect!==m.seal) { popText('⚠ a chat line arrived whose seal does not match — shown, but not trusted', 3000); }
+  chatLine(cleanName(m.from), m.text, '#e8e0c8', expect===m.seal?' ✓':' ⚠');
+  popText('💬 '+cleanName(m.from)+': '+m.text, Math.min(4200, 1400+m.text.length*45));
+  publish('talk', {type:'echo', tid:LOBBY.tid, to:m.tid, seal:m.seal});
+  if(LOBBY.rec) recEvent({ev:'chat', from:cleanName(m.from), text:m.text, seal:m.seal});
+}
+function onEcho(m){
+  if(m.to!==LOBBY.tid) return;
+  const mk=LOBBY.seals.get(m.seal);
+  if(mk){ mk.textContent=' ✓✓'; }
+  const row=LOBBY.chatLog.find(r=>r.seal===m.seal); if(row) row.sealed=true;
+}
+// ---------- TALK: per-peer objects, the copycat face method ----------
+// The TRUE track is the key: it rides the wire; it is never consumed locally.
+// Every local consumer — tile, face-plane texture, recorder — drinks from its
+// OWN clone (track.clone()), stamped with its root. A stalled copy is thrown
+// away and re-derived from the key; the key is never touched by a toggle.
+function myIntent(){ return LOBBY.micOn||LOBBY.hearOn||LOBBY.faceOn; }
+function peerIntent(p){ return p.voiceOn||p.faceOn; }
+function talkersCount(){ let n=LOBBY.micOn?1:0; LOBBY.peers.forEach(p=>{ if(p.talkOn) n++; }); return n; }
+function ensurePeerTalk(p){
+  if(!p.talk) p.talk={pc:null, makingOffer:false, ignoreOffer:false, polite:LOBBY.tid>p.tid, stuck:0, iceQ:[]};
+  return p.talk;
+}
+async function flushIce(p){
+  const t=p.talk; if(!t || !t.pc || !t.pc.remoteDescription) return;
+  const q=t.iceQ.splice(0);
+  for(const cand of q){ try{ await t.pc.addIceCandidate(cand); }catch(e){} }
+}
+function maybeWire(p){
+  // a connection forms when EITHER side has media intent: faces are room-
+  // visible, and voice audibility is gated by each listener's own HEAR toggle.
+  const want = myIntent() || peerIntent(p);
+  const t=ensurePeerTalk(p);
+  if(want && !t.pc) wirePeer(p);
+  if(!want && t.pc) closePeerTalk(p);
+}
+const DIAG={wired:0, offersIn:0, answersIn:0, iceIn:0, offersOut:0, staleRemoved:0, errs:[]};
+function diagErr(where, e){ if(DIAG.errs.length<8) DIAG.errs.push(where+': '+((e&&e.name)||'')+' '+((e&&e.message)||String(e)).slice(0,120)); }
+function wirePeer(p){
+  const t=ensurePeerTalk(p);
+  if(t.pc) return;
+  DIAG.wired++;
+  let pc;
+  try{ pc=new RTCPeerConnection({iceServers:[{urls:'stun:stun.l.google.com:19302'}]}); }catch(e){ return; }
+  t.pc=pc;
+  if(LOBBY.micStream) LOBBY.micStream.getAudioTracks().forEach(tr=> pc.addTrack(tr, LOBBY.micStream));
+  if(LOBBY.camStream) LOBBY.camStream.getVideoTracks().forEach(tr=> pc.addTrack(tr, LOBBY.camStream));
+  pc.onnegotiationneeded=async ()=>{
+    if(t.makingOffer) return; t.makingOffer=true;
+    try{
+      await pc.setLocalDescription();
+      DIAG.offersOut++; t.offerAt=Date.now();
+      publish('talk', {type:'rtc-offer', tid:LOBBY.tid, to:p.tid, desc:pc.localDescription});
+    }catch(e){ diagErr('negotiate', e); }
+    t.makingOffer=false;
+  };
+  pc.onicecandidate=e=>{ if(e.candidate) publish('talk', {type:'rtc-ice', tid:LOBBY.tid, to:p.tid, cand:e.candidate}); };
+  pc.ontrack=e=>{
+    if(!p.srcStream) p.srcStream=new MediaStream();
+    if(!p.srcStream.getTracks().includes(e.track)) p.srcStream.addTrack(e.track);
+    bindPeerMedia(p);
+  };
+  pc.onconnectionstatechange=()=>{ if(pc.connectionState==='failed'||pc.connectionState==='closed'){ if(t.pc===pc) t.pc=null; } };
+  // signaling watchdog: an offer lost on the wire (a starved tab, a dropped
+  // relay packet) must not wedge the pair in have-local-offer forever —
+  // re-send the standing offer until the negotiation lands.
+  t.watchIv=setInterval(()=>{
+    if(t.pc!==pc){ clearInterval(t.watchIv); return; }
+    if(pc.signalingState==='have-local-offer' && !pc.remoteDescription && t.offerAt && Date.now()-t.offerAt>8000){
+      t.offerAt=Date.now(); DIAG.offersOut++;
+      publish('talk', {type:'rtc-offer', tid:LOBBY.tid, to:p.tid, desc:pc.localDescription});
+    }
+  }, 4000);
+}
+async function onRtc(m){
+  const p=LOBBY.peers.get(m.tid); if(!p) return;
+  const t=ensurePeerTalk(p);
+  if(m.type==='rtc-offer'){
+    DIAG.offersIn++;
+    if(!t.pc) wirePeer(p);
+    const pc=t.pc; if(!pc) return;
+    const collision = t.makingOffer || pc.signalingState!=='stable';
+    t.ignoreOffer = !t.polite && collision;
+    if(t.ignoreOffer) return;
+    try{
+      // perfect negotiation: the polite side must ROLL BACK its own pending
+      // offer before it can accept the remote one — without this, two people
+      // toggling at the same moment deadlock in have-local-offer forever.
+      if(collision){ try{ await pc.setLocalDescription({type:'rollback'}); }catch(e){} }
+      await pc.setRemoteDescription(m.desc);
+      await flushIce(p);
+      await pc.setLocalDescription();
+      publish('talk', {type:'rtc-answer', tid:LOBBY.tid, to:p.tid, desc:pc.localDescription});
+    }catch(e){ diagErr('offer', e); }
+  } else if(m.type==='rtc-answer'){
+    DIAG.answersIn++;
+    if(t.pc) try{ await t.pc.setRemoteDescription(m.desc); await flushIce(p); }catch(e){ diagErr('answer', e); }
+  } else if(m.type==='rtc-ice'){
+    DIAG.iceIn++;
+    // candidates can outrun the description on a slow room — queue, never drop
+    if(t.pc && t.pc.remoteDescription){ try{ await t.pc.addIceCandidate(m.cand); }catch(e){} }
+    else t.iceQ.push(m.cand);
+  }
+}
+function closePeerTalk(p){
+  const t=p.talk;
+  if(t){ t.iceQ=[]; if(t.watchIv){ clearInterval(t.watchIv); t.watchIv=null; } }
+  if(t && t.pc){ try{ t.pc.close(); }catch(e){} t.pc=null; }
+  p.srcStream=null;
+  unbindPeerMedia(p);
+}
+let _restartT=null;
+function restartPeers(){ // debounced: a flurry of toggles restarts the mesh once
+  if(_restartT) clearTimeout(_restartT);
+  _restartT=setTimeout(()=>{ _restartT=null; LOBBY.peers.forEach(p=>{ if(p.talk && p.talk.pc) closePeerTalk(p); maybeWire(p); }); }, 400);
+}
+// --- media binding: tile copy + texture copy, each its own clone of the key ---
+function cloneInto(el, stream, kind){
+  if(!stream) { el.srcObject=null; return; }
+  const tr=stream.getTracks().find(x=>x.kind===kind);
+  if(!tr){ el.srcObject=null; return; }
+  const c=tr.clone();
+  el.srcObject=new MediaStream([c]);
+  el.dataset.root=tr.id;
+}
+function ensurePlaying(el){
+  if(el && el.srcObject && el.paused && el.readyState>=2) el.play().catch(()=>{});
+}
+function bindPeerMedia(p){
+  const dock=$('lbDock'); if(!dock || !p.srcStream) return;
+  if(!p.tileWrap){
+    const wrap=document.createElement('div'); wrap.className='lb-tile';
+    const v=document.createElement('video');
+    v.muted=true; v.playsInline=true; v.autoplay=true; v.removeAttribute('controls');
+    const cap=document.createElement('div'); cap.className='lb-tilecap';
+    wrap.appendChild(v); wrap.appendChild(cap); dock.appendChild(wrap);
+    p.tileWrap=wrap; p.tileEl=v; p.tileCap=cap;
+    const tv=document.createElement('video');   // texture copy: parked, rendered, never display:none
+    tv.muted=true; tv.playsInline=true; tv.autoplay=true; tv.className='lb-texpark';
+    $('lbTexPark').appendChild(tv); p.texEl=tv;
+    const av=document.createElement('audio');   // voice playback: its own clone too
+    av.autoplay=true; $('lbTexPark').appendChild(av); p.audEl=av;
+  }
+  p.tileCap.textContent=cleanName(p.name);
+  cloneInto(p.tileEl, p.srcStream, 'video');
+  cloneInto(p.texEl, p.srcStream, 'video');
+  cloneInto(p.audEl, p.srcStream, 'audio');
+  if(p.audEl) p.audEl.muted=!LOBBY.hearOn;
+  ensurePlaying(p.tileEl); ensurePlaying(p.texEl); ensurePlaying(p.audEl);
+  // the face card over the figure's head wears the texture copy
+  if(p.texEl && p.faceMesh){
+    if(!p.texTex){ p.texTex=new THREE.VideoTexture(p.texEl); }
+    else if(p.texTex.image!==p.texEl){ p.texTex.image=p.texEl; p.texTex.needsUpdate=true; }
+    p.faceMesh.material.map=p.texTex; p.faceMesh.material.needsUpdate=true;
+    p.faceMesh.material.opacity=1;
+  }
+  if(LOBBY.rec && LOBBY.rec.on) recHookPeer(p);
+}
+function unbindPeerMedia(p){
+  [p.tileEl, p.texEl, p.audEl].forEach(el=>{ if(el){ if(el.srcObject) el.srcObject.getTracks().forEach(t=>t.stop()); el.srcObject=null; } });
+  if(p.faceMesh){ p.faceMesh.material.map=null; p.faceMesh.material.opacity=0; p.faceMesh.material.needsUpdate=true; }
+  p.texTex=null;
+}
+// watchdog: a copy that will not play is disposed and re-derived from the key
+setInterval(()=>{
+  LOBBY.peers.forEach(p=>{
+    [['tileEl'],['texEl']].forEach(([k])=>{
+      const el=p[k]; if(!el) return;
+      if(el.srcObject && el.paused && el.readyState>=2){
+        el.play().catch(()=>{});
+        const t=ensurePeerTalk(p);
+        if(el.dataset.stuck==='1' && p.srcStream){ cloneInto(el, p.srcStream, 'video'); el.dataset.stuck=''; ensurePlaying(el); }
+        else el.dataset.stuck='1';
+      } else if(el) el.dataset.stuck='';
+    });
+    if(p.audEl) ensurePlaying(p.audEl);
+  });
+  if(LOBBY.selfTileEl) ensurePlaying(LOBBY.selfTileEl);
+  if(LOBBY.selfTexEl) ensurePlaying(LOBBY.selfTexEl);
+}, 2000);
+// my own face: self tile wears a clone; the key (camStream) only rides wires
+function bindSelfFace(){
+  const dock=$('lbDock'); if(!dock) return;
+  if(LOBBY.camStream && !LOBBY.selfTileEl){
+    const wrap=document.createElement('div'); wrap.className='lb-tile lb-self';
+    const v=document.createElement('video'); v.muted=true; v.playsInline=true; v.autoplay=true;
+    const cap=document.createElement('div'); cap.className='lb-tilecap'; cap.textContent=LOBBY.name+' (you)';
+    wrap.appendChild(v); wrap.appendChild(cap); dock.insertBefore(wrap, dock.firstChild);
+    LOBBY.selfTileWrap=wrap; LOBBY.selfTileEl=v;
+  }
+  if(LOBBY.selfTileEl) cloneInto(LOBBY.selfTileEl, LOBBY.camStream, 'video');
+  ensurePlaying(LOBBY.selfTileEl);
+}
+function unbindSelfFace(){
+  if(LOBBY.selfTileEl){ if(LOBBY.selfTileEl.srcObject) LOBBY.selfTileEl.srcObject.getTracks().forEach(t=>t.stop()); LOBBY.selfTileEl.srcObject=null; }
+  if(LOBBY.selfTileWrap && LOBBY.selfTileWrap.parentNode) LOBBY.selfTileWrap.parentNode.removeChild(LOBBY.selfTileWrap);
+  LOBBY.selfTileWrap=null; LOBBY.selfTileEl=null;
+}
+// ---------- toggles ----------
+async function toggleMic(){
+  if(!LOBBY.micOn){
+    if(talkersCount()>=VOICE_CAP){ popText('🔊 VOICE IS FULL — '+VOICE_CAP+' talking right now. Chat and faces still work; hang out, a seat opens when someone mutes.', 4200); flashCap(); return; }
+    try{ LOBBY.micStream=await navigator.mediaDevices.getUserMedia({audio:true}); }
+    catch(e){ popText('🎙 the microphone refused — the room goes on without it', 3000); return; }
+    LOBBY.micOn=true;
+  } else {
+    LOBBY.micOn=false;
+    if(LOBBY.micStream){ LOBBY.micStream.getTracks().forEach(t=>t.stop()); LOBBY.micStream=null; }
+  }
+  syncToggleUI(); gossipPresence(); restartPeers();
+}
+function toggleHear(){
+  // hearing is a LOCAL gate (mute/unmute the audio copies) — it must never
+  // tear down the mesh; wiring itself rides the constant presence gossip.
+  LOBBY.hearOn=!LOBBY.hearOn;
+  LOBBY.peers.forEach(p=>{ if(p.audEl) p.audEl.muted=!LOBBY.hearOn; });
+  syncToggleUI(); gossipPresence();
+}
+async function toggleFace(){
+  if(!LOBBY.faceOn){
+    try{ LOBBY.camStream=await navigator.mediaDevices.getUserMedia({video:true, audio:false}); }
+    catch(e){ popText('📷 the camera refused — your face stays yours', 3000); return; }
+    LOBBY.faceOn=true; bindSelfFace();
+  } else {
+    LOBBY.faceOn=false;
+    if(LOBBY.camStream){ LOBBY.camStream.getTracks().forEach(t=>t.stop()); LOBBY.camStream=null; }
+    unbindSelfFace();
+  }
+  syncToggleUI(); gossipPresence(); restartPeers();
+}
+function flashCap(){ const b=$('lbMic'); if(b){ b.classList.add('lb-denied'); setTimeout(()=>b.classList.remove('lb-denied'), 1200); } }
+function syncToggleUI(){
+  const set=(id,on)=>{ const b=$(id); if(b) b.classList.toggle('on', !!on); };
+  set('lbMic', LOBBY.micOn); set('lbHear', LOBBY.hearOn); set('lbFace', LOBBY.faceOn);
+  const rb=$('lbRec'); if(rb) rb.classList.toggle('on', !!(LOBBY.rec&&LOBBY.rec.on));
+  const mb=$('lbMic'); if(mb) mb.textContent=LOBBY.micOn?'🎙 MIC ON':((!LOBBY.micOn && talkersCount()>=VOICE_CAP)?'🎙 VOICE FULL '+VOICE_CAP+'/'+VOICE_CAP:'🎙 MIC');
+  const fb=$('lbFace'); if(fb) fb.textContent=LOBBY.faceOn?'📷 FACE ON':'📷 FACE';
+}
+// ---------- ROOM REC: record the room as ONE stack ----------
+// The recorder seals WHAT IT RECEIVES: presence snapshots + chat + its talk
+// media, in 10s segments that chain on the tape clock. Segment pour =
+// separate track blobs (room mix audio; every face its own video blob —
+// track separation law) + a room-seg/1 record carrying the events slice.
+// The head is ONE room-tape/1 record: attachments + a coverage receipt
+// (segments chain; a span that failed to pour is a FLAGGED gap, never hidden).
+function recNow(){ return LOBBY.rec ? performance.now()-LOBBY.rec.t0 : 0; }
+function recEvent(ev){ if(LOBBY.rec && LOBBY.rec.on){ ev.m=Math.round(recNow()); LOBBY.rec.events.push(ev); } }
+function recStart(){
+  const rec=LOBBY.rec={on:true, t0:performance.now(), seq:0, chainEnd:0, events:[], poured:[], held:[],
+    actx:null, mixDest:null, mixRec:null, mixChunks:[], faceRecs:new Map(), segTimer:null, snapTimer:null, coverage:null, closes:new Set()};
+  try{
+    rec.actx=new (window.AudioContext||window.webkitAudioContext)();
+    rec.mixDest=rec.actx.createMediaStreamDestination();
+    if(LOBBY.micStream) rec.actx.createMediaStreamSource(LOBBY.micStream).connect(rec.mixDest);
+    LOBBY.peers.forEach(p=>{ if(p.srcStream && p.srcStream.getAudioTracks().length) rec.actx.createMediaStreamSource(new MediaStream([p.srcStream.getAudioTracks()[0].clone()])).connect(rec.mixDest); });
+  }catch(e){ rec.actx=null; }
+  rec.snapTimer=setInterval(()=>{
+    const snap=[[LOBBY.tid, ...(()=>{const p=myPos(); return [p.x,p.z,p.hd];})(), LOBBY.faceOn?1:0]];
+    LOBBY.peers.forEach(p=> snap.push([p.tid, +p.tx.toFixed(2), +p.tz.toFixed(2), +p.thd.toFixed(1), p.faceOn?1:0]));
+    recEvent({ev:'snap', peers:snap});
+  }, 500);
+  recOpenSegment();
+  rec.segTimer=setInterval(()=>{ recCloseSegment(); }, SEG_MS);
+  publish('talk', {type:'rec', tid:LOBBY.tid, from:LOBBY.name, on:true});
+  popText('🔴 RECORDING THIS ROOM — the badge is on your name; the room can see it', 3200);
+  gossipPresence(); roster(); syncToggleUI();
+}
+function recHookPeer(p){ // a peer's media arrived mid-recording: tap it into the open segment
+  const rec=LOBBY.rec; if(!rec || !rec.on) return;
+  if(rec.actx && p.srcStream && p.srcStream.getAudioTracks().length){
+    try{ rec.actx.createMediaStreamSource(new MediaStream([p.srcStream.getAudioTracks()[0].clone()])).connect(rec.mixDest); }catch(e){}
+  }
+  recStartFaceRec(p);
+}
+function recStartFaceRec(p){
+  const rec=LOBBY.rec; if(!rec || !rec.on || rec.faceRecs.has(p.tid)) return;
+  const src = p.tid===LOBBY.tid ? LOBBY.camStream : p.srcStream;
+  if(!src) return;
+  const tr=src.getVideoTracks()[0]; if(!tr) return;
+  try{
+    const r=new MediaRecorder(new MediaStream([tr.clone()]));
+    const fr={who:p.tid, rec:r, chunks:[], t0:recNow()};
+    r.ondataavailable=e=>{ if(e.data && e.data.size) fr.chunks.push(e.data); };
+    r.start(1000); rec.faceRecs.set(p.tid, fr);
+  }catch(e){}
+}
+function recOpenSegment(){
+  const rec=LOBBY.rec; if(!rec) return;
+  rec.mixChunks=[];
+  if(rec.actx && rec.mixDest){
+    try{ rec.mixRec=new MediaRecorder(rec.mixDest.stream); rec.mixRec.ondataavailable=e=>{ if(e.data&&e.data.size) rec.mixChunks.push(e.data); }; rec.mixRec.start(1000); }catch(e){ rec.mixRec=null; }
+  }
+  rec.faceRecs=new Map();
+  if(LOBBY.faceOn) recStartFaceRec({tid:LOBBY.tid});
+  LOBBY.peers.forEach(p=>{ if(p.faceOn || (p.srcStream && p.srcStream.getVideoTracks().length)) recStartFaceRec(p); });
+}
+function stopRec(r){ return new Promise(res=>{ if(!r){ res(new Blob([])); return; } r.onstop=()=>res(new Blob(r._chunks||[])); try{ r.stop(); }catch(e){ res(new Blob([])); } }); }
+async function recCloseSegment(){
+  const rec=LOBBY.rec; if(!rec) return;
+  const pr=recCloseSegmentInner();
+  rec.closes.add(pr); try{ await pr; } finally { rec.closes.delete(pr); }
+}
+async function recCloseSegmentInner(){
+  const rec=LOBBY.rec; if(!rec || !rec.on && !rec.closing) return;
+  const t1=Math.round(recNow());
+  const win={t0:rec.chainEnd, t1, markMs0:rec.chainEnd}; rec.chainEnd=t1;
+  const seq=rec.seq++;
+  // stop this segment's recorders
+  let mixBlob=null;
+  if(rec.mixRec){ rec.mixRec._chunks=rec.mixChunks; mixBlob=await stopRec(rec.mixRec); rec.mixRec=null; }
+  const faceBlobs=[];
+  for(const [tid, fr] of [...rec.faceRecs]){
+    fr.rec._chunks=fr.chunks; const b=await stopRec(fr.rec); faceBlobs.push({who:tid, blob:b});
+  }
+  rec.faceRecs=new Map();
+  const evs=rec.events.filter(e=>e.m<=t1); rec.events=rec.events.filter(e=>e.m>t1);
+  const segRec={kind:'room-seg/1', room:LOBBY.code, seq, tapeMs0:win.t0, tapeMs1:win.t1, markMs0:win.markMs0, tracks:[], events:evs};
+  try{
+    if(mixBlob && mixBlob.size){ const meta=await shaOfBlob(mixBlob); const id=await putBlob(mixBlob); segRec.tracks.push({who:'room-mix', kind:'audio', blob:id, sha256:meta.sha256, size:meta.size, mime:mixBlob.type||'audio/webm'}); }
+    for(const f of faceBlobs){ if(f.blob.size){ const meta=await shaOfBlob(f.blob); const id=await putBlob(f.blob); segRec.tracks.push({who:f.who, kind:'video', blob:id, sha256:meta.sha256, size:meta.size, mime:f.blob.type||'video/webm'}); } }
+    const id=await putBlob(new Blob([JSON.stringify(segRec)], {type:'application/json'}));
+    rec.poured.push({t0:win.t0, t1:win.t1, seq, id});
+  }catch(e){
+    rec.held.push({win, seq, segRec});
+  }
+  if(rec.on && !rec.closing) recOpenSegment();
+}
+async function recStop(){
+  const rec=LOBBY.rec; if(!rec || !rec.on) return;
+  rec.on=false; rec.closing=true;
+  clearInterval(rec.segTimer); clearInterval(rec.snapTimer);
+  await recCloseSegment();
+  // wait out any earlier segment close still in flight (a starved page can
+  // lag a full segment behind) so its span lands before coverage is computed
+  if(rec.closes.size) await Promise.race([Promise.allSettled([...rec.closes]), new Promise(r=>setTimeout(r,20000))]);
+  // retry held segments once — a span that still fails becomes a flagged gap
+  for(const h of rec.held.splice(0)){
+    // a held segRec keeps whatever track blobs DID pour (they are valid,
+    // content-addressed); only the record itself still needs its pour.
+    try{
+      const id=await putBlob(new Blob([JSON.stringify(h.segRec)], {type:'application/json'}));
+      rec.poured.push({t0:h.win.t0, t1:h.win.t1, seq:h.seq, id});
+    }catch(e){ /* stays unpoured: the gap is the truth */ }
+  }
+  rec.poured.sort((a,b)=>a.t0-b.t0);
+  const gaps=[]; let cursor=rec.poured.length?rec.poured[0].t0:0;
+  rec.poured.forEach(s=>{ if(s.t0>cursor) gaps.push({from:cursor, to:s.t0}); cursor=Math.max(cursor, s.t1); });
+  if(rec.chainEnd>cursor) gaps.push({from:cursor, to:rec.chainEnd});
+  const coverage={coveredFrom:rec.poured.length?rec.poured[0].t0:0, coveredTo:rec.chainEnd,
+    segments:rec.poured.length, seqs:rec.poured.map(s=>s.seq), gaps, gapMs:gaps.reduce((a,g)=>a+(g.to-g.from),0), room:LOBBY.code, sealedAt:new Date().toISOString()};
+  rec.coverage=coverage;
+  const tape={kind:'room-tape/1', room:LOBBY.code, by:LOBBY.name, startedAt:new Date(Date.now()-(recNow())).toISOString(), durMs:rec.chainEnd,
+    segs:rec.poured.map(s=>s.id), attachments:{jars:rec.poured.map(s=>s.id)}, coverage};
+  let tapeId=null;
+  try{ tapeId=await putBlob(new Blob([JSON.stringify(tape)], {type:'application/json'})); }catch(e){}
+  LOBBY.lastTape={id:tapeId, tape, coverage};
+  publish('talk', {type:'rec', tid:LOBBY.tid, from:LOBBY.name, on:false});
+  popText(tapeId?('🫙 ROOM TAPE SEALED — '+tapeId.slice(0,16)+'… · '+coverage.segments+' segments · '+(coverage.gaps.length?('⚠ '+coverage.gaps.length+' flagged gap(s)'):'no gaps')):'⚠ the tape pour failed — segments held on this device only', 5200);
+  const box=$('lbTapeBox');
+  if(box){ box.style.display='block'; box.innerHTML=''; const b=document.createElement('b'); b.textContent='🫙 ROOM TAPE '; box.appendChild(b);
+    const s=document.createElement('span'); s.textContent=(tapeId||'(pour failed)')+' · '+coverage.segments+' segs · gaps: '+coverage.gaps.length; box.appendChild(s); }
+  LOBBY.rec=null; gossipPresence(); roster(); syncToggleUI();
+}
+function toggleRec(){ if(LOBBY.rec && LOBBY.rec.on) recStop(); else if(!LOBBY.rec) recStart(); }
+// ---------- portals: doors that carry the party ----------
+function portalURL(key){
+  const P=PORTALS.find(x=>x.key===key); if(!P) return '';
+  return LOADER+'?g='+P.blob+'&h='+P.sha+'&n='+encodeURIComponent(P.icon+' '+P.name+' — from THE ROOM '+LOBBY.code)+'&room='+LOBBY.code;
+}
+function openPortalSplash(key){
+  const P=PORTALS.find(x=>x.key===key); if(!P) return;
+  const sp=$('lbSplash'); if(!sp) return;
+  $('lbSplashTitle').textContent=P.icon+' '+P.name;
+  $('lbSplashBody').textContent='Everyone who walks through lands in the SAME game room — code '+LOBBY.code+' rides along in the link. Tell the room, then go together.';
+  const a=$('lbSplashGo'); a.setAttribute('href', portalURL(key)); a.textContent='🚪 ENTER '+P.name+' — room '+LOBBY.code;
+  sp.style.display='flex';
+  publish('talk', {type:'portal', tid:LOBBY.tid, from:LOBBY.name, portal:key});
+  popText('🚪 '+LOBBY.name+' opened the '+P.name+' door — room code '+LOBBY.code+' rides the link', 3000);
+}
+function buildPortals(){
+  const sceneEl=document.querySelector('a-scene'); if(!sceneEl) return;
+  PORTALS.forEach(P=>{
+    const g=document.createElement('a-entity');
+    g.setAttribute('position', '-6.35 0 '+P.z); g.setAttribute('rotation', '0 90 0');
+    g.classList.add('doorlink'); g.dataset.portal=P.key;
+    const frame=document.createElement('a-box');
+    frame.setAttribute('width','1.5'); frame.setAttribute('height','2.7'); frame.setAttribute('depth','0.16'); frame.setAttribute('position','0 1.35 0');
+    frame.setAttribute('color','#131022');
+    const trim=document.createElement('a-box');
+    trim.setAttribute('width','1.56'); trim.setAttribute('height','0.34'); trim.setAttribute('depth','0.18'); trim.setAttribute('position','0 2.86 0');
+    trim.setAttribute('color', P.color); trim.setAttribute('material', 'color:'+P.color+';emissive:'+P.color+';emissiveIntensity:.55');
+    const t1=document.createElement('a-text');
+    t1.setAttribute('value', P.name); t1.setAttribute('align','center'); t1.setAttribute('width','2.8'); t1.setAttribute('color','#ffffff'); t1.setAttribute('position','0 2.86 0.11');
+    const t2=document.createElement('a-text');
+    t2.setAttribute('value', P.sub+'\nstand in the ring 3s —\nor tap the door'); t2.setAttribute('align','center'); t2.setAttribute('width','2.0'); t2.setAttribute('color','#cfc4a0'); t2.setAttribute('position','0 1.62 0.1');
+    const cnt=document.createElement('a-text');
+    cnt.setAttribute('align','center'); cnt.setAttribute('width','3'); cnt.setAttribute('color', P.color); cnt.setAttribute('position','0 0.62 0.1');
+    cnt.classList.add('portal-count');
+    g.appendChild(frame); g.appendChild(trim); g.appendChild(t1); g.appendChild(t2); g.appendChild(cnt);
+    const ring=document.createElement('a-ring');
+    ring.setAttribute('position', '-5.55 0.03 '+P.z); ring.setAttribute('rotation', '-90 0 0');
+    ring.setAttribute('radius-inner','0.42'); ring.setAttribute('radius-outer','0.58');
+    ring.setAttribute('color', P.color); ring.setAttribute('material', 'color:'+P.color+';transparent:true;opacity:0.25;shader:flat');
+    sceneEl.appendChild(g); sceneEl.appendChild(ring);
+    P._ring=ring; P._count=cnt; P._door=g;
+    g.addEventListener('click', ()=> openPortalSplash(P.key));
+    g.querySelectorAll('*').forEach(k=> k.addEventListener('click', ()=> openPortalSplash(P.key)));
+  });
+}
+setInterval(()=>{ // portal dwell: stand in a ring 3s and the door builds its link
+  const cam=$('cam'); if(!cam) return;
+  const p=cam.getAttribute('position'); if(!p) return;
+  let inKey=null;
+  PORTALS.forEach(P=>{
+    const d=Math.hypot(p.x-(-5.55), p.z-P.z);
+    if(d<0.78) inKey=P.key;
+  });
+  const dw=LOBBY.portalDwell;
+  if(inKey){
+    if(dw.key!==inKey){ dw.key=inKey; dw.t=0; }
+    dw.t+=0.15;
+    const P=PORTALS.find(x=>x.key===inKey);
+    if(P._count) P._count.setAttribute('value', dw.t>=3?'ENTER!':'STAND… '+(3-dw.t).toFixed(1));
+    if(P._ring) P._ring.setAttribute('material', 'color:'+P.color+';transparent:true;shader:flat;opacity:'+(0.45+0.3*Math.sin(Date.now()/120)));
+    if(dw.t>=3 && !dw.fired){ dw.fired=true; openPortalSplash(inKey); }
+  } else {
+    if(dw.key){ const P=PORTALS.find(x=>x.key===dw.key); if(P&&P._count) P._count.setAttribute('value',''); if(P&&P._ring) P._ring.setAttribute('material', 'color:'+P.color+';transparent:true;shader:flat;opacity:0.25'); }
+    dw.key=null; dw.t=0; dw.fired=false;
+  }
+}, 150);
+// ---------- talk-topic router ----------
+function onTalkMsg(m){
+  if(m.type==='chat') onChat(m);
+  else if(m.type==='echo') onEcho(m);
+  else if(m.type==='rtc-offer'||m.type==='rtc-answer'||m.type==='rtc-ice'){ if(m.to===LOBBY.tid) onRtc(m); }
+  else if(m.type==='rec'){ const p=LOBBY.peers.get(m.tid); popText(m.on?('🔴 '+cleanName(m.from||'someone')+' started recording this room'):('⏹ '+cleanName(m.from||'someone')+' stopped recording'), 2600); }
+  else if(m.type==='portal'){ popText('🚪 '+cleanName(m.from||'someone')+' opened a portal door — ask them for the room code and follow!', 3400); }
+}
+// ---------- init ----------
+function initLobby(){
+  const nameIn=$('lbName'); if(nameIn){ nameIn.value=LOBBY.name; nameIn.addEventListener('change', ()=>{ LOBBY.name=cleanName(nameIn.value)||LOBBY.name; nameIn.value=LOBBY.name; try{ localStorage.setItem('lobby-name', LOBBY.name); }catch(e){} gossipPresence(); roster(); }); }
+  const codeEl=$('lbCode'); if(codeEl) codeEl.textContent=LOBBY.code;
+  const joinBtn=$('lbJoin'); if(joinBtn) joinBtn.addEventListener('click', ()=>{ const v=cleanCode($('lbJoinCode').value); if(v && v!==LOBBY.code) location.search='?room='+v; });
+  const copyBtn=$('lbCopy'); if(copyBtn) copyBtn.addEventListener('click', ()=>{ const u=location.origin+location.pathname+'?room='+LOBBY.code; if(navigator.clipboard) navigator.clipboard.writeText(u).catch(()=>{}); popText('🔗 room link copied — anyone who opens it lands in room '+LOBBY.code, 2600); });
+  $('lbMic').addEventListener('click', toggleMic);
+  $('lbHear').addEventListener('click', toggleHear);
+  $('lbFace').addEventListener('click', toggleFace);
+  $('lbRec').addEventListener('click', toggleRec);
+  $('lbChatBtn').addEventListener('click', ()=>{ const c=$('lbChat'); const show=c.style.display!=='flex'; c.style.display=show?'flex':'none'; if(show) $('lbChatIn').focus(); });
+  const send=()=>{ const i=$('lbChatIn'); sendChat(i.value); i.value=''; };
+  $('lbChatSend').addEventListener('click', send);
+  $('lbChatIn').addEventListener('keydown', e=>{ if(e.key==='Enter') send(); e.stopPropagation(); });
+  $('lbChatIn').addEventListener('keyup', e=> e.stopPropagation());
+  document.querySelectorAll('.lb-portal-btn').forEach(b=> b.addEventListener('click', ()=> openPortalSplash(b.dataset.portal)));
+  $('lbSplashClose').addEventListener('click', ()=>{ $('lbSplash').style.display='none'; });
+  buildPortals();
+  roster(); syncToggleUI();
+  connectMQ();
+  try{ if(typeof FINN_CAN!=='undefined') FINN_CAN.push('run THE LOBBY — real people in this room: share the room code, talk and chat (voice mesh seats four talkers), wear your camera face over your avatar, record the whole hangout as one sealed room tape, and walk everyone through the portal doors (left wall) into Bunny Cube, Zombie World or the Builder — same room code, same party'); }catch(e){}
+  window.__LOBBY=LOBBY;
+  LOBBY.portalURL=portalURL; LOBBY.sendChat=sendChat; LOBBY.toggleMic=toggleMic; LOBBY.toggleHear=toggleHear;
+  LOBBY.toggleFace=toggleFace; LOBBY.toggleRec=toggleRec; LOBBY.gossip=gossipPresence; LOBBY.sha256hex=sha256hex; LOBBY._publish=publish; LOBBY.diag=DIAG;
+  LOBBY.setSegMs=ms=>{ SEG_MS=Math.max(500, ms|0); };
+  LOBBY.openPortalSplash=openPortalSplash;
+}
+if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', initLobby); else initLobby();
+})();
+
 </script>
 
 </body>
