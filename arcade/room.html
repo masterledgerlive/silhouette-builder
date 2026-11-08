@@ -1489,6 +1489,21 @@ window.addEventListener('load', ()=>{
 .lb-live{color:#3ec97f;font-weight:bold}
 #lbFindEmpty{font-size:12px;color:#9fb6cc;margin:6px 0}
 #lbSheetState{font-size:11.5px;color:#b9f4cd;margin-top:8px;min-height:13px}
+#lbHostBlock{border-bottom:1px solid #2c3350;padding-bottom:10px;margin-bottom:10px}
+#lbHost{display:block;width:100%;padding:11px;font-size:14.5px}
+#lbHostWords{font-size:11.5px;color:#9fb6cc;margin-top:6px;line-height:1.45}
+#lbBigCodeRow{text-align:center;margin-top:8px;font-size:12px;color:#9fb6cc}
+#lbBigCode{display:block;font-size:30px;letter-spacing:8px;color:#7fd4ff;font-weight:bold;margin-top:2px}
+.lb-orjoin{text-align:center;color:#9fb6cc;font-size:12px;margin:10px 0 6px}
+#lbSheetJoinRow{display:flex;gap:6px}
+#lbSheetJoinCode{flex:1;background:#0d1526;color:#dfe9ff;border:1px solid #39507a;border-radius:6px;padding:8px;font-family:inherit;font-size:14px;text-transform:uppercase;letter-spacing:2px}
+#lbHostOwn{margin-top:8px}
+#lbMediaNote{display:none;margin-top:10px;background:#2a1408;border:1px solid #8a5a2f;border-radius:9px;padding:9px 10px;font-size:12px;line-height:1.5;color:#ffd9a8}
+#lbMediaNote a{color:#7fd4ff;font-weight:bold}
+#lbMediaWarn{position:fixed;top:calc(6px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);z-index:97;width:min(430px,94vw);display:none;align-items:flex-start;gap:8px;background:rgba(24,14,4,.97);border:1.5px solid #e2a13e;border-radius:12px;padding:10px 12px;font-family:Georgia,serif;color:#ffe1b0;font-size:13px;line-height:1.45;box-shadow:0 10px 30px rgba(0,0,0,.6)}
+#lbMediaWarnGo{flex:none;background:#ffd76a;color:#241b08;border-radius:8px;padding:8px 10px;font-weight:bold;text-decoration:none;font-size:12.5px;margin-top:2px}
+#lbMediaWarnX{flex:none;background:none;border:1px solid #8a5a2f;color:#ffd9a8;border-radius:8px;width:32px;height:32px;cursor:pointer;font-family:inherit}
+#lbBarHostOwn{flex-basis:100%;margin:2px auto 0;width:auto}
 #lbStrip{display:none}
 @media (max-width:700px){
   #ui{max-height:34vh;overflow-y:auto}
@@ -1533,6 +1548,7 @@ window.addEventListener('load', ()=>{
   <span id="lbCount">👥 1 here</span>
   <div id="lbRoster"></div>
   <div id="lbJoinState"></div>
+  <button class="lb-btn" id="lbBarHostOwn" style="display:none">🏠 HOST YOUR OWN</button>
   <div id="lbTapeBox"></div>
 </div>
 <div id="lbStrip">
@@ -1546,15 +1562,25 @@ window.addEventListener('load', ()=>{
 </div>
 <div id="lbSheet">
   <div id="lbSheetHead"><b>🏠 THE LOBBY — invite &amp; find</b><button id="lbSheetX" title="close">✕</button></div>
+  <div id="lbHostBlock">
+    <button class="lb-btn" id="lbHost">🏠 HOST A ROOM</button>
+    <div id="lbHostWords">Hosting makes a room YOURS: you answer the knocks, your heartbeat holds the room together, and the code is the key.</div>
+    <div id="lbBigCodeRow">your room code<span id="lbBigCode">····</span></div>
+  </div>
   <div id="lbQr"></div>
-  <div class="lb-qr-cap">📷 scan to join this room — the code rides the link</div>
+  <div class="lb-qr-cap">📷 scan to join this room — the link carries the current build, with the code filled in</div>
   <button class="lb-btn" id="lbSheetCopy">🔗 COPY LINK</button>
-  <div id="lbOpenRow"><button class="lb-btn" id="lbOpen">📣 OPEN</button><span id="lbOpenWords">others can find and join this room</span></div>
-  <div id="lbFindHead">🔎 OPEN ROOMS — tap one to walk in</div>
+  <div class="lb-orjoin">— or join a room —</div>
+  <div id="lbSheetJoinRow"><input id="lbSheetJoinCode" placeholder="CODE" maxlength="8"/><button class="lb-btn" id="lbSheetJoin">▶ JOIN</button></div>
+  <div id="lbMediaNote">📷 Camera &amp; mic are blocked in this browser view. For faces and voice, open this room in Safari — same room, one tap: <a id="lbMediaNoteGo" href="#">open this room in Safari</a></div>
+  <div id="lbOpenRow"><button class="lb-btn" id="lbOpen">📣 OPEN</button><span id="lbOpenWords">others can find and join this room (hosts announce)</span></div>
+  <div id="lbFindHead">👀 OPEN ROOMS — hosts announce here while their door is open</div>
   <div id="lbFindList"></div>
-  <div id="lbFindEmpty">No open rooms right now — open yours with 📣 OPEN.</div>
+  <div id="lbFindEmpty">No open rooms right now — 🏠 host a room and flip 📣 OPEN to announce it.</div>
   <div id="lbSheetState"></div>
+  <button class="lb-btn" id="lbHostOwn" style="display:none">🏠 HOST YOUR OWN</button>
 </div>
+<div id="lbMediaWarn"><span>📷 Camera &amp; mic are blocked in this browser view. For faces and voice, open this room in Safari — same room, one tap:</span><a id="lbMediaWarnGo" href="#">Open this room in Safari</a><button id="lbMediaWarnX" title="dismiss">✕</button></div>
 <div id="lbPop"></div>
 <div id="lbDock"></div>
 <div id="lbTexPark"></div>
@@ -1571,7 +1597,7 @@ window.addEventListener('load', ()=>{
 </div></div>
 
 <script>
-// ================= THE LOBBY — ROOM v1.1 "THE FRONT DOOR" =================
+// ================= THE LOBBY — ROOM v1.2 "THE GAME'S DOOR, VERBATIM" ====================
 // v1.0 (David, Nov 8 01:03 EST): the Arcade Room becomes the hangout —
 // everybody meets here, avatars walk with video faces on top, everyone talks
 // and chats, the whole hangout can be recorded as one stack, and the room is
@@ -1586,6 +1612,14 @@ window.addEventListener('load', ()=>{
 // OPEN (beacons on kodakai/room/v1/lobby), a QR quick-connect in the invite
 // sheet (the Cube's generator + 192px rule), and a phone layout of ONE slim
 // bottom strip + mutually-exclusive sheets with big ✕s.
+// v1.2 (David's phone verdict, Nov 8 09:05 EST): THE GAME'S DOOR, VERBATIM —
+// gossip was never a LINK, so v1.2 adds the BOND: HOST A ROOM creates the
+// room (the host answers knocks with a WELCOME carrying the roster, the
+// host's ~5s heartbeat holds the guests' linked line, the host's goodbye
+// closes the room); FIND lists hosted rooms whose host flipped OPEN; the
+// QR + COPY LINK now carry the LOADER deep link of the current build
+// (two-step pin), never a bare Pages URL; and an opaque/blob: origin or a
+// missing mediaDevices gets a plain banner with the Safari way out.
 (function(){
 'use strict';
 // ---------- pure-JS SHA-256 (FIPS 180-4; crypto.subtle is undefined on http) ----------
@@ -1616,6 +1650,12 @@ function sha256hex(data){
 const BROKER='wss://broker.emqx.io:8084/mqtt';
 const PUBLISHER='https://publisher.walrus-testnet.walrus.space/v1/blobs?epochs=30';
 const LOADER='https://arcade.highscores.live/arcade/blob-loader.html';
+// v1.2: the QR + COPY LINK carry THIS build, the game's form — a loader deep
+// link with the room filled in. The pin names the previous build until the
+// ship's two-step pour replaces it with the candidate blob of THIS build
+// (the Cube's pattern: the QR points one pour back; the two pours differ
+// only in these constants).
+const SELF_PIN={blob:'ttPN-f1mg4D-Nkf79wNleyi29sy-2XcxntTHYMXaq0U', sha:'0beb6b1a654fe23186f7214d3cd5e40fecf4b17a743e3ae38e79d21f285d5dc3'};
 const VOICE_CAP=4;           // honest cap: simultaneous talkers in the mesh
 let SEG_MS=10000;            // room-tape segment length (tape ms)
 const PALETTE=['#e2543e','#3e8ae2','#3ec97f','#e2b13e','#9a5de2','#e25d9e','#3ed0c9','#8a6d2f'];
@@ -1639,8 +1679,13 @@ const LOBBY={
   rec:null, lastTape:null,
   portalDwell:{key:null, t:0},
   // v1.1 front door state
-  join:{state:'idle', answers:new Set(), timer:null},
+  join:{state:'idle', answers:new Set(), timer:null, welcomedAt:0},
   open:false, openRooms:new Map(),   // code -> {hostName,count,live,ts,from}
+  // v1.2 host bond: a hosted room has ONE host; the WELCOME is the bond and
+  // the host's heartbeat is what makes a guest's link state true.
+  isHost:false, host:null, hbLast:0, closed:false, lost:false,
+  wantHost: qs.get('host')==='1',
+  mediaBlocked:false, mediaRefused:false,
   sheet:null, _qrPayload:''
 };
 try{ LOBBY.open = localStorage.getItem('lobby-open')==='1'; }catch(e){}
@@ -1739,14 +1784,22 @@ function roster(){
 }
 // ---------- the join ritual's status line (v1.1: proof of company, or honest solo) ----------
 function renderJoinState(){
-  const st=LOBBY.join.state;
+  const n=LOBBY.peers.size+1;
   let txt='';
-  if(st==='waiting') txt='⏳ joining room '+LOBBY.code+' — listening for the room…';
-  else if(st==='in') txt='✓ YOU\'RE IN — room '+LOBBY.code+' · '+(LOBBY.peers.size+1)+' here';
-  else if(st==='solo') txt='You\'re the first one here — share the code or QR to bring them in';
+  if(LOBBY.isHost) txt='🏠 You\'re hosting room '+LOBBY.code+' · '+n+' here';
+  else if(LOBBY.closed) txt='Host left — room closed';
+  else if(LOBBY.host && LOBBY.lost) txt='⚠ link to host lost…';
+  else if(LOBBY.host && LOBBY.join.welcomedAt && Date.now()-LOBBY.join.welcomedAt<9000) txt='✓ You\'re in — '+LOBBY.host.name+'\'s room · '+n+' here';
+  else if(LOBBY.host) txt='🔗 linked to '+LOBBY.host.name+'\'s room · '+n+' here';
+  else if(LOBBY.join.state==='waiting') txt='⏳ joining room '+LOBBY.code+' — listening for the room…';
+  else if(LOBBY.join.state==='in') txt='✓ YOU\'RE IN — room '+LOBBY.code+' · '+n+' here';
+  else if(LOBBY.join.state==='solo') txt='You\'re the first one here — share the code or QR to bring them in';
   const a=$('lbJoinState'); if(a) a.textContent=txt;
   const b=$('lbSheetState'); if(b) b.textContent=txt;
+  const showOwn=LOBBY.closed && !LOBBY.isHost;
+  ['lbHostOwn','lbBarHostOwn'].forEach(id=>{ const el=$(id); if(el) el.style.display=showOwn?'inline-block':'none'; });
 }
+setInterval(renderJoinState, 2000); // the ✓-in line settles into the 🔗-linked line; counts stay true
 // ---------- MQTT: the room's life is the gossip ----------
 function topic(kind){ return 'kodakai/room/v1/'+LOBBY.code+'/'+kind; }
 const LOBBY_TOPIC='kodakai/room/v1/lobby';   // FIND beacons live here, across rooms
@@ -1768,6 +1821,10 @@ function connectMQ(){
     gossipPresence(); roster();
     popText('🏠 You are in room '+LOBBY.code+' — say the code out loud; anyone who enters it stands here with you', 3600);
     startHandshake();
+    if(LOBBY.code!=='MAIN'){ // v1.2: arriving in a coded room = knocking as a joiner
+      publish('presence', {type:'knock', tid:LOBBY.tid, name:LOBBY.name});
+      if(LOBBY.wantHost) becomeHost(false);
+    }
     if(LOBBY.open) publishBeacon();
   });
   mq.on('close', ()=>{ LOBBY.connected=false; });
@@ -1778,6 +1835,10 @@ function connectMQ(){
     if(t.endsWith('/presence')){
       if(m.type==='hello'){ onHello(m); return; }
       if(m.type==='hi'){ onHi(m); return; }
+      if(m.type==='knock'){ onKnock(m); return; }
+      if(m.type==='welcome'){ onWelcome(m); return; }
+      if(m.type==='host-hb'){ onHostHb(m); return; }
+      if(m.type==='host-bye'){ onHostBye(m); return; }
       onPresence(m);
     }
     else if(t.endsWith('/talk')) onTalkMsg(m);
@@ -1839,6 +1900,98 @@ function onHi(m){
   p.lastSeen=Date.now();
   noteCompany();
 }
+// ---------- v1.2: THE HOST BOND (the game's door, verbatim) ----------
+// Presence gossip alone is not a LINK — David's phones drifted in separate
+// codes because nobody CREATED the room. Hosting creates the bond: the host
+// answers knocks with a WELCOME carrying the authoritative roster, the
+// host's heartbeat holds the guests' state line true, and the host's
+// goodbye closes the room honestly, with a way to host your own.
+function genCode(){
+  const A='ABCDEFGHJKMNPQRSTUVWXYZ23456789'; let s='';
+  for(let i=0;i<5;i++) s+=A[Math.floor(Math.random()*A.length)];
+  return s;
+}
+function rosterList(){
+  const out=[{tid:LOBBY.tid, name:LOBBY.name}];
+  LOBBY.peers.forEach(p=> out.push({tid:p.tid, name:p.name}));
+  return out;
+}
+function hostBeat(){
+  if(!LOBBY.isHost) return;
+  publish('presence', {type:'host-hb', tid:LOBBY.tid, name:LOBBY.name, hostName:LOBBY.name, count:LOBBY.peers.size+1, ts:Date.now()});
+}
+setInterval(()=>{ if(LOBBY.isHost && LOBBY.connected) hostBeat(); }, 5000);
+function becomeHost(fresh){
+  if(fresh){ location.search='?room='+genCode()+'&host=1'; return; }
+  if(LOBBY.isHost) return;
+  LOBBY.isHost=true; LOBBY.closed=false; LOBBY.lost=false;
+  LOBBY.host={tid:LOBBY.tid, name:LOBBY.name}; LOBBY.hbLast=Date.now();
+  hostBeat(); if(LOBBY.open) publishBeacon();
+  popText('🏠 You are hosting room '+LOBBY.code+' — the code is the key: share it, or the QR below', 3600);
+  renderJoinState(); syncHostUI();
+}
+function hostButton(){
+  if(LOBBY.isHost){ popText('🏠 You are already hosting room '+LOBBY.code, 2400); return; }
+  if(LOBBY.code==='MAIN') becomeHost(true);   // the walk-in has no room worth keeping — deal a fresh one
+  else becomeHost(false);                      // a coded room is worth keeping: host THIS one
+}
+function onKnock(m){
+  const isNew=!LOBBY.peers.has(m.tid);
+  const p=getPeer(m.tid);
+  if(m.name) p.name=cleanName(m.name);
+  p.lastSeen=Date.now();
+  publish('presence', {type:'hi', tid:LOBBY.tid, name:LOBBY.name, to:m.tid}); // occupants still answer (v1.1)
+  if(LOBBY.isHost){
+    publish('presence', {type:'welcome', tid:LOBBY.tid, name:LOBBY.name, to:m.tid,
+      hostName:LOBBY.name, hostTid:LOBBY.tid, roster:rosterList(), count:LOBBY.peers.size+1});
+    if(isNew && !p.greeted){ p.greeted=true; popText('👋 '+p.name+' joined your room', 2200); if(LOBBY.rec) recEvent({ev:'join', name:p.name}); }
+  }
+  noteCompany();
+}
+function onWelcome(m){
+  if(m.to && m.to!==LOBBY.tid) return;
+  if(LOBBY.isHost) return;
+  LOBBY.host={tid:m.tid, name:cleanName(m.hostName||m.name||'HOST')};
+  LOBBY.hbLast=Date.now(); LOBBY.closed=false; LOBBY.lost=false;
+  LOBBY.join.welcomedAt=Date.now();
+  if(Array.isArray(m.roster)) m.roster.forEach(r=>{ if(r && r.tid && r.tid!==LOBBY.tid){ const p=getPeer(r.tid); if(r.name) p.name=cleanName(r.name); p.lastSeen=Date.now(); } });
+  if(LOBBY.join.timer){ clearTimeout(LOBBY.join.timer); LOBBY.join.timer=null; }
+  LOBBY.join.state='in';
+  popText('✓ You\'re in — '+LOBBY.host.name+'\'s room · '+(LOBBY.peers.size+1)+' here', 2600);
+  renderJoinState(); roster();
+}
+function onHostHb(m){
+  const p=getPeer(m.tid); if(m.name) p.name=cleanName(m.name); p.lastSeen=Date.now();
+  if(LOBBY.isHost) return;
+  const now=Date.now();
+  if(!LOBBY.host || LOBBY.host.tid===m.tid || now-LOBBY.hbLast>15000){
+    const newBond=!LOBBY.host || LOBBY.host.tid!==m.tid;
+    LOBBY.host={tid:m.tid, name:cleanName(m.hostName||m.name||'HOST')};
+    LOBBY.closed=false;
+    if(LOBBY.lost){ LOBBY.lost=false; popText('🔗 link to '+LOBBY.host.name+'\'s room restored', 2200); }
+    if(newBond && LOBBY.join.state!=='in'){ LOBBY.join.state='in'; if(LOBBY.join.timer){ clearTimeout(LOBBY.join.timer); LOBBY.join.timer=null; } }
+  }
+  if(LOBBY.host && LOBBY.host.tid===m.tid) LOBBY.hbLast=now;
+  renderJoinState();
+}
+setInterval(()=>{ // the link is only as true as its last heartbeat
+  if(LOBBY.isHost || !LOBBY.host || LOBBY.closed) return;
+  if(Date.now()-LOBBY.hbLast>15000 && !LOBBY.lost){ LOBBY.lost=true; renderJoinState(); popText('⚠ link to host lost…', 3000); }
+}, 2000);
+function onHostBye(m){
+  if(LOBBY.isHost) return;
+  if(LOBBY.host && m.tid!==LOBBY.host.tid) return;
+  LOBBY.host=null; LOBBY.closed=true; LOBBY.lost=false;
+  renderJoinState();
+  popText('Host left — room closed. Host your own to keep the room alive.', 3800);
+}
+function syncHostUI(){
+  const b=$('lbHost'); if(b){ b.classList.toggle('on', LOBBY.isHost); b.textContent=LOBBY.isHost?('🏠 HOSTING ✓ — room '+LOBBY.code):'🏠 HOST A ROOM'; }
+  const bc=$('lbBigCode'); if(bc) bc.textContent=LOBBY.code;
+  const hw=$('lbHostWords'); if(hw) hw.textContent=LOBBY.isHost
+    ? 'You hold this room: knocks come to you, your heartbeat keeps everyone linked, and the code above is the key.'
+    : 'Hosting makes a room YOURS: you answer the knocks, your heartbeat holds the room together, and the code is the key.';
+}
 // ---------- FIND: beacons for rooms someone chose to OPEN ----------
 function roomLive(){
   if(LOBBY.micOn || LOBBY.faceOn) return true;
@@ -1847,11 +2000,11 @@ function roomLive(){
   return live;
 }
 function publishBeacon(){
-  if(!LOBBY.open) return;
+  if(!LOBBY.open || !LOBBY.isHost) return; // v1.2: FIND lists HOSTED rooms — the host does the announcing
   publishRaw(LOBBY_TOPIC, {type:'beacon', tid:LOBBY.tid, code:LOBBY.code, hostName:LOBBY.name,
     count:LOBBY.peers.size+1, live:roomLive(), ts:Date.now()});
 }
-setInterval(()=>{ if(LOBBY.open && LOBBY.connected) publishBeacon(); }, 10000);
+setInterval(()=>{ if(LOBBY.open && LOBBY.isHost && LOBBY.connected) publishBeacon(); }, 10000);
 function onBeacon(m){
   if(!m || m.type!=='beacon') return;
   const code=cleanCode(m.code); if(!code) return;
@@ -1894,7 +2047,10 @@ function setOpen(v){
   LOBBY.open=!!v;
   try{ localStorage.setItem('lobby-open', LOBBY.open?'1':'0'); }catch(e){}
   syncOpenUI();
-  if(LOBBY.open){ publishBeacon(); popText('📣 room '+LOBBY.code+' is OPEN — others can find and join it', 3000); }
+  if(LOBBY.open){
+    if(LOBBY.isHost){ publishBeacon(); popText('📣 room '+LOBBY.code+' is OPEN — hosts announce here while their door is open; others can find and join it', 3200); }
+    else popText('📣 OPEN is on — host this room (🏠 HOST A ROOM) and it announces itself here while your door is open', 3400);
+  }
   else popText('📣 room '+LOBBY.code+' is no longer listed — the code still works for anyone who has it', 3200);
 }
 function onPresence(m){
@@ -1935,7 +2091,7 @@ setInterval(()=>{ // figures walk to their gossiped places; face cards billboard
     if(p.faceHolder && camObj) p.faceHolder.lookAt(camObj.position.x, 1.05, camObj.position.z);
   });
 }, 50);
-window.addEventListener('beforeunload', ()=>{ publish('presence', {type:'bye', tid:LOBBY.tid}); });
+window.addEventListener('beforeunload', ()=>{ if(LOBBY.isHost) publish('presence', {type:'host-bye', tid:LOBBY.tid, name:LOBBY.name}); publish('presence', {type:'bye', tid:LOBBY.tid}); });
 // ---------- chat: echo-sealed, captioned (hearing law) ----------
 function chatLine(who, text, color, sealState){
   const log=$('lbChatLog'); if(!log) return null;
@@ -2157,12 +2313,28 @@ function unbindSelfFace(){
   if(LOBBY.selfTileWrap && LOBBY.selfTileWrap.parentNode) LOBBY.selfTileWrap.parentNode.removeChild(LOBBY.selfTileWrap);
   LOBBY.selfTileWrap=null; LOBBY.selfTileEl=null;
 }
+// ---------- media context (v1.2, D) ----------
+// Inside an in-app webview sheet — and on the loader's blob: hand-off — the
+// origin is opaque and getUserMedia is refused no matter what the page does.
+// The page must SAY so plainly and hand over the way out: the same room on
+// the Pages URL, opened in Safari, where the camera works.
+function safariURL(){ return 'https://arcade.highscores.live/arcade/room.html?room='+LOBBY.code; }
+function showMediaWarn(){
+  const w=$('lbMediaWarn');
+  if(w){ const a=$('lbMediaWarnGo'); if(a) a.href=safariURL(); w.style.display='flex'; }
+  const n=$('lbMediaNote');
+  if(n){ const a=$('lbMediaNoteGo'); if(a) a.href=safariURL(); n.style.display='block'; }
+}
+function mediaGate(){
+  LOBBY.mediaBlocked = (location.protocol==='blob:') || !(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+  if(LOBBY.mediaBlocked) showMediaWarn();
+}
 // ---------- toggles ----------
 async function toggleMic(){
   if(!LOBBY.micOn){
     if(talkersCount()>=VOICE_CAP){ popText('🔊 VOICE IS FULL — '+VOICE_CAP+' talking right now. Chat and faces still work; hang out, a seat opens when someone mutes.', 4200); flashCap(); return; }
     try{ LOBBY.micStream=await navigator.mediaDevices.getUserMedia({audio:true}); }
-    catch(e){ popText('🎙 the microphone refused — the room goes on without it', 3000); return; }
+    catch(e){ LOBBY.mediaRefused=true; showMediaWarn(); popText('🎙 the microphone refused — this browser view blocks it. For voice, open this room in Safari — the way out is in the invite sheet', 4200); return; }
     LOBBY.micOn=true;
   } else {
     LOBBY.micOn=false;
@@ -2180,7 +2352,7 @@ function toggleHear(){
 async function toggleFace(){
   if(!LOBBY.faceOn){
     try{ LOBBY.camStream=await navigator.mediaDevices.getUserMedia({video:true, audio:false}); }
-    catch(e){ popText('📷 the camera refused — your face stays yours', 3000); return; }
+    catch(e){ LOBBY.mediaRefused=true; showMediaWarn(); popText('📷 the camera refused — your face stays yours. This browser view blocks the camera; open this room in Safari for faces — the way out is in the invite sheet', 4600); return; }
     LOBBY.faceOn=true; bindSelfFace();
   } else {
     LOBBY.faceOn=false;
@@ -2391,7 +2563,9 @@ setInterval(()=>{ // portal dwell: stand in a ring 3s and the door builds its li
   }
 }, 150);
 // ---------- QR quick connect (the Cube's generator + 192px rule, ported) ----------
-function roomURL(){ return 'https://arcade.highscores.live/arcade/room.html?room='+LOBBY.code; }
+// v1.2: the invite carries the CURRENT BUILD through the loader (the game's
+// form) — a scan can never land on a stale build again.
+function roomURL(){ return LOADER+'?g='+SELF_PIN.blob+'&h='+SELF_PIN.sha+'&n='+encodeURIComponent('THE ROOM')+'&room='+LOBBY.code; }
 function renderQR(){
   const qb=$('lbQr'); if(!qb) return;
   const text=roomURL();
@@ -2409,9 +2583,9 @@ function renderQR(){
   }, 1400);
 }
 function copyRoomLink(){
-  const u=location.origin+location.pathname+'?room='+LOBBY.code;
+  const u=roomURL();
   if(navigator.clipboard) navigator.clipboard.writeText(u).catch(()=>{});
-  popText('🔗 room link copied — anyone who opens it lands in room '+LOBBY.code, 2600);
+  popText('🔗 room link copied — it loads the current build with room '+LOBBY.code+' filled in', 2600);
 }
 // ---------- sheets (v1.1): one at a time on a phone, each with its own big ✕ ----------
 // On a phone the Lobby is a slim bottom strip; everything else is a SHEET
@@ -2479,11 +2653,16 @@ function initLobby(){
   on('lbSheetX', ()=> closeSheet('sheet'));
   on('lbChatX', ()=> closeSheet('chat'));
   on('lbOpen', ()=> setOpen(!LOBBY.open));
+  on('lbHost', hostButton);
+  on('lbHostOwn', ()=> becomeHost(false));
+  on('lbBarHostOwn', ()=> becomeHost(false));
+  on('lbSheetJoin', ()=>{ const v=cleanCode($('lbSheetJoinCode').value); if(v && v!==LOBBY.code) location.search='?room='+v; });
+  on('lbMediaWarnX', ()=>{ const w=$('lbMediaWarn'); if(w) w.style.display='none'; });
   document.addEventListener('click', e=>{
     if(!isPhone()) return;
     if(e.target && e.target.closest && e.target.closest('#sleeveBtn,#handL,#handR,#phoneBtn,#finnBtn,#worldWinBtn,#grandBtn,#kickBtn,#watchBtn,#winLaunch,#worldWinLaunch')) closeLobbySheets();
   }, true);
-  syncOpenUI();
+  syncOpenUI(); syncHostUI(); mediaGate();
   const send=()=>{ const i=$('lbChatIn'); sendChat(i.value); i.value=''; };
   $('lbChatSend').addEventListener('click', send);
   $('lbChatIn').addEventListener('keydown', e=>{ if(e.key==='Enter') send(); e.stopPropagation(); });
@@ -2493,7 +2672,7 @@ function initLobby(){
   buildPortals();
   roster(); syncToggleUI();
   connectMQ();
-  try{ if(typeof FINN_CAN!=='undefined') FINN_CAN.push('run THE LOBBY — real people in this room: share the room code, talk and chat (voice mesh seats four talkers), wear your camera face over your avatar, record the whole hangout as one sealed room tape, and walk everyone through the portal doors (left wall) into Bunny Cube, Zombie World or the Builder — same room code, same party. The invite sheet carries a QR a friend can scan straight in, 📣 OPEN lists your room under 🔎 FIND so others can discover it, and joining is a handshake — you are only told you are IN once the room answers'); }catch(e){}
+  try{ if(typeof FINN_CAN!=='undefined') FINN_CAN.push('run THE LOBBY — real people in this room: share the room code, talk and chat (voice mesh seats four talkers), wear your camera face over your avatar, record the whole hangout as one sealed room tape, and walk everyone through the portal doors (left wall) into Bunny Cube, Zombie World or the Builder — same room code, same party. The invite sheet carries a QR a friend can scan straight in, 📣 OPEN lists your room under 🔎 FIND so others can discover it, and joining is a handshake — you are only told you are IN once the room answers. HOST A ROOM (invite sheet) makes a room yours: you answer knocks with a welcome, your heartbeat holds the room, the code is the key — and OPEN only lists rooms whose host flipped it on'); }catch(e){}
   window.__LOBBY=LOBBY;
   LOBBY.portalURL=portalURL; LOBBY.sendChat=sendChat; LOBBY.toggleMic=toggleMic; LOBBY.toggleHear=toggleHear;
   LOBBY.toggleFace=toggleFace; LOBBY.toggleRec=toggleRec; LOBBY.gossip=gossipPresence; LOBBY.sha256hex=sha256hex; LOBBY._publish=publish; LOBBY.diag=DIAG;
@@ -2501,6 +2680,8 @@ function initLobby(){
   LOBBY.openPortalSplash=openPortalSplash;
   LOBBY.openSheet=openSheet; LOBBY.toggleSheet=toggleSheet; LOBBY.closeSheet=closeSheet; LOBBY.isPhone=isPhone;
   LOBBY.setOpen=setOpen; LOBBY.renderFind=renderFind; LOBBY.roomURL=roomURL; LOBBY.qrText=roomURL;
+  LOBBY.pin=SELF_PIN; LOBBY.becomeHost=becomeHost; LOBBY.hostButton=hostButton; LOBBY.syncHostUI=syncHostUI;
+  LOBBY.showMediaWarn=showMediaWarn; LOBBY.safariURL=safariURL; LOBBY.renderJoinState=renderJoinState;
   LOBBY._join=LOBBY.join; LOBBY._openRooms=LOBBY.openRooms; LOBBY._publishRaw=publishRaw;
 }
 if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', initLobby); else initLobby();
