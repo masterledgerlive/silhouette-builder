@@ -291,8 +291,8 @@ var PLUGIN_BLOB='4xEsQxFNJxWvLIUAIBaw5-3JI1XTbe3O0ULOafW_8d0';
 var PLUGIN_SHA='b9b9677035f8c55bbb6cd54f56b6113be75a9fbdd2abda517d0a31c263be5685';
 var PUBLISHER='https://publisher.walrus-testnet.walrus.space/v1/blobs?epochs=30';
 var LOBBY_TOPIC='kodakai/comms/v1/lobby';
-var MS_PAGE_BLOB='QdUzX71kWjskP9tM0pI4OJTsA88pf4D-PckMRuN6koI';   /* QR pin — candidate blob, two-step (the Cube's pattern) */
-var MS_PAGE_SHA='d159ea1cc068c31aba6f5cadbeec597e2491db03a2cc8473c57185b79c938628';     /* QR pin — sha256 of the candidate bytes */
+var MS_PAGE_BLOB='ZZDmII2S2wlh0oDiETRqAoONCEZIyt2Z8cXoISm4dJY';   /* QR pin — candidate blob, two-step (the Cube's pattern) */
+var MS_PAGE_SHA='c47da85cfc29eb80e687972960d22db139355377eab68fb4ac002f627a2184f1';     /* QR pin — sha256 of the candidate bytes */
 var PAGES_URL='https://arcade.highscores.live/arcade/messenger.html';
 var LOADER='https://arcade.highscores.live/arcade/blob-loader.html';
 var MIRRORS=['https://aggregator.walrus-testnet.walrus.space','https://walrus-testnet.blockscope.net'];
@@ -637,6 +637,28 @@ async function importJarById(){
   }
   if(!txt){ say('that id would not pour — check it and try again'); return; }
   var rec=null; try{ rec=JSON.parse(txt); }catch(e){}
+  /* v0.3.1 (probe-caught): a HISTORY pointer is redeemable — pasting
+     someone's history/1 id imports every jar it names, so the whole
+     shelf really does travel by one pointer (David, Nov 8 12:29). */
+  if(rec && rec.kind==='history/1' && Array.isArray(rec.jars)){
+    var have={}; readShelfAll().forEach(function(j){ have[j.recordBlob]=1; });
+    var imp2=loadImported(), added=0;
+    for(var k=0;k<rec.jars.length;k++){
+      var jr=rec.jars[k]; if(!jr || !jr.record || have[jr.record]) continue;
+      var jtxt=null;
+      for(var i2=0;i2<MIRRORS.length && !jtxt;i2++){ try{ var r2=await fetch(MIRRORS[i2]+'/v1/blobs/'+jr.record); if(r2.ok) jtxt=await r2.text(); }catch(e){} }
+      if(!jtxt) continue;
+      var jrec=null; try{ jrec=JSON.parse(jtxt); }catch(e){}
+      var jn=normJar(jrec, jr.record, false);
+      if(!jn || jn.kind!=='voice-jar/1' || !jn.trackBlob) continue;
+      imp2.push(Object.assign({}, jrec, {recordBlob:jr.record})); have[jr.record]=1; added++;
+    }
+    try{ localStorage.setItem('messenger-imported-jars', JSON.stringify(imp2)); }catch(e){}
+    inp.value=''; say(added?('✓ HISTORY added — '+added+' jar'+(added===1?'':'s')+' joined your shelf'):'that history is already on your shelf');
+    shelfSig=''; renderShelf(); pourHistory();
+    toast('🫙 history added to your shelf', 2600);
+    return;
+  }
   var n=normJar(rec, id, false);
   if(!n || n.kind!=='voice-jar/1' || !n.trackBlob){ say('that blob is not a voice jar record'); return; }
   var imp=loadImported();
