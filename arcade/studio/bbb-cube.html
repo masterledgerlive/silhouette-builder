@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>BUNNY CUBE v1.9.3 — BONK THE BULLIES + BLOB TALK + TALK JARS (a 3D world from Walrus blobs)</title>
+<title>BUNNY CUBE v1.9.4 — BONK THE BULLIES + BLOB TALK + THE LIVE SHOW (a 3D world from Walrus blobs)</title>
 <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/mqtt@5.10.1/dist/mqtt.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -49,6 +49,18 @@
   #jarBox .jrow{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid rgba(150,150,220,.18)}
   #jarBox button{background:#2a2a55;color:#cfe0ff;border:1px solid #667;border-radius:8px;padding:4px 10px;font-weight:bold}
   #jarBtn.rec{background:#7a1622;color:#fff;border-color:#ff8f8f;animation:jarPulse 1.1s infinite}
+  #faceBox{position:absolute;right:10px;top:64px;z-index:10;display:flex;flex-direction:column;gap:6px;align-items:flex-end;pointer-events:none}
+  .faceTile{width:118px;background:rgba(5,8,14,.85);border:1.5px solid rgba(255,215,106,.8);border-radius:12px;padding:4px;pointer-events:auto}
+  .faceTile video{width:100%;height:88px;object-fit:cover;border-radius:8px;background:#000;display:block}
+  .faceCap{font-size:11px;font-weight:800;color:#ffd76a;text-align:center;padding:2px 0 1px}
+  #jarVid{width:230px;max-height:180px;border-radius:12px;border:1.5px solid rgba(150,150,220,.8);background:#000;pointer-events:auto}
+  #faceBtn.on,#maskBtn.on{background:#2e7d32;color:#fff;border-color:#4caf50}
+  .rpChip{display:inline-flex;gap:4px;align-items:center;background:rgba(16,27,48,.9);border:1px solid rgba(255,255,255,.35);border-radius:999px;padding:3px 6px 3px 10px;margin:2px;font-size:12px}
+  .rpChip button{background:#2a2a55;color:#cfe0ff;border:1px solid #667;border-radius:999px;padding:2px 8px;font-weight:bold}
+  .rpChip button.off{opacity:.45}
+  #showBox{position:absolute;left:10px;top:64px;z-index:10;display:flex;flex-direction:column;gap:6px}
+  .showCard{width:200px;background:rgba(5,8,14,.88);border:1.5px solid rgba(126,195,242,.75);border-radius:12px;padding:5px;color:#eaf4ff;font-size:12px}
+  .showCard video,.showCard audio{width:100%;display:block;border-radius:8px;background:#000}
   @keyframes jarPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.07)}}
   #verTag{position:absolute;left:10px;bottom:186px;z-index:5;display:none;background:rgba(7,10,16,.5);border:1px solid rgba(255,215,106,.4);
           color:#ffd76a;border-radius:8px;padding:3px 9px;font-size:12px;font-weight:700;pointer-events:none}
@@ -185,10 +197,16 @@ grab apples, bonk them back. First to the banner takes the round.</p>
       <div id="jarInd"></div>
       <div id="chatBox" style="display:none"><div id="chatLog"></div><div id="chatRow"><input id="chatIn" maxlength="120" placeholder="💬 say it…" autocomplete="off"><button id="chatSend">SEND</button></div></div>
       <div id="jarBox" style="display:none"><div style="font-weight:700;margin-bottom:2px">🫙 TALK JARS — this room's voices, kept as their own track</div><div id="jarList"></div></div>
-      <div id="talkRow"><button id="chatTog">💬 CHAT</button><button id="micBtn">🎙 MIC OFF</button><button id="hearBtn">🔊 HEAR ON</button><button id="jarBtn">● JAR</button><button id="jarListBtn">🫙 <span id="jarCount">0</span></button></div>
+      <div id="talkRow"><button id="chatTog">💬 CHAT</button><button id="micBtn">🎙 MIC OFF</button><button id="hearBtn">🔊 HEAR ON</button><button id="faceBtn">📷 FACE OFF</button><button id="maskBtn">🎭 MASK</button><button id="jarBtn">● JAR</button><button id="jarListBtn">🫙 <span id="jarCount">0</span></button></div>
     </div>
     <audio id="talkAudio" autoplay></audio>
-    <div id="verTag">🧊 CUBE v1.9.3 · BLOB TALK + JARS</div>
+    <div id="faceBox">
+      <div class="faceTile" id="faceSelfTile" style="display:none"><video id="faceSelfVid" autoplay muted playsinline></video><div class="faceCap">YOU 📷</div></div>
+      <div class="faceTile" id="faceRemoteTile" style="display:none"><video id="faceRemoteVid" autoplay playsinline></video><div class="faceCap" id="faceRemoteCap">THEM 📷</div></div>
+      <video id="jarVid" style="display:none" playsinline controls></video>
+    </div>
+    <div id="showBox"></div>
+    <div id="verTag">🧊 CUBE v1.9.4 · THE LIVE SHOW</div>
     <button id="tiltBtn">🧭 TILT</button>
     <div id="joy"><div id="joyKnob"></div></div>
     <div id="pad"><span class="pip pU">▲</span><span class="pip pD">▼</span><span class="pip pL">◀</span><span class="pip pR">▶</span><div id="padKnob"></div></div>
@@ -246,7 +264,10 @@ grab apples, bonk them back. First to the banner takes the round.</p>
     <option value="frank">🎭 FRANK</option><option value="rinky">🎭 RINKY</option><option value="gamera">🎭 GAMERA</option>
     <option value="free">🕊 FREE ROAM</option>
   </select>
-  <button class="lkBtn" id="rpExit">✕ EXIT</button>
+  <button class="lkBtn" id="rpExit">✕ EXIT</button><br>
+  <button class="lkBtn" id="rpJump" style="margin-top:6px;background:#2e7d32;color:#fff;border-color:#4caf50;font-weight:800">▶ JUMP IN FROM HERE — PLAY IT LIVE (SOLO)</button>
+  <div style="font-size:11.5px;opacity:.85">solo jump-in — friends join-in comes with multi-seat</div>
+  <div id="rpJars" style="margin-top:6px"></div>
 </div>
 <div id="aboutSheet"><button id="aboutClose" class="lkBtn">✕ CLOSE</button><div class="panel"><h2>🏆 MEADOW RECORDS — FASTEST FINISHES</h2><div id="winBook" class="small">No finishes sealed yet — win a round and the record is solidified into a Walrus blob, name and time and all, chained so nobody can rewrite it.</div></div><div class="panel"><h2>🎞️ MATCH REPLAY — THE TAPE IS THE PROOF</h2><div class="small" id="rpInfo">No tape yet — finish a round and the whole match is here, sealed frame by sealed frame.</div><div style="margin-top:8px"><button class="lkBtn" id="rpWatch" style="display:none">▶ WATCH LAST MATCH</button> <button class="lkBtn" id="rpSeal" style="display:none">🧊 SEAL TAPE AS BLOB</button></div><div class="small" style="margin-top:8px">Open a sealed tape from its blob: <input id="rpBlobId" placeholder="tape blob id" style="background:rgba(5,8,14,.85);border:1px solid rgba(255,255,255,.4);border-radius:7px;color:#fff;padding:6px 8px;width:200px"> <button class="lkBtn" id="rpLoad">LOAD TAPE</button></div></div></div>
 <div class="panel" data-about><div id="log">warming the cube — recalling the meadow from the blobs…</div></div>
@@ -1105,6 +1126,7 @@ function startReplay(frames, label){
   if(!frames || frames.length<2){ popText("🎞️ That tape is too short to play", 2200); return; }
   RP.verified=verifyTape(frames);
   RP.frames=frames; RP.i=0; RP.playing=true; RP.active=true; RP.acc=0; RP.label=label||"REPLAY";
+  RP.tapeT0ms=Math.round(frames[0].t*1000); RP.tapeT1ms=Math.round(frames[frames.length-1].t*1000); RP.room=NET.room||null; showBuildViewer();
   $("aboutSheet").style.display="none"; $("startScreen").style.display="none";
   $("rpBar").style.display="block"; $("rpPlayBtn").textContent="⏸ PAUSE";
   $("rpScrub").max=frames.length-1; $("rpScrub").value=0;
@@ -1135,6 +1157,7 @@ function rpPlace(f){
   placeGuestApples(f.apples||[]);
   $("rpInfo2").textContent="🎞️ "+RP.label+" · frame "+(RP.i+1)+"/"+RP.frames.length+" · t="+f.t+"s · seals ✓ "+RP.verified+"/"+RP.frames.length+" · 🎯 "+f.bonks+" · 💥 "+f.bonked;
   $("rpScrub").value=RP.i;
+  showSync();
 }
 function rpTick(dt){
   if(RP.active && RP.camMode==="free"){
@@ -1148,7 +1171,7 @@ function rpTick(dt){
   RP.acc+=dt*RP.speed;
   const cur=RP.frames[RP.i], nxt=RP.frames[Math.min(RP.i+1, RP.frames.length-1)];
   const step=Math.max(0.05,(nxt.t-cur.t)||0.125);
-  if(RP.acc>=step){ RP.acc=0; RP.i=Math.min(RP.i+1, RP.frames.length-1); rpPlace(RP.frames[RP.i]); if(RP.i>=RP.frames.length-1){ RP.playing=false; $("rpPlayBtn").textContent="▶ REPLAY AGAIN"; RP.i=0; } }
+  if(RP.acc>=step){ RP.acc=0; RP.i=Math.min(RP.i+1, RP.frames.length-1); rpPlace(RP.frames[RP.i]); if(RP.i>=RP.frames.length-1){ RP.playing=false; $("rpPlayBtn").textContent="▶ REPLAY AGAIN"; RP.i=0; showSync(); } }
 }
 let winChain=[];
 function myName(){ const v=($("nameInput")&&$("nameInput").value||"").trim()||localStorage.getItem("cube-name")||""; return (v||"BUNNY").slice(0,14).toUpperCase(); }
@@ -1570,9 +1593,9 @@ function netEvBanner(m,s){ if(NET.role==="host") mqSend("down",{type:"ev", banne
 // network (the loader hash-checks before it opens anything), never on a stale
 // Pages copy. Re-pinned at ship time: g = this version's first PUT blob,
 // h = sha256 of the bytes that blob names.
-const PAGE_BLOB="lNU_ob53_MoyoREihwYiIO6zicTkMPMUBcxBgjup56Y";
-const PAGE_SHA="8cefa166d34b28bf0400b49539c68a4b7a210ada8c2feec43799aaa1b9e71238";
-function jarQrText(room){ return "https://arcade.highscores.live/arcade/blob-loader.html?g="+PAGE_BLOB+"&h="+PAGE_SHA+"&n="+encodeURIComponent("BUNNY CUBE v1.9.3")+"&room="+room+"&join="+room; }
+const PAGE_BLOB="q43FVwe7g7lYlwf4gNYkTDLk6yMb6jGnPhBctrSMiY8";
+const PAGE_SHA="c9f4e81cee0a6e8ebd56431d8700ab5d2e57cea39586b27d1e59799e9b00943b";
+function jarQrText(room){ return "https://arcade.highscores.live/arcade/blob-loader.html?g="+PAGE_BLOB+"&h="+PAGE_SHA+"&n="+encodeURIComponent("BUNNY CUBE v1.9.4")+"&room="+room+"&join="+room; }
 window.__CHATSEALS=[];
 const TALK={pc:null, mic:null, micOn:false, hear:true, remote:null, id:"t"+Math.random().toString(36).slice(2,9)};
 function talkTopic(){ return mqTopic("talk"); }
@@ -1585,7 +1608,9 @@ async function talkEnsurePc(){ if(TALK.pc&&(TALK.pc.signalingState==="closed"||T
   pc.onconnectionstatechange=()=>{ if(pc._dead) return; const st=pc.connectionState; if(st==="failed") talkResurrect("conn-failed"); else if(st==="closed") talkResurrect("conn-closed"); else if(st==="connected"&&TALK._down){ TALK._down=false; TALK.attempts=0; popText("link back", 1600); } };
   pc.onsignalingstatechange=()=>{ if(pc._dead) return; if(pc.signalingState==="closed") talkResurrect("sig-closed"); };
   pc.onicecandidate=(e)=>{ if(e.candidate) mqPub(talkTopic(), {type:"rtc-ice", tid:TALK.id, cand:e.candidate.toJSON()}); };
-  pc.ontrack=(e)=>{ const a=$("talkAudio"); if(a&&e.streams&&e.streams[0]){ TALK.remote=e.streams[0]; a.srcObject=e.streams[0]; a.volume=TALK.hear?1:0; popText("🔊 voice connected — they're on the meadow radio", 2400); if(e.track) e.track.onended=()=>{ talkResurrect("track-ended"); }; try{ if(JAR.on) jarPlugRemote(); }catch(_){} } };
+  pc.ontrack=(e)=>{ const tr=e.track; if(!tr) return;
+    if(tr.kind==="video"){ const st=(e.streams&&e.streams[0])||new MediaStream([tr]); FACE.remoteStream=st; const rv=$("faceRemoteVid"); if(rv) rv.srcObject=st; FACE.remoteOn=true; faceTiles(); faceBindTex("remote", st); tr.onended=()=>{ FACE.remoteOn=false; faceTiles(); facePlaneVis(); }; popText("📷 their face is on the meadow", 2000); return; }
+    const a=$("talkAudio"); if(a&&e.streams&&e.streams[0]){ TALK.remote=e.streams[0]; a.srcObject=e.streams[0]; a.volume=TALK.hear?1:0; popText("🔊 voice connected — they're on the meadow radio", 2400); tr.onended=()=>{ talkResurrect("track-ended"); }; try{ if(JAR.on) jarPlugRemote(); }catch(_){} } };
   pc.onnegotiationneeded=async ()=>{ if(TALK._off) return; TALK._off=true; try{ const off=await pc.createOffer(); await pc.setLocalDescription(off); mqPub(talkTopic(), {type:"rtc-offer", tid:TALK.id, sdp:pc.localDescription}); }catch(e){} TALK._off=false; };
   return pc; }
 async function talkMicToggle(){ try{
@@ -1616,15 +1641,17 @@ async function talkResurrect(why){
   try{
     const pc=await talkEnsurePc();
     if(TALK.mic){ for(const tr of TALK.mic.getAudioTracks()){ if(!pc.getSenders().some(sd=>sd.track===tr)){ pc.addTrack(tr, TALK.mic); tr.enabled=TALK.micOn; } } }
+    if(FACE.on&&TALK.cam){ for(const tr of TALK.cam.getVideoTracks()){ if(!pc.getSenders().some(sd=>sd.track===tr)) pc.addTrack(tr, TALK.cam); } }
     teleEvent("TALK RESURRECT", "📻 talk link rebuilt ("+why+", attempt "+TALK.attempts+") — his toggles untouched: mic "+(TALK.micOn?"ON":"off")+", hear "+(TALK.hear?"ON":"off"));
   }catch(e){}
   TALK._resing=false;
 }
 async function onTalkMsg(t, m){ if(!NET.room||t!==talkTopic()) return; let msg; try{ msg=JSON.parse(m.toString()); }catch(e){ return; } if(msg.tid===TALK.id) return;
-  if(msg.type==="jar"){ const ind=$("jarInd"); if(msg.on){ if(ind){ ind.style.display="block"; ind.textContent="● "+(msg.from||"A PLAYER")+" is jarring this room — the voices are being kept as a track"; } popText("● "+(msg.from||"a player")+" opened a jar on this room", 2200); } else if(ind){ ind.style.display="none"; ind.textContent=""; } return; }
+  if(msg.type==="face"){ FACE.remoteOn=!!msg.on; if(!FACE.remoteOn){ const rv=$("faceRemoteVid"); if(rv) rv.srcObject=null; } faceTiles(); facePlaneVis(); popText(msg.on?"📷 "+(msg.from||"they")+" turned their face on — say hi":"📷 "+(msg.from||"they")+" turned their face off", 2000); return; }
+  if(msg.type==="jar"){ const ind=$("jarInd"); if(msg.on){ if(ind){ ind.style.display="block"; ind.textContent="● "+(msg.from||"A PLAYER")+" is jarring this room"+(msg.video?" (face + voice)":"")+" — the show is being kept as its own track"; } popText("● "+(msg.from||"a player")+" opened a jar on this room", 2200); } else if(ind){ ind.style.display="none"; ind.textContent=""; } return; }
   if(msg.type==="echo"){ const rec=__CHATSEALS.find(r=>r.mine&&r.tid===msg.of&&r.seal===msg.seal); if(rec&&!rec.echoed){ rec.echoed=true; rec.echoBy=msg.by||""; if(rec.el&&rec.el.parentNode){ const sp=document.createElement("span"); sp.textContent=" \u2713\u2713"; sp.style.color="#9fe8a8"; sp.style.fontWeight="800"; rec.el.appendChild(sp); } } return; }
   if(msg.type==="chat"){ const from=msg.from||"BUNNY", text=msg.text||""; let mismatch=false, ok=false; if(msg.seal){ ok=(chatSeal(msg.tid||"", from, text)===msg.seal); mismatch=!ok; } const el=addChat(from, text, false, {tid:msg.tid, seal:msg.seal||null, mismatch}); __CHATSEALS.push({tid:msg.tid, from, text, seal:msg.seal||null, mine:false, echoed:false, mismatch, el}); if(msg.seal&&ok){ mqPub(talkTopic(), {type:"echo", tid:TALK.id, of:msg.tid, seal:msg.seal, by:myName()}); } else if(msg.seal&&mismatch){ popText("\u26a0 a chat line arrived with a broken seal — marked, never silently trusted", 3200); } return; }
-  if(msg.type==="rtc-offer"){ try{ const pc=await talkEnsurePc(); if(pc.signalingState!=="stable"){ if(NET.role!=="host") return; await pc.setLocalDescription({type:"rollback"}); } await pc.setRemoteDescription(new RTCSessionDescription(msg.sdp)); if(!pc.getTransceivers().some(tr=>tr.receiver&&tr.receiver.track.kind==="audio")) pc.addTransceiver("audio",{direction:"recvonly"}); const ans=await pc.createAnswer(); await pc.setLocalDescription(ans); mqPub(talkTopic(), {type:"rtc-answer", tid:TALK.id, sdp:pc.localDescription}); }catch(e){} return; }
+  if(msg.type==="rtc-offer"){ try{ const pc=await talkEnsurePc(); if(pc.signalingState!=="stable"){ if(NET.role!=="host") return; await pc.setLocalDescription({type:"rollback"}); } await pc.setRemoteDescription(new RTCSessionDescription(msg.sdp)); if(!pc.getTransceivers().some(tr=>tr.receiver&&tr.receiver.track.kind==="audio")) pc.addTransceiver("audio",{direction:"recvonly"}); if(!pc.getTransceivers().some(tr=>tr.receiver&&tr.receiver.track.kind==="video")) pc.addTransceiver("video",{direction:"recvonly"}); const ans=await pc.createAnswer(); await pc.setLocalDescription(ans); mqPub(talkTopic(), {type:"rtc-answer", tid:TALK.id, sdp:pc.localDescription}); }catch(e){} return; }
   if(msg.type==="rtc-answer"){ if(TALK.pc&&TALK.pc.signalingState==="have-local-offer"){ try{ await TALK.pc.setRemoteDescription(new RTCSessionDescription(msg.sdp)); }catch(e){} } return; }
   if(msg.type==="rtc-ice"){ if(TALK.pc&&msg.cand){ try{ await TALK.pc.addIceCandidate(new RTCIceCandidate(msg.cand)); }catch(e){} } return; } }
 function wireTalk(){ const ct=$("chatTog"), cs=$("chatSend"), ci=$("chatIn"), mb=$("micBtn"), hb=$("hearBtn"); if(!ct||ct._w) return; ct._w=1;
@@ -1633,7 +1660,7 @@ function wireTalk(){ const ct=$("chatTog"), cs=$("chatSend"), ci=$("chatIn"), mb
   mb.onclick=talkMicToggle;
   hb.onclick=()=>{ TALK.hear=!TALK.hear; const a=$("talkAudio"); if(a) a.volume=TALK.hear?1:0; hb.textContent=TALK.hear?"🔊 HEAR ON":"🔇 MUTED"; };
   const ta=$("talkAudio"); if(ta&&!ta._pg){ ta._pg=1; ta.addEventListener("pause", ()=>{ if(TALK.hear&&TALK.remote){ try{ const p=ta.play(); if(p&&p.catch) p.catch(()=>{}); }catch(e){} } }); }
-  const jb=$("jarBtn"), jl=$("jarListBtn"); if(jb) jb.onclick=jarToggle; if(jl) jl.onclick=()=>{ const b=$("jarBox"); b.style.display=b.style.display==="block"?"none":"block"; renderJarList(); }; renderJarList(); }
+  const jb=$("jarBtn"), jl=$("jarListBtn"); if(jb) jb.onclick=jarToggle; if(jl) jl.onclick=()=>{ const b=$("jarBox"); b.style.display=b.style.display==="block"?"none":"block"; renderJarList(); }; const fb=$("faceBtn"), mk=$("maskBtn"); if(fb) fb.onclick=faceToggle; if(mk) mk.onclick=()=>{ FACE.mask=!FACE.mask; faceUi(); popText(FACE.mask?"🎭 faces ride the characters":"🎭 face cards off — tiles only", 1600); }; faceUi(); renderJarList(); }
 
 // ----- TALK JARS (v1.9.3): the room's voices kept as a SEPARATE TRACK -----
 // David's law: your voice is your blob, you hold the key — and the room always
@@ -1642,7 +1669,7 @@ function wireTalk(){ const ct=$("chatTog"), cs=$("chatSend"), ci=$("chatIn"), mb
 // on THIS phone only (my mic + their voice), the audio seals as its own blob,
 // and a voice-jar/1 record pins it to the seal chain's current anchor. The
 // track never muxes into the game tape; it stands beside it, named by its hash.
-const JAR={on:false, rec:null, chunks:[], ctx:null, mime:"", t0:0, held:null, mixed:false, dest:null, remoteSrc:null, remoteFor:null};
+const JAR={on:false, rec:null, chunks:[], ctx:null, mime:"", t0:0, held:null, mixed:false, dest:null, remoteSrc:null, remoteFor:null, kind:"voice-jar/1", mark0:null, mark1:null};
 
 function jarPlugRemote(){
   if(!JAR.ctx||!JAR.dest) return;
@@ -1653,6 +1680,8 @@ function jarPlugRemote(){
 }
 function jarShelf(){ try{ const s=JSON.parse(localStorage.getItem("cube-jars-v1")||"[]"); return Array.isArray(s)?s:[]; }catch(e){ return []; } }
 function jarMime(){ const cand=["audio/webm;codecs=opus","audio/mp4","audio/webm",""]; for(const m of cand){ if(!m) return ""; try{ if(MediaRecorder.isTypeSupported(m)) return m; }catch(e){} } return ""; }
+function jarVideoMime(){ const cand=["video/webm;codecs=vp8,opus","video/webm","video/mp4",""]; for(const m of cand){ if(!m) return ""; try{ if(MediaRecorder.isTypeSupported(m)) return m; }catch(e){} } return ""; }
+function jarTapeMark(){ const inSess=!!(NET.room||state.started||RP.active); return {tick:(inSess&&typeof NET.snapN==="number")?NET.snapN:null, ms:inSess?Math.round(state.t*1000):null}; }
 function walrusPut(bytes){ return fetch(WIN_PUBLISHER,{method:"PUT", body:bytes}).then(async r=>{ if(!r.ok) throw new Error("publisher "+r.status); const j=await r.json(); const id=(j.newlyCreated&&j.newlyCreated.blobObject&&j.newlyCreated.blobObject.blobId)||(j.alreadyCertified&&(j.alreadyCertified.blobId||(j.alreadyCertified.blobObject&&j.alreadyCertified.blobObject.blobId))); if(!id) throw new Error("no blobId in reply"); return id; }); }
 function jarUiBtn(){ const b=$("jarBtn"); if(!b) return; b.textContent=JAR.on?"⏺ JAR…":"● JAR"; b.classList.toggle("rec", JAR.on); }
 async function jarToggle(){ if(JAR.on){ jarStop(); } else { await jarStart(); } }
@@ -1666,40 +1695,66 @@ async function jarStart(){
     JAR.ctx.createMediaStreamSource(TALK.mic).connect(dest);
     JAR.mixed=false; JAR.remoteSrc=null; JAR.remoteFor=null;
     jarPlugRemote();
-    const mt=jarMime(); const rec=new MediaRecorder(dest.stream, mt?{mimeType:mt}:undefined);
-    JAR.chunks=[]; JAR.rec=rec; JAR.mime=rec.mimeType||mt||"audio/webm";
+    JAR.mark0=jarTapeMark();
+    const vTr=(FACE.on&&TALK.cam)?TALK.cam.getVideoTracks().filter(tr=>tr.readyState==="live"):[];
+    JAR.kind=vTr.length?"video-jar/1":"voice-jar/1";
+    // David's track-separation law: the video rides right next to the audio,
+    // timestamped together, but SEPARATE — never baked into one file, so the
+    // edit stays a spatial scene across the voxel points. Face on -> TWO
+    // recorders started on the same transport tick: video-only, audio-only.
+    const mtA=jarMime(); const rec=new MediaRecorder(dest.stream, mtA?{mimeType:mtA}:undefined);
+    JAR.chunks=[]; JAR.rec=rec; JAR.mime=rec.mimeType||mtA||"audio/webm";
     rec.ondataavailable=(e)=>{ if(e.data&&e.data.size) JAR.chunks.push(e.data); };
-    rec.onstop=()=>{ jarSeal(); };
-    JAR.t0=Date.now(); JAR.on=true; rec.start(1000);
-    mqPub(talkTopic(), {type:"jar", tid:TALK.id, from:myName(), on:true});
-    jarUiBtn(); popText(JAR.mixed?"🫙 jar open — both voices are being kept, as their own track":"🫙 jar open — keeping this side's voice (theirs joins the mix when their voice connects)", 2800);
+    JAR.chunksV=[]; JAR.recV=null; JAR.mimeV=""; JAR._stops=1;
+    if(vTr.length){
+      const mtV=jarVideoMime(); const recV=new MediaRecorder(new MediaStream(vTr), mtV?{mimeType:mtV}:undefined);
+      JAR.recV=recV; JAR.mimeV=recV.mimeType||mtV||"video/webm"; JAR._stops=2;
+      recV.ondataavailable=(e)=>{ if(e.data&&e.data.size) JAR.chunksV.push(e.data); };
+      recV.onstop=()=>{ if(--JAR._stops<=0) jarSeal(); };
+    }
+    rec.onstop=()=>{ if(--JAR._stops<=0) jarSeal(); };
+    JAR.t0=Date.now(); JAR.on=true; rec.start(1000); if(JAR.recV) JAR.recV.start(1000);
+    mqPub(talkTopic(), {type:"jar", tid:TALK.id, from:myName(), on:true, video:JAR.kind==="video-jar/1"});
+    jarUiBtn(); popText(JAR.kind==="video-jar/1"?"🫙 video jar open — face + voices kept as their own track, stamped to the tape":(JAR.mixed?"🫙 jar open — both voices are being kept, as their own track":"🫙 jar open — keeping this side's voice (theirs joins the mix when their voice connects)"), 2800);
   }catch(e){ JAR.on=false; jarUiBtn(); popText("🫙 the jar wouldn't open ("+e.message+")", 2800); }
 }
 function jarStop(){
-  if(!JAR.on) return; JAR.on=false;
+  if(!JAR.on) return; JAR.on=false; JAR.mark1=jarTapeMark();
   mqPub(talkTopic(), {type:"jar", tid:TALK.id, from:myName(), on:false});
   jarUiBtn();
   const rec=JAR.rec; JAR.rec=null;
+  const recV=JAR.recV; JAR.recV=null;
   if(rec&&rec.state!=="inactive"){ try{ rec.stop(); }catch(e){} }
+  if(recV&&recV.state!=="inactive"){ try{ recV.stop(); }catch(e){} }
 }
 async function jarSeal(){
-  const blob=new Blob(JAR.chunks, {type:JAR.mime}); JAR.chunks=[];
-  const bytes=new Uint8Array(await blob.arrayBuffer());
-  const rec={kind:"voice-jar/1", room:NET.room, from:myName(), startedAt:new Date(JAR.t0).toISOString(), durMs:Date.now()-JAR.t0, mime:JAR.mime, blob:null, sha256:sha256hex(bytes), anchor:(typeof NET.snapN==="number")?{seq:NET.snapN, seal:NET.lastHash}:null};
-  JAR.held={bytes, rec};
+  const aBlob=new Blob(JAR.chunks, {type:JAR.mime}); JAR.chunks=[];
+  const aBytes=new Uint8Array(await aBlob.arrayBuffer());
+  const parts=[{type:"audio", bytes:aBytes, mime:JAR.mime, sha256:sha256hex(aBytes), blob:null}];
+  if(JAR.kind==="video-jar/1"&&JAR.chunksV&&JAR.chunksV.length){
+    const vBlob=new Blob(JAR.chunksV, {type:JAR.mimeV}); JAR.chunksV=[];
+    const vBytes=new Uint8Array(await vBlob.arrayBuffer());
+    parts.unshift({type:"video", bytes:vBytes, mime:JAR.mimeV, sha256:sha256hex(vBytes), blob:null});
+  }
+  const main=parts[0];
+  const rec={kind:JAR.kind||"voice-jar/1", room:NET.room, from:myName(), startedAt:new Date(JAR.t0).toISOString(), durMs:Date.now()-JAR.t0, mime:main.mime, blob:null, sha256:main.sha256, tracks:parts.map(p=>({type:p.type, blob:null, sha256:p.sha256, mime:p.mime})), tapeTick0:JAR.mark0?JAR.mark0.tick:null, tapeMs0:JAR.mark0?JAR.mark0.ms:null, tapeTick1:JAR.mark1?JAR.mark1.tick:null, tapeMs1:JAR.mark1?JAR.mark1.ms:null, anchor:(typeof NET.snapN==="number")?{seq:NET.snapN, seal:NET.lastHash}:null};
+  JAR.held={parts, rec};
   await jarPutHeld();
 }
 async function jarPutHeld(){
   const held=JAR.held; if(!held) return;
   try{
-    const blobId=await walrusPut(held.bytes); held.rec.blob=blobId;
+    for(let i=0;i<held.parts.length;i++){ const p=held.parts[i]; p.blob=await walrusPut(p.bytes); held.rec.tracks[i].blob=p.blob; }
+    const prim=held.rec.tracks.find(t=>t.type===(held.rec.kind==="video-jar/1"?"video":"audio"))||held.rec.tracks[0];
+    held.rec.blob=prim.blob; held.rec.sha256=prim.sha256; held.rec.mime=prim.mime;
+    const blobId=prim.blob;
     const recBlob=await walrusPut(new TextEncoder().encode(JSON.stringify(held.rec)));
     const shelf=jarShelf(); shelf.push(Object.assign({}, held.rec, {recordBlob:recBlob}));
     try{ localStorage.setItem("cube-jars-v1", JSON.stringify(shelf)); }catch(e){}
     JAR.held=null; renderJarList();
-    addChat("🫙 JAR", "voice jar sealed — blob "+blobId.slice(0,10)+"… · record "+recBlob.slice(0,10)+"…", true);
+    addChat("🫙 JAR", (held.rec.kind==="video-jar/1"?"video":"voice")+" jar sealed — blob "+blobId.slice(0,10)+"… · record "+recBlob.slice(0,10)+"…", true);
     popText("🫙 Jar saved — "+blobId.slice(0,8)+"…", 2600);
-    teleEvent("JAR SEALED","🫙 voice jar "+blobId.slice(0,16)+"… · "+(held.rec.durMs/1000).toFixed(1)+"s · sha "+held.rec.sha256.slice(0,10)+"… · anchor seq "+(held.rec.anchor?held.rec.anchor.seq:"-"));
+    teleEvent("JAR SEALED","🫙 "+(held.rec.kind||"voice-jar/1")+" "+blobId.slice(0,16)+"… · "+(held.rec.durMs/1000).toFixed(1)+"s · tracks "+held.rec.tracks.map(t=>t.type+":"+t.sha256.slice(0,8)).join(" + ")+" · anchor seq "+(held.rec.anchor?held.rec.anchor.seq:"-"));
   }catch(e){
     renderJarList();
     popText("🫙 jar held on this phone — the network said no. Open 🫙 JARS and tap RETRY to seal it.", 4000);
@@ -1709,10 +1764,10 @@ function renderJarList(){
   const list=$("jarList"), cnt=$("jarCount"); if(!list) return;
   const shelf=jarShelf(); if(cnt) cnt.textContent=String(shelf.length+(JAR.held?1:0));
   list.innerHTML="";
-  if(JAR.held){ const d=document.createElement("div"); d.className="jrow"; const sp=document.createElement("span"); sp.textContent="🫙 unsealed jar ("+(JAR.held.bytes.length/1024).toFixed(1)+" KB) — held on this phone"; const b=document.createElement("button"); b.textContent="RETRY"; b.onclick=()=>{ jarPutHeld(); }; d.appendChild(sp); d.appendChild(b); list.appendChild(d); }
+  if(JAR.held){ const d=document.createElement("div"); d.className="jrow"; const sp=document.createElement("span"); sp.textContent="🫙 unsealed jar ("+(JAR.held.parts.reduce((a,p)=>a+p.bytes.length,0)/1024).toFixed(1)+" KB) — held on this phone"; const b=document.createElement("button"); b.textContent="RETRY"; b.onclick=()=>{ jarPutHeld(); }; d.appendChild(sp); d.appendChild(b); list.appendChild(d); }
   shelf.slice().reverse().forEach(en=>{
     const d=document.createElement("div"); d.className="jrow";
-    const sp=document.createElement("span"); sp.textContent=(en.from||"?")+" · "+new Date(en.startedAt).toLocaleTimeString()+" · "+(en.durMs/1000).toFixed(0)+"s · "+String(en.blob||"").slice(0,8)+"…";
+    const sp=document.createElement("span"); sp.textContent=(en.kind==="video-jar/1"?"🎬 ":"🎙 ")+(en.from||"?")+" · "+new Date(en.startedAt).toLocaleTimeString()+" · "+(en.durMs/1000).toFixed(0)+"s · "+String(en.blob||"").slice(0,8)+"…";
     const b=document.createElement("button"); b.textContent="▶ POUR"; b.onclick=()=>{ jarPlay(en, b); };
     d.appendChild(sp); d.appendChild(b); list.appendChild(d);
   });
@@ -1720,12 +1775,264 @@ function renderJarList(){
 }
 async function jarPlay(en, btn){
   try{ if(btn) btn.textContent="⏳";
-    const {buf}=await ladder(en.blob);
-    const u=URL.createObjectURL(new Blob([buf], {type:en.mime||"audio/webm"}));
-    const a=new Audio(u); a.volume=TALK.hear?1:0; await a.play();
+    const vTr=(en.tracks||[]).find(t=>t.type==="video"), aTr=(en.tracks||[]).find(t=>t.type==="audio");
+    if(en.kind==="video-jar/1"&&vTr&&aTr){
+      const v=$("jarVid"); if(!v) throw new Error("no video pour on this screen");
+      const vb=await ladder(vTr.blob), ab=await ladder(aTr.blob);
+      const a=new Audio(URL.createObjectURL(new Blob([ab.buf], {type:aTr.mime||"audio/webm"}))); a.volume=TALK.hear?1:0; window.__jarPlayedAudio=a;
+      v.src=URL.createObjectURL(new Blob([vb.buf], {type:vTr.mime||"video/webm"})); v.style.display="block"; v.muted=true;
+      await Promise.all([v.play(), a.play()]);
+    } else {
+      const {buf}=await ladder(en.blob);
+      const u=URL.createObjectURL(new Blob([buf], {type:en.mime||(en.kind==="video-jar/1"?"video/webm":"audio/webm")}));
+      if(en.kind==="video-jar/1"){ const v=$("jarVid"); if(!v) throw new Error("no video pour on this screen"); v.src=u; v.style.display="block"; v.volume=TALK.hear?1:0; await v.play(); }
+      else { const a=new Audio(u); a.volume=TALK.hear?1:0; await a.play(); }
+    }
     window.__jarPlayed=en.blob;
     if(btn) btn.textContent="▶ POUR";
   }catch(e){ popText("🫙 that jar didn't pour ("+e.message+")", 2600); if(btn) btn.textContent="▶ POUR"; }
+}
+
+
+// ----- THE LIVE SHOW (v1.9.4): the face layer, solved like the audio -----
+// David's commission: the face rides the player live, stamped to the same
+// tape as everything else; toggles to watch or listen per player in the
+// viewer; and a recording you can JUMP INTO and play on from. The face is a
+// VIEW layer — it never enters a snapshot, a tape frame, or a hash. Consent
+// law (his, from the streamer kit): your face is your blob, you hold the
+// key — the 📷 toggle is per-person and only ever drives YOUR OWN camera.
+const FACE={on:false, mask:true, remoteStream:null, remoteOn:false, planes:{}, tex:{}};
+function faceTiles(){
+  const st=$("faceSelfTile"), rt=$("faceRemoteTile");
+  if(st) st.style.display=(FACE.on&&TALK.cam)?"block":"none";
+  if(rt) rt.style.display=FACE.remoteOn?"block":"none";
+  const cap=$("faceRemoteCap"); if(cap) cap.textContent=((NET.guest&&NET.guest.name)||"THEM")+" 📷";
+}
+function faceUi(){
+  const b=$("faceBtn"); if(b){ b.textContent=FACE.on?"📷 FACE ON":"📷 FACE OFF"; b.classList.toggle("on", FACE.on); }
+  const mb=$("maskBtn"); if(mb) mb.classList.toggle("on", FACE.mask);
+  faceTiles(); facePlaneVis();
+}
+async function faceToggle(){
+  try{
+    if(FACE.on){
+      FACE.on=false;
+      if(TALK.pc){ for(const sd of [...TALK.pc.getSenders()]){ if(sd.track&&sd.track.kind==="video"){ try{ TALK.pc.removeTrack(sd); }catch(e){} } } }
+      if(TALK.cam){ for(const tr of TALK.cam.getTracks()) tr.stop(); TALK.cam=null; }
+      const sv=$("faceSelfVid"); if(sv) sv.srcObject=null;
+      mqPub(talkTopic(), {type:"face", tid:TALK.id, from:myName(), on:false});
+      popText("📷 your face is off — the meadow sees Bunny again", 1800);
+    } else {
+      if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia) throw new Error("no camera on this device");
+      const st=await navigator.mediaDevices.getUserMedia({video:{facingMode:"user"}});
+      TALK.cam=st; FACE.on=true;
+      const pc=await talkEnsurePc();
+      for(const tr of st.getVideoTracks()){ if(!pc.getSenders().some(sd=>sd.track===tr)) pc.addTrack(tr, st); }
+      if(!pc.getTransceivers().some(tr=>tr.receiver&&tr.receiver.track.kind==="audio")) pc.addTransceiver("audio",{direction:"recvonly"});
+      const sv=$("faceSelfVid"); if(sv) sv.srcObject=st;
+      faceBindTex("self", st);
+      mqPub(talkTopic(), {type:"face", tid:TALK.id, from:myName(), on:true});
+      popText("📷 you're live — face on the meadow radio", 2000);
+    }
+  }catch(e){ FACE.on=false; popText("📷 camera blocked — the browser needs your permission", 2600); }
+  faceUi();
+}
+function facePlane(key){
+  if(FACE.planes[key]) return FACE.planes[key];
+  if(!worldEl) return null;
+  const el=document.createElement("a-plane");
+  el.setAttribute("width","0.95"); el.setAttribute("height","1.15");
+  el.setAttribute("material","color:#101018; shader:flat");
+  el.setAttribute("visible","false");
+  worldEl.appendChild(el);
+  FACE.planes[key]=el;
+  return el;
+}
+function faceBindTex(key, stream){
+  const el=facePlane(key); if(!el||!stream) return;
+  let vid=FACE["vid_"+key];
+  if(!vid){ vid=document.createElement("video"); vid.autoplay=true; vid.muted=true; vid.playsInline=true; FACE["vid_"+key]=vid; }
+  if(vid.srcObject!==stream){ vid.srcObject=stream; const p=vid.play(); if(p&&p.catch) p.catch(()=>{}); }
+  const iv=setInterval(()=>{
+    const mesh=el.getObject3D&&el.getObject3D("mesh");
+    if(mesh){
+      clearInterval(iv);
+      const tex=new THREE.VideoTexture(vid);
+      try{ tex.colorSpace=THREE.SRGBColorSpace; }catch(e){}
+      FACE.tex[key]=tex;
+      mesh.material=new THREE.MeshBasicMaterial({map:tex});
+      facePlaneVis();
+    }
+  }, 300);
+  setTimeout(()=>clearInterval(iv), 8000);
+}
+function facePlaneVis(){
+  const sp=FACE.planes.self, rp=FACE.planes.remote;
+  if(sp) sp.setAttribute("visible", (FACE.mask&&FACE.on)?"true":"false");
+  if(rp) rp.setAttribute("visible", (FACE.mask&&FACE.remoteOn)?"true":"false");
+}
+const _fv=new THREE.Vector3();
+function facePlace(el, x, z){
+  if(!el) return;
+  const gy=groundY(x,z);
+  el.setAttribute("position", x+" "+(gy+3.55)+" "+z);
+  if(camObj&&el.object3D){ camObj.getWorldPosition(_fv); el.object3D.lookAt(_fv.x, gy+3.55, _fv.z); }
+}
+function faceTick(){
+  if(!FACE.mask||!state.ready) return;
+  if(FACE.on&&FACE.planes.self) facePlace(FACE.planes.self, state.bunnyPos.x, state.bunnyPos.z);
+  if(FACE.remoteOn&&FACE.planes.remote){
+    let rx=null, rz=null;
+    if(NET.role==="guest"){ rx=NET.hostC.x; rz=NET.hostC.z; }
+    else if(NET.guest&&NET.guest.joined){ rx=NET.guest.x; rz=NET.guest.z; }
+    else if(RP.active&&RP.view&&RP.view.guest){ rx=RP.view.guest.x; rz=RP.view.guest.z; }
+    if(rx!==null&&rx!==undefined) facePlace(FACE.planes.remote, rx, rz);
+  }
+}
+
+// ----- THE VIEWER: jars pinned to a tape become the show -----
+// A jar names its tape window (tapeMs0..tapeMs1, the session clock the tape
+// frames also carry). In replay, jars whose window overlaps this tape — and
+// whose room matches, when the room is known — pin to it: per-player chips
+// (eye = see their face card, ear = hear their stem), media chased against
+// the replay clock, and stems panned/gained by where that player stands in
+// the replayed frame vs the camera. Sync is best-effort by construction:
+// the media elements are chased to the frame time whenever they drift more
+// than ~0.4 s; the tape stays the proof, the show rides beside it.
+const SHOW={items:[], ctx:null};
+function showPinnedJars(){
+  return jarShelf().filter(en=>en&&en.blob&&typeof en.tapeMs0==="number"&&typeof en.tapeMs1==="number"&&en.tapeMs1>=RP.tapeT0ms&&en.tapeMs0<=RP.tapeT1ms&&(!RP.room||!en.room||en.room===RP.room));
+}
+function showBuildViewer(){
+  showStopAll();
+  const box=$("rpJars"); if(!box) return;
+  const pinned=showPinnedJars();
+  if(!pinned.length){ box.innerHTML="<div style='opacity:.8'>🫙 no jars are pinned to this tape on this phone</div>"; return; }
+  const head=document.createElement("div"); head.textContent="🎬 THE LIVE SHOW — jars pinned to this tape:"; head.style.fontWeight="700"; box.appendChild(head);
+  const wrap=$("showBox");
+  for(const en of pinned){
+    const it={en, el:null, card:null, eye:true, ear:true, pan:null, gain:null, src:null, ready:false, spatial:false};
+    SHOW.items.push(it);
+    const chip=document.createElement("span"); chip.className="rpChip";
+    const nm=document.createElement("span"); nm.textContent=(en.kind==="video-jar/1"?"🎬 ":"🎙 ")+(en.from||"PLAYER");
+    const eb=document.createElement("button"); eb.textContent="👁"; eb.title="show / hide their face";
+    const ab=document.createElement("button"); ab.textContent="👂"; ab.title="hear / mute their jar";
+    eb.onclick=()=>{ it.eye=!it.eye; eb.classList.toggle("off",!it.eye); showCardVis(it); };
+    ab.onclick=()=>{ it.ear=!it.ear; ab.classList.toggle("off",!it.ear); if(it.el) it.el.muted=!it.ear; };
+    chip.appendChild(nm); chip.appendChild(eb); chip.appendChild(ab); box.appendChild(chip);
+    showLoadMedia(it, wrap);
+  }
+}
+async function showLoadMedia(it, wrap){
+  const en=it.en; if(!wrap) return;
+  const card=document.createElement("div"); card.className="showCard"; it.card=card;
+  const cap=document.createElement("div"); cap.textContent=(en.kind==="video-jar/1"?"🎬 ":"🎙 ")+(en.from||"PLAYER")+" · "+new Date(en.startedAt).toLocaleTimeString();
+  card.appendChild(cap);
+  const el=document.createElement("audio");
+  el.preload="auto"; el.muted=!it.ear;
+  const vTr=(en.tracks||[]).find(t=>t.type==="video"), aTr=(en.tracks||[]).find(t=>t.type==="audio");
+  let vel=null;
+  if(en.kind==="video-jar/1"){ vel=document.createElement("video"); vel.playsInline=true; vel.muted=true; vel.preload="auto"; card.appendChild(vel); it.vel=vel; }
+  card.appendChild(el); wrap.appendChild(card);
+  it.el=el;
+  try{
+    if(vel){ const vb=await ladder(vTr?vTr.blob:en.blob); vel.src=URL.createObjectURL(new Blob([vb.buf], {type:(vTr&&vTr.mime)||"video/webm"})); }
+    const {buf}=await ladder(aTr?aTr.blob:en.blob);
+    el.src=URL.createObjectURL(new Blob([buf], {type:(aTr&&aTr.mime)||en.mime||"audio/webm"}));
+    try{
+      if(!SHOW.ctx) SHOW.ctx=new (window.AudioContext||window.webkitAudioContext)();
+      if(SHOW.ctx.state==="suspended"){ const p=SHOW.ctx.resume(); if(p&&p.catch) p.catch(()=>{}); }
+      it.src=SHOW.ctx.createMediaElementSource(el);
+      it.pan=SHOW.ctx.createStereoPanner(); it.gain=SHOW.ctx.createGain(); it.gain.gain.value=0.9;
+      it.src.connect(it.pan); it.pan.connect(it.gain); it.gain.connect(SHOW.ctx.destination);
+      it.spatial=true;
+    }catch(e){ it.spatial=false; }
+    it.ready=true; showCardVis(it); showSync();
+  }catch(e){ cap.textContent+=" · ⚠ that jar didn't pour ("+e.message+")"; }
+}
+function showCardVis(it){ if(it.card) it.card.style.display=it.eye?"block":"none"; }
+function showStopAll(){
+  for(const it of SHOW.items){ try{ if(it.el){ it.el.pause(); it.el.removeAttribute("src"); } if(it.vel){ it.vel.pause(); it.vel.removeAttribute("src"); } if(it.card&&it.card.parentNode) it.card.parentNode.removeChild(it.card); }catch(e){} }
+  SHOW.items=[];
+  const box=$("rpJars"); if(box) box.innerHTML="";
+}
+function showSync(){
+  if(!RP.active||!RP.frames.length) return;
+  const nowMs=RP.frames[RP.i].t*1000;
+  for(const it of SHOW.items){
+    if(!it.el||!it.ready) continue;
+    const mt=(nowMs-it.en.tapeMs0)/1000;
+    const dur=(it.en.durMs||0)/1000;
+    const inWin=mt>=-0.05&&mt<=dur+0.05;
+    const els=it.vel?[it.el,it.vel]:[it.el];
+    if(RP.playing&&inWin){
+      for(const elx of els){
+        if(Math.abs(elx.currentTime-Math.max(0,mt))>0.4){ try{ elx.currentTime=Math.max(0,mt); }catch(e){} }
+        if(elx.paused){ const p=elx.play(); if(p&&p.catch) p.catch(()=>{}); }
+      }
+    } else { for(const elx of els){ if(!elx.paused) elx.pause(); } }
+  }
+}
+const _sv=new THREE.Vector3(), _sf=new THREE.Vector3();
+function showSpatialTick(){
+  if(!RP.active||!SHOW.items.length||!camObj||!RP.view) return;
+  const cp=camObj.getWorldPosition(_sv);
+  camObj.getWorldDirection(_sf);
+  for(const it of SHOW.items){
+    if(!it.pan||!it.gain) continue;
+    const seat=(NET.guest&&NET.guest.name&&it.en.from===NET.guest.name&&RP.view.guest)?RP.view.guest:RP.view.host;
+    if(!seat) continue;
+    const dx=seat.x-cp.x, dz=seat.z-cp.z;
+    const dist=Math.max(0.6, Math.hypot(dx,dz));
+    const side=(dx*(-_sf.z)+dz*(_sf.x))/dist;
+    it.pan.pan.value=Math.max(-1, Math.min(1, side));
+    it.gain.gain.value=it.ear?Math.max(0.05, Math.min(1, 1.7-dist/20)):0;
+  }
+}
+
+// ----- JUMP IN (solo fork v1): stand where the tape stood, play on -----
+// The maximal honest subset of the frame is carried (positions, carried,
+// scores, round + round-elapsed, match, star step, sky, bully hp/alive,
+// the frame's ground apples by id). The guest seat, flying apples, and the
+// old chain are NOT carried — the fork starts a NEW chain whose first
+// record names its parent (fork/1). Friends joining a fork ride multi-seat.
+function jumpIn(){
+  if(!RP.active||!RP.frames.length) return;
+  const idx=RP.i, f=RP.frames[idx];
+  const parentTape=(RP.frames[RP.frames.length-1]&&RP.frames[RP.frames.length-1].h)||"";
+  const fork={kind:"fork/1", parentTape, parentFrame:idx, parentLabel:RP.label, ts:Date.now()};
+  RP.active=false; RP.playing=false; showStopAll();
+  const rb=$("rpBar"); if(rb) rb.style.display="none";
+  NET.role="solo"; NET.room=null; if(NET.guest) NET.guest.joined=false; talkUi();
+  if(rpGuestEl) rpGuestEl.setAttribute("visible","false");
+  state.bunnyPos.set(f.host.x, groundY(f.host.x,f.host.z), f.host.z);
+  state.bunnyRotY=f.host.r||0; state.carried=f.host.c||0;
+  state.bonks=f.bonks||0; state.bonked=f.bonked||0;
+  state.round=f.round||1; state.pickups=0; state.kb={};
+  state.roundT0=state.t-Math.max(0, f.t-(RP.frames[0]?RP.frames[0].t:f.t));
+  if(f.match){ NET.match.P1=f.match.a||0; NET.match.P2=f.match.b||0; NET.match.AI=f.match.c||0; }
+  SEQ.step=f.seq||0; SEQ.offered=!!f.offer; try{ seqGlow(); }catch(e){}
+  if(typeof f.tod==="number"){ SKY.tod=f.tod; try{ applySky(); }catch(e){} }
+  for(const row of (f.bullies||[])){
+    const b=bullies.find(q=>q.key===row[0]); if(!b) continue;
+    b.x=row[1]; b.z=row[2]; b.rotY=row[3]; b.hp=(typeof row[4]==="number")?row[4]:3; b.out=b.hp<=0; b.dizzyT=0; b.spinT=0; b.celebT=0; b.pauseT=0; b.target=null;
+    setBullyLabel(b, b.out?"✖ OUT":b.name);
+    if(b.el){ const gy2=groundY(b.x,b.z); b.el.setAttribute("position", b.x+" "+gy2+" "+b.z); b.el.setAttribute("rotation","0 "+(b.rotY*180/Math.PI)+" 0"); }
+  }
+  const rowsById={}; for(const r of (f.apples||[])) rowsById[r[0]]=r;
+  for(const a of apples){
+    const row=rowsById[a.id];
+    if(row){ a.st="ground"; a.kind=null; a.p.set(row[1], groundY(row[1],row[2])+0.16, row[2]); a.el.setAttribute("visible","true"); a.el.setAttribute("position", row[1]+" "+a.p.y+" "+row[2]); }
+    else if(a.st==="ground"||a.st==="flying"){ a.st="spare"; a.el.setAttribute("visible","false"); }
+  }
+  NET.tape=[]; NET.lastTape=null; NET.tapeBlob=null; NET.snapN=0; NET.lastHash="GENESIS"; NET.soloTapeT=0.2;
+  PENDING_FORK=fork; window.__FORK=null;
+  state.started=true;
+  const ss=$("startScreen"); if(ss) ss.style.display="none";
+  const as=$("aboutSheet"); if(as) as.style.display="none";
+  syncHUD();
+  popText("▶ YOU JUMPED IN — a new live branch from frame "+(idx+1)+" · the fork's tape names its parent", 3200);
+  teleEvent("FORK","▶ jump-in from "+fork.parentLabel+" frame "+idx+" · parent tape …"+parentTape.slice(-10)+" · carried: positions, scores, round, match, star step, sky, bully hp, ground apples · reset: guest seat, flying apples, the chain (new genesis)");
 }
 
 // ----- host side -----
@@ -1828,6 +2135,7 @@ function hostGuestTick(dt){
     if(g.label) g.label.setAttribute("position",g.x+" "+(gy+(g.bully?g.bully.h+1.3:3.1))+" "+g.z);
   }
 }
+let PENDING_FORK=null;
 function buildCore(){
   const bp=state.bunnyPos, g=NET.guest;
   const core={v:1, n:++NET.snapN, t:+state.t.toFixed(2), w:Date.now(), round:state.round, bonks:state.bonks, bonked:state.bonked, match:{a:NET.match.P1, b:NET.match.P2, c:NET.match.AI}, seq:SEQ.step, offer:SEQ.offered?1:0, tod:+SKY.tod.toFixed(2), sky:SKY.mode, started:state.started?1:0,
@@ -1838,6 +2146,7 @@ function buildCore(){
     apples:apples.filter(a=>a.st==="ground").map(a=>[a.id, +a.p.x.toFixed(1), +a.p.z.toFixed(1)]),
     fly:apples.filter(a=>a.st==="flying").map(a=>[a.fid||0, +a.p.x.toFixed(2), +a.p.y.toFixed(2), +a.p.z.toFixed(2), a.src||"P1"]),
     prev:NET.lastHash};
+  if(PENDING_FORK){ core.fork=PENDING_FORK; PENDING_FORK=null; window.__FORK=core.fork; }
   core.h=snapHash(core); NET.lastHash=core.h;
   return core;
 }
@@ -2125,8 +2434,8 @@ $("aboutClose").addEventListener("click",()=>{ $("aboutSheet").style.display="no
   const rw=$("rpWatch"); if(rw) rw.addEventListener("click",()=>startReplay(NET.lastTape,"LAST MATCH"));
   const rs=$("rpSeal"); if(rs) rs.addEventListener("click",sealTape);
   const rl=$("rpLoad"); if(rl) rl.addEventListener("click",()=>{ const v=$("rpBlobId").value.trim(); if(v) loadTapeBlob(v); });
-  const pb=$("rpPlayBtn"); if(pb) pb.addEventListener("click",()=>{ if(RP.i>=RP.frames.length-1) RP.i=0; RP.playing=!RP.playing; pb.textContent=RP.playing?"⏸ PAUSE":"▶ PLAY"; });
-  const sc=$("rpScrub"); if(sc) sc.addEventListener("input",()=>{ RP.i=+sc.value; RP.playing=false; if(pb) pb.textContent="▶ PLAY"; rpPlace(RP.frames[RP.i]); });
+  const pb=$("rpPlayBtn"); if(pb) pb.addEventListener("click",()=>{ if(RP.i>=RP.frames.length-1) RP.i=0; RP.playing=!RP.playing; pb.textContent=RP.playing?"⏸ PAUSE":"▶ PLAY"; showSync(); });
+  const sc=$("rpScrub"); if(sc) sc.addEventListener("input",()=>{ RP.i=+sc.value; RP.playing=false; if(pb) pb.textContent="▶ PLAY"; rpPlace(RP.frames[RP.i]); showSync(); });
   const rc=$("rpCam"); if(rc) rc.addEventListener("change",()=>rpSetCam(rc.value));
   const sb=$("sndBtn"), sv=$("sndVol");
   const sndLabel=()=>{ if(sb) sb.textContent=SND.on?"🔊 SOUND ON":"🔇 SOUND OFF"; if(sv) sv.value=Math.round(SND.vol*100); };
@@ -2147,6 +2456,7 @@ $("aboutClose").addEventListener("click",()=>{ $("aboutSheet").style.display="no
     if(NET.role==="guest"){ if(NET.matchTapeBlob) loadTapeBlob(NET.matchTapeBlob); else popText("🎞️ The match tape is still sealing…", 1800); }
     else if(NET.lastTape) startReplay(NET.lastTape, "🏆 THE MATCH"); });
   const rx=$("rpExit"); if(rx) rx.addEventListener("click",()=>{ location.href=location.pathname; });
+  const rj=$("rpJump"); if(rj) rj.addEventListener("click", jumpIn);
   renderReplayPanel();
   const rpq=new URLSearchParams(location.search).get("replay"); if(rpq) setTimeout(()=>loadTapeBlob(rpq), 5000);
 })();
@@ -2298,6 +2608,7 @@ function tickLoop(now){
   if(camObj) camObj.lookAt(_anch.x, _anchGy+1.8, _anch.z);
   else camEl.object3D.lookAt(_anch.x, _anchGy+1.8, _anch.z);
   if(RP.active) rpCamApply();
+  faceTick(); showSpatialTick();
   // v1.3 — if the active camera is ever not ours, take the seat back; the
   // first time it holds, print the receipt in the log for anyone to see.
   if(camObj&&sceneEl&&sceneEl.camera!==camObj) claimCamera();
