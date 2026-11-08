@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>BUNNY CUBE v1.9.5 — BONK THE BULLIES + BLOB TALK + THE LIVE SHOW + ON AIR (a 3D world from Walrus blobs)</title>
+<title>BUNNY CUBE v1.9.6 — BONK THE BULLIES + BLOB TALK + THE LIVE SHOW + ON AIR (a 3D world from Walrus blobs)</title>
 <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/mqtt@5.10.1/dist/mqtt.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -206,11 +206,11 @@ grab apples, bonk them back. First to the banner takes the round.</p>
     <audio id="talkAudio" autoplay></audio>
     <div id="faceBox">
       <div class="faceTile" id="faceSelfTile" style="display:none"><video id="faceSelfVid" autoplay muted playsinline></video><div class="faceCap">YOU 📷</div></div>
-      <div class="faceTile" id="faceRemoteTile" style="display:none"><video id="faceRemoteVid" autoplay playsinline></video><div class="faceCap" id="faceRemoteCap">THEM 📷</div></div>
+      <div class="faceTile" id="faceRemoteTile" style="display:none"><video id="faceRemoteVid" autoplay muted playsinline></video><div class="faceCap" id="faceRemoteCap">THEM 📷</div></div>
       <video id="jarVid" style="display:none" playsinline controls></video>
     </div>
     <div id="showBox"></div>
-    <div id="verTag">🧊 CUBE v1.9.5 · ON AIR</div>
+    <div id="verTag">🧊 CUBE v1.9.6 · FACES THAT STAY</div>
     <button id="tiltBtn">🧭 TILT</button>
     <div id="joy"><div id="joyKnob"></div></div>
     <div id="pad"><span class="pip pU">▲</span><span class="pip pD">▼</span><span class="pip pL">◀</span><span class="pip pR">▶</span><div id="padKnob"></div></div>
@@ -1057,7 +1057,7 @@ function bonkBunny(a){
   if(state.bonked>=3) endRound(false,"AI");
 }
 const WIN_PUBLISHER="https://publisher.walrus-testnet.walrus.space/v1/blobs?epochs=30";
-const RP={active:false, frames:[], i:0, playing:false, speed:1, acc:0, verified:0, links:0, label:"REPLAY", camMode:"follow", view:null, free:{x:0,z:0}, yawEntry:0};
+const RP={active:false, frames:[], attach:[], i:0, playing:false, speed:1, acc:0, verified:0, links:0, label:"REPLAY", camMode:"follow", view:null, free:{x:0,z:0}, yawEntry:0};
 let rpGuestEl=null, rpGuestLabel=null;
 function renderReplayPanel(){
   const info=$("rpInfo"), w=$("rpWatch"), s=$("rpSeal");
@@ -1079,9 +1079,27 @@ function verifyTape(frames){
   for(const f of frames){ if(snapHash(f)===f.h){ ok++; if(f.prev===prev) links++; prev=f.h; } }
   RP.links=links; return ok;
 }
+function tapeAttachments(frames){
+  // v1.9.6 (David): a tape travels WHOLE — the jars + show segments made
+  // inside its window ride IN the record's header (attachments, never
+  // inside the hashed frames), so a replay opened fresh on any device
+  // pours the same faces and voices the room kept.
+  const jars=[], segs=[];
+  if(!frames||frames.length<2) return {jars, segs};
+  const t0=Math.round(frames[0].t*1000), t1=Math.round(frames[frames.length-1].t*1000);
+  for(const en of jarShelf()){
+    if(!en||!en.recordBlob||typeof en.tapeMs0!=="number"||typeof en.tapeMs1!=="number") continue;
+    if(en.tapeMs1<t0||en.tapeMs0>t1) continue;
+    if(en.room&&NET.room&&en.room!==NET.room) continue;
+    if(en.kind==="show-seg/1"){ if(segs.length<24) segs.push(en.recordBlob); }
+    else if(jars.length<24) jars.push(en.recordBlob);
+  }
+  return {jars, segs};
+}
 async function sealTape(){
   if(!NET.lastTape) return;
-  const tape={format:"cube-tape/1", world:CUBE_MANIFEST, frames:NET.lastTape};
+  const _att=tapeAttachments(NET.lastTape);
+  const tape={format:"cube-tape/1", world:CUBE_MANIFEST, frames:NET.lastTape, jars:_att.jars, segs:_att.segs};
   try{
     const r=await fetch(WIN_PUBLISHER,{method:"PUT", body:JSON.stringify(tape)});
     if(!r.ok) throw new Error("publisher "+r.status);
@@ -1102,7 +1120,15 @@ async function loadTapeBlob(id){
     const {buf}=await ladder(id);
     const tape=JSON.parse(new TextDecoder().decode(buf));
     if(tape.format!=="cube-tape/1" || !Array.isArray(tape.frames)) throw new Error("not a cube-tape/1 blob");
-    startReplay(tape.frames, "BLOB TAPE "+id.slice(0,10)+"…");
+    let attach=[];
+    const attIds=[...(Array.isArray(tape.jars)?tape.jars:[]), ...(Array.isArray(tape.segs)?tape.segs:[])].slice(0,48);
+    for(const jid of attIds){
+      try{ const jb=await ladder(jid); const jr=JSON.parse(new TextDecoder().decode(jb.buf));
+        if(jr&&(jr.kind==="video-jar/1"||jr.kind==="voice-jar/1"||jr.kind==="show-seg/1")&&Array.isArray(jr.tracks)&&jr.blob) attach.push(Object.assign({}, jr, {recordBlob:jid}));
+      }catch(e){}
+    }
+    if(attach.length) teleEvent("TAPE ATTACHMENTS","🎞️ this tape carries "+attach.length+" jar(s) in its header — the faces + voices it names pour with the replay, on any device");
+    startReplay(tape.frames, "BLOB TAPE "+id.slice(0,10)+"…", attach);
   }catch(e){ popText("🎞️ Tape load failed: "+e.message, 2600); }
 }
 // v1.8.3 REPLAY CAMERAS (David, Nov 6 23:56): the tape is sealed STATE, not video —
@@ -1126,11 +1152,11 @@ function rpCamApply(){
   const yaw=A.r+(state.camYaw-RP.yawEntry);
   camObj.lookAt(A.x+Math.sin(yaw)*10, gyA+eye+(0.42-state.camPitch)*6, A.z+Math.cos(yaw)*10);
 }
-function startReplay(frames, label){
+function startReplay(frames, label, attach){
   if(!frames || frames.length<2){ popText("🎞️ That tape is too short to play", 2200); return; }
   RP.verified=verifyTape(frames);
   RP.frames=frames; RP.i=0; RP.playing=true; RP.active=true; RP.acc=0; RP.label=label||"REPLAY";
-  RP.tapeT0ms=Math.round(frames[0].t*1000); RP.tapeT1ms=Math.round(frames[frames.length-1].t*1000); RP.room=NET.room||null; showBuildViewer();
+  RP.tapeT0ms=Math.round(frames[0].t*1000); RP.tapeT1ms=Math.round(frames[frames.length-1].t*1000); RP.room=NET.room||null; RP.attach=Array.isArray(attach)?attach:[]; showBuildViewer();
   $("aboutSheet").style.display="none"; $("startScreen").style.display="none";
   $("rpBar").style.display="block"; $("rpPlayBtn").textContent="⏸ PAUSE";
   $("rpScrub").max=frames.length-1; $("rpScrub").value=0;
@@ -1185,7 +1211,7 @@ function saveWinChain(){ try{ localStorage.setItem("cube-wins-v1", JSON.stringif
 async function sealRoundTape(frames, recH){
   if(!frames || frames.length<10 || !recH) return;
   try{
-    const resp=await fetch(WIN_PUBLISHER,{method:"PUT", body:JSON.stringify({format:"cube-tape/1", world:CUBE_MANIFEST, frames})});
+    const resp=await fetch(WIN_PUBLISHER,{method:"PUT", body:JSON.stringify(Object.assign({format:"cube-tape/1", world:CUBE_MANIFEST, frames}, tapeAttachments(frames)))});
     if(!resp.ok) return;
     const j=await resp.json().catch(()=>null);
     const blobId=j&&((j.newlyCreated&&j.newlyCreated.blobObject&&j.newlyCreated.blobObject.blobId)||(j.alreadyCertified&&j.alreadyCertified.blobObject&&j.alreadyCertified.blobObject.blobId));
@@ -1600,13 +1626,37 @@ function netEvBanner(m,s){ if(NET.role==="host") mqSend("down",{type:"ev", banne
 // network (the loader hash-checks before it opens anything), never on a stale
 // Pages copy. Re-pinned at ship time: g = this version's first PUT blob,
 // h = sha256 of the bytes that blob names.
-const PAGE_BLOB="h2dKPAnTRjfjOHJZaYsg3wy4-JTVst-lq-tSCpcuvWc";
-const PAGE_SHA="e9872b5e098df53e3f55831f45b536dc6c3867acff7d651d9499e0021372402d";
-function jarQrText(room){ return "https://arcade.highscores.live/arcade/blob-loader.html?g="+PAGE_BLOB+"&h="+PAGE_SHA+"&n="+encodeURIComponent("BUNNY CUBE v1.9.5")+"&room="+room+"&join="+room; }
+const PAGE_BLOB="2wxgFD5AplGTGCh-pVKc2DFz4P-T8CgthTRxobIfE-w";
+const PAGE_SHA="f3917faabca33495b5b32922727c7305affe1a5ff88b630284d0cf4120e51a0b";
+function jarQrText(room){ return "https://arcade.highscores.live/arcade/blob-loader.html?g="+PAGE_BLOB+"&h="+PAGE_SHA+"&n="+encodeURIComponent("BUNNY CUBE v1.9.6")+"&room="+room+"&join="+room; }
 window.__CHATSEALS=[];
-const TALK={pc:null, mic:null, micOn:false, hear:true, remote:null, id:"t"+Math.random().toString(36).slice(2,9)};
+const TALK={pc:null, mic:null, micOn:false, hear:true, remote:null, peerTid:null, watcher:false, _foreign:{}, id:"t"+Math.random().toString(36).slice(2,9)};
 function talkTopic(){ return mqTopic("talk"); }
 function talkUi(){ const el=$("talkBar"); if(el) el.style.display=(NET.role!=="solo"&&!!NET.room)?"block":"none"; }
+// ----- THE THIRD PARTICIPANT (v1.9.6): every participant is its own
+// object. The pair's seat, link and face objects are keyed to THEIR owner
+// and a third arrival never touches them: the knock is answered, and the
+// third lands softly as a WATCHER — in the room (chat, jar + show
+// announcements reach it), honest badge up, its own face/mic its own.
+// A true 3-seat mesh is the v2.0 rung (THE STANDS is its spectator
+// cousin); it is NOT built in this version.
+function watcherLand(src){
+  if(NET.watcher) return;
+  NET.watcher=true; TALK.watcher=true;
+  let b=$("watchBadge");
+  if(!b){ b=document.createElement("div"); b.id="watchBadge"; b.style.cssText="position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:60;background:rgba(20,16,40,.88);color:#ffe9a8;border:1px solid #ffe9a8;border-radius:999px;padding:6px 14px;font:700 13px system-ui;pointer-events:none"; document.body.appendChild(b); }
+  b.textContent="👀 WATCHING — seats are full";
+  b.style.display="block";
+  popText("👀 you're in the room as a WATCHER — both seats are taken; chat, jars and the show still reach you, and your own face stays yours", 5200);
+  netStatus("👀 Watching — seats are full. You're in the room; the pair's game is untouched.");
+  teleEvent("WATCHER LANDED","👀 this page landed as a watcher ("+src+") — no seat, no peer; the pair's objects were never touched");
+}
+function foreignKnock(msg){
+  if(TALK._foreign[msg.tid]) return;
+  TALK._foreign[msg.tid]=1;
+  teleEvent("THIRD KNOCK","🚪 a third participant knocked on the talk link — this link is a pair, locked to its peer; the knock is refused and the pair is untouched");
+  if(NET.role==="host") mqPub(talkTopic(), {type:"seats-full", tid:TALK.id, for:msg.tid});
+}
 function addChat(from, text, mine, meta){ const log=$("chatLog"); if(!log) return null; const d=document.createElement("div"); const b=document.createElement("b"); b.textContent=(mine?"YOU":from)+":"; d.appendChild(b); d.appendChild(document.createTextNode(" "+text)); if(meta){ d.dataset.tid=meta.tid||""; d.dataset.seal=meta.seal||""; if(meta.mismatch){ const w=document.createElement("span"); w.textContent=" \u26a0 seal mismatch"; w.style.color="#ff9c9c"; w.style.fontWeight="800"; d.appendChild(w); } } log.appendChild(d); while(log.children.length>30) log.removeChild(log.firstChild); log.scrollTop=1e6; if(!mine) popText("💬 "+from+": "+text.slice(0,60), 2400); return d; }
 function chatSeal(tid, from, text){ return sha256hex(new TextEncoder().encode(tid+"|"+from+"|"+text)); }
 function talkSendChat(){ const inp=$("chatIn"); const t=(inp.value||"").trim(); if(!t||!NET.room) return; inp.value=""; const from=myName(), seal=chatSeal(TALK.id, from, t); const el=addChat(from, t, true, {tid:TALK.id, seal}); __CHATSEALS.push({tid:TALK.id, from, text:t, seal, mine:true, echoed:false, echoBy:"", el}); mqPub(talkTopic(), {type:"chat", tid:TALK.id, from, seal, text:t}); }
@@ -1616,9 +1666,9 @@ async function talkEnsurePc(){ if(TALK.pc&&(TALK.pc.signalingState==="closed"||T
   pc.onsignalingstatechange=()=>{ if(pc._dead) return; if(pc.signalingState==="closed") talkResurrect("sig-closed"); };
   pc.onicecandidate=(e)=>{ if(e.candidate) mqPub(talkTopic(), {type:"rtc-ice", tid:TALK.id, cand:e.candidate.toJSON()}); };
   pc.ontrack=(e)=>{ const tr=e.track; if(!tr) return;
-    if(tr.kind==="video"){ const st=(e.streams&&e.streams[0])||new MediaStream([tr]); FACE.remoteStream=st; const rv=$("faceRemoteVid"); if(rv) rv.srcObject=st; FACE.remoteOn=true; faceTiles(); faceBindTex("remote", st); tr.onended=()=>{ FACE.remoteOn=false; faceTiles(); facePlaneVis(); }; popText("📷 their face is on the meadow", 2000); return; }
+    if(tr.kind==="video"){ const st=(e.streams&&e.streams[0])||new MediaStream([tr]); FACE.remoteStream=st; FACE.remoteOn=true; faceBindCopy("remote","tile",$("faceRemoteVid")); faceBindTex("remote"); faceWatchdogStart(); faceTiles(); tr.onunmute=()=>faceEnsurePlaying("unmute"); tr.onended=()=>{ FACE.remoteOn=false; faceTiles(); facePlaneVis(); }; popText("📷 their face is on the meadow", 2000); return; }
     const a=$("talkAudio"); if(a&&e.streams&&e.streams[0]){ TALK.remote=e.streams[0]; a.srcObject=e.streams[0]; a.volume=TALK.hear?1:0; popText("🔊 voice connected — they're on the meadow radio", 2400); tr.onended=()=>{ talkResurrect("track-ended"); }; try{ if(JAR.on) jarPlugRemote(); }catch(_){} } };
-  pc.onnegotiationneeded=async ()=>{ if(TALK._off) return; TALK._off=true; try{ const off=await pc.createOffer(); await pc.setLocalDescription(off); mqPub(talkTopic(), {type:"rtc-offer", tid:TALK.id, sdp:pc.localDescription}); }catch(e){} TALK._off=false; };
+  pc.onnegotiationneeded=async ()=>{ if(TALK._off||TALK.watcher) return; TALK._off=true; try{ const off=await pc.createOffer(); await pc.setLocalDescription(off); mqPub(talkTopic(), {type:"rtc-offer", tid:TALK.id, sdp:pc.localDescription}); }catch(e){} TALK._off=false; };
   return pc; }
 async function talkMicToggle(){ try{
     if(!TALK.mic){ const st=await navigator.mediaDevices.getUserMedia({audio:true}); TALK.mic=st; const pc=await talkEnsurePc(); for(const tr of st.getAudioTracks()) pc.addTrack(tr, st); }
@@ -1639,7 +1689,7 @@ function talkWatchdog(){ if(TALK._wd) return; TALK._wd=setInterval(()=>{ if(TALK
 async function talkResurrect(why){
   if(TALK._resing || !talkWanted()) return;
   TALK.attempts=(TALK.attempts||0)+1;
-  if(TALK.attempts>3){ if(!TALK._gaveUp){ TALK._gaveUp=1; popText("📻 link down — tap 🎙 to retry", 3600); } return; }
+  if(TALK.attempts>3){ if(!TALK._gaveUp){ TALK._gaveUp=1; TALK.peerTid=null; popText("📻 link down — tap 🎙 to retry", 3600); } return; }
   TALK._resing=true; TALK._down=true; TALK._gaveUp=0;
   popText("📻 link rebuilding…", 1800);
   const old=TALK.pc; TALK.pc=null; TALK.remote=null;
@@ -1649,22 +1699,24 @@ async function talkResurrect(why){
     const pc=await talkEnsurePc();
     if(TALK.mic){ for(const tr of TALK.mic.getAudioTracks()){ if(!pc.getSenders().some(sd=>sd.track===tr)){ pc.addTrack(tr, TALK.mic); tr.enabled=TALK.micOn; } } }
     if(FACE.on&&TALK.cam){ for(const tr of TALK.cam.getVideoTracks()){ if(!pc.getSenders().some(sd=>sd.track===tr)) pc.addTrack(tr, TALK.cam); } }
+    faceEnsurePlaying("resurrect");
     teleEvent("TALK RESURRECT", "📻 talk link rebuilt ("+why+", attempt "+TALK.attempts+") — his toggles untouched: mic "+(TALK.micOn?"ON":"off")+", hear "+(TALK.hear?"ON":"off"));
   }catch(e){}
   TALK._resing=false;
 }
 async function onTalkMsg(t, m){ if(!NET.room||t!==talkTopic()) return; let msg; try{ msg=JSON.parse(m.toString()); }catch(e){ return; } if(msg.tid===TALK.id) return;
-  if(msg.type==="face"){ FACE.remoteOn=!!msg.on; if(!FACE.remoteOn){ const rv=$("faceRemoteVid"); if(rv) rv.srcObject=null; } faceTiles(); facePlaneVis(); popText(msg.on?"📷 "+(msg.from||"they")+" turned their face on — say hi":"📷 "+(msg.from||"they")+" turned their face off", 2000); return; }
+  if(msg.type==="face"){ const pr=FACE.peers[msg.tid]||(FACE.peers[msg.tid]={name:msg.from||"THEM", on:false}); const wasOn=pr.on; pr.on=!!msg.on; if(msg.from) pr.name=msg.from; if(TALK.peerTid&&msg.tid!==TALK.peerTid){ if(pr.on!==wasOn) popText("📷 "+pr.name+(pr.on?" turned their face on — they are watching, so their face stays on their own screen":" turned their face off"), 2400); return; } FACE.remoteOn=!!msg.on; if(!FACE.remoteOn){ faceDropCopy("remote","tile"); faceDropCopy("remote","tex"); const rv=$("faceRemoteVid"); if(rv) rv.srcObject=null; if(FACE.texEl.remote) FACE.texEl.remote.srcObject=null; } else faceEnsurePlaying("gossip"); faceTiles(); facePlaneVis(); popText(msg.on?"📷 "+(msg.from||"they")+" turned their face on — say hi":"📷 "+(msg.from||"they")+" turned their face off", 2000); return; }
   if(msg.type==="jar"){ const ind=$("jarInd"); if(msg.on){ if(ind){ ind.style.display="block"; ind.textContent="● "+(msg.from||"A PLAYER")+" is jarring this room"+(msg.video?" (face + voice)":"")+" — the show is being kept as its own track"; } popText("● "+(msg.from||"a player")+" opened a jar on this room", 2200); } else if(ind){ ind.style.display="none"; ind.textContent=""; } return; }
   if(msg.type==="onair"){ const ind=$("airInd"); if(msg.on){ if(ind){ ind.style.display="block"; ind.textContent="📡 "+(msg.from||"THE HOST")+" is ON AIR — this room is pouring a show"; } popText("📡 "+(msg.from||"the host")+" is ON AIR", 2200); } else if(ind){ ind.style.display="none"; ind.textContent=""; } return; }
   if(msg.type==="seg"){ return; }
   if(msg.type==="echo"){ const rec=__CHATSEALS.find(r=>r.mine&&r.tid===msg.of&&r.seal===msg.seal); if(rec&&!rec.echoed){ rec.echoed=true; rec.echoBy=msg.by||""; if(rec.el&&rec.el.parentNode){ const sp=document.createElement("span"); sp.textContent=" \u2713\u2713"; sp.style.color="#9fe8a8"; sp.style.fontWeight="800"; rec.el.appendChild(sp); } } return; }
   if(msg.type==="chat"){ const from=msg.from||"BUNNY", text=msg.text||""; let mismatch=false, ok=false; if(msg.seal){ ok=(chatSeal(msg.tid||"", from, text)===msg.seal); mismatch=!ok; } const el=addChat(from, text, false, {tid:msg.tid, seal:msg.seal||null, mismatch}); __CHATSEALS.push({tid:msg.tid, from, text, seal:msg.seal||null, mine:false, echoed:false, mismatch, el}); if(msg.seal&&ok){ mqPub(talkTopic(), {type:"echo", tid:TALK.id, of:msg.tid, seal:msg.seal, by:myName()}); } else if(msg.seal&&mismatch){ popText("\u26a0 a chat line arrived with a broken seal — marked, never silently trusted", 3200); } return; }
-  if(msg.type==="rtc-offer"){ try{ const pc=await talkEnsurePc(); if(pc.signalingState!=="stable"){ if(NET.role!=="host") return; await pc.setLocalDescription({type:"rollback"}); } await pc.setRemoteDescription(new RTCSessionDescription(msg.sdp)); if(!pc.getTransceivers().some(tr=>tr.receiver&&tr.receiver.track.kind==="audio")) pc.addTransceiver("audio",{direction:"recvonly"}); if(!pc.getTransceivers().some(tr=>tr.receiver&&tr.receiver.track.kind==="video")) pc.addTransceiver("video",{direction:"recvonly"}); const ans=await pc.createAnswer(); await pc.setLocalDescription(ans); mqPub(talkTopic(), {type:"rtc-answer", tid:TALK.id, sdp:pc.localDescription}); }catch(e){} return; }
-  if(msg.type==="rtc-answer"){ if(TALK.pc&&TALK.pc.signalingState==="have-local-offer"){ try{ await TALK.pc.setRemoteDescription(new RTCSessionDescription(msg.sdp)); }catch(e){} } return; }
-  if(msg.type==="rtc-ice"){ if(TALK.pc&&msg.cand){ try{ await TALK.pc.addIceCandidate(new RTCIceCandidate(msg.cand)); }catch(e){} } return; } }
+  if(msg.type==="seats-full"){ if(!TALK.peerTid&&(!msg.for||msg.for===TALK.id)) watcherLand("talk"); return; }
+  if(msg.type==="rtc-offer"){ if(NET.watcher){ foreignKnock(msg); return; } const seatTid=(NET.role==="host"&&NET.guest&&NET.guest.joined)?NET.guest.tid:(NET.role==="guest"?NET.hostTid:null); if(seatTid&&msg.tid!==seatTid){ foreignKnock(msg); return; } if(TALK.peerTid&&msg.tid!==TALK.peerTid){ foreignKnock(msg); return; } try{ const pc=await talkEnsurePc(); if(pc.signalingState!=="stable"){ if(NET.role!=="host") return; await pc.setLocalDescription({type:"rollback"}); } await pc.setRemoteDescription(new RTCSessionDescription(msg.sdp)); if(!pc.getTransceivers().some(tr=>tr.receiver&&tr.receiver.track.kind==="audio")) pc.addTransceiver("audio",{direction:"recvonly"}); if(!pc.getTransceivers().some(tr=>tr.receiver&&tr.receiver.track.kind==="video")) pc.addTransceiver("video",{direction:"recvonly"}); const ans=await pc.createAnswer(); await pc.setLocalDescription(ans); TALK.peerTid=msg.tid; mqPub(talkTopic(), {type:"rtc-answer", tid:TALK.id, sdp:pc.localDescription}); }catch(e){} return; }
+  if(msg.type==="rtc-answer"){ if(NET.watcher) return; if(TALK.peerTid&&msg.tid!==TALK.peerTid) return; if(TALK.pc&&TALK.pc.signalingState==="have-local-offer"){ try{ await TALK.pc.setRemoteDescription(new RTCSessionDescription(msg.sdp)); TALK.peerTid=msg.tid; }catch(e){} } return; }
+  if(msg.type==="rtc-ice"){ if(TALK.peerTid&&msg.tid!==TALK.peerTid) return; if(TALK.pc&&msg.cand){ try{ await TALK.pc.addIceCandidate(new RTCIceCandidate(msg.cand)); }catch(e){} } return; } }
 function wireTalk(){ const ct=$("chatTog"), cs=$("chatSend"), ci=$("chatIn"), mb=$("micBtn"), hb=$("hearBtn"); if(!ct||ct._w) return; ct._w=1;
-  ct.onclick=()=>{ const b=$("chatBox"); const open=b.style.display!=="block"; b.style.display=open?"block":"none"; ct.textContent=open?"💬 HIDE":"💬 CHAT"; if(open) ci.focus(); };
+  ct.onclick=()=>{ const b=$("chatBox"); const open=b.style.display!=="block"; b.style.display=open?"block":"none"; ct.textContent=open?"💬 HIDE":"💬 CHAT"; if(open) ci.focus(); faceEnsurePlaying("chat"); };
   cs.onclick=talkSendChat; ci.addEventListener("keydown",(e)=>{ if(e.key==="Enter") talkSendChat(); e.stopPropagation(); });
   mb.onclick=talkMicToggle;
   hb.onclick=()=>{ TALK.hear=!TALK.hear; const a=$("talkAudio"); if(a) a.volume=TALK.hear?1:0; hb.textContent=TALK.hear?"🔊 HEAR ON":"🔇 MUTED"; };
@@ -1709,7 +1761,15 @@ async function jarStart(){
     const rc={chunks:[], chunksV:[], mime:"", mimeV:"", kind:"voice-jar/1", t0:Date.now(), mark0:jarTapeMark(), mark1:null, stops:1, seg:JAR.segMode};
     JAR.cur=rc;
     JAR.mark0=rc.mark0;
-    const vTr=(FACE.on&&TALK.cam)?TALK.cam.getVideoTracks().filter(tr=>tr.readyState==="live"):[];
+    // COPYCAT (v1.9.6): the jar never records the true track — it
+    // records its own clone of it, so a jar stopping can never wound the
+    // key or the tile/plane copies drinking from the same key. The copy
+    // carries its lineage (root stream + root track) and its density —
+    // "base": this build derives at true rate, no resampling (Law 8).
+    const jarCopy=(FACE.on&&TALK.cam)?faceMakeCopy("self","jar"):null;
+    if(jarCopy) FACE.copies.self.jar=jarCopy;
+    const vTr=jarCopy?[jarCopy.track]:[];
+    rc.videoCopy=jarCopy?{root:jarCopy.root, rootStream:jarCopy.rootStream, density:jarCopy.density}:null;
     rc.kind=vTr.length?"video-jar/1":"voice-jar/1";
     JAR.kind=rc.kind;
     // David's track-separation law: the video rides right next to the audio,
@@ -1726,7 +1786,7 @@ async function jarStart(){
       recV.onstop=()=>{ if(--rc.stops<=0) jarSeal(rc); };
     }
     rec.onstop=()=>{ if(--rc.stops<=0) jarSeal(rc); };
-    JAR.t0=rc.t0; JAR.on=true; rec.start(1000); if(JAR.recV) JAR.recV.start(1000);
+    JAR.t0=rc.t0; JAR.on=true; rec.start(1000); if(JAR.recV) JAR.recV.start(1000); faceEnsurePlaying("jar-start");
     if(!rc.seg) mqPub(talkTopic(), {type:"jar", tid:TALK.id, from:myName(), on:true, video:rc.kind==="video-jar/1"});
     jarUiBtn(); if(!rc.seg) popText(rc.kind==="video-jar/1"?"🫙 video jar open — face + voices kept as their own track, stamped to the tape":(JAR.mixed?"🫙 jar open — both voices are being kept, as their own track":"🫙 jar open — keeping this side's voice (theirs joins the mix when their voice connects)"), 2800);
     return true;
@@ -1734,6 +1794,7 @@ async function jarStart(){
 }
 function jarStop(){
   if(!JAR.on) return; JAR.on=false;
+  faceEnsurePlaying("jar-stop");
   const rc=JAR.cur; if(rc) rc.mark1=jarTapeMark();
   JAR.mark1=rc?rc.mark1:null;
   if(!(rc&&rc.seg)) mqPub(talkTopic(), {type:"jar", tid:TALK.id, from:myName(), on:false});
@@ -1762,6 +1823,8 @@ async function jarSeal(rc){
   } else {
     rec={kind:rc.kind||"voice-jar/1", room:NET.room, from:myName(), startedAt:new Date(rc.t0).toISOString(), durMs:Date.now()-rc.t0, mime:main.mime, blob:null, sha256:main.sha256, tracks:tracks, tapeTick0:rc.mark0?rc.mark0.tick:null, tapeMs0:rc.mark0?rc.mark0.ms:null, tapeTick1:rc.mark1?rc.mark1.tick:null, tapeMs1:rc.mark1?rc.mark1.ms:null, anchor:(typeof NET.snapN==="number")?{seq:NET.snapN, seal:NET.lastHash}:null};
   }
+  if(rc.videoCopy){ rec.rootStream=rc.videoCopy.rootStream; rec.rootTrack=rc.videoCopy.root; rec.density=rc.videoCopy.density; }
+  if(FACE.copies.self&&FACE.copies.self.jar) faceDropCopy("self","jar");
   const held={parts, rec};
   if(rc.seg){
     ONAIR.seq++;
@@ -1907,7 +1970,85 @@ async function jarPlay(en, btn){
 // VIEW layer — it never enters a snapshot, a tape frame, or a hash. Consent
 // law (his, from the streamer kit): your face is your blob, you hold the
 // key — the 📷 toggle is per-person and only ever drives YOUR OWN camera.
-const FACE={on:false, mask:true, remoteStream:null, remoteOn:false, planes:{}, tex:{}};
+const FACE={on:false, mask:true, remoteStream:null, remoteOn:false, planes:{}, tex:{}, peers:{}, copies:{self:{}, remote:{}}, _stall:{}, texEl:{}, lineage:{}, _wd:null, _rev:0};
+// ----- COPYCAT FACES (v1.9.6 — David's key-layer method) -----
+// The TRUE stream (the camera track as it arrives from getUserMedia / the
+// peer connection) is the key: it is attached to NO fighting consumer, and
+// no toggle ever pauses or stops it — only the owner's own face-off stops
+// the camera itself (consent). Every consumer works from its own COPYCAT:
+// a track.clone() in its own MediaStream feeding its own element — one
+// copy for the dock TILE, one for the face-PLANE texture element, one for
+// the JAR recorder. Stopping, pausing or freezing one clone cannot touch
+// the true track or any sibling clone. A copy is disposable: the watchdog
+// re-derives a fresh clone from the true track when one dies — the copy
+// is replaceable, the key is not. Every copy is stamped with its lineage
+// (root track id + root stream id, mirrored onto its element as
+// data-root) and its density on the ladder (Law 8: a copy is an object
+// hung on the key at its own density) — this build derives at true rate,
+// so every copy's density is honestly "base"; no resampler is built here.
+function faceTrueStream(key){ return key==="self"?TALK.cam:FACE.remoteStream; }
+function faceTrueTrack(key){ const ts=faceTrueStream(key); if(!ts||!ts.getVideoTracks) return null; const trs=ts.getVideoTracks(); return trs.find(t=>t.readyState==="live")||trs[0]||null; }
+function faceMakeCopy(key, consumer){
+  const ts=faceTrueStream(key), tr=faceTrueTrack(key); if(!ts||!tr) return null;
+  const ct=tr.clone(); const ms=new MediaStream([ct]);
+  const c={track:ct, stream:ms, root:tr.id, rootStream:ts.id, key, consumer, density:"base"};
+  FACE.lineage[ct.id]={root:tr.id, rootStream:ts.id, key, consumer, density:"base"};
+  return c;
+}
+function faceDropCopy(key, consumer){
+  const c=FACE.copies[key]&&FACE.copies[key][consumer]; if(!c) return;
+  try{ c.track.stop(); }catch(e){}
+  if(FACE.lineage[c.track.id]) delete FACE.lineage[c.track.id];
+  FACE.copies[key][consumer]=null;
+}
+function ensurePlayingEl(el){
+  if(!el||!el.srcObject) return;
+  if(el.readyState>=2&&el.paused){ const p=el.play(); if(p&&p.catch) p.catch(()=>{}); FACE._rev++; }
+}
+function faceBindCopy(key, consumer, el){
+  faceDropCopy(key, consumer);
+  const c=faceMakeCopy(key, consumer);
+  FACE.copies[key][consumer]=c;
+  if(el){ el.dataset.root=c?c.rootStream:""; el.dataset.density=c?c.density:""; if(el.srcObject!==(c?c.stream:null)) el.srcObject=c?c.stream:null; ensurePlayingEl(el); }
+  return c;
+}
+function faceConsumers(key){ const out=[]; const t=key==="self"?$("faceSelfVid"):$("faceRemoteVid"); if(t) out.push(t); if(FACE.texEl[key]) out.push(FACE.texEl[key]); return out; }
+function faceEnsurePlaying(why){
+  if(FACE.on) for(const el of faceConsumers("self")) ensurePlayingEl(el);
+  if(FACE.remoteOn) for(const el of faceConsumers("remote")) ensurePlayingEl(el);
+  // self-healing by re-derivation: a copy whose track ENDED while its face
+  // is still on is re-cloned from the true track (the key never noticed).
+  for(const key of ["self","remote"]){
+    const on=key==="self"?FACE.on:FACE.remoteOn; if(!on) continue;
+    const tt=faceTrueTrack(key); if(!tt||tt.readyState!=="live") continue;
+    for(const consumer of ["tile","tex"]){
+      const c=FACE.copies[key][consumer];
+      const cel=consumer==="tile"?(key==="self"?$("faceSelfVid"):$("faceRemoteVid")):FACE.texEl[key];
+      if(c&&cel&&cel.srcObject&&cel.readyState>=2&&cel.paused){
+        const sk=key+":"+consumer;
+        FACE._stall[sk]=(FACE._stall[sk]||0)+1;
+        if(FACE._stall[sk]>=2){
+          FACE._stall[sk]=0;
+          faceBindCopy(key, consumer, cel);
+          if(consumer==="tex") faceBindTex(key);
+          teleEvent("COPYCAT","♻ a "+key+" "+consumer+" copy sat paused under a live face — disposed and re-cloned from the true track ("+(why||"watchdog")+")");
+          continue;
+        }
+      } else if(FACE._stall[key+":"+consumer]) FACE._stall[key+":"+consumer]=0;
+      if(c&&c.track.readyState!=="live"){
+        const el=consumer==="tile"?(key==="self"?$("faceSelfVid"):$("faceRemoteVid")):FACE.texEl[key];
+        faceBindCopy(key, consumer, el);
+        if(consumer==="tex") faceBindTex(key);
+        teleEvent("COPYCAT","♻ a "+key+" "+consumer+" copy died under a live face — re-cloned from the true track ("+(why||"watchdog")+") · the key was never interrupted");
+      }
+    }
+  }
+}
+function faceWatchdogStart(){
+  if(FACE._wd) return;
+  FACE._wd=setInterval(()=>{ if(FACE.on||FACE.remoteOn){ faceEnsurePlaying("watchdog"); facePlaneVis(); } }, 2000);
+  document.addEventListener("visibilitychange", ()=>{ if(!document.hidden) faceEnsurePlaying("visible"); });
+}
 function faceTiles(){
   const st=$("faceSelfTile"), rt=$("faceRemoteTile");
   if(st) st.style.display=(FACE.on&&TALK.cam)?"block":"none";
@@ -1917,15 +2058,18 @@ function faceTiles(){
 function faceUi(){
   const b=$("faceBtn"); if(b){ b.textContent=FACE.on?"📷 FACE ON":"📷 FACE OFF"; b.classList.toggle("on", FACE.on); }
   const mb=$("maskBtn"); if(mb) mb.classList.toggle("on", FACE.mask);
-  faceTiles(); facePlaneVis();
+  faceTiles(); facePlaneVis(); faceEnsurePlaying("ui");
 }
 async function faceToggle(){
+  faceEnsurePlaying("tap");
   try{
     if(FACE.on){
       FACE.on=false;
       if(TALK.pc){ for(const sd of [...TALK.pc.getSenders()]){ if(sd.track&&sd.track.kind==="video"){ try{ TALK.pc.removeTrack(sd); }catch(e){} } } }
       if(TALK.cam){ for(const tr of TALK.cam.getTracks()) tr.stop(); TALK.cam=null; }
+      faceDropCopy("self","tile"); faceDropCopy("self","tex");
       const sv=$("faceSelfVid"); if(sv) sv.srcObject=null;
+      if(FACE.texEl.self) FACE.texEl.self.srcObject=null;
       mqPub(talkTopic(), {type:"face", tid:TALK.id, from:myName(), on:false});
       popText("📷 your face is off — the meadow sees Bunny again", 1800);
     } else {
@@ -1935,8 +2079,9 @@ async function faceToggle(){
       const pc=await talkEnsurePc();
       for(const tr of st.getVideoTracks()){ if(!pc.getSenders().some(sd=>sd.track===tr)) pc.addTrack(tr, st); }
       if(!pc.getTransceivers().some(tr=>tr.receiver&&tr.receiver.track.kind==="audio")) pc.addTransceiver("audio",{direction:"recvonly"});
-      const sv=$("faceSelfVid"); if(sv) sv.srcObject=st;
-      faceBindTex("self", st);
+      faceBindCopy("self","tile",$("faceSelfVid"));
+      faceBindTex("self");
+      faceWatchdogStart(); faceEnsurePlaying("face-on");
       mqPub(talkTopic(), {type:"face", tid:TALK.id, from:myName(), on:true});
       popText("📷 you're live — face on the meadow radio", 2000);
     }
@@ -1954,16 +2099,31 @@ function facePlane(key){
   FACE.planes[key]=el;
   return el;
 }
-function faceBindTex(key, stream){
-  const el=facePlane(key); if(!el||!stream) return;
-  let vid=FACE["vid_"+key];
-  if(!vid){ vid=document.createElement("video"); vid.autoplay=true; vid.muted=true; vid.playsInline=true; FACE["vid_"+key]=vid; }
-  if(vid.srcObject!==stream){ vid.srcObject=stream; const p=vid.play(); if(p&&p.catch) p.catch(()=>{}); }
+function faceTexEl(key){
+  let el=FACE.texEl[key];
+  if(el) return el;
+  el=document.createElement("video");
+  el.autoplay=true; el.muted=true; el.playsInline=true;
+  // parked: tiny, ~invisible, off-viewport, but RENDERING — never
+  // display:none (browsers freeze those) and never in the visible layout
+  // (v1.9.5's detached source could surface as a stray face mid-meadow).
+  el.style.cssText="position:fixed;left:-64px;top:8px;width:16px;height:16px;opacity:0.02;pointer-events:none;z-index:-1";
+  document.body.appendChild(el);
+  FACE.texEl[key]=el;
+  return el;
+}
+function faceBindTex(key){
+  const el=facePlane(key); if(!el) return;
+  if(!faceTrueStream(key)) return;
+  const tel=faceTexEl(key);
+  const cur=FACE.copies[key].tex;
+  if(!cur||cur.track.readyState!=="live"||tel.srcObject!==cur.stream) faceBindCopy(key,"tex",tel);
+  if(FACE.tex[key]&&FACE.tex[key].image===tel){ facePlaneVis(); return; }
   const iv=setInterval(()=>{
     const mesh=el.getObject3D&&el.getObject3D("mesh");
     if(mesh){
       clearInterval(iv);
-      const tex=new THREE.VideoTexture(vid);
+      const tex=new THREE.VideoTexture(tel);
       try{ tex.colorSpace=THREE.SRGBColorSpace; }catch(e){}
       FACE.tex[key]=tex;
       mesh.material=new THREE.MeshBasicMaterial({map:tex});
@@ -1977,23 +2137,25 @@ function facePlaneVis(){
   if(sp) sp.setAttribute("visible", (FACE.mask&&FACE.on)?"true":"false");
   if(rp) rp.setAttribute("visible", (FACE.mask&&FACE.remoteOn)?"true":"false");
 }
-const _fv=new THREE.Vector3();
-function facePlace(el, x, z){
-  if(!el) return;
-  const gy=groundY(x,z);
-  el.setAttribute("position", x+" "+(gy+3.55)+" "+z);
-  if(camObj&&el.object3D){ camObj.getWorldPosition(_fv); el.object3D.lookAt(_fv.x, gy+3.55, _fv.z); }
+const _fv=new THREE.Vector3(), _fp=new THREE.Vector3();
+function faceCharEnt(key){
+  if(key==="self") return NET.meEl||bunnyEl||null;
+  if(RP.active) return rpGuestEl||null;
+  if(NET.role==="guest") return NET.hostEl||bunnyEl||null;
+  return (NET.guest&&NET.guest.el)||null;
+}
+function faceRide(key){
+  const el=FACE.planes[key]; if(!el) return;
+  const ent=faceCharEnt(key); if(!ent) return;
+  if(el.parentNode!==ent){ ent.appendChild(el); el._rideS=null; }
+  const sy=(ent.object3D&&ent.object3D.scale&&ent.object3D.scale.y)||1;
+  if(el._rideS!==sy){ el.setAttribute("position", "0 "+(3.55/(sy||1)).toFixed(3)+" 0"); el._rideS=sy; }
+  if(camObj&&el.object3D){ camObj.getWorldPosition(_fv); el.object3D.getWorldPosition(_fp); el.object3D.lookAt(_fv.x, _fp.y, _fv.z); }
 }
 function faceTick(){
   if(!FACE.mask||!state.ready) return;
-  if(FACE.on&&FACE.planes.self) facePlace(FACE.planes.self, state.bunnyPos.x, state.bunnyPos.z);
-  if(FACE.remoteOn&&FACE.planes.remote){
-    let rx=null, rz=null;
-    if(NET.role==="guest"){ rx=NET.hostC.x; rz=NET.hostC.z; }
-    else if(NET.guest&&NET.guest.joined){ rx=NET.guest.x; rz=NET.guest.z; }
-    else if(RP.active&&RP.view&&RP.view.guest){ rx=RP.view.guest.x; rz=RP.view.guest.z; }
-    if(rx!==null&&rx!==undefined) facePlace(FACE.planes.remote, rx, rz);
-  }
+  if(FACE.on&&FACE.planes.self) faceRide("self");
+  if(FACE.remoteOn&&FACE.planes.remote) faceRide("remote");
 }
 
 // ----- THE VIEWER: jars pinned to a tape become the show -----
@@ -2007,7 +2169,15 @@ function faceTick(){
 // than ~0.4 s; the tape stays the proof, the show rides beside it.
 const SHOW={items:[], ctx:null};
 function showPinnedJars(){
-  return jarShelf().filter(en=>en&&en.blob&&typeof en.tapeMs0==="number"&&typeof en.tapeMs1==="number"&&en.tapeMs1>=RP.tapeT0ms&&en.tapeMs0<=RP.tapeT1ms&&(!RP.room||!en.room||en.room===RP.room));
+  const inWin=en=>en&&en.blob&&typeof en.tapeMs0==="number"&&typeof en.tapeMs1==="number"&&en.tapeMs1>=RP.tapeT0ms&&en.tapeMs0<=RP.tapeT1ms;
+  const local=jarShelf().filter(en=>inWin(en)&&(!RP.room||!en.room||en.room===RP.room));
+  const have=new Set(local.map(en=>en.recordBlob||en.blob));
+  // v1.9.6: jars the TAPE ITSELF carries in its header pour beside the
+  // local shelf — the tape vouches for them (the room filter does not
+  // apply), the tape window still gates them, and a jar already on the
+  // shelf is never doubled.
+  const att=(RP.attach||[]).filter(en=>inWin(en)&&!have.has(en.recordBlob||en.blob));
+  return local.concat(att);
 }
 function showBuildViewer(){
   showStopAll();
@@ -2042,7 +2212,7 @@ async function showLoadMedia(it, wrap){
   card.appendChild(el); wrap.appendChild(card);
   it.el=el;
   try{
-    if(vel){ const vb=await ladder(vTr?vTr.blob:en.blob); vel.src=URL.createObjectURL(new Blob([vb.buf], {type:(vTr&&vTr.mime)||"video/webm"})); }
+    if(vel){ vel.dataset.root=en.rootStream||""; vel.dataset.density=en.density||"base"; const vb=await ladder(vTr?vTr.blob:en.blob); vel.src=URL.createObjectURL(new Blob([vb.buf], {type:(vTr&&vTr.mime)||"video/webm"})); }
     const {buf}=await ladder(aTr?aTr.blob:en.blob);
     el.src=URL.createObjectURL(new Blob([buf], {type:(aTr&&aTr.mime)||en.mime||"audio/webm"}));
     try{
@@ -2162,7 +2332,7 @@ function hostRoom(){
 function onHostMsg(t, m){
   NET.tele.bytesDown+=(m&&m.length)||0; NET.tele.msgsDown++;
   let msg; try{ msg=JSON.parse(m.toString()); }catch(e){ return; }
-  if(msg.type==="join"){ teleEvent("JOIN KNOCK",(msg.role||"?")+" asked to enter room "+NET.room); setupGuest(msg.role, msg.name); }
+  if(msg.type==="join"){ teleEvent("JOIN KNOCK",(msg.role||"?")+" asked to enter room "+NET.room); setupGuest(msg.role, msg.name, msg.tid); }
   else if(msg.type==="ping"){ mqSend("down",{type:"pong", id:msg.id, t:msg.t, ht:Date.now(), snap:NET.snapN}); }
   else if(msg.type==="eat"){ teleEvent("THE CHOICE","🍎 "+(NET.guest.name||"P2")+" bit the apple — her sky turns to night"); popText("🍎 "+(NET.guest.name||"P2")+" CHOSE — she bit the apple!", 2600); }
   else if(msg.type==="in" && NET.guest.joined){
@@ -2173,13 +2343,14 @@ function onHostMsg(t, m){
     NET.guest.lastIn=state.t;
   }
 }
-function setupGuest(role, name){
+function setupGuest(role, name, tid){
   const g=NET.guest;
-  if(g.joined && g.role===role){ mqSend("down",{type:"welcome", role}); return; }
+  if(g.joined && tid && g.tid && tid!==g.tid){ mqSend("down",{type:"seats-full", for:tid}); teleEvent("SEAT HELD","🚪 a third player knocked ("+(name||"someone")+") — the seat is "+(g.name||"P2")+"'s own object; the knock is answered seats-full and they land as a watcher. The pair is untouched."); popText("🚪 a third player knocked — seats are full, they land as a watcher", 2600); return; }
+  if(g.joined && g.role===role){ if(tid&&!g.tid) g.tid=tid; mqSend("down",{type:"welcome", role, tid:TALK.id}); return; }
   if(g.el && !g.bully && g.el.parentNode) g.el.parentNode.removeChild(g.el);
   if(g.label){ if(g.label.parentNode) g.label.parentNode.removeChild(g.label); const i=labels.indexOf(g.label); if(i>=0) labels.splice(i,1); }
   if(g.bully) g.bully.possessed=false;
-  g.joined=true; g.role=role; g.carried=0; g.bonks=0; if(name) g.name=String(name).slice(0,14).toUpperCase(); g.throwQ=0; g.bully=null; g.el=null; g.label=null;
+  g.joined=true; g.role=role; if(tid) g.tid=tid; g.carried=0; g.bonks=0; if(name) g.name=String(name).slice(0,14).toUpperCase(); g.throwQ=0; g.bully=null; g.el=null; g.label=null;
   if(role==="bunny2"){
     g.x=2.5; g.z=13; g.rotY=Math.PI;
     g.el=mkEntity(worldEl, URLS.bunny, 1);
@@ -2189,7 +2360,7 @@ function setupGuest(role, name){
     b.possessed=true; g.bully=b; g.el=b.el; g.x=b.x; g.z=b.z; g.rotY=b.rotY;
     g.label=addLabel("★ "+b.name+" — P2", b.x, b.z, b.h+1.3);
   }
-  mqSend("down",{type:"welcome", role});
+  mqSend("down",{type:"welcome", role, tid:TALK.id});
   teleEvent("WELCOME SENT","P2 seated as "+role+" · sealed snapshot stream running");
   popText("🔗 Player 2 is in — as "+(role==="bunny2"?"BUNNY TWO":"a bad guy")+"!", 2600);
   netStatus("Player 2 joined as "+role+" ✓ — tap PLAY below and play!");
@@ -2273,7 +2444,7 @@ function joinRoom(){
   setTeleMode("off");
   mqConnect(()=>{
     NET.mq.subscribe(mqTopic("down")); NET.mq.subscribe(mqTopic("talk")); NET.mq.on("message",onGuestMsg); NET.mq.on("message",onTalkMsg); talkUi();
-    mqSend("up",{type:"join", role:NET.meRole, name:myName()});
+    mqSend("up",{type:"join", role:NET.meRole, name:myName(), tid:TALK.id});
     netStatus("Joining room "+code+" as "+NET.meRole+"… the game re-asks every few seconds until the host answers.");
     netBadge();
     setTeleMode("mini");
@@ -2295,7 +2466,8 @@ function setupGuestSelf(role){
 function onGuestMsg(t, m){
   NET.tele.bytesDown+=(m&&m.length)||0; NET.tele.msgsDown++;
   let msg; try{ msg=JSON.parse(m.toString()); }catch(e){ return; }
-  if(msg.type==="welcome"){ NET.welcomed=true; setupGuestSelf(msg.role); $("hostBtn").style.display="none"; $("panelPlay").style.display="block"; $("panelPlay").textContent="✓ JOINED — VERIFIED · ▶ PLAY"; netStatus("You're in ✓ — playing as "+msg.role+". Press PLAY when the host does."); popText("🔗 You're in! Press PLAY ▶", 2400); setTimeout(()=>{ if(NET.role==="guest") popText("🌐 WORLD VERIFIED FROM THE BLOB NETWORK — ON THIS PHONE ✓", 3400); }, 2600); teleEvent("PROVENANCE","world = 14 Walrus blobs, sha256-verified on this phone · the page is only the envelope"); teleEvent("WELCOME","host answered · you are "+msg.role+" · seal stream incoming"); }
+  if(msg.type==="seats-full"){ if(!NET.welcomed && msg.for===TALK.id) watcherLand("game"); return; }
+  if(msg.type==="welcome"){ NET.welcomed=true; if(msg.tid) NET.hostTid=msg.tid; setupGuestSelf(msg.role); $("hostBtn").style.display="none"; $("panelPlay").style.display="block"; $("panelPlay").textContent="✓ JOINED — VERIFIED · ▶ PLAY"; netStatus("You're in ✓ — playing as "+msg.role+". Press PLAY when the host does."); popText("🔗 You're in! Press PLAY ▶", 2400); setTimeout(()=>{ if(NET.role==="guest") popText("🌐 WORLD VERIFIED FROM THE BLOB NETWORK — ON THIS PHONE ✓", 3400); }, 2600); teleEvent("PROVENANCE","world = 14 Walrus blobs, sha256-verified on this phone · the page is only the envelope"); teleEvent("WELCOME","host answered · you are "+msg.role+" · seal stream incoming"); }
   else if(msg.type==="pong"){
     const now=Date.now(), rtt=now-(+msg.t||now);
     NET.tele.rttMs=rtt;
@@ -2439,9 +2611,9 @@ function netTick(dt){
     }
   } else if(NET.role==="guest"){
     guestPlaceTick(dt);
-    if(!NET.welcomed){
+    if(!NET.welcomed && !NET.watcher){
       NET.joinTimer-=dt;
-      if(NET.joinTimer<=0){ NET.joinTimer=2.5; mqSend("up",{type:"join", role:NET.meRole, name:myName()}); }
+      if(NET.joinTimer<=0){ NET.joinTimer=2.5; mqSend("up",{type:"join", role:NET.meRole, name:myName(), tid:TALK.id}); }
     }
     if(NET.welcomed){
       NET.tele.pingTimer-=dt;
