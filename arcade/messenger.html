@@ -17,8 +17,10 @@
   body{background:#0b0e1a;color:#f2ecd8;font-family:Georgia,'Times New Roman',serif;padding:14px 14px 320px;max-width:640px;margin:0 auto}
   h1{font-size:30px;margin:6px 0 2px;letter-spacing:.5px;color:#ffd76a;font-weight:normal;text-align:center}
   .sub{text-align:center;color:#9fb6cc;font-size:15.5px;line-height:1.5;margin:0 8px 10px}
-  #msState{margin:10px 0;padding:14px 12px;border:2px solid #39507a;border-radius:14px;background:#101a30;font-size:21px;line-height:1.35;text-align:center;min-height:64px}
+  #msStatusSlot{margin:10px 0;min-height:158px}
+  #msState{margin:0;padding:14px 12px;border:2px solid #39507a;border-radius:14px;background:#101a30;font-size:21px;line-height:1.35;text-align:center;min-height:64px}
   #msState.in{border-color:#3ec97f;background:#0f2a1c;color:#b9f4cd}
+  #msVisitStatus{font-size:17px;color:#ffe9a8;line-height:1.45;text-align:center;margin-top:8px;min-height:24px}
   .card{background:#11182b;border:1.5px solid #2c3350;border-radius:16px;padding:16px 14px;margin:14px 0}
   .card h2{margin:0 0 8px;font-size:19px;color:#7fd4ff;font-weight:normal;letter-spacing:.5px}
   .card p{font-size:15.5px;line-height:1.5;color:#cfd8ea;margin:6px 0}
@@ -71,10 +73,26 @@
   .closebtn{width:100%;min-height:58px;font-size:20px;margin-top:12px}
   #msScanVid{width:100%;border-radius:12px;background:#000;aspect-ratio:4/3}
   #msToast{position:fixed;left:50%;transform:translateX(-50%);bottom:262px;z-index:90;background:#1b2b1e;border:1.5px solid #3ec97f;color:#d9ffe6;font-size:16.5px;padding:10px 18px;border-radius:12px;display:none;max-width:92vw;text-align:center}
-  #proof{margin:22px 4px 0;font-size:11.5px;color:#68788f;line-height:1.7;text-align:center;word-break:break-all}
+  #proof{margin:22px 4px 0;font-size:11.5px;color:#68788f;line-height:1.7;text-align:center;word-break:break-all;background:#0b0e1a;position:relative;z-index:1;padding:6px 2px}
+  .findbtn{width:100%;min-height:64px;font-size:22px;margin-top:12px;background:#16233c;border-color:#7fd4ff;color:#bfe6ff}
+  #msOpenFilter{font-size:24px;margin-top:10px}
+  .ms-open-row .lbl2{font-size:25px;color:#ffd76a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ms-open-row .info{font-size:16px;color:#cfd8ea;margin-top:2px}
+  .ms-open-row .gobtn{flex:none;min-height:58px;font-size:20px;padding:0 22px;background:#14532d;border-color:#3ec97f;color:#d9ffe6}
+  #msMeter{font-size:15.5px;color:#b9f4cd;text-align:center;margin-top:8px;min-height:20px}
+  #msMeterCap{font-size:12px;color:#68788f;text-align:center;margin-top:2px}
+  .ms-jar-row{background:#16233c;border:1px solid #39507a;border-radius:12px;padding:10px 12px;margin:8px 0}
+  .ms-jar-row .jt{font-size:18.5px;color:#fff;line-height:1.4}
+  .ms-jar-row .jm{font-size:14.5px;color:#9fb6cc;margin-top:2px}
+  .ms-jar-row .clean{font-size:15px;color:#3ec97f;margin-top:2px}
+  .ms-jar-row .grab{font-size:11.5px;color:#68788f;word-break:break-all;margin-top:4px}
+  .ms-jar-row .listen{width:100%;min-height:56px;font-size:19px;margin-top:8px;background:#1a2438}
+  .ms-jar-row .lstat{font-size:14px;color:#ffb0a5;margin-top:4px;min-height:16px}
+  #msPlayer{width:100%;margin-top:8px;display:none}
+  .histline{font-size:16.5px;color:#ffd76a;line-height:1.5;word-break:break-all}
+  .histgrab{font-size:11.5px;color:#68788f;word-break:break-all}
   .visitbtn{width:100%;min-height:62px;font-size:20px;margin-top:8px}
   #msGuestLine{margin:8px 0 0;padding:10px 12px;border:1.5px solid #3ec97f;border-radius:12px;background:#0f2a1c;color:#b9f4cd;font-size:18px;text-align:center}
-  #msVisitStatus{font-size:18px;color:#ffe9a8;line-height:1.45}
   .homebtn{display:block;text-align:center;background:#7a5b12;border:1.5px solid #ffd76a;color:#ffe9a8;border-radius:14px;min-height:64px;line-height:64px;font-size:19px;text-decoration:none;margin-top:10px;padding:0 8px}
   .ms-open-row{display:flex;align-items:center;gap:10px;width:100%;min-height:68px;background:#16233c;border:1px solid #39507a;border-radius:12px;padding:10px 12px;margin:8px 0;text-align:left}
   .ms-open-row .who{flex:1;min-width:0}
@@ -88,8 +106,11 @@
 <h1>💬 BLOB MESSENGER</h1>
 <p class="sub">Video calls that live in the blob network — no account, no install.<br/>A code is all it takes.</p>
 
-<div id="msState">waking the messenger…</div>
-<div id="msGuestLine" style="display:none"></div>
+<div id="msStatusSlot">
+  <div id="msState">waking the messenger…</div>
+  <div id="msGuestLine" style="display:none"></div>
+  <div id="msVisitStatus"></div>
+</div>
 <div id="msStage"></div>
 
 <div class="card" id="msHomeCard" style="display:none;border-color:#ffd76a">
@@ -102,7 +123,6 @@
 <div class="card" id="visitCard" style="display:none">
   <h2>👋 YOU'RE VISITING</h2>
   <p>You came in through a link — you're in room <b id="msVisitCode"></b>. Say hello below: 🎙 for your voice, 📷 for your face.</p>
-  <p id="msVisitStatus"></p>
   <button class="visitbtn" id="msSaveVisit">💾 SAVE THIS ROOM AS A CONTACT</button>
   <button class="visitbtn" id="msGoHome">🏠 LEAVE — BACK TO MY ROOM</button>
 </div>
@@ -119,6 +139,10 @@
     <button class="sharebtn" id="msOpenBtn">📣 OPEN</button>
   </div>
   <p>📣 OPEN lists your door so friends can find you. Off is fine too — your code still works for anyone who has it.</p>
+  <label class="lbl" for="msRoomLabel">LABEL YOUR ROOM — shown on the board while you're 📣 OPEN</label>
+  <input type="text" id="msRoomLabel" maxlength="28" placeholder="Dav's Table" style="font-size:20px"/>
+  <label class="lbl" for="msRoomInfo">ONE LINE ABOUT IT</label>
+  <input type="text" id="msRoomInfo" maxlength="60" placeholder="testing the Cube — all welcome" style="font-size:18px"/>
 </div>
 
 <div class="card">
@@ -128,6 +152,12 @@
   <div class="btnrow">
     <button class="joinbtn" id="msJoinBtn">📞 JOIN THEM</button>
     <button class="scanbtn" id="msScanBtn" title="scan a QR code">📷 SCAN</button>
+  </div>
+  <button class="findbtn" id="msFindBtn">🔎 SEARCH OPEN ROOMS</button>
+  <div id="msOpenBoard" style="display:none">
+    <input type="text" id="msOpenFilter" placeholder="type a name or room…" autocomplete="off"/>
+    <div id="msOpenList"></div>
+    <div class="empty" id="msOpenEmpty">Nobody's door is open right now — flip your 📣 OPEN and friends can find you here.</div>
   </div>
   <label class="lbl">PEOPLE YOU CALL — one tap, forever</label>
   <div id="msContacts"></div>
@@ -139,9 +169,19 @@
 </div>
 
 <div class="card">
-  <h2>👀 WHO'S OPEN NOW</h2>
-  <div id="msOpenList"></div>
-  <div class="empty" id="msOpenEmpty">Nobody's door is open right now — flip your 📣 OPEN and friends can find you here.</div>
+  <h2>🫙 MY SAVED CALLS</h2>
+  <p>Every call you jarred on this device, newest first — these jars are your history. Tap LISTEN to pour one back and hear it; anyone holding a jar's <i>grab</i> id can pull that call out of the network.</p>
+  <div id="msShelf"></div>
+  <div class="empty" id="msShelfEmpty">No saved calls yet. In a call, tap 🫙 SAVE THIS CALL and it lands here.</div>
+  <audio id="msPlayer" controls playsinline></audio>
+  <div id="msHistoryBox" style="margin-top:12px">
+    <div class="histline" id="msHistoryLine">YOUR HISTORY — one pointer: …</div>
+    <div class="histgrab" id="msHistoryGrab"></div>
+  </div>
+  <label class="lbl" for="msImportIn">ADD A JAR BY ITS ID — a jar someone handed you joins your shelf</label>
+  <input type="text" id="msImportIn" placeholder="paste a jar record id" style="font-size:16px"/>
+  <button class="savebtn" id="msImportBtn">➕ ADD IT TO MY SHELF</button>
+  <div class="lstat" id="msImportStat" style="font-size:14px;color:#ffb0a5;min-height:16px;margin-top:4px"></div>
 </div>
 
 <div id="proof">Loaded by a pointer · code poured from a blob and hash-checked · calls ride as separate tracks · saved calls are sealed jars<br/>
@@ -158,6 +198,8 @@ home: arcade.highscores.live/arcade/messenger.html — add it to your home scree
   <button id="msBtnJar">🫙 SAVE THIS CALL</button>
   <div id="consent">Only saves when you turn it on. The badge shows while it saves.<br/>Nobody else can save your face without the badge.</div>
   <div id="msJarLine"></div>
+  <div id="msMeter">🎞 frames clean: —</div>
+  <div id="msMeterCap">the meter watches the road; the seal proves the record</div>
 </div>
 
 <div class="overlay" id="msQrSheet">
@@ -184,31 +226,37 @@ home: arcade.highscores.live/arcade/messenger.html — add it to your home scree
 
 <script>
 /* ================================================================
-   BLOB MESSENGER v0.2 "THE OPEN DOOR" — the flagship face of the blob
-   engine. The page supplies presentation + contacts; the ENGINE is
-   the BLOB COMMS plugin, recalled by its blob and verified by its
-   sha256 before a line of it runs (the loader pattern).
-   PIN NOTE: the task brief pinned plugin v1
-   (jpy2FG1X…, sha 041c2644…); plugin v1.1 "THE WAY OUT" had already
-   landed in ~/workspace/blob-comms (pour receipt pour-comms-v11.json,
-   package-record.json updated, fetch-back byte-identical), so this
-   page pins v1.1 — blob WtXn5JHP…, sha 38a0f49c… — and inherits its
-   media-context banner instead of growing a second one.
-   v0.2 "THE OPEN DOOR" (David's phone report, Nov 8 11:52): WHO'S
-   OPEN is a first-class, grandma-sized section driven by the plugin's
-   FIND beacons; joining an open door is a VISIT — a knock on the
-   room's talk topic, the owner's welcome, a came-to-visit line — all
-   at the MESSENGER layer (the plugin file is untouched); and a
-   blob:-born page wears a home-address card whose gold button carries
-   the room to the page's https home (a sheet's compass can't carry a
-   blob page to Safari — WebKitBlobResource error 1).
+   BLOB MESSENGER v0.3 "THE SHELF + THE FIELD FIXES" — the flagship
+   face of the blob engine. The page supplies presentation + contacts;
+   the ENGINE is the BLOB COMMS plugin, recalled by its blob and
+   verified by its sha256 before a line of it runs (the loader
+   pattern). This page pins plugin v1.2 "THE FIELD FIXES" — blob
+   yL6BNx0c…, sha 5b111f80… — and inherits its media-context banner,
+   ghost-tile law, independent toggles and clean-meter plumbing.
+   v0.2 "THE OPEN DOOR": WHO'S OPEN + the invite bond (a knock on the
+   room's talk topic, the owner's welcome, a came-to-visit line), all
+   at the MESSENGER layer, plus the blob: home-address card.
+   v0.3 (David, Nov 8 12:25–12:54, from live calls): the SEARCH board
+   lives on the front page directly under 📷 SCAN (the standalone
+   WHO'S OPEN card is gone), rows carry room LABEL + INFO (an
+   ms-open beacon at the messenger layer merges with the plugin's
+   beacons); MY SAVED CALLS is the jar vault — every jar on this
+   device, LISTEN in place, a grab id under each, and a HISTORY JAR
+   (history/1) whose single pointer names the whole shelf; the CLEAN
+   METER reads the plugin's getStats sampling in the call bar, and a
+   jar's `clean` receipt rides its record; POP-UP DISCIPLINE — one
+   reserved status slot, sheets mutually exclusive across the page
+   and the plugin, the media banner docked clear of the stage and
+   call bar mid-call, bottom padding that tracks the real chrome.
    ================================================================ */
 (function(){
 'use strict';
-var PLUGIN_BLOB='WtXn5JHPjgtFLDuVK3iLTMKKdCYTcHe9UruLxzdEe_4';
-var PLUGIN_SHA='38a0f49c11b05944612b85f62813be79aceeab08e8e39dc6dfa0f26214b12fc1';
-var MS_PAGE_BLOB='-qaRryk4jDy97qXx3z5waoz3aGfEKTfDekVxS50pBtw';   /* QR pin — candidate blob, two-step (the Cube's pattern) */
-var MS_PAGE_SHA='d9b64fbf6e880134da9b67f5eaf7493ce56fc4997a536a2c45c2faea4bef5b68';     /* QR pin — sha256 of the candidate bytes */
+var PLUGIN_BLOB='yL6BNx0crk8M07FXVu8KhVsteQZZO-Mdz-mD2vkm9Eg';
+var PLUGIN_SHA='5b111f80d982052adf0d7dae9c792641c8b985ec265e2c78998359557ad14a28';
+var PUBLISHER='https://publisher.walrus-testnet.walrus.space/v1/blobs?epochs=30';
+var LOBBY_TOPIC='kodakai/comms/v1/lobby';
+var MS_PAGE_BLOB='yHHCLEcK9gHjlESXFaCkoSNTusWz99c83lLOTAH5cKo';   /* QR pin — candidate blob, two-step (the Cube's pattern) */
+var MS_PAGE_SHA='242c97b7d31c0a655236ae67149e092d7868fa0d5e15a2cc56bd210c8037ef87';     /* QR pin — sha256 of the candidate bytes */
 var PAGES_URL='https://arcade.highscores.live/arcade/messenger.html';
 var LOADER='https://arcade.highscores.live/arcade/blob-loader.html';
 var MIRRORS=['https://aggregator.walrus-testnet.walrus.space','https://walrus-testnet.blockscope.net'];
@@ -244,6 +292,10 @@ var savedName=''; try{ savedName=localStorage.getItem('messenger-name')||''; }ca
 var qsName=(qs.get('name')||'').slice(0,18);
 if(qsName) savedName=qsName;
 try{ if(savedName) localStorage.setItem('blobcomms-name', savedName); }catch(e){}
+/* ----- v0.3: my room's LABEL + INFO (they ride the ms-open beacon) ----- */
+var roomLabel='', roomInfo='';
+try{ roomLabel=localStorage.getItem('messenger-room-label')||''; roomInfo=localStorage.getItem('messenger-room-info')||''; }catch(e){}
+var msBeacons=new Map();   /* code -> {code, name, label, info, count, ts} from ms-open beacons */
 
 function loaderLink(code){ return LOADER+'?g='+MS_PAGE_BLOB+'&h='+MS_PAGE_SHA+'&n='+encodeURIComponent('💬 BLOB MESSENGER')+'&room='+code; }
 
@@ -253,7 +305,12 @@ function toast(msg, ms){ var t=$('msToast'); t.textContent=msg; t.style.display=
 window.__ms={ evts:[], myCode:myCode, room:room, qrPayload:'', pagePin:{blob:MS_PAGE_BLOB, sha:MS_PAGE_SHA},
   pluginPin:{blob:PLUGIN_BLOB, sha:PLUGIN_SHA}, handle:function(){ return handle; },
   state:function(){ return handle?handle.state():null; },
-  contacts:function(){ return loadContacts(); } };
+  contacts:function(){ return loadContacts(); },
+  board:function(){ return mergedOpenRooms(); },
+  msBeacons:function(){ return [...msBeacons.values()]; },
+  shelf:function(){ return readShelfAll(); },
+  historyId:function(){ var v=null; try{ v=localStorage.getItem('messenger-history-blob'); }catch(e){} return v; },
+  labelInfo:function(){ return {label:roomLabel, info:roomInfo}; } };
 
 var handle=null;
 function renderState(st, count){
@@ -309,35 +366,79 @@ function takePendingVisit(code){
     if(v && v.code===code && Date.now()-v.ts<120000){ sessionStorage.removeItem(VISIT_KEY); return true; } }catch(e){}
   return false;
 }
+/* ----- v0.3: the merged board — plugin beacons + ms-open label beacons.
+   The board's ONLY front-page home is directly under the 📷 SCAN button;
+   it unfolds inline, filters by text, and each row's one big GO button
+   starts the v0.2 visit flow unchanged. ----- */
+function mergedOpenRooms(){
+  var map=new Map();
+  if(handle && handle._s){
+    handle._s.openRooms.forEach(function(r){ map.set(r.code, {code:r.code, hostName:r.hostName, count:r.count, live:!!r.live, ts:r.ts, label:'', info:''}); });
+  }
+  var now=Date.now();
+  msBeacons.forEach(function(b, code){
+    if(now-b.ts>30000){ msBeacons.delete(code); return; }
+    var ex=map.get(code);
+    if(ex){ if(b.label) ex.label=b.label; if(b.info) ex.info=b.info; if(b.name) ex.hostName=b.name; ex.ts=Math.max(ex.ts, b.ts); }
+    else map.set(code, {code:code, hostName:b.name||'GUEST', count:b.count||1, live:false, ts:b.ts, label:b.label||'', info:b.info||''});
+  });
+  return [...map.values()].sort(function(a,b){ return b.ts-a.ts; });
+}
 function renderOpenRooms(){
   if(!handle || !handle._s) return;
-  var rooms=[...handle._s.openRooms.values()].sort(function(a,b){ return b.ts-a.ts; });
+  var all=mergedOpenRooms();
+  var fEl=$('msOpenFilter');
+  var f=((fEl && fEl.value) || '').trim().toLowerCase();
+  var rooms=f? all.filter(function(r){ return (r.hostName+' '+r.label+' '+r.info+' '+r.code).toLowerCase().indexOf(f)>=0; }) : all;
   var box=$('msOpenList'); if(!box) return;
   $('msOpenEmpty').style.display=rooms.length?'none':'block';
-  var sig=rooms.map(function(r){ return r.code+':'+r.hostName+':'+r.count+':'+(r.live?1:0); }).join('|');
+  $('msOpenEmpty').textContent=(f && !rooms.length)? 'No open room matches "'+f+'" — try fewer letters.' : "Nobody's door is open right now — flip your 📣 OPEN and friends can find you here.";
+  var sig=f+'|'+rooms.map(function(r){ return r.code+':'+r.hostName+':'+r.label+':'+r.info+':'+r.count+':'+(r.live?1:0); }).join('|');
   if(sig===renderOpenRooms._sig) return; renderOpenRooms._sig=sig;
   box.innerHTML='';
   rooms.forEach(function(r){
     var here=r.code===room;
-    var row=document.createElement('button'); row.className='ms-open-row'+(here?' here':''); row.dataset.code=r.code;
+    var row=document.createElement('div'); row.className='ms-open-row'+(here?' here':''); row.dataset.code=r.code;
     var who=document.createElement('div'); who.className='who';
-    var nm=document.createElement('div'); nm.className='nm'; nm.textContent='\u{1F3E0} '+r.hostName;
+    var nm=document.createElement('div'); nm.className='nm'; nm.textContent='🏠 '+r.hostName;
+    if(r.label){ var lb=document.createElement('div'); lb.className='lbl2'; lb.textContent=r.label; who.appendChild(lb); }
     var meta=document.createElement('div'); meta.className='meta';
-    meta.textContent=r.code+' · \u{1F465} '+r.count+(r.live?' · \u{1F399} live':'')+(here?' · (you are here)':'');
-    who.appendChild(nm); who.appendChild(meta); row.appendChild(who);
+    meta.textContent=r.code+' · 👥 '+r.count+(r.live?' · 🎙 live':'')+(here?' · (you are here)':'');
+    who.appendChild(nm); who.appendChild(meta);
+    if(r.info){ var inf=document.createElement('div'); inf.className='info'; inf.textContent=r.info; who.appendChild(inf); }
+    row.appendChild(who);
     if(!here){
-      var go=document.createElement('div'); go.className='go'; go.textContent='VISIT \u{25B8}'; row.appendChild(go);
-      row.addEventListener('click', function(){ setPendingVisit(r.code); if(handle) handle.join(r.code); });
+      var go=document.createElement('button'); go.className='gobtn'; go.textContent='GO ▸'; row.appendChild(go);
+      go.addEventListener('click', function(){ setPendingVisit(r.code); if(handle) handle.join(r.code); });
     }
     box.appendChild(row);
   });
+}
+/* ----- v0.3: my own ms-open beacon — label + info ride the lobby ----- */
+function publishMsOpen(){
+  if(!handle || !handle._s || !handle._s.mq || !handle._s.connected) return;
+  if(!handle.state().open) return;
+  if(publishMsOpen._last && Date.now()-publishMsOpen._last<9000) return;
+  publishMsOpen._last=Date.now();
+  try{ handle._s.mq.publish(LOBBY_TOPIC, JSON.stringify({type:'ms-open', tid:handle.tid, ns:'messenger', code:myCode,
+    name:handle.state().name, label:roomLabel, info:roomInfo,
+    count:(room===myCode? handle.state().peers+1 : 1), ts:Date.now()})); }catch(e){}
 }
 function visitStatus(txt){ var el=$('msVisitStatus'); if(el) el.textContent=txt; }
 function hookMq(){
   if(visit.mqHooked || !handle || !handle._s || !handle._s.mq) return;
   visit.mqHooked=true;
   var myTopic=talkTopic(room);
+  try{ handle._s.mq.subscribe(LOBBY_TOPIC); }catch(e){}
   handle._s.mq.on('message', function(t, payload){
+    if(t===LOBBY_TOPIC){
+      var lm; try{ lm=JSON.parse(payload.toString()); }catch(e){ return; }
+      if(lm && lm.type==='ms-open' && lm.tid!==handle.tid && lm.ns==='messenger'){
+        var cc=cleanCode(lm.code||'');
+        if(cc) msBeacons.set(cc, {code:cc, name:String(lm.name||'GUEST').slice(0,18), label:String(lm.label||'').slice(0,28), info:String(lm.info||'').slice(0,60), count:lm.count||1, ts:Date.now()});
+      }
+      return;
+    }
     if(t!==myTopic) return;
     var m; try{ m=JSON.parse(payload.toString()); }catch(e){ return; }
     if(!m || m.tid===handle.tid) return;
@@ -359,7 +460,7 @@ function knockOnce(){
   try{ handle._s.mq.publish(talkTopic(room), JSON.stringify({type:'visit-knock', tid:handle.tid, name:handle.state().name})); }catch(e){}
 }
 function visitTick(){
-  hookMq(); renderOpenRooms();
+  hookMq(); renderOpenRooms(); renderShelf(); pourHistory(); publishMsOpen();
   if(!visiting || visit.phase==='in') return;
   if(!visit.knocked){
     if(handle && handle._s && handle._s.connected && (takePendingVisit(room) || hostNameFor(room))) knockOnce();
@@ -370,6 +471,151 @@ function visitTick(){
 }
 window.__ms.visit=function(){ return {phase:visit.phase, knocked:visit.knocked, hostName:visit.hostName}; };
 window.__ms.openRooms=function(){ return (handle&&handle._s)?[...handle._s.openRooms.values()]:[]; };
+
+/* ================================================================
+   THE JAR VAULT (v0.3) — MY SAVED CALLS. The plugin shelf (this
+   device) + anything imported by id, newest first; LISTEN pours the
+   track blob down the mirror ladder, verifies its sha, plays it in
+   place; every entry names its grab id. THE HISTORY JAR re-pours a
+   history/1 index whenever the shelf set changes, so one pointer
+   carries the person's whole jarred history (David, Nov 8 12:29).
+   ================================================================ */
+var shelfSig='', shelfRendered=false, histInFlight=false, histLastSig='', lastListenOk=null;
+function normJar(rec, recordBlob, mine){
+  if(!rec || !recordBlob) return null;
+  var t0=(rec.tracks && rec.tracks[0]) || null;
+  return {recordBlob:recordBlob, kind:rec.kind||'voice-jar/1', room:rec.room||'?', from:rec.from||'',
+    startedAt:rec.startedAt||null, durMs:rec.durMs||0,
+    trackBlob:rec.blob || (t0 && t0.blob) || null, trackSha:rec.sha256 || (t0 && t0.sha256) || null,
+    mime:rec.mime || (t0 && t0.mime) || 'audio/webm', clean:rec.clean||null, mine:!!mine};
+}
+function loadImported(){
+  try{ return JSON.parse(localStorage.getItem('messenger-imported-jars')||'[]'); }catch(e){ return []; }
+}
+function readShelfAll(){
+  var out=[], seen={};
+  try{ (JSON.parse(localStorage.getItem('blobcomms-jars-v1')||'[]')).forEach(function(j){ var n=normJar(j, j.recordBlob, true); if(n && !seen[n.recordBlob]){ seen[n.recordBlob]=1; out.push(n); } }); }catch(e){}
+  loadImported().forEach(function(j){ var n=normJar(j, j.recordBlob, false); if(n && !seen[n.recordBlob]){ seen[n.recordBlob]=1; out.push(n); } });
+  out.sort(function(a,b){ return String(b.startedAt||'').localeCompare(String(a.startedAt||'')); });
+  return out;
+}
+function fmtWhen(iso){
+  if(!iso) return 'a call';
+  var d=new Date(iso); if(isNaN(d.getTime())) return iso;
+  return d.toLocaleString([], {month:'short', day:'numeric', hour:'numeric', minute:'2-digit'});
+}
+function renderShelf(){
+  var box=$('msShelf'); if(!box) return;
+  var jars=readShelfAll();
+  $('msShelfEmpty').style.display=jars.length?'none':'block';
+  var sig=jars.map(function(j){ return j.recordBlob; }).join('|');
+  if(sig===shelfSig && shelfRendered) return; shelfSig=sig; shelfRendered=true;
+  box.innerHTML='';
+  jars.forEach(function(j){
+    var row=document.createElement('div'); row.className='ms-jar-row'; row.dataset.record=j.recordBlob;
+    var t=document.createElement('div'); t.className='jt';
+    t.textContent='🫙 '+fmtWhen(j.startedAt)+' · room '+j.room+' · '+Math.round((j.durMs||0)/100)/10+'s';
+    row.appendChild(t);
+    var m=document.createElement('div'); m.className='jm'; m.textContent=(j.from?('with '+j.from+' · '):'')+(j.mine?'saved on this device':'added by its id');
+    row.appendChild(m);
+    if(j.clean && j.clean.pctClean!=null){
+      var c=document.createElement('div'); c.className='clean';
+      c.textContent='✓ '+j.clean.pctClean+'% frames clean'+(j.clean.framesDropped?(' · '+j.clean.framesDropped+' dropped'):'');
+      row.appendChild(c);
+    }
+    var b=document.createElement('button'); b.className='listen'; b.textContent='▶ LISTEN';
+    var st=document.createElement('div'); st.className='lstat';
+    b.addEventListener('click', function(){ listenToJar(j, st); });
+    row.appendChild(b); row.appendChild(st);
+    var g=document.createElement('div'); g.className='grab'; g.textContent='grab: '+j.recordBlob;
+    row.appendChild(g);
+    box.appendChild(row);
+  });
+  renderHistoryLine();
+}
+async function listenToJar(j, statEl){
+  lastListenOk=null;
+  function say(s){ if(statEl) statEl.textContent=s; }
+  if(!j.trackBlob){ say('this jar record names no track — nothing to pour'); return; }
+  say('pouring the jar…');
+  var buf=null;
+  for(var i=0;i<MIRRORS.length && !buf;i++){
+    try{ var r=await fetch(MIRRORS[i]+'/v1/blobs/'+j.trackBlob); if(r.ok) buf=await r.arrayBuffer(); }catch(e){}
+  }
+  if(!buf){ say('the jar would not pour — the network may still be waking it; try again in a bit'); lastListenOk=false; return; }
+  var got=await sha256hex(new Uint8Array(buf));
+  if(j.trackSha && got!==j.trackSha){ say('⚠ the poured track FAILED its sha check — not played'); lastListenOk=false; return; }
+  var url=URL.createObjectURL(new Blob([buf], {type:j.mime||'audio/webm'}));
+  var p=$('msPlayer'); p.src=url; p.style.display='block';
+  try{ await p.play(); }catch(e){}
+  say('✓ poured + sha-verified — playing');
+  lastListenOk=true;
+}
+window.__ms.listenState=function(){ return lastListenOk; };
+function buildHistoryRecord(){
+  return {kind:'history/1', jars:readShelfAll().map(function(j){ return {record:j.recordBlob, kind:j.kind, room:j.room, ts:j.startedAt, ms:j.durMs}; }), updated:new Date().toISOString()};
+}
+function renderHistoryLine(){
+  var id=null; try{ id=localStorage.getItem('messenger-history-blob'); }catch(e){}
+  $('msHistoryLine').textContent='YOUR HISTORY — one pointer: '+(id||'…');
+  $('msHistoryGrab').textContent=id?('grab: '+id):'';
+}
+async function pourHistory(){
+  var jars=readShelfAll();
+  var sig=jars.map(function(j){ return j.recordBlob; }).join('|');
+  if(histInFlight || sig===histLastSig) return;
+  histInFlight=true;
+  try{
+    var bytes=new TextEncoder().encode(JSON.stringify(buildHistoryRecord()));
+    var r=await fetch(PUBLISHER, {method:'PUT', body:bytes});
+    var j=await r.json();
+    var id=(j.newlyCreated && j.newlyCreated.blobObject && j.newlyCreated.blobObject.blobId) || (j.alreadyCertified && j.alreadyCertified.blobId) || null;
+    if(id){ try{ localStorage.setItem('messenger-history-blob', id); }catch(e){} histLastSig=sig; renderHistoryLine(); }
+  }catch(e){ /* the last good pointer stands; the next jar retries */ }
+  histInFlight=false;
+}
+async function importJarById(){
+  var inp=$('msImportIn'), stat=$('msImportStat');
+  var id=(inp.value||'').trim();
+  function say(s){ stat.textContent=s; }
+  if(!/^[A-Za-z0-9_-]{20,}$/.test(id)){ say('that does not look like a jar record id'); return; }
+  say('fetching the jar record…');
+  var txt=null;
+  for(var i=0;i<MIRRORS.length && !txt;i++){
+    try{ var r=await fetch(MIRRORS[i]+'/v1/blobs/'+id); if(r.ok) txt=await r.text(); }catch(e){}
+  }
+  if(!txt){ say('that id would not pour — check it and try again'); return; }
+  var rec=null; try{ rec=JSON.parse(txt); }catch(e){}
+  var n=normJar(rec, id, false);
+  if(!n || n.kind!=='voice-jar/1' || !n.trackBlob){ say('that blob is not a voice jar record'); return; }
+  var imp=loadImported();
+  if(imp.some(function(x){ return x.recordBlob===id; })){ say('that jar is already on your shelf'); return; }
+  imp.push(Object.assign({}, rec, {recordBlob:id}));
+  try{ localStorage.setItem('messenger-imported-jars', JSON.stringify(imp)); }catch(e){}
+  inp.value=''; say('✓ added — it is on your shelf now');
+  shelfSig=''; renderShelf(); pourHistory();
+  toast('🫙 jar added to your shelf', 2600);
+}
+
+/* ----- pop-up discipline at the messenger layer (v0.3) ----- */
+function closePluginSheets(){
+  if(!handle || !handle._el) return;
+  var e=handle._el;
+  [['bar',e.bar,'barX'],['chat',e.chat,'chatX'],['sheet',e.sheet,'sheetX']].forEach(function(t){
+    if(t[1] && t[1].classList.contains('bc-open') && e[t[2]]) e[t[2]].click();
+  });
+}
+function closeMsOverlays(){
+  $('msQrSheet').classList.remove('open');
+  if(typeof scanStream!=='undefined' && scanStream) stopScan();
+  else $('msScanSheet').classList.remove('open');
+}
+function fitPadding(){
+  var strip=document.querySelector('#msMount .bc-strip');
+  var sh=strip?strip.offsetHeight:0, ch=$('callBar').offsetHeight;
+  var want=sh+ch+28;
+  if(Math.abs(parseFloat(document.body.style.paddingBottom||'0')-want)>2) document.body.style.paddingBottom=want+'px';
+}
 
 /* ----- QR (my link is the portal-form loader link, pinned two-step) ----- */
 function renderMyQr(){
@@ -439,7 +685,7 @@ function wire(){
     $('msGoHome').addEventListener('click', function(){ if(handle) handle.join(myCode); });
     $('msSaveVisit').addEventListener('click', function(){ $('msCCode').value=room; $('msCName').focus(); $('msCName').scrollIntoView({block:'center'}); });
   }
-  $('msQrBtn').addEventListener('click', function(){ renderMyQr(); $('msQrSheet').classList.add('open'); });
+  $('msQrBtn').addEventListener('click', function(){ closePluginSheets(); renderMyQr(); $('msQrSheet').classList.add('open'); });
   $('msQrClose').addEventListener('click', function(){ $('msQrSheet').classList.remove('open'); });
   $('msCopyBtn').addEventListener('click', function(){
     var link=loaderLink(myCode);
@@ -447,13 +693,34 @@ function wire(){
     else toast(link);
   });
   $('msOpenBtn').addEventListener('click', function(){ if(handle) handle.setOpen(!handle.state().open); });
+  /* ----- v0.3 wiring: label + info, the SEARCH board, the vault ----- */
+  var labEl=$('msRoomLabel'), infEl=$('msRoomInfo');
+  labEl.value=roomLabel; infEl.value=roomInfo;
+  function saveLabelInfo(){ roomLabel=labEl.value.slice(0,28); roomInfo=infEl.value.slice(0,60);
+    try{ localStorage.setItem('messenger-room-label', roomLabel); localStorage.setItem('messenger-room-info', roomInfo); }catch(e){}
+    publishMsOpen._last=0; publishMsOpen(); }
+  labEl.addEventListener('change', saveLabelInfo); infEl.addEventListener('change', saveLabelInfo);
+  $('msFindBtn').addEventListener('click', function(){
+    var b=$('msOpenBoard'), open=b.style.display!=='block';
+    b.style.display=open?'block':'none';
+    $('msFindBtn').textContent=open?'✕ CLOSE THE LIST':'🔎 SEARCH OPEN ROOMS';
+    if(open) renderOpenRooms();
+  });
+  $('msOpenFilter').addEventListener('input', function(){ renderOpenRooms._sig=null; renderOpenRooms(); });
+  $('msImportBtn').addEventListener('click', importJarById);
+  renderShelf(); renderHistoryLine();
+  /* ----- sheets mutually exclusive across page + plugin (v0.3) ----- */
+  if(handle && handle._el){
+    [handle._el.sChat, handle._el.sFind, handle._el.sQr, handle._el.sUp].forEach(function(bn){ if(bn) bn.addEventListener('click', closeMsOverlays); });
+  }
+  fitPadding();
   $('msJoinBtn').addEventListener('click', function(){
     var v=cleanCode($('msCodeIn').value);
     if(!v){ toast('type their code first — it\'s on their screen, big letters'); return; }
     if(v===room){ toast('you\'re already in room '+v); return; }
     if(handle) handle.join(v);
   });
-  $('msScanBtn').addEventListener('click', startScan);
+  $('msScanBtn').addEventListener('click', function(){ closePluginSheets(); startScan(); });
   $('msScanClose').addEventListener('click', stopScan);
   $('msSaveContact').addEventListener('click', function(){
     var name=$('msCName').value.trim().slice(0,24), code=cleanCode($('msCCode').value);
@@ -466,7 +733,7 @@ function wire(){
   $('msBtnMic').addEventListener('click', function(){ if(handle) handle.toggleMic(); });
   $('msBtnFace').addEventListener('click', function(){ if(handle) handle.toggleFace(); });
   $('msBtnHear').addEventListener('click', function(){ if(handle) handle.toggleHear(); });
-  $('msBtnChat').addEventListener('click', function(){ if(handle && handle._el && handle._el.sChat) handle._el.sChat.click(); });
+  $('msBtnChat').addEventListener('click', function(){ closeMsOverlays(); if(handle && handle._el && handle._el.sChat) handle._el.sChat.click(); });
   $('msBtnJar').addEventListener('click', function(){ if(handle) handle.toggleJar(); });
   if(location.protocol==='blob:'){
     $('msHomeCard').style.display='block';
@@ -490,6 +757,21 @@ function wire(){
     var jl=$('msJarLine');
     if(st.jarOn) jl.textContent='🫙 saving this call — the badge is on, everyone can see it';
     else if(st.lastJar && st.lastJar.recordBlob) jl.textContent='🫙 last call saved · jar '+String(st.lastJar.recordBlob).slice(0,14)+'… · '+Math.round((st.lastJar.durMs||0)/1000)+'s of talk, sealed';
+    /* the clean meter (v0.3): the plugin samples getStats; we speak it plainly */
+    var mt=$('msMeter'), c=st.clean;
+    if(mt && c){
+      if(c.ok===false) mt.textContent='🎞 no frame meter in this browser — the seal still proves every saved call';
+      else mt.textContent='🎞 frames clean: '+(c.pctClean==null?'— · no video yet':c.pctClean+'%')+' · dropped '+c.framesDropped+' · jitter '+(c.jitterMs==null?'—':Math.round(c.jitterMs)+'ms');
+    }
+    fitPadding();
+    /* pop-up discipline: mid-call the media banner docks clear of the stage + call bar */
+    var bn=handle._el && handle._el.mediaBanner;
+    if(bn){
+      if(st.peers>=1 && bn.classList.contains('bc-open')){
+        var strip=document.querySelector('#msMount .bc-strip');
+        bn.style.top='auto'; bn.style.bottom=(($('callBar').offsetHeight)+(strip?strip.offsetHeight:0)+10)+'px';
+      } else { bn.style.top=''; bn.style.bottom=''; }
+    }
   }, 800);
 }
 
