@@ -1099,7 +1099,7 @@ function tapeAttachments(frames){
 async function sealTape(){
   if(!NET.lastTape) return;
   const _att=tapeAttachments(NET.lastTape);
-  const tape={format:"cube-tape/1", world:CUBE_MANIFEST, frames:NET.lastTape, jars:_att.jars, segs:_att.segs};
+  const tape={format:"cube-tape/1", world:CUBE_MANIFEST, frames:NET.lastTape, jars:_att.jars, segs:_att.segs, coverage:tapeCoverage()};
   try{
     const r=await fetch(WIN_PUBLISHER,{method:"PUT", body:JSON.stringify(tape)});
     if(!r.ok) throw new Error("publisher "+r.status);
@@ -1211,7 +1211,7 @@ function saveWinChain(){ try{ localStorage.setItem("cube-wins-v1", JSON.stringif
 async function sealRoundTape(frames, recH){
   if(!frames || frames.length<10 || !recH) return;
   try{
-    const resp=await fetch(WIN_PUBLISHER,{method:"PUT", body:JSON.stringify(Object.assign({format:"cube-tape/1", world:CUBE_MANIFEST, frames}, tapeAttachments(frames)))});
+    const resp=await fetch(WIN_PUBLISHER,{method:"PUT", body:JSON.stringify(Object.assign({format:"cube-tape/1", world:CUBE_MANIFEST, frames, coverage:tapeCoverage()}, tapeAttachments(frames)))});
     if(!resp.ok) return;
     const j=await resp.json().catch(()=>null);
     const blobId=j&&((j.newlyCreated&&j.newlyCreated.blobObject&&j.newlyCreated.blobObject.blobId)||(j.alreadyCertified&&j.alreadyCertified.blobObject&&j.alreadyCertified.blobObject.blobId));
@@ -1626,8 +1626,8 @@ function netEvBanner(m,s){ if(NET.role==="host") mqSend("down",{type:"ev", banne
 // network (the loader hash-checks before it opens anything), never on a stale
 // Pages copy. Re-pinned at ship time: g = this version's first PUT blob,
 // h = sha256 of the bytes that blob names.
-const PAGE_BLOB="2wxgFD5AplGTGCh-pVKc2DFz4P-T8CgthTRxobIfE-w";
-const PAGE_SHA="f3917faabca33495b5b32922727c7305affe1a5ff88b630284d0cf4120e51a0b";
+const PAGE_BLOB="i8HWl9PXfVtDb-tVyPSMJuBOtb-suwcgZ6AjBG9dw3o";
+const PAGE_SHA="82bedc5d6290511a5511abe1862371921cd243570c74c19b044dc93cc9b7d142";
 function jarQrText(room){ return "https://arcade.highscores.live/arcade/blob-loader.html?g="+PAGE_BLOB+"&h="+PAGE_SHA+"&n="+encodeURIComponent("BUNNY CUBE v1.9.6")+"&room="+room+"&join="+room; }
 window.__CHATSEALS=[];
 const TALK={pc:null, mic:null, micOn:false, hear:true, remote:null, peerTid:null, watcher:false, _foreign:{}, id:"t"+Math.random().toString(36).slice(2,9)};
@@ -1707,6 +1707,7 @@ async function talkResurrect(why){
 async function onTalkMsg(t, m){ if(!NET.room||t!==talkTopic()) return; let msg; try{ msg=JSON.parse(m.toString()); }catch(e){ return; } if(msg.tid===TALK.id) return;
   if(msg.type==="face"){ const pr=FACE.peers[msg.tid]||(FACE.peers[msg.tid]={name:msg.from||"THEM", on:false}); const wasOn=pr.on; pr.on=!!msg.on; if(msg.from) pr.name=msg.from; if(TALK.peerTid&&msg.tid!==TALK.peerTid){ if(pr.on!==wasOn) popText("📷 "+pr.name+(pr.on?" turned their face on — they are watching, so their face stays on their own screen":" turned their face off"), 2400); return; } FACE.remoteOn=!!msg.on; if(!FACE.remoteOn){ faceDropCopy("remote","tile"); faceDropCopy("remote","tex"); const rv=$("faceRemoteVid"); if(rv) rv.srcObject=null; if(FACE.texEl.remote) FACE.texEl.remote.srcObject=null; } else faceEnsurePlaying("gossip"); faceTiles(); facePlaneVis(); popText(msg.on?"📷 "+(msg.from||"they")+" turned their face on — say hi":"📷 "+(msg.from||"they")+" turned their face off", 2000); return; }
   if(msg.type==="jar"){ const ind=$("jarInd"); if(msg.on){ if(ind){ ind.style.display="block"; ind.textContent="● "+(msg.from||"A PLAYER")+" is jarring this room"+(msg.video?" (face + voice)":"")+" — the show is being kept as its own track"; } popText("● "+(msg.from||"a player")+" opened a jar on this room", 2200); } else if(ind){ ind.style.display="none"; ind.textContent=""; } return; }
+  if(msg.type==="coverage"&&msg.receipt){ const r=msg.receipt; teleEvent("COVERAGE","📡 coverage receipt from "+(msg.from||"the host")+" · "+r.segments+" segment(s) · tape ["+r.coveredFrom+"…"+r.coveredTo+"] ms · "+((r.gaps&&r.gaps.length)?("⚠ "+r.gaps.length+" gap(s) flagged · "+r.gapMs+" ms uncovered"):("full coverage ✓"))); return; }
   if(msg.type==="onair"){ const ind=$("airInd"); if(msg.on){ if(ind){ ind.style.display="block"; ind.textContent="📡 "+(msg.from||"THE HOST")+" is ON AIR — this room is pouring a show"; } popText("📡 "+(msg.from||"the host")+" is ON AIR", 2200); } else if(ind){ ind.style.display="none"; ind.textContent=""; } return; }
   if(msg.type==="seg"){ return; }
   if(msg.type==="echo"){ const rec=__CHATSEALS.find(r=>r.mine&&r.tid===msg.of&&r.seal===msg.seal); if(rec&&!rec.echoed){ rec.echoed=true; rec.echoBy=msg.by||""; if(rec.el&&rec.el.parentNode){ const sp=document.createElement("span"); sp.textContent=" \u2713\u2713"; sp.style.color="#9fe8a8"; sp.style.fontWeight="800"; rec.el.appendChild(sp); } } return; }
@@ -1820,6 +1821,14 @@ async function jarSeal(rc){
   let rec;
   if(rc.seg){
     rec={kind:"show-seg/1", room:NET.room, from:myName(), seq:ONAIR.seq, startedAt:new Date(rc.t0).toISOString(), durMs:Date.now()-rc.t0, mime:main.mime, blob:null, sha256:main.sha256, tracks:tracks, tapeMs0:rc.mark0?rc.mark0.ms:null, tapeMs1:rc.mark1?rc.mark1.ms:null, scoreStrip:onairScoreStrip()};
+    // SEGMENT CHAIN (David's coverage law): segments chain on the tape
+    // clock — this segment's declared window opens exactly where the
+    // previous segment's window closed. The recorder's true start mark
+    // rides along as markMs0 provenance; nothing is hidden.
+    if(typeof rec.tapeMs0==="number"&&typeof rec.tapeMs1==="number"){
+      if(ONAIR.chain&&typeof ONAIR.chain.lastEnd==="number"){ rec.markMs0=rec.tapeMs0; rec.tapeMs0=ONAIR.chain.lastEnd; }
+      if(!ONAIR.chain) ONAIR.chain={startMs:rec.tapeMs0, lastEnd:rec.tapeMs1}; else ONAIR.chain.lastEnd=rec.tapeMs1;
+    }
   } else {
     rec={kind:rc.kind||"voice-jar/1", room:NET.room, from:myName(), startedAt:new Date(rc.t0).toISOString(), durMs:Date.now()-rc.t0, mime:main.mime, blob:null, sha256:main.sha256, tracks:tracks, tapeTick0:rc.mark0?rc.mark0.tick:null, tapeMs0:rc.mark0?rc.mark0.ms:null, tapeTick1:rc.mark1?rc.mark1.tick:null, tapeMs1:rc.mark1?rc.mark1.ms:null, anchor:(typeof NET.snapN==="number")?{seq:NET.snapN, seal:NET.lastHash}:null};
   }
@@ -1828,6 +1837,7 @@ async function jarSeal(rc){
   const held={parts, rec};
   if(rc.seg){
     ONAIR.seq++;
+    if(!ONAIR.on) ONAIR.finalSegSealed=true;
     jarPourSeg(held);
     if(ONAIR.on){ onairSegStart(); } else { JAR.segMode=false; }
   } else {
@@ -1853,6 +1863,7 @@ async function jarPourSeg(held){
       const h=ONAIR.pourQ.shift();
       try{
         const recBlob=await jarPourOne(h);
+        ONAIR.ledger.push({seq:h.rec.seq, tapeMs0:h.rec.tapeMs0, tapeMs1:h.rec.tapeMs1, recBlob});
         mqPub(talkTopic(), {type:"seg", rec:recBlob, seq:h.rec.seq});
         renderJarList();
         teleEvent("SHOW SEG","📡 segment "+h.rec.seq+" poured · record "+recBlob.slice(0,16)+"… · tracks "+h.rec.tracks.map(t=>t.type+":"+t.sha256.slice(0,8)).join(" + "));
@@ -1862,7 +1873,7 @@ async function jarPourSeg(held){
         popText("📡 a show segment didn't pour — it's held on this phone (🫙 JARS → RETRY)", 3600);
       }
     }
-  } finally { ONAIR.pouring=false; }
+  } finally { ONAIR.pouring=false; maybeCoverageFinalize(); }
 }
 
 // ----- ON AIR (v1.9.5): the show leaves the room -----
@@ -1874,8 +1885,8 @@ async function jarPourSeg(held){
 // anywhere can chase the pour segment by segment. The room stays the room;
 // the show is a layer that leaves it. Segments are shelf jars too — the
 // kind field tells them apart.
-const ONAIR={on:false, segMs:10000, seq:0, segT0:0, wall0:0, timer:null, pourQ:[], pouring:false};
-window.__ONAIR={setSegMs:(ms)=>{ if(typeof ms==="number"&&ms>=200) ONAIR.segMs=ms; return ONAIR.segMs; }, state:()=>({on:ONAIR.on, seq:ONAIR.seq, segMs:ONAIR.segMs, pouring:ONAIR.pouring, queued:ONAIR.pourQ.length})};
+const ONAIR={on:false, segMs:10000, seq:0, segT0:0, wall0:0, timer:null, pourQ:[], pouring:false, chain:null, ledger:[], endMs:null, coverage:null, closePending:false, awaitFinalSeg:false, finalSegSealed:false};
+window.__ONAIR={setSegMs:(ms)=>{ if(typeof ms==="number"&&ms>=200) ONAIR.segMs=ms; return ONAIR.segMs; }, state:()=>({on:ONAIR.on, seq:ONAIR.seq, segMs:ONAIR.segMs, pouring:ONAIR.pouring, queued:ONAIR.pourQ.length, ledger:ONAIR.ledger.length, coverage:ONAIR.coverage}), coverage:()=>ONAIR.coverage||coverageReceipt()};
 function onairScoreStrip(){ return {p1Name:myName(), p1Score:state.bonks||0, p2Name:(NET.guest&&NET.guest.name)||"BUNNY 2", p2Score:NET.guest.bonks||0, round:state.round||1, clockSec:Math.round(state.t||0)}; }
 function onairNowMs(){ const m=jarTapeMark(); if(m&&typeof m.ms==="number") return m.ms; return Date.now()-ONAIR.wall0; }
 function onairUi(){ const b=$("airBtn"); if(!b) return; b.textContent=ONAIR.on?"📡 ON AIR…":"📡 ON AIR"; b.classList.toggle("on", ONAIR.on); }
@@ -1885,7 +1896,7 @@ async function onairStart(){
   if(!window.MediaRecorder){ popText("📡 this browser can't pour a show — no MediaRecorder here", 2800); return; }
   if(!TALK.mic){ popText("📡 a show needs your voice — tap 🎙 MIC first (that asks your permission), then 📡 ON AIR", 3200); return; }
   if(JAR.on){ popText("📡 a jar is open — close it first, then go ON AIR", 2600); return; }
-  ONAIR.on=true; ONAIR.seq=0; ONAIR.wall0=Date.now();
+  ONAIR.on=true; ONAIR.seq=0; ONAIR.wall0=Date.now(); ONAIR.chain=null; ONAIR.ledger=[]; ONAIR.endMs=null; ONAIR.coverage=null; ONAIR.closePending=false; ONAIR.awaitFinalSeg=false; ONAIR.finalSegSealed=false;
   JAR.segMode=true;
   mqPub(talkTopic(), {type:"onair", tid:TALK.id, from:myName(), on:true});
   onairUi();
@@ -1911,14 +1922,37 @@ function onairStop(silent){
   if(ONAIR.timer){ clearInterval(ONAIR.timer); ONAIR.timer=null; }
   mqPub(talkTopic(), {type:"onair", tid:TALK.id, from:myName(), on:false});
   onairUi();
-  if(JAR.on&&JAR.segMode) jarStop();
+  if(JAR.on&&JAR.segMode){ ONAIR.awaitFinalSeg=true; jarStop(); }
+  ONAIR.endMs=(JAR.mark1&&typeof JAR.mark1.ms==="number")?JAR.mark1.ms:onairNowMs(); ONAIR.closePending=true; maybeCoverageFinalize();
   if(!silent) popText("📡 off air — the last segment is pouring", 2400);
   teleEvent("ON AIR OFF","📡 broadcast stopped · "+ONAIR.seq+" segment(s) poured or pouring");
+}
+function coverageReceipt(){
+  if(ONAIR.coverage) return ONAIR.coverage;
+  if(!ONAIR.chain||typeof ONAIR.chain.startMs!=="number") return null;
+  const L=[...ONAIR.ledger].sort((a,b)=>a.seq-b.seq);
+  const end=(typeof ONAIR.endMs==="number")?ONAIR.endMs:(L.length?L[L.length-1].tapeMs1:ONAIR.chain.lastEnd);
+  const gaps=[]; let expect=ONAIR.chain.startMs;
+  for(const sg of L){ if(typeof sg.tapeMs0==="number"&&sg.tapeMs0>expect) gaps.push({from:expect, to:sg.tapeMs0}); if(typeof sg.tapeMs1==="number"&&sg.tapeMs1>expect) expect=sg.tapeMs1; }
+  if(typeof end==="number"&&end>expect) gaps.push({from:expect, to:end});
+  let gapMs=0; for(const g of gaps) gapMs+=g.to-g.from;
+  return {coveredFrom:ONAIR.chain.startMs, coveredTo:end, segments:L.length, seqs:L.map(x=>x.seq), gaps, gapMs, room:NET.room||null, sealedAt:new Date().toISOString()};
+}
+function tapeCoverage(){ try{ return coverageReceipt(); }catch(e){ return null; } }
+function maybeCoverageFinalize(){
+  if(!ONAIR.closePending||ONAIR.on||ONAIR.pouring||ONAIR.pourQ.length||ONAIR.coverage||(ONAIR.awaitFinalSeg&&!ONAIR.finalSegSealed)) return;
+  const r=coverageReceipt(); if(!r) return;
+  ONAIR.coverage=r;
+  const full=r.gaps.length===0;
+  teleEvent("COVERAGE","📡 coverage receipt · "+r.segments+" segment(s) · tape ["+r.coveredFrom+"…"+r.coveredTo+"] ms · "+(full?"FULL COVERAGE — no gaps ✓":("⚠ "+r.gaps.length+" GAP(S) FLAGGED · "+r.gapMs+" ms of tape with no segment · gaps are adopted and counted, never hidden")));
+  popText(full?("📡 coverage: FULL — "+r.segments+" segments, no gaps ✓"):("📡 coverage: "+r.segments+" segments · ⚠ "+r.gaps.length+" gap(s) flagged — "+r.gapMs+" ms of tape has no segment (counted, never hidden)"), 4200);
+  mqPub(talkTopic(), {type:"coverage", tid:TALK.id, from:myName(), receipt:r});
 }
 async function jarPutHeld(){
   const held=JAR.held; if(!held) return;
   try{
     const recBlob=await jarPourOne(held);
+    if(held.rec.kind==="show-seg/1"){ ONAIR.ledger.push({seq:held.rec.seq, tapeMs0:held.rec.tapeMs0, tapeMs1:held.rec.tapeMs1, recBlob}); mqPub(talkTopic(), {type:"seg", rec:recBlob, seq:held.rec.seq}); maybeCoverageFinalize(); }
     const blobId=held.rec.blob;
     JAR.held=null; renderJarList();
     addChat("🫙 JAR", (held.rec.kind==="show-seg/1"?"show segment":held.rec.kind==="video-jar/1"?"video":"voice")+" jar sealed — blob "+blobId.slice(0,10)+"… · record "+recBlob.slice(0,10)+"…", true);
