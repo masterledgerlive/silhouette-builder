@@ -3,9 +3,10 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>THE ROOM v1.0 — THE LOBBY · Arcades of Time Hangout</title>
+<title>THE ROOM v1.1 — THE FRONT DOOR · Arcades of Time Hangout</title>
 <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/mqtt@5.10.1/dist/mqtt.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="arcade-shared/kk-rally.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
@@ -79,14 +80,14 @@
 </div>
 
 <div id="ui">
-  <h1>🕹️ THE ROOM — THE LOBBY v1.0</h1>
+  <h1>🕹️ THE ROOM — THE FRONT DOOR v1.1</h1>
   <p><b>Step into a cabinet's glowing circle</b> and stand 9 seconds — or click its screen — to step up and play. WASD to walk, drag to look. Big screen on the right wall: live matches, prediction board, reputation on the ding. Courts door on the left wall hot-jumps you to the seats.</p>
   <p>SKIN:
     <button class="sbtn on" data-skin="neon">NEON</button>
     <button class="sbtn" data-skin="wood">WOOD &amp; BRASS</button>
     <button class="sbtn" data-skin="space">DEEP SPACE</button>
   </p>
-  <p>Patrons with 🤖 are our agents playing <i>real engine matches</i> right now. Humans — that is YOU, arriving through <b>THE LOBBY</b> bar up top: share your room code and friends stand here beside you, faces over their avatars, talking. The three doors on the left wall are portals — walk through together into Bunny Cube, Zombie World or the Builder, same room code, same party. <a href="blob-cinema/scores.html">Hall of Scores</a> · <a href="system.html">System Map</a></p>
+  <p>Patrons with 🤖 are our agents playing <i>real engine matches</i> right now. Humans — that is YOU, arriving through <b>THE LOBBY</b> (on a phone it is the slim strip along the bottom): share your room code, let a friend scan your QR, or flip 📣 OPEN and be discovered under 🔎 FIND — joining is a handshake, and the bar only says YOU'RE IN once the room answers. Friends stand here beside you, faces over their avatars, talking. The three doors on the left wall are portals — walk through together into Bunny Cube, Zombie World or the Builder, same room code, same party. <a href="blob-cinema/scores.html">Hall of Scores</a> · <a href="system.html">System Map</a></p>
   <p>STEP UP:
     <button class="sbtn" id="upRally">🏓 RALLY</button>
     <button class="sbtn" id="upSlap">✋ SLAP</button>
@@ -1432,7 +1433,7 @@ window.addEventListener('load', ()=>{
 </script>
 
 <style>
-/* ================= THE LOBBY (v1.0) chrome ================= */
+/* ================= THE LOBBY (v1.1) chrome ================= */
 #lbBar{position:fixed;top:52px;left:50%;transform:translateX(-50%);z-index:46;display:flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:center;max-width:97vw;background:rgba(10,10,20,.92);border:1.5px solid #ffd76a;border-radius:14px;padding:7px 10px;font-family:Georgia,serif;color:#e8e0c8;box-shadow:0 8px 30px rgba(0,0,0,.55)}
 #lbBar .lb-brand{color:#ffd76a;font-weight:bold;letter-spacing:1px;font-size:13.5px}
 #lbCode{color:#7fd4ff;font-weight:bold;font-size:15px;letter-spacing:2px}
@@ -1465,11 +1466,60 @@ window.addEventListener('load', ()=>{
 #lbSplashBody{font-size:13.5px;line-height:1.55;color:#cfc4a0}
 #lbSplashGo{display:block;margin:14px 0 8px;background:#ffd76a;color:#241b08;border-radius:10px;padding:13px;font-size:16px;font-weight:bold;text-decoration:none}
 #lbSplashClose{background:#241b08;color:#ffd76a;border:1px solid #8a6d2f;border-radius:8px;padding:7px 14px;cursor:pointer;font-family:inherit}
+/* ================= v1.1 THE FRONT DOOR: join state, invite sheet, strip ================= */
+#lbJoinState{flex-basis:100%;text-align:center;font-size:12px;color:#b9f4cd;min-height:14px}
+#lbBarX{display:none}
+#lbChatBar{display:flex;align-items:center;justify-content:space-between;gap:8px;background:#1b1430;padding:5px 6px 5px 10px;border-bottom:1px solid #2c3350}
+#lbChatBar b{color:#c9a7ff;font-size:12.5px}
+#lbChatX{background:none;border:1px solid #7a4fd0;color:#c9a7ff;border-radius:8px;cursor:pointer;width:32px;height:32px;font-size:15px;font-family:inherit;flex:none}
+#lbSheet{position:fixed;top:118px;right:10px;z-index:66;width:min(348px,94vw);max-height:76vh;overflow-y:auto;display:none;background:rgba(10,10,18,.96);border:1.5px solid #ffd76a;border-radius:14px;padding:12px;font-family:Georgia,serif;color:#e8e0c8;box-shadow:0 10px 34px rgba(0,0,0,.6)}
+#lbSheet.lb-open{display:block}
+#lbSheetHead{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px}
+#lbSheetHead b{color:#ffd76a;font-size:14px}
+#lbSheetX{background:#241b08;color:#ffd76a;border:1px solid #8a6d2f;border-radius:8px;cursor:pointer;width:32px;height:32px;font-size:15px;font-family:inherit;flex:none}
+#lbQr{background:#fff;border-radius:12px;padding:12px;width:216px;margin:6px auto}
+#lbQr canvas,#lbQr img{width:192px!important;height:192px!important;image-rendering:pixelated}
+.lb-qr-cap{text-align:center;font-size:11.5px;color:#9fb6cc}
+#lbSheetCopy{display:block;margin:8px auto 2px}
+#lbOpenRow{display:flex;align-items:center;gap:8px;margin:10px 0 2px}
+#lbOpenWords{font-size:11.5px;color:#9fb6cc}
+#lbFindHead{margin-top:10px;color:#7fd4ff;font-size:12.5px;letter-spacing:.5px}
+.lb-find-row{display:block;width:100%;text-align:left;margin:5px 0;background:#16233c;color:#dfe9ff;border:1px solid #39507a;border-radius:9px;padding:9px 10px;cursor:pointer;font-family:inherit;font-size:13px}
+.lb-find-row-here{opacity:.65;cursor:default}
+.lb-live{color:#3ec97f;font-weight:bold}
+#lbFindEmpty{font-size:12px;color:#9fb6cc;margin:6px 0}
+#lbSheetState{font-size:11.5px;color:#b9f4cd;margin-top:8px;min-height:13px}
+#lbStrip{display:none}
+@media (max-width:700px){
+  #ui{max-height:34vh;overflow-y:auto}
+  #lbBar{display:none;top:auto;bottom:calc(56px + env(safe-area-inset-bottom,0px));left:6px;right:6px;transform:none;width:auto;max-width:none;max-height:58vh;overflow-y:auto;z-index:80;border-radius:16px;justify-content:flex-start}
+  #lbBar.lb-open{display:flex}
+  #lbBarX{display:block;order:-1;flex:none;width:44px;height:44px;font-size:19px;background:#241b08;color:#ffd76a;border:1px solid #8a6d2f;border-radius:10px;cursor:pointer;font-family:inherit}
+  #lbStrip{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:82;align-items:center;gap:6px;padding:6px 8px calc(6px + env(safe-area-inset-bottom,0px));background:rgba(10,10,20,.95);border-top:1.5px solid #ffd76a;font-family:Georgia,serif;color:#e8e0c8}
+  #lbStripCode{color:#7fd4ff;font-weight:bold;letter-spacing:1.5px;font-size:14px}
+  #lbStripCount{color:#b9f4cd;font-size:12.5px;margin-right:auto}
+  .lb-sbtn{flex:none;width:44px;height:44px;border-radius:10px;background:#241b08;color:#ffd76a;border:1px solid #8a6d2f;font-size:17px;cursor:pointer;font-family:inherit}
+  .lb-sbtn.on{background:#ffd76a;color:#241b08}
+  #lbSheet{top:auto;bottom:calc(56px + env(safe-area-inset-bottom,0px));left:6px;right:6px;width:auto;max-height:62vh;z-index:80;border-radius:16px}
+  #lbSheetX{width:44px;height:44px;font-size:18px}
+  #lbChat{left:6px;right:6px;width:auto;bottom:calc(56px + env(safe-area-inset-bottom,0px));height:48vh;z-index:80;border-radius:16px}
+  #lbChatX{width:44px;height:44px;font-size:17px}
+  #lbDock{top:auto;bottom:calc(124px + env(safe-area-inset-bottom,0px));right:8px}
+  #lbPop{top:36vh;z-index:85}
+  #lbSplash{z-index:95}
+  #joy{bottom:calc(72px + env(safe-area-inset-bottom,0px))}
+  #joylbl{bottom:calc(198px + env(safe-area-inset-bottom,0px))}
+  #phoneBtn{bottom:calc(72px + env(safe-area-inset-bottom,0px))}
+  #tray{bottom:calc(68px + env(safe-area-inset-bottom,0px))}
+  #chipStrip{bottom:calc(126px + env(safe-area-inset-bottom,0px))}
+}
 </style>
 <div id="lbBar">
+  <button id="lbBarX" title="close the lobby panel">✕</button>
   <span class="lb-brand">🏠 THE LOBBY</span>
   <span>room <span id="lbCode">····</span></span>
   <button class="lb-btn" id="lbCopy" title="copy the room link">🔗 COPY LINK</button>
+  <button class="lb-btn" id="lbInvite" title="QR, open the room, find other rooms">🔗 INVITE · 🔎 FIND</button>
   <input id="lbJoinCode" placeholder="CODE" maxlength="8"/><button class="lb-btn" id="lbJoin">JOIN</button>
   <span>🏷</span><input id="lbName" maxlength="18"/>
   <button class="lb-btn" id="lbMic">🎙 MIC</button>
@@ -1482,12 +1532,34 @@ window.addEventListener('load', ()=>{
   <button class="lb-btn lb-portal-btn" data-portal="builder">🛠 BUILDER</button>
   <span id="lbCount">👥 1 here</span>
   <div id="lbRoster"></div>
+  <div id="lbJoinState"></div>
   <div id="lbTapeBox"></div>
+</div>
+<div id="lbStrip">
+  <span id="lbStripCode">····</span>
+  <span id="lbStripCount">👥 1</span>
+  <button class="lb-sbtn" id="lbStripMic" title="mic">🎙</button>
+  <button class="lb-sbtn" id="lbStripFace" title="face">📷</button>
+  <button class="lb-sbtn" id="lbStripChat" title="chat">💬</button>
+  <button class="lb-sbtn" id="lbStripFind" title="invite & find rooms">🔎</button>
+  <button class="lb-sbtn" id="lbStripUp" title="the whole lobby panel">⬆</button>
+</div>
+<div id="lbSheet">
+  <div id="lbSheetHead"><b>🏠 THE LOBBY — invite &amp; find</b><button id="lbSheetX" title="close">✕</button></div>
+  <div id="lbQr"></div>
+  <div class="lb-qr-cap">📷 scan to join this room — the code rides the link</div>
+  <button class="lb-btn" id="lbSheetCopy">🔗 COPY LINK</button>
+  <div id="lbOpenRow"><button class="lb-btn" id="lbOpen">📣 OPEN</button><span id="lbOpenWords">others can find and join this room</span></div>
+  <div id="lbFindHead">🔎 OPEN ROOMS — tap one to walk in</div>
+  <div id="lbFindList"></div>
+  <div id="lbFindEmpty">No open rooms right now — open yours with 📣 OPEN.</div>
+  <div id="lbSheetState"></div>
 </div>
 <div id="lbPop"></div>
 <div id="lbDock"></div>
 <div id="lbTexPark"></div>
 <div id="lbChat">
+  <div id="lbChatBar"><b>💬 ROOM CHAT — sealed as you send</b><button id="lbChatX" title="close chat">✕</button></div>
   <div id="lbChatLog"></div>
   <div id="lbChatRow"><input id="lbChatIn" placeholder="say it to the room — sealed as you send" maxlength="300"/><button class="lb-btn" id="lbChatSend">SEND</button></div>
 </div>
@@ -1499,8 +1571,8 @@ window.addEventListener('load', ()=>{
 </div></div>
 
 <script>
-// ================= THE LOBBY — ROOM v1.0 =================
-// David's commission (Nov 8 01:03 EST): the Arcade Room becomes the hangout —
+// ================= THE LOBBY — ROOM v1.1 "THE FRONT DOOR" =================
+// v1.0 (David, Nov 8 01:03 EST): the Arcade Room becomes the hangout —
 // everybody meets here, avatars walk with video faces on top, everyone talks
 // and chats, the whole hangout can be recorded as one stack, and the room is
 // the entry point: portals carry the party INTO the games together.
@@ -1508,6 +1580,12 @@ window.addEventListener('load', ()=>{
 // objects, the COPYCAT face method (true track is the key; every consumer
 // drinks from its own clone), echo-sealed chat, tape attachments + coverage.
 // Presence has NO host: the room's life is the gossip itself.
+// v1.1 (David's phone verdict, Nov 8 08:22 EST): the Cube's FRONT DOOR,
+// ported — an explicit hello/hi join handshake with an honest first-one-here
+// state (never a fake "connected"), a FIND list of rooms someone chose to
+// OPEN (beacons on kodakai/room/v1/lobby), a QR quick-connect in the invite
+// sheet (the Cube's generator + 192px rule), and a phone layout of ONE slim
+// bottom strip + mutually-exclusive sheets with big ✕s.
 (function(){
 'use strict';
 // ---------- pure-JS SHA-256 (FIPS 180-4; crypto.subtle is undefined on http) ----------
@@ -1559,8 +1637,13 @@ const LOBBY={
   peers:new Map(),   // tid -> peer object (figure + talk + media)
   chatLog:[], seals:new Map(),
   rec:null, lastTape:null,
-  portalDwell:{key:null, t:0}
+  portalDwell:{key:null, t:0},
+  // v1.1 front door state
+  join:{state:'idle', answers:new Set(), timer:null},
+  open:false, openRooms:new Map(),   // code -> {hostName,count,live,ts,from}
+  sheet:null, _qrPayload:''
 };
+try{ LOBBY.open = localStorage.getItem('lobby-open')==='1'; }catch(e){}
 try{ LOBBY.name = localStorage.getItem('lobby-name') || ('YOU-'+LOBBY.tid.slice(1,4).toUpperCase()); }catch(e){ LOBBY.name='YOU-'+LOBBY.tid.slice(1,4).toUpperCase(); }
 LOBBY.color = PALETTE[[...LOBBY.tid].reduce((a,c)=>a+c.charCodeAt(0),0)%PALETTE.length];
 const $=id=>document.getElementById(id);
@@ -1626,7 +1709,7 @@ function getPeer(tid){
   let p=LOBBY.peers.get(tid);
   if(!p){
     p={tid, name:'GUEST', color:PALETTE[[...tid].reduce((a,c)=>a+c.charCodeAt(0),0)%PALETTE.length],
-       x:0, z:3, hd:0, faceOn:false, voiceOn:false, talkOn:false, recOn:false, lastSeen:Date.now(),
+       x:0, z:3, hd:0, faceOn:false, voiceOn:false, talkOn:false, recOn:false, greeted:false, lastSeen:Date.now(),
        fig:null, label:null, faceHolder:null, faceMesh:null,
        talk:null, tileWrap:null, tileEl:null, texEl:null, audEl:null, srcStream:null, texTex:null};
     LOBBY.peers.set(tid, p);
@@ -1645,18 +1728,35 @@ function removePeer(tid){
 function roster(){
   const n=LOBBY.peers.size+1;
   const el=$('lbCount'); if(el) el.textContent='👥 '+n+' here';
+  const sc=$('lbStripCount'); if(sc) sc.textContent='👥 '+n;
   const rb=$('lbRoster');
   if(rb){
     const names=[LOBBY.name+' (you)'+(LOBBY.rec&&LOBBY.rec.on?' 🔴':'')];
     LOBBY.peers.forEach(p=> names.push(cleanName(p.name)+(p.recOn?' 🔴':'')));
     rb.textContent=names.join(' · ');
   }
+  renderJoinState();
+}
+// ---------- the join ritual's status line (v1.1: proof of company, or honest solo) ----------
+function renderJoinState(){
+  const st=LOBBY.join.state;
+  let txt='';
+  if(st==='waiting') txt='⏳ joining room '+LOBBY.code+' — listening for the room…';
+  else if(st==='in') txt='✓ YOU\'RE IN — room '+LOBBY.code+' · '+(LOBBY.peers.size+1)+' here';
+  else if(st==='solo') txt='You\'re the first one here — share the code or QR to bring them in';
+  const a=$('lbJoinState'); if(a) a.textContent=txt;
+  const b=$('lbSheetState'); if(b) b.textContent=txt;
 }
 // ---------- MQTT: the room's life is the gossip ----------
 function topic(kind){ return 'kodakai/room/v1/'+LOBBY.code+'/'+kind; }
+const LOBBY_TOPIC='kodakai/room/v1/lobby';   // FIND beacons live here, across rooms
 function publish(kind, obj){
   if(!LOBBY.mq || !LOBBY.connected) return false;
   try{ LOBBY.mq.publish(topic(kind), JSON.stringify(obj)); return true; }catch(e){ return false; }
+}
+function publishRaw(topicStr, obj){
+  if(!LOBBY.mq || !LOBBY.connected) return false;
+  try{ LOBBY.mq.publish(topicStr, JSON.stringify(obj)); return true; }catch(e){ return false; }
 }
 function connectMQ(){
   if(typeof mqtt==='undefined'){ popText('📡 presence offline — the mqtt library did not load; the room still works solo', 4000); return; }
@@ -1664,15 +1764,22 @@ function connectMQ(){
   LOBBY.mq=mq;
   mq.on('connect', ()=>{
     LOBBY.connected=true;
-    mq.subscribe(topic('presence')); mq.subscribe(topic('talk'));
+    mq.subscribe(topic('presence')); mq.subscribe(topic('talk')); mq.subscribe(LOBBY_TOPIC);
     gossipPresence(); roster();
     popText('🏠 You are in room '+LOBBY.code+' — say the code out loud; anyone who enters it stands here with you', 3600);
+    startHandshake();
+    if(LOBBY.open) publishBeacon();
   });
   mq.on('close', ()=>{ LOBBY.connected=false; });
   mq.on('message', (t, payload)=>{
     let m; try{ m=JSON.parse(payload.toString()); }catch(e){ return; }
     if(!m || m.tid===LOBBY.tid) return;
-    if(t.endsWith('/presence')) onPresence(m);
+    if(t===LOBBY_TOPIC){ onBeacon(m); return; }
+    if(t.endsWith('/presence')){
+      if(m.type==='hello'){ onHello(m); return; }
+      if(m.type==='hi'){ onHi(m); return; }
+      onPresence(m);
+    }
     else if(t.endsWith('/talk')) onTalkMsg(m);
   });
 }
@@ -1683,6 +1790,113 @@ function gossipPresence(){
     talk:LOBBY.micOn?1:0, rec:(LOBBY.rec&&LOBBY.rec.on)?1:0, ts:Date.now()});
 }
 setInterval(gossipPresence, 200);
+// ---------- the connect ritual: hello / hi handshake (v1.1, the Cube's front door) ----------
+// Entering a room is a HANDSHAKE, not a hope: the joiner knocks (hello),
+// every occupant answers (hi), and the joiner can then say — truthfully —
+// that they are IN, with names. Nobody answering in ~6s is also a truth:
+// you're the first one here. The state never claims company it hasn't met.
+function startHandshake(){
+  LOBBY.join.state='waiting';
+  LOBBY.join.answers.clear();
+  if(LOBBY.join.timer) clearTimeout(LOBBY.join.timer);
+  renderJoinState();
+  publish('presence', {type:'hello', tid:LOBBY.tid, name:LOBBY.name});
+  LOBBY.join.timer=setTimeout(()=>{
+    if(LOBBY.join.state==='waiting' && LOBBY.peers.size===0){
+      LOBBY.join.state='solo'; renderJoinState();
+      popText('You\'re the first one here — share the code or QR to bring them in', 4200);
+    }
+  }, 6000);
+}
+function noteCompany(){
+  // company proven (a hi, a hello, a new presence): the solo/waiting states end
+  if(LOBBY.join.state==='waiting' || LOBBY.join.state==='solo'){
+    const wasWaiting=LOBBY.join.state==='waiting';
+    LOBBY.join.state='in';
+    if(LOBBY.join.timer){ clearTimeout(LOBBY.join.timer); LOBBY.join.timer=null; }
+    renderJoinState();
+    if(wasWaiting) popText('✓ YOU\'RE IN — room '+LOBBY.code, 2200);
+  }
+}
+function onHello(m){
+  const isNew=!LOBBY.peers.has(m.tid);
+  const p=getPeer(m.tid);
+  if(m.name) p.name=cleanName(m.name);
+  p.lastSeen=Date.now();
+  if(isNew && !p.greeted){
+    p.greeted=true;
+    popText('👋 '+p.name+' joined', 2000);
+    if(LOBBY.rec) recEvent({ev:'join', name:p.name});
+  }
+  publish('presence', {type:'hi', tid:LOBBY.tid, name:LOBBY.name, to:m.tid});
+  noteCompany();
+}
+function onHi(m){
+  if(m.to && m.to!==LOBBY.tid) return;
+  LOBBY.join.answers.add(m.tid);
+  const p=getPeer(m.tid);
+  if(m.name) p.name=cleanName(m.name);
+  p.lastSeen=Date.now();
+  noteCompany();
+}
+// ---------- FIND: beacons for rooms someone chose to OPEN ----------
+function roomLive(){
+  if(LOBBY.micOn || LOBBY.faceOn) return true;
+  let live=false;
+  LOBBY.peers.forEach(p=>{ if(p.talkOn || p.faceOn) live=true; });
+  return live;
+}
+function publishBeacon(){
+  if(!LOBBY.open) return;
+  publishRaw(LOBBY_TOPIC, {type:'beacon', tid:LOBBY.tid, code:LOBBY.code, hostName:LOBBY.name,
+    count:LOBBY.peers.size+1, live:roomLive(), ts:Date.now()});
+}
+setInterval(()=>{ if(LOBBY.open && LOBBY.connected) publishBeacon(); }, 10000);
+function onBeacon(m){
+  if(!m || m.type!=='beacon') return;
+  const code=cleanCode(m.code); if(!code) return;
+  const ts=+m.ts||Date.now();
+  const prev=LOBBY.openRooms.get(code);
+  if(prev && prev.ts>ts) return;
+  LOBBY.openRooms.set(code, {code, hostName:cleanName(m.hostName||'GUEST'),
+    count:Math.max(1, +m.count||1), live:!!m.live, ts, from:m.tid});
+  if(LOBBY.sheet==='sheet') renderFind();
+}
+setInterval(()=>{ // beacons go stale after 30s of silence — the list stays honest
+  const now=Date.now(); let changed=false;
+  LOBBY.openRooms.forEach((v,k)=>{ if(now-v.ts>30000){ LOBBY.openRooms.delete(k); changed=true; } });
+  if(changed && LOBBY.sheet==='sheet') renderFind();
+}, 5000);
+function renderFind(){
+  const list=$('lbFindList'), empty=$('lbFindEmpty'); if(!list) return;
+  list.innerHTML='';
+  const rooms=[...LOBBY.openRooms.values()].sort((a,b)=>b.ts-a.ts);
+  rooms.forEach(r=>{
+    const b=document.createElement('button');
+    const here=r.code===LOBBY.code;
+    b.className='lb-find-row'+(here?' lb-find-row-here':'');
+    b.dataset.code=r.code;
+    const s=document.createElement('span');
+    s.textContent='🏠 '+r.code+' — '+r.hostName+' · 👥 '+r.count+(here?' · (you are here)':'');
+    b.appendChild(s);
+    if(r.live){ const lv=document.createElement('span'); lv.className='lb-live'; lv.textContent=' · 🎙 live'; b.appendChild(lv); }
+    if(!here) b.addEventListener('click', ()=>{ location.search='?room='+r.code; });
+    list.appendChild(b);
+  });
+  if(empty) empty.style.display=rooms.length?'none':'block';
+}
+function syncOpenUI(){
+  const b=$('lbOpen'); if(!b) return;
+  b.classList.toggle('on', LOBBY.open);
+  b.textContent=LOBBY.open?'📣 OPEN ✓':'📣 OPEN';
+}
+function setOpen(v){
+  LOBBY.open=!!v;
+  try{ localStorage.setItem('lobby-open', LOBBY.open?'1':'0'); }catch(e){}
+  syncOpenUI();
+  if(LOBBY.open){ publishBeacon(); popText('📣 room '+LOBBY.code+' is OPEN — others can find and join it', 3000); }
+  else popText('📣 room '+LOBBY.code+' is no longer listed — the code still works for anyone who has it', 3200);
+}
 function onPresence(m){
   if(m.type==='bye'){ removePeer(m.tid); return; }
   if(m.type!=='presence') return;
@@ -1694,7 +1908,7 @@ function onPresence(m){
   p.faceOn=!!m.face; p.voiceOn=!!m.voice; p.talkOn=!!m.talk;
   const wasRec=p.recOn; p.recOn=!!m.rec; p.lastSeen=Date.now();
   if(!p.fig){ p.x=p.tx; p.z=p.tz; makeFigure(p); }
-  if(isNew){ popText('👋 '+p.name+' walked in', 1800); if(LOBBY.rec) recEvent({ev:'join', name:p.name}); }
+  if(isNew){ p.greeted=true; popText('👋 '+p.name+' walked in', 1800); if(LOBBY.rec) recEvent({ev:'join', name:p.name}); noteCompany(); }
   if(p.recOn && !wasRec) popText('🔴 '+p.name+' is recording this room', 2600);
   if(p.recOn!==wasRec) drawPeerLabel(p);
   maybeWire(p);
@@ -1979,6 +2193,7 @@ function flashCap(){ const b=$('lbMic'); if(b){ b.classList.add('lb-denied'); se
 function syncToggleUI(){
   const set=(id,on)=>{ const b=$(id); if(b) b.classList.toggle('on', !!on); };
   set('lbMic', LOBBY.micOn); set('lbHear', LOBBY.hearOn); set('lbFace', LOBBY.faceOn);
+  set('lbStripMic', LOBBY.micOn); set('lbStripFace', LOBBY.faceOn);
   const rb=$('lbRec'); if(rb) rb.classList.toggle('on', !!(LOBBY.rec&&LOBBY.rec.on));
   const mb=$('lbMic'); if(mb) mb.textContent=LOBBY.micOn?'🎙 MIC ON':((!LOBBY.micOn && talkersCount()>=VOICE_CAP)?'🎙 VOICE FULL '+VOICE_CAP+'/'+VOICE_CAP:'🎙 MIC');
   const fb=$('lbFace'); if(fb) fb.textContent=LOBBY.faceOn?'📷 FACE ON':'📷 FACE';
@@ -2175,6 +2390,61 @@ setInterval(()=>{ // portal dwell: stand in a ring 3s and the door builds its li
     dw.key=null; dw.t=0; dw.fired=false;
   }
 }, 150);
+// ---------- QR quick connect (the Cube's generator + 192px rule, ported) ----------
+function roomURL(){ return 'https://arcade.highscores.live/arcade/room.html?room='+LOBBY.code; }
+function renderQR(){
+  const qb=$('lbQr'); if(!qb) return;
+  const text=roomURL();
+  LOBBY._qrPayload=text;
+  qb.innerHTML='';
+  try{
+    if(window.QRCode){ new QRCode(qb, {text, width:192, height:192, correctLevel:QRCode.CorrectLevel.M}); }
+  }catch(e){}
+  setTimeout(()=>{ // the Cube's fallback: if the library left the box empty, an image carries it
+    if(qb.children.length===0){
+      const im=document.createElement('img'); im.alt='join QR'; im.width=192; im.height=192;
+      im.src='https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=12&data='+encodeURIComponent(text);
+      qb.appendChild(im);
+    }
+  }, 1400);
+}
+function copyRoomLink(){
+  const u=location.origin+location.pathname+'?room='+LOBBY.code;
+  if(navigator.clipboard) navigator.clipboard.writeText(u).catch(()=>{});
+  popText('🔗 room link copied — anyone who opens it lands in room '+LOBBY.code, 2600);
+}
+// ---------- sheets (v1.1): one at a time on a phone, each with its own big ✕ ----------
+// On a phone the Lobby is a slim bottom strip; everything else is a SHEET
+// raised above it. Opening any sheet closes the other Lobby sheets AND the
+// room's legacy floating windows (SLEEVE, phone, FINN chat, the .win
+// windows) — and a legacy window opening closes the Lobby sheets right
+// back (the discipline runs both ways, small screens only). Desktop keeps
+// the v1.0 always-there bar; the invite sheet is its only new panel.
+function isPhone(){ return !!(window.matchMedia && window.matchMedia('(max-width: 700px)').matches); }
+function closeLegacyWindows(){
+  ['sleeve','phone','finnChat'].forEach(id=>{ const el=$(id); if(el) el.style.display='none'; });
+  document.querySelectorAll('.win .close').forEach(b=>{ try{ b.click(); }catch(e){} });
+}
+function sheetIsOpen(name){
+  if(name==='chat'){ const c=$('lbChat'); return !!c && c.style.display==='flex'; }
+  if(name==='bar'){ const b=$('lbBar'); return !!b && b.classList.contains('lb-open'); }
+  const s=$('lbSheet'); return !!s && s.classList.contains('lb-open');
+}
+function closeSheet(name){
+  if(name==='bar'){ const b=$('lbBar'); if(b) b.classList.remove('lb-open'); }
+  else if(name==='chat'){ const c=$('lbChat'); if(c){ c.style.display='none'; } }
+  else if(name==='sheet'){ const s=$('lbSheet'); if(s) s.classList.remove('lb-open'); }
+  if(LOBBY.sheet===name) LOBBY.sheet=null;
+}
+function closeLobbySheets(except){ ['bar','chat','sheet'].forEach(n=>{ if(n!==except) closeSheet(n); }); }
+function openSheet(name){
+  if(isPhone()){ closeLobbySheets(name); closeLegacyWindows(); }
+  if(name==='bar'){ const b=$('lbBar'); if(b) b.classList.add('lb-open'); }
+  else if(name==='chat'){ const c=$('lbChat'); if(c) c.style.display='flex'; if(!isPhone()){ const i=$('lbChatIn'); if(i) i.focus(); } }
+  else if(name==='sheet'){ const s=$('lbSheet'); if(s) s.classList.add('lb-open'); renderQR(); renderFind(); }
+  LOBBY.sheet=name;
+}
+function toggleSheet(name){ if(sheetIsOpen(name)) closeSheet(name); else openSheet(name); }
 // ---------- talk-topic router ----------
 function onTalkMsg(m){
   if(m.type==='chat') onChat(m);
@@ -2187,13 +2457,33 @@ function onTalkMsg(m){
 function initLobby(){
   const nameIn=$('lbName'); if(nameIn){ nameIn.value=LOBBY.name; nameIn.addEventListener('change', ()=>{ LOBBY.name=cleanName(nameIn.value)||LOBBY.name; nameIn.value=LOBBY.name; try{ localStorage.setItem('lobby-name', LOBBY.name); }catch(e){} gossipPresence(); roster(); }); }
   const codeEl=$('lbCode'); if(codeEl) codeEl.textContent=LOBBY.code;
+  const stripCode=$('lbStripCode'); if(stripCode) stripCode.textContent=LOBBY.code;
   const joinBtn=$('lbJoin'); if(joinBtn) joinBtn.addEventListener('click', ()=>{ const v=cleanCode($('lbJoinCode').value); if(v && v!==LOBBY.code) location.search='?room='+v; });
-  const copyBtn=$('lbCopy'); if(copyBtn) copyBtn.addEventListener('click', ()=>{ const u=location.origin+location.pathname+'?room='+LOBBY.code; if(navigator.clipboard) navigator.clipboard.writeText(u).catch(()=>{}); popText('🔗 room link copied — anyone who opens it lands in room '+LOBBY.code, 2600); });
+  const copyBtn=$('lbCopy'); if(copyBtn) copyBtn.addEventListener('click', copyRoomLink);
+  const sheetCopy=$('lbSheetCopy'); if(sheetCopy) sheetCopy.addEventListener('click', copyRoomLink);
   $('lbMic').addEventListener('click', toggleMic);
   $('lbHear').addEventListener('click', toggleHear);
   $('lbFace').addEventListener('click', toggleFace);
   $('lbRec').addEventListener('click', toggleRec);
-  $('lbChatBtn').addEventListener('click', ()=>{ const c=$('lbChat'); const show=c.style.display!=='flex'; c.style.display=show?'flex':'none'; if(show) $('lbChatIn').focus(); });
+  $('lbChatBtn').addEventListener('click', ()=> toggleSheet('chat'));
+  // v1.1 front door wiring: strip, sheets, big ✕s, OPEN, and the two-way
+  // discipline with the room's legacy windows (small screens only).
+  const on=(id,fn)=>{ const el=$(id); if(el) el.addEventListener('click', fn); };
+  on('lbStripMic', toggleMic);
+  on('lbStripFace', toggleFace);
+  on('lbStripChat', ()=> toggleSheet('chat'));
+  on('lbStripFind', ()=> toggleSheet('sheet'));
+  on('lbStripUp', ()=> toggleSheet('bar'));
+  on('lbInvite', ()=> toggleSheet('sheet'));
+  on('lbBarX', ()=> closeSheet('bar'));
+  on('lbSheetX', ()=> closeSheet('sheet'));
+  on('lbChatX', ()=> closeSheet('chat'));
+  on('lbOpen', ()=> setOpen(!LOBBY.open));
+  document.addEventListener('click', e=>{
+    if(!isPhone()) return;
+    if(e.target && e.target.closest && e.target.closest('#sleeveBtn,#handL,#handR,#phoneBtn,#finnBtn,#worldWinBtn,#grandBtn,#kickBtn,#watchBtn,#winLaunch,#worldWinLaunch')) closeLobbySheets();
+  }, true);
+  syncOpenUI();
   const send=()=>{ const i=$('lbChatIn'); sendChat(i.value); i.value=''; };
   $('lbChatSend').addEventListener('click', send);
   $('lbChatIn').addEventListener('keydown', e=>{ if(e.key==='Enter') send(); e.stopPropagation(); });
@@ -2203,12 +2493,15 @@ function initLobby(){
   buildPortals();
   roster(); syncToggleUI();
   connectMQ();
-  try{ if(typeof FINN_CAN!=='undefined') FINN_CAN.push('run THE LOBBY — real people in this room: share the room code, talk and chat (voice mesh seats four talkers), wear your camera face over your avatar, record the whole hangout as one sealed room tape, and walk everyone through the portal doors (left wall) into Bunny Cube, Zombie World or the Builder — same room code, same party'); }catch(e){}
+  try{ if(typeof FINN_CAN!=='undefined') FINN_CAN.push('run THE LOBBY — real people in this room: share the room code, talk and chat (voice mesh seats four talkers), wear your camera face over your avatar, record the whole hangout as one sealed room tape, and walk everyone through the portal doors (left wall) into Bunny Cube, Zombie World or the Builder — same room code, same party. The invite sheet carries a QR a friend can scan straight in, 📣 OPEN lists your room under 🔎 FIND so others can discover it, and joining is a handshake — you are only told you are IN once the room answers'); }catch(e){}
   window.__LOBBY=LOBBY;
   LOBBY.portalURL=portalURL; LOBBY.sendChat=sendChat; LOBBY.toggleMic=toggleMic; LOBBY.toggleHear=toggleHear;
   LOBBY.toggleFace=toggleFace; LOBBY.toggleRec=toggleRec; LOBBY.gossip=gossipPresence; LOBBY.sha256hex=sha256hex; LOBBY._publish=publish; LOBBY.diag=DIAG;
   LOBBY.setSegMs=ms=>{ SEG_MS=Math.max(500, ms|0); };
   LOBBY.openPortalSplash=openPortalSplash;
+  LOBBY.openSheet=openSheet; LOBBY.toggleSheet=toggleSheet; LOBBY.closeSheet=closeSheet; LOBBY.isPhone=isPhone;
+  LOBBY.setOpen=setOpen; LOBBY.renderFind=renderFind; LOBBY.roomURL=roomURL; LOBBY.qrText=roomURL;
+  LOBBY._join=LOBBY.join; LOBBY._openRooms=LOBBY.openRooms; LOBBY._publishRaw=publishRaw;
 }
 if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', initLobby); else initLobby();
 })();
