@@ -44,15 +44,29 @@
   .ms-contact .del{min-height:58px;width:52px;font-size:18px;color:#c9a7ff}
   .savebtn{width:100%;min-height:60px;font-size:20px;margin-top:10px}
   .empty{font-size:16.5px;color:#9fb6cc;line-height:1.55;padding:8px 2px}
-  #msStage{height:10px;transition:height .3s}
-  body.stage-on #msStage{height:min(68vw,340px)}
-  /* the plugin's face dock, restyled into the call stage: faces LARGE,
-     self small — the engine is the plugin's; only the frame is ours */
-  #msMount .bc-dock{position:fixed;top:132px;left:0;right:0;bottom:auto;flex-direction:row;flex-wrap:wrap;justify-content:center;align-items:flex-start;gap:10px;z-index:30;padding:0 10px}
-  #msMount .bc-tile{width:min(62vw,320px);border-width:2px;border-radius:14px}
-  #msMount .bc-tile video{width:100%;height:auto;aspect-ratio:4/3}
-  #msMount .bc-tile.bc-self{width:min(28vw,132px)}
-  #msMount .bc-tilecap{font-size:14.5px;padding:5px 2px}
+  /* v0.3.1 THE STAGE GETS A HOME: the page adopts the plugin's face
+     dock into this in-flow section at the top of the page — tiles take
+     real page space and scroll away with the page. Nothing floats over
+     a panel ever again (in v0.3 the dock stayed position:fixed and
+     covered MY SAVED CALLS with no way out — David, Nov 8 18:12). */
+  #msStage{display:none;margin:10px 0 0}
+  body.stage-on #msStage{display:block}
+  #msStageBar{display:flex;align-items:center;gap:10px;background:#101a30;border:1.5px solid #39507a;border-radius:12px;padding:8px 10px}
+  #msStageCount{flex:1;font-size:17px;color:#bfe6ff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #msStageBar button{min-height:48px;font-size:16.5px;padding:6px 14px;flex:none}
+  #msStageExit{border-color:#ff8fa3;color:#ffd9d2}
+  #msStageBody{position:relative}
+  #msStageBody .bc-dock{position:static;display:flex;flex-direction:row;flex-wrap:wrap;justify-content:center;align-items:flex-start;gap:10px;padding:10px 0 2px}
+  #msStageBody .bc-tile{width:min(62vw,320px);border-width:2px;border-radius:14px}
+  #msStageBody .bc-tile video{width:100%;height:auto;aspect-ratio:4/3}
+  #msStageBody .bc-tile.bc-self{width:min(28vw,132px)}
+  #msStageBody .bc-tilecap{font-size:14.5px;padding:5px 2px}
+  #msStageBody .bc-namecard{height:auto;bottom:27px}
+  /* MINIMIZE: the dock parks Cube-style — a 16px box at opacity .02,
+     NEVER display:none — so every tile's stream keeps flowing while
+     the room waits folded into its bar */
+  #msStage.ms-min #msStageBody{height:0}
+  #msStage.ms-min #msStageBody .bc-dock{position:absolute;left:0;top:0;width:16px;height:16px;overflow:hidden;opacity:.02;padding:0;pointer-events:none}
   #callBar{position:fixed;left:0;right:0;bottom:66px;z-index:45;background:rgba(8,10,18,.96);border-top:1.5px solid #2c3350;padding:10px 10px 8px;max-width:640px;margin:0 auto}
   #callBar .togs{display:flex;gap:10px;justify-content:space-between}
   .tog{flex:1;height:72px;min-width:64px;font-size:31px;border-radius:16px}
@@ -111,7 +125,14 @@
   <div id="msGuestLine" style="display:none"></div>
   <div id="msVisitStatus"></div>
 </div>
-<div id="msStage"></div>
+<div id="msStage">
+  <div id="msStageBar">
+    <span id="msStageCount">👥 1 here</span>
+    <button id="msStageMin">⌄ MINIMIZE</button>
+    <button id="msStageExit">✕ EXIT ROOM</button>
+  </div>
+  <div id="msStageBody"></div>
+</div>
 
 <div class="card" id="msHomeCard" style="display:none;border-color:#ffd76a">
   <h2>📍 YOU CAME IN THROUGH A POINTER</h2>
@@ -226,13 +247,28 @@ home: arcade.highscores.live/arcade/messenger.html — add it to your home scree
 
 <script>
 /* ================================================================
-   BLOB MESSENGER v0.3 "THE SHELF + THE FIELD FIXES" — the flagship
+   BLOB MESSENGER v0.3.1 "THE STUCK BOX" — the flagship
    face of the blob engine. The page supplies presentation + contacts;
    the ENGINE is the BLOB COMMS plugin, recalled by its blob and
    verified by its sha256 before a line of it runs (the loader
-   pattern). This page pins plugin v1.2 "THE FIELD FIXES" — blob
-   yL6BNx0c…, sha 5b111f80… — and inherits its media-context banner,
-   ghost-tile law, independent toggles and clean-meter plumbing.
+   pattern). This page pins plugin v1.3 "THE STUCK BOX" — blob
+   4xEsQxFN…, sha b9b96770… — and inherits its media-context banner,
+   frame-advance ghost law, independent toggles and clean-meter
+   plumbing.
+   v0.3.1 (David, Nov 8 18:12–18:16, from his phone): THE STAGE GETS A
+   HOME + AN EXIT. In v0.3 the plugin's face dock stayed position:fixed
+   and floated over the panels — a silent peer's black tile covered MY
+   SAVED CALLS with no way to move or dismiss it. Now the page ADOPTS
+   the dock node into an in-flow stage section at the top of the page,
+   under a slim stage bar: 👥 count · ⌄ MINIMIZE (the stage folds to
+   the bar; tiles park Cube-style — 16px at opacity .02, never
+   display:none — so their streams keep flowing; a room waits without
+   letting go) · ✕ EXIT ROOM (ends the visit — back to your own code's
+   home state). Plugin v1.3's frame-advance watchdog makes the silent
+   tile a name card ("camera quiet") instead of a black box. And every
+   shelf entry gains PER-TRACK grab lines — Law 4 surfaced: a jar's
+   tracks are separable, timestamp-linked in its record, grabbable one
+   by one (for the studio: clips pull as audio-only or video-only).
    v0.2 "THE OPEN DOOR": WHO'S OPEN + the invite bond (a knock on the
    room's talk topic, the owner's welcome, a came-to-visit line), all
    at the MESSENGER layer, plus the blob: home-address card.
@@ -251,12 +287,12 @@ home: arcade.highscores.live/arcade/messenger.html — add it to your home scree
    ================================================================ */
 (function(){
 'use strict';
-var PLUGIN_BLOB='yL6BNx0crk8M07FXVu8KhVsteQZZO-Mdz-mD2vkm9Eg';
-var PLUGIN_SHA='5b111f80d982052adf0d7dae9c792641c8b985ec265e2c78998359557ad14a28';
+var PLUGIN_BLOB='4xEsQxFNJxWvLIUAIBaw5-3JI1XTbe3O0ULOafW_8d0';
+var PLUGIN_SHA='b9b9677035f8c55bbb6cd54f56b6113be75a9fbdd2abda517d0a31c263be5685';
 var PUBLISHER='https://publisher.walrus-testnet.walrus.space/v1/blobs?epochs=30';
 var LOBBY_TOPIC='kodakai/comms/v1/lobby';
-var MS_PAGE_BLOB='yHHCLEcK9gHjlESXFaCkoSNTusWz99c83lLOTAH5cKo';   /* QR pin — candidate blob, two-step (the Cube's pattern) */
-var MS_PAGE_SHA='242c97b7d31c0a655236ae67149e092d7868fa0d5e15a2cc56bd210c8037ef87';     /* QR pin — sha256 of the candidate bytes */
+var MS_PAGE_BLOB='QdUzX71kWjskP9tM0pI4OJTsA88pf4D-PckMRuN6koI';   /* QR pin — candidate blob, two-step (the Cube's pattern) */
+var MS_PAGE_SHA='d159ea1cc068c31aba6f5cadbeec597e2491db03a2cc8473c57185b79c938628';     /* QR pin — sha256 of the candidate bytes */
 var PAGES_URL='https://arcade.highscores.live/arcade/messenger.html';
 var LOADER='https://arcade.highscores.live/arcade/blob-loader.html';
 var MIRRORS=['https://aggregator.walrus-testnet.walrus.space','https://walrus-testnet.blockscope.net'];
@@ -486,6 +522,7 @@ function normJar(rec, recordBlob, mine){
   var t0=(rec.tracks && rec.tracks[0]) || null;
   return {recordBlob:recordBlob, kind:rec.kind||'voice-jar/1', room:rec.room||'?', from:rec.from||'',
     startedAt:rec.startedAt||null, durMs:rec.durMs||0,
+    tracks:(rec.tracks||[]).map(function(t){ return {type:(t&&t.type)||'', blob:(t&&t.blob)||null}; }).filter(function(t){ return !!t.blob; }),
     trackBlob:rec.blob || (t0 && t0.blob) || null, trackSha:rec.sha256 || (t0 && t0.sha256) || null,
     mime:rec.mime || (t0 && t0.mime) || 'audio/webm', clean:rec.clean||null, mine:!!mine};
 }
@@ -529,6 +566,20 @@ function renderShelf(){
     row.appendChild(b); row.appendChild(st);
     var g=document.createElement('div'); g.className='grab'; g.textContent='grab: '+j.recordBlob;
     row.appendChild(g);
+    /* v0.3.1 PER-TRACK GRAB (Law 4 surfaced): a jar's tracks ride its
+       record as their own blobs — timestamp-linked in the record,
+       grabbable one by one. Print only what the record names; a record
+       with no tracks[] is a single-file jar, said plainly. */
+    if(j.tracks && j.tracks.length){
+      j.tracks.forEach(function(tr){
+        var tg=document.createElement('div'); tg.className='grab trackgrab';
+        tg.textContent=(tr.type==='video'?'🎬 video track: grab: ':'🎙 audio track: grab: ')+tr.blob;
+        row.appendChild(tg);
+      });
+    } else {
+      var sf=document.createElement('div'); sf.className='grab trackgrab'; sf.textContent='single-file jar';
+      row.appendChild(sf);
+    }
     box.appendChild(row);
   });
   renderHistoryLine();
@@ -685,6 +736,26 @@ function wire(){
     $('msGoHome').addEventListener('click', function(){ if(handle) handle.join(myCode); });
     $('msSaveVisit').addEventListener('click', function(){ $('msCCode').value=room; $('msCName').focus(); $('msCName').scrollIntoView({block:'center'}); });
   }
+  /* ----- v0.3.1: THE STAGE — adopt the plugin's dock into the page flow.
+     The plugin keeps its el.dock reference; moving the NODE is safe —
+     tiles are appended to the node wherever it lives. The strip, sheets
+     and banner stay in the plugin's fixed chrome; only the tiles come
+     home to the stage, where they take real space and scroll away. ----- */
+  var stageDock=(handle && handle._el && handle._el.dock) || null;
+  if(stageDock) $('msStageBody').appendChild(stageDock);
+  var stageMin=false;
+  window.__ms.stageDock=function(){ return stageDock; };
+  window.__ms.stageMin=function(){ return stageMin; };
+  window.__ms.setStageMin=function(v){ stageMin=!!v; $('msStage').classList.toggle('ms-min', stageMin); $('msStageMin').textContent=stageMin?'⌃ SHOW FACES':'⌄ MINIMIZE'; };
+  $('msStageMin').addEventListener('click', function(){ window.__ms.setStageMin(!stageMin); });
+  $('msStageExit').addEventListener('click', function(){
+    /* ✕ EXIT ROOM — end the visit / leave this room's presence and land
+       back in your own code's home state (the plugin's join navigates —
+       the same road the v0.2 LEAVE button walks). At home there is
+       nowhere to exit to; say so plainly. */
+    if(room!==myCode){ if(handle) handle.join(myCode); }
+    else toast('you are in your own room — this is home 🏠');
+  });
   $('msQrBtn').addEventListener('click', function(){ closePluginSheets(); renderMyQr(); $('msQrSheet').classList.add('open'); });
   $('msQrClose').addEventListener('click', function(){ $('msQrSheet').classList.remove('open'); });
   $('msCopyBtn').addEventListener('click', function(){
@@ -754,6 +825,7 @@ function wire(){
     $('msOpenBtn').classList.toggle('on', !!st.open);
     $('msOpenBtn').textContent=st.open?'📣 OPEN ✓':'📣 OPEN';
     document.body.classList.toggle('stage-on', st.peers>=1 || st.faceOn);
+    var scEl=$('msStageCount'); if(scEl) scEl.textContent='👥 '+(st.peers+1)+' here';
     var jl=$('msJarLine');
     if(st.jarOn) jl.textContent='🫙 saving this call — the badge is on, everyone can see it';
     else if(st.lastJar && st.lastJar.recordBlob) jl.textContent='🫙 last call saved · jar '+String(st.lastJar.recordBlob).slice(0,14)+'… · '+Math.round((st.lastJar.durMs||0)/1000)+'s of talk, sealed';
