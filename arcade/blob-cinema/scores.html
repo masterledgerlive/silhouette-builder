@@ -91,6 +91,28 @@ input,select{background:#0b0b1a;border:1px solid #33336a;color:#e8e8ff;border-ra
   </div>
 </div>
 
+<div class="panel" id="ledgerPanel">
+  <h2 style="margin:0 0 8px">📜 THE FULL LEDGER — BUNNY CUBE <span class="lbl">EVERY finished game — win, lose, or quit after a round · carried by reblob, permanent only by decision</span></h2>
+  <p class="lbl">The board above crowns rounds. This ledger remembers <b>whole games</b>: every match the Cube finishes seals a <span class="mono">game-ledger/1</span> record as a Walrus blob, and every device that was there learns it. Records are <b>carried</b>: a 30-epoch pour lives about 30 days, and anyone can keep a record alive by reblobbing it (the 🛡 keeper below). <b>Carried is kept by reblobbing; permanent is a second, deliberate decision</b> — this page offers no fake permanence button. If a record's blob lapses, a keeper copy held on any device can heal it — the re-pour must reproduce the identical blob id, or it is refused.</p>
+  <div id="ledgerList" class="lbl">learning the ledger…</div>
+  <div style="margin-top:10px">
+    <input id="ledgerRecInput" placeholder="ledger record blob id (game-ledger/1)" style="width:340px">
+    <button class="btn go" onclick="LGadd()">➕ add ledger record</button>
+    <span id="ledgerRecMsg" class="lbl"></span>
+  </div>
+  <div style="margin-top:10px">
+    🛡 <b>KEEPER</b> <span class="lbl">re-pour listed records to extend their carry — every re-pour is fetch-back verified:</span><br>
+    <select id="ledgerKeepWindow"><option value="0">all listed records</option><option value="7">expiring within 7 days</option><option value="2">expiring within 2 days</option></select>
+    <button class="btn go" onclick="LGkeeper()">🛡 REBLOB THE LEDGER</button>
+    <span id="ledgerKeepMsg" class="lbl"></span>
+  </div>
+</div>
+
+<div class="panel" id="zombieLedgerPanel">
+  <h2 style="margin:0 0 8px">📜 THE FULL LEDGER — ZOMBIE WORLD <span class="lbl">structure ready · no records yet — and no fake ones, ever</span></h2>
+  <p class="lbl">Zombie World does not seal <span class="mono">game-ledger/1</span> whole-game records yet — its runs seal <span class="mono">zombie-run/1</span> score records (the board above). When Zombie World games seal ledger records, every finished run — survived or fallen — will list here under the same law as the Cube's ledger: verified on intake, carried by reblob, permanent only by a separate decision.</p>
+</div>
+
 <div class="panel" id="zombiePanel">
   <h2 style="margin:0 0 8px">🧟 BLOB RECORDS — ZOMBIE WORLD <span class="lbl">every record a Walrus blob · verified right here · <a href="../studio/zombie-player.html" style="color:var(--blue)">play Zombie World →</a></span></h2>
   <p class="lbl">Survival records, separated by game like all the others: <b>nights survived</b>, <b>kills</b>, <b>endurance</b> (kills × seconds) — and the <b>zombie board</b>: fastest takedown by a player who <i>was</i> the zombie. Records fetch from their blobs and hash-verify in your browser (format <span class="mono">zombie-run/1</span>). Paste a record blob id from the game's 🏆 board to add it here. Landing from the game? Use a <span class="mono">#zombie=id1,id2</span> link — ids in the address are admitted and verified the same way.</p>
@@ -613,6 +635,153 @@ async function addZombieRecord(){
 renderZombieHall();
 
 renderCubeHall();
+</script>
+
+<script>
+// ---- THE FULL LEDGER — game-ledger/1 (David, Nov 8 19:22 + 19:28) ----
+// Every finished Bunny Cube game — win, lose, or quit after a round — as
+// ONE long honest list. Records verify on intake (ledgerHash, the same
+// fixed-field discipline as winHash); a record whose hash fails is shown
+// FLAGGED, never silently dropped. Every entry names its blob + the date
+// it is carried until; the 🛡 keeper re-pours listed records (fetch-back
+// verified) to extend the carry; a lapsed record heals from a keeper copy
+// held on this device, and the heal is refused unless the re-pour
+// reproduces the IDENTICAL blob id (content addressing is the judge).
+// Permanence is a separate, deliberate act — no button here fakes it.
+const LG_EPOCHS_MS=30*24*3600*1000; // epochs=30 on Walrus testnet ≈ 30 days
+const LG_PUBLISHER="https://publisher.walrus-testnet.walrus.space/v1/blobs?epochs=30";
+let LGentries=[]; // {id, rec, raw, lapsed, ok}
+function LGhash(r){ const res=(r&&r.result)||{}; const c={kind:r.kind, game:r.game, room:r.room, p1:r.p1, p2:r.p2, t1:r.t1, t2:r.t2, winner:res.winner, s1:res.s1, s2:res.s2, sa:res.sa, rounds:res.rounds, ts:r.ts, prev:r.prev}; return sha256hex(_enc.encode(JSON.stringify(c))); }
+function LGesc(s){ return String(s==null?"":s).replace(/</g,"&lt;"); }
+function LGstore(){ try{ const s=JSON.parse(localStorage.getItem("hall-ledger-v1")||"{}"); s.copies=s.copies||{}; s.until=s.until||{}; return s; }catch(e){ return {copies:{}, until:{}}; } }
+function LGsave(st){ try{ localStorage.setItem("hall-ledger-v1", JSON.stringify(st)); }catch(e){} }
+function LGids(){
+  const st=LGstore(); const out=new Set(Object.keys(st.copies));
+  const grab=s=>{ const m=String(s||"").match(/[#?&]ledger=([A-Za-z0-9_,-]+)/g); if(m) for(const part of m){ const ids=part.split("ledger=")[1]; ids.split(",").forEach(x=>{ x=x.trim(); if(x.length>20) out.add(x); }); } };
+  try{ grab(location.hash); }catch(e){}
+  try{ grab(location.search); }catch(e){}
+  return Array.from(out);
+}
+async function LGfetchBuf(id){
+  for(const base of CUBE_LADDER){ try{ const r=await fetch(base+id); if(r.ok) return await r.arrayBuffer(); }catch(e){} }
+  return null;
+}
+function LGpublisherId(j){
+  return (j&&j.newlyCreated&&j.newlyCreated.blobObject&&j.newlyCreated.blobObject.blobId)||(j&&j.alreadyCertified&&(j.alreadyCertified.blobId||(j.alreadyCertified.blobObject&&j.alreadyCertified.blobObject.blobId)))||null;
+}
+function LGresultLine(r){
+  const res=r.result||{}; const who=r.p2?(LGesc(r.p1)+" + "+LGesc(r.p2)):LGesc(r.p1)+" (solo)";
+  if(res.winner==="bullies") return "🍎 <b>THE BULLIES WIN</b> — "+who+" fall · rounds "+res.s1+"–"+res.s2+" · bullies took "+res.sa;
+  if(res.winner==="unfinished-quit") return "🚪 <b>UNFINISHED</b> — quit after "+res.rounds+" round(s) · "+who+" · score "+res.s1+"–"+res.s2+" · bullies "+res.sa;
+  return "🏆 <b>"+LGesc(res.winner)+" WINS THE MATCH</b> · rounds "+res.s1+"–"+res.s2+(res.sa?" · bullies "+res.sa:"")+" · "+who;
+}
+async function LGload(){
+  const st=LGstore();
+  const ids=LGids();
+  LGentries=[];
+  for(const id of ids){
+    let rec=null, raw=null, lapsed=false;
+    const buf=await LGfetchBuf(id);
+    if(buf){ const t=new TextDecoder().decode(buf); try{ const j=JSON.parse(t); if(j&&j.kind==="game-ledger/1"){ rec=j; raw=t; } }catch(e){} }
+    if(rec){
+      if(st.copies[id]!==raw) st.copies[id]=raw;
+      if(!st.until[id]) st.until[id]=(rec.ts||Date.now())+LG_EPOCHS_MS;
+    } else if(st.copies[id]){
+      try{ const c=JSON.parse(st.copies[id]); if(c&&c.kind==="game-ledger/1"){ rec=c; raw=st.copies[id]; lapsed=true; } }catch(e){}
+    }
+    if(!rec) continue; // not a ledger record (or unreachable with no copy held) — not this list's business
+    LGentries.push({id, rec, raw, lapsed, ok: LGhash(rec)===rec.h});
+  }
+  LGsave(st);
+  LGentries.sort((a,b)=>(b.rec.ts||0)-(a.rec.ts||0));
+  LGrender();
+}
+function LGrender(){
+  const el=document.getElementById("ledgerList"); if(!el) return;
+  const st=LGstore();
+  if(!LGentries.length){ el.innerHTML="No ledger records learned yet — finish a game in the Cube and follow its 🌐 HALL link, or paste a ledger record blob id below. Wins AND losses live here."; return; }
+  const when=ts=>{ const d=new Date(ts); return d.toLocaleDateString()+" "+String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0"); };
+  el.innerHTML=LGentries.map(e=>{
+    const r=e.rec;
+    let h="<div style='padding:7px 0;border-bottom:1px solid #2a2a4d'>";
+    h+="<b>"+when(r.ts)+"</b> · room <span class='mono'>"+LGesc(r.room||"—")+"</span> · "+LGresultLine(r);
+    h+=" "+(e.ok?'<span class="badge v">✓ HASH VERIFIED</span>':'<span class="badge u">⚠ HASH FAILS — shown flagged, not trusted</span>');
+    if(r.tape) h+=" <a class='btn' href='../studio/bbb-cube.html?replay="+r.tape+"'>▶ REPLAY</a>";
+    if(Array.isArray(r.jars)&&r.jars.length) h+='<span class="jarSlot" data-rec="'+e.id+'" data-jars="'+r.jars.join(",")+'"></span>';
+    h+="<br><span class='lbl mono' style='font-size:.68rem;word-break:break-all'>grab: "+e.id+"</span>";
+    if(e.lapsed){
+      h+="<br>⚠ <b>lapsed</b> — this record's blob no longer answers. "+(st.copies[e.id]
+        ? "A keeper copy is held on this device: <button class='btn go' onclick=\"LGheal('"+e.id+"')\">♻ RE-POUR FROM THE KEPT COPY</button>"
+        : "No keeper copy on this device — it heals from any device that kept one.");
+    } else {
+      h+="<br><span class='lbl'>🧳 carried until <b>"+when(st.until[e.id]||((r.ts||Date.now())+LG_EPOCHS_MS))+"</b> — reblob to keep it · carried is kept by reblobbing; permanent is a second decision</span>";
+    }
+    return h+"</div>";
+  }).join("");
+  if(window.FPfill) FPfill();
+}
+async function LGadd(){
+  const inp=document.getElementById("ledgerRecInput"), msg=document.getElementById("ledgerRecMsg");
+  const id=(inp.value||"").trim(); if(!id) return;
+  msg.textContent="fetching + verifying…";
+  const buf=await LGfetchBuf(id);
+  if(!buf){
+    const st=LGstore();
+    if(st.copies[id]){ msg.textContent="that blob is unreachable right now, but this device holds a keeper copy — it is on the ledger below, flagged."; LGload(); return; }
+    msg.textContent="✗ that blob is unreachable right now, and no keeper copy is held on this device."; return;
+  }
+  const raw=new TextDecoder().decode(buf);
+  let j=null; try{ j=JSON.parse(raw); }catch(e){}
+  if(!j||j.kind!=="game-ledger/1"){ msg.textContent="✗ that blob is not a game-ledger/1 record."; return; }
+  const st=LGstore(); st.copies[id]=raw; if(!st.until[id]) st.until[id]=(j.ts||Date.now())+LG_EPOCHS_MS; LGsave(st);
+  inp.value="";
+  msg.textContent=(LGhash(j)===j.h)?"✓ verified and admitted to the ledger.":"⚠ admitted but FLAGGED — its hash does not verify; it is shown flagged on the ledger, never silently trusted.";
+  LGload();
+}
+async function LGkeeper(){
+  const msg=document.getElementById("ledgerKeepMsg");
+  const winDays=+((document.getElementById("ledgerKeepWindow")||{}).value||0);
+  const st=LGstore(); const now=Date.now();
+  const scope=LGentries.filter(e=>!e.lapsed&&(winDays===0||((st.until[e.id]||0)-now)<=winDays*24*3600*1000));
+  if(!scope.length){ msg.textContent="nothing in that window to reblob."; return; }
+  let kept=0, failed=0;
+  msg.textContent="🛡 keeping… 0/"+scope.length;
+  for(const e of scope){
+    try{
+      const buf=await LGfetchBuf(e.id); if(!buf) throw new Error("unreachable");
+      const before=sha256hex(new Uint8Array(buf));
+      const pr=await fetch(LG_PUBLISHER,{method:"PUT", body:buf});
+      if(!pr.ok) throw new Error("publisher "+pr.status);
+      const nid=LGpublisherId(await pr.json());
+      if(nid!==e.id) throw new Error("re-pour returned a different blob id");
+      const back=await LGfetchBuf(e.id); if(!back) throw new Error("fetch-back unreachable");
+      if(sha256hex(new Uint8Array(back))!==before) throw new Error("fetch-back hash mismatch");
+      st.until[e.id]=Date.now()+LG_EPOCHS_MS; kept++;
+    }catch(err){ failed++; }
+    msg.textContent="🛡 keeping… "+(kept+failed)+"/"+scope.length;
+  }
+  LGsave(st); LGrender();
+  msg.textContent="🛡 keeper done — "+kept+" record(s) reblobbed + fetch-back verified, carried ~30 more days"+(failed?" · "+failed+" could not be kept (see the list)":"");
+}
+async function LGheal(id){
+  const msg=document.getElementById("ledgerRecMsg");
+  const st=LGstore(); const raw=(st.copies||{})[id];
+  if(!raw){ msg.textContent="no keeper copy of that record on this device."; return; }
+  let rec=null; try{ rec=JSON.parse(raw); }catch(e){}
+  if(!rec||rec.kind!=="game-ledger/1"||LGhash(rec)!==rec.h){ msg.textContent="⚠ the kept copy's hash does not verify — refused: it may not be the record it claims to be."; return; }
+  msg.textContent="healing — re-pouring the kept copy…";
+  try{
+    const pr=await fetch(LG_PUBLISHER,{method:"PUT", body:raw});
+    if(!pr.ok) throw new Error("publisher "+pr.status);
+    const nid=LGpublisherId(await pr.json());
+    if(nid!==id){ msg.textContent="⚠ refused — the re-pour produced a DIFFERENT blob id ("+String(nid||"?").slice(0,12)+"…), so the kept copy is not this record's bytes. Nothing was admitted."; return; }
+    st.until[id]=Date.now()+LG_EPOCHS_MS; LGsave(st);
+    msg.textContent="✓ healed — the record is a blob again under its own id, carried ~30 more days.";
+    LGload();
+  }catch(e){ msg.textContent="⚠ heal failed: "+e.message; }
+}
+window.LGadd=LGadd; window.LGkeeper=LGkeeper; window.LGheal=LGheal;
+LGload();
 </script>
 </body>
 </html>
