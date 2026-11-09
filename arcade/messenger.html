@@ -177,6 +177,38 @@
   #msPeek .btnrow button{flex:1;min-height:54px;font-size:16.5px;padding:6px}
   #msTapRow{display:none;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px;background:#101a30;border:1.5px solid #39507a;border-radius:12px;padding:8px 10px;font-size:16px;color:#9fb6cc}
   #msTapRow button{min-height:48px;font-size:16.5px;padding:6px 12px}
+  /* v0.6 THE RALLY — FIND ANYONE rows, the jump card, the play shelf */
+  .ms-net-row{display:flex;align-items:center;gap:10px;width:100%;min-height:68px;background:#16233c;border:1px solid #39507a;border-radius:12px;padding:10px 12px;margin:8px 0;text-align:left}
+  .ms-net-row .who{flex:1;min-width:0}
+  .ms-net-row .nm{font-size:21px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ms-net-row .lbl2{font-size:25px;color:#ffd76a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ms-net-row .meta{font-size:15px;color:#9fb6cc;margin-top:2px}
+  .ms-net-row .info{font-size:16px;color:#cfd8ea;margin-top:2px}
+  .ms-net-row .gameline{font-size:16.5px;color:#ffe9a8;margin-top:3px;line-height:1.4}
+  .ms-net-row .doors{display:flex;flex-direction:column;gap:8px;flex:none}
+  .ms-net-row .doors button{min-height:52px;font-size:17px;padding:6px 14px}
+  .ms-net-row .talkbtn{background:#1a2438}
+  .ms-net-row .gobtn{background:#14532d;border-color:#3ec97f;color:#d9ffe6}
+  #msNetFilter{font-size:24px;margin-top:10px}
+  /* the jump card lives in the reserved status slot (pop-up
+     discipline: in flow, never over the stage or the call bar) */
+  #msJumpCard{display:none;margin-top:10px;background:#241a08;border:2px solid #ffd76a;border-radius:14px;padding:14px 12px;text-align:center}
+  #msJumpCard.show{display:block}
+  #msJumpText{font-size:20px;color:#ffe9a8;line-height:1.45}
+  #msJumpSub{font-size:15px;color:#cfd8ea;line-height:1.5;margin-top:6px;text-align:left}
+  #msJumpGo{display:block;background:#14532d;border:1.5px solid #3ec97f;color:#d9ffe6;border-radius:14px;min-height:64px;line-height:64px;font-size:23px;text-decoration:none;margin-top:10px;padding:0 8px}
+  #msJumpFold{width:100%;min-height:48px;font-size:16px;margin-top:8px}
+  #msJumpStrip{font-size:17px;color:#ffe9a8;line-height:1.5;cursor:pointer;text-align:left}
+  #msJumpGo2{color:#3ec97f;font-weight:bold;font-size:19px;white-space:nowrap}
+  #msPlayBtn{width:100%;min-height:62px;font-size:21px;margin-top:12px;background:#3a2a08;border-color:#ffd76a;color:#ffe9a8;display:none}
+  #msPlayShelf{display:none;margin-top:10px}
+  .ms-game-row{display:flex;align-items:center;gap:10px;min-height:72px;background:#16233c;border:1px solid #39507a;border-radius:12px;padding:8px 10px;margin:8px 0}
+  .ms-game-row .who{flex:1;min-width:0}
+  .ms-game-row .nm{font-size:21px;color:#fff}
+  .ms-game-row .meta{font-size:15px;color:#9fb6cc;margin-top:2px;line-height:1.45}
+  .ms-game-row .take{flex:none;min-height:56px;font-size:18px;padding:0 16px;background:#14532d;border-color:#3ec97f;color:#d9ffe6}
+  #msTripLine{display:none;margin-top:10px;font-size:16.5px;color:#ffe9a8;line-height:1.5;background:#101a30;border:1.5px solid #8a6d2f;border-radius:12px;padding:10px 12px;text-align:left}
+  #msTripLine button{min-height:48px;font-size:15.5px;margin-top:8px;padding:6px 14px}
 </style>
 </head>
 <body>
@@ -187,12 +219,24 @@
   <div id="msState">waking the messenger…</div>
   <div id="msGuestLine" style="display:none"></div>
   <div id="msVisitStatus"></div>
+  <div id="msJumpCard">
+    <div id="msJumpFull">
+      <div id="msJumpText"></div>
+      <div id="msJumpSub">Your room stays open right here — the gathering waits underneath the trip, and you can tap back in anytime. Talk inside the game rides the game's own Blob Talk; a talk layer that never breaks across the jump is the Portal's gift, still coming. No quorum: whoever taps GO, plays — whoever's busy can jump in later with the same ticket.</div>
+      <a id="msJumpGo" href="#">🎮 GO TOGETHER</a>
+      <button id="msJumpFold">⌄ FOLD THIS CARD — the trip stays open</button>
+    </div>
+    <div id="msJumpStrip" style="display:none"><span id="msJumpStripText"></span> <a id="msJumpGo2" href="#">GO TOGETHER ▸</a></div>
+  </div>
 </div>
 <div class="card" id="msRackCard">
   <h2>🗂 YOUR ROOMS — THE RACK</h2>
   <p>Every room you hold sits here on a chip. ONE room is in front — that&rsquo;s where your voice and face live. The others wait <b>parked</b>: their people and their writing stay, their chat keeps arriving, and you are honestly quiet there (your mic and camera are off in a parked room — nobody hears a room you&rsquo;re not standing in). Tap a chip to step into that room; your talk comes with you.</p>
   <div id="msRackChips"></div>
   <div id="msLiveAlert" style="display:none"></div>
+  <button id="msPlayBtn">🎮 PLAY TOGETHER — take this room into a game</button>
+  <div id="msPlayShelf"></div>
+  <div id="msTripLine"></div>
 </div>
 
 <div id="msRecBanner"></div>
@@ -261,6 +305,14 @@
   <input type="text" id="msCName" maxlength="24" placeholder="their name — Grandma, David…"/>
   <input type="text" id="msCCode" maxlength="8" placeholder="their code" style="margin-top:8px;font-size:22px;letter-spacing:3px;text-transform:uppercase"/>
   <button class="savebtn" id="msSaveContact">➕ SAVE CONTACT</button>
+</div>
+
+<div class="card" id="msNetCard">
+  <h2>🌍 FIND ANYONE — EVERYONE LIVE, EVERYWHERE</h2>
+  <p>One board for the whole network: open calls, hosted game tables, hosted rooms — each row names who, what, and where. 🎙 TALK wears their talk here on your screen; 🚪 GO THERE travels to where they are. The gathering is the constant; the worlds are trips.</p>
+  <input type="text" id="msNetFilter" placeholder="type a name, a game, a room…" autocomplete="off"/>
+  <div id="msNetList"></div>
+  <div class="empty" id="msNetEmpty">Nobody's broadcasting right now — when a friend opens a call, hosts a table, or opens THE ROOM, they appear here.</div>
 </div>
 
 <div class="card" id="msSavedCard">
@@ -344,7 +396,7 @@ home: arcade.highscores.live/arcade/messenger.html — add it to your home scree
 
 <script>
 /* ================================================================
-   BLOB MESSENGER v0.5 "THE SESSION BOX" — the flagship
+   BLOB MESSENGER v0.6 "THE RALLY" — the flagship
    face of the blob engine. The page supplies presentation + contacts;
    the ENGINE is the BLOB COMMS plugin, recalled by its blob and
    verified by its sha256 before a line of it runs (the loader
@@ -449,6 +501,28 @@ home: arcade.highscores.live/arcade/messenger.html — add it to your home scree
    UI where David reads it: recorded on this device from what it
    received — if a connection dropped a moment, the box has a gap
    and says so.
+   v0.6 "THE RALLY" (David, Nov 8 12:25, 13:02, 18:42, 21:39 —
+   plugin UNCHANGED at v1.6; this is a messenger-layer build): the
+   gathering is the constant; games are trips the room takes; the
+   booth enters any world with everyone inside. FIND ANYONE — one
+   board for the whole network, listening to all three lobby
+   families (comms open calls, hosted Cube tables, hosted Rooms),
+   each row naming WHO + WHAT + WHERE with two doors: 🎙 TALK
+   (wear their talk here — mount their room in your rack) and
+   🚪 GO THERE (travel: the same mount for a call; the loader door
+   into THEIR game room for a game). PLAY TOGETHER — in a gathered
+   room, one press mints ONE jump ticket and publishes it on the
+   room's talk topic; every member's big GO TOGETHER card carries
+   that same ticket + their own name; GO is per-person consent and
+   there is NO QUORUM — whoever goes, plays, and a late GO rides
+   the same ticket while the gathering lasts. THE LOADING ROOM:
+   the room never closes for a trip — it stays held in the rack,
+   parked underneath, and the card says so honestly (talk inside
+   the game is the game's own Blob Talk; a layover unbroken across
+   the page change is the Portal's power, named, not faked).
+   OPEN FROM INSIDE: while 📣 OPEN, my ms-open beacon carries my
+   room's open trip ("in BUNNY CUBE now — room XXXXX"), so the
+   board's GO THERE for my call joins my table mid-game.
    ================================================================ */
 (function(){
 'use strict';
@@ -456,8 +530,8 @@ var PLUGIN_BLOB='Px046YmRZY4ttQsdd_ADlWiK_NInC8g6roIBZuA388I';
 var PLUGIN_SHA='9728b1e0adfd8a5fbb6bf994728e3f00a06587cbdcdb8f07c03d765f03c58f2a';
 var PUBLISHER='https://publisher.walrus-testnet.walrus.space/v1/blobs?epochs=30';
 var LOBBY_TOPIC='kodakai/comms/v1/lobby';
-var MS_PAGE_BLOB='qRg7FPrGXPb4tbIr5sTkrPntAIGUC6tAb0U8wtmmOjI';   /* QR pin — candidate blob, two-step (the Cube's pattern) */
-var MS_PAGE_SHA='a5036ccd55e308295eaf3ce90afcd5cec1c221d89ad5c41b7f5033bf2ea8bc37';     /* QR pin — sha256 of the candidate bytes */
+var MS_PAGE_BLOB='TNFOQDrUPxAHsT9JEKcTm03iRaRhnDczvkOdRZD_Mro';   /* QR pin — candidate blob, two-step (the Cube's pattern) */
+var MS_PAGE_SHA='b2a2fb73e1b8a5219acd932a4643ab905737c85363d99017040318afddbe1054';     /* QR pin — sha256 of the candidate bytes */
 var PAGES_URL='https://arcade.highscores.live/arcade/messenger.html';
 var LOADER='https://arcade.highscores.live/arcade/blob-loader.html';
 var MIRRORS=['https://aggregator.walrus-testnet.walrus.space','https://walrus-testnet.blockscope.net'];
@@ -497,6 +571,32 @@ try{ if(savedName) localStorage.setItem('blobcomms-name', savedName); }catch(e){
 var roomLabel='', roomInfo='';
 try{ roomLabel=localStorage.getItem('messenger-room-label')||''; roomInfo=localStorage.getItem('messenger-room-info')||''; }catch(e){}
 var msBeacons=new Map();   /* code -> {code, name, label, info, count, ts} from ms-open beacons */
+
+/* ----- v0.6 THE RALLY — state for the world beyond this page's own
+   rooms: Cube tables + Room hosts heard on their lobby topics, and
+   the jumps this page mints or hears. The GAME SHELF pins were
+   verified at build time by fetch-back: each blob's poured bytes
+   sha256-match the frozen page they name (Cube v1.9.8 pour receipt
+   debug/v198-pour.json; Zombie v1.3 goalie TARGET). ----- */
+var CUBE_LOBBY_TOPIC='kodakai/cube/v1/lobby';
+var ROOM_LOBBY_TOPIC='kodakai/room/v1/lobby';
+var cubeTables=new Map();   /* room -> {room, world, need, ts} */
+var roomHosts=new Map();    /* code -> {code, hostName, count, live, ts} */
+var jumps=new Map();        /* messenger room code -> {game, gameName, gameRoom, hostName, ts, mine} */
+var jumpFolded=false;
+var netMqHooked=false;
+var lastTravel=null;        /* {url, kind, code, at} — the last travel this page began */
+var holdTravel=false;       /* tests set this: travel is recorded, not taken */
+var jumpsPublished=[];      /* every jump THIS page published (proof it went out exactly once) */
+var GAMES={
+  cube:{key:'cube', name:'BUNNY CUBE', ver:'v1.9.8', icon:'🐰',
+    blob:'JAw8qvOYPm7rC1ZGb0owfPY4lpVYWRPijMbr8ZbW6JA', sha:'f7a23b4c78a1c16cfb25538ad77c00cb7b2021547a7cd623fc8dd72c8aeb6191'},
+  zombie:{key:'zombie', name:'ZOMBIE WORLD', ver:'v1.3', icon:'🧟',
+    blob:'Zq95-47oC4dYDPDXRJXAwYq3obuPIopBgLAqlFxfOIA', sha:'0dec725145678238ac10dbed8cf0cf311eca17d6081a4d3f5cc882832f90bfc3'}
+};
+function gameLoaderURL(g, roomCode, nm){ return LOADER+'?g='+g.blob+'&h='+g.sha+'&n='+encodeURIComponent(g.icon+' '+g.name+' '+g.ver)+'&room='+roomCode+(nm?'&name='+encodeURIComponent(nm):''); }
+function roomPageURL(code){ return 'https://arcade.highscores.live/arcade/room.html?room='+code; }
+function myChosenName(){ var home=entries.get(myCode); return home?home.handle.state().name:(savedName||''); }
 
 function loaderLink(code){ return LOADER+'?g='+MS_PAGE_BLOB+'&h='+MS_PAGE_SHA+'&n='+encodeURIComponent('💬 BLOB MESSENGER')+'&room='+code; }
 
@@ -635,7 +735,7 @@ function publishMsOpen(){
   publishMsOpen._last=Date.now();
   try{ home.handle._s.mq.publish(LOBBY_TOPIC, JSON.stringify({type:'ms-open', tid:home.handle.tid, ns:'messenger', code:myCode,
     name:home.handle.state().name, label:roomLabel, info:roomInfo,
-    count:home.handle.state().peers+1, ts:Date.now()})); }catch(e){}
+    count:home.handle.state().peers+1, game:beaconGameField(), ts:Date.now()})); }catch(e){}
 }
 function visitStatus(txt){ var el=$('msVisitStatus'); if(el) el.textContent=txt; }
 /* ================================================================
@@ -725,7 +825,7 @@ function foreground(code){
   updateVisitCard();
   var st=e.handle.state(); renderState(st.joinState, st.peers+1);
   renderRack._sig=null; renderRack();
-  renderTapRow._sig=null; renderTapRow();
+  renderTapRow._sig=null; renderTapRow(); renderJumpCard();
 }
 function rackJoin(code, opts){
   opts=opts||{};
@@ -742,7 +842,7 @@ function rackExit(code){
   var wasFg=(fgCode===code);
   e.handle.destroy();
   if(e.hostEl.parentNode) e.hostEl.parentNode.removeChild(e.hostEl);
-  entries.delete(code); tapsPending.delete(code);
+  entries.delete(code); tapsPending.delete(code); jumps.delete(code); if(code===fgCode) renderJumpCard();
   if(peekCode===code) closePeek();
   renderRack._sig=null;
   if(wasFg) foreground(myCode); else renderRack();
@@ -767,7 +867,7 @@ function hookEntryMq(e){
       var lm; try{ lm=JSON.parse(payload.toString()); }catch(err){ return; }
       if(lm && lm.type==='ms-open' && lm.ns==='messenger' && !ownTids().has(lm.tid)){
         var cc=cleanCode(lm.code||'');
-        if(cc) msBeacons.set(cc, {code:cc, name:String(lm.name||'GUEST').slice(0,18), label:String(lm.label||'').slice(0,28), info:String(lm.info||'').slice(0,60), count:lm.count||1, ts:Date.now()});
+        if(cc) msBeacons.set(cc, {code:cc, name:String(lm.name||'GUEST').slice(0,18), label:String(lm.label||'').slice(0,28), info:String(lm.info||'').slice(0,60), count:lm.count||1, game:(lm.game&&lm.game.gameRoom)?{game:String(lm.game.game||''), gameName:String(lm.game.gameName||'').slice(0,24), gameRoom:String(lm.game.gameRoom).slice(0,8)}:null, ts:Date.now()});
       }
       return;
     }
@@ -782,6 +882,18 @@ function hookEntryMq(e){
     else if(m.type==='visit-welcome' && m.to===e.handle.tid && e.isVisit && e.visit.phase!=='in'){
       e.visit.phase='in'; if(m.hostName) e.visit.hostName=m.hostName;
       if(e.code===fgCode) visitStatus('You\'re visiting '+(e.visit.hostName||'your host')+' — say hi! 👋');
+      renderRack._sig=null; renderRack();
+    }
+    else if(m.type==='jump' && m.gameRoom){
+      /* v0.6 THE RALLY: a jump published in a room I hold lands as that
+         room's open trip — ONE ticket, a named host, and the game
+         resolved against THIS page's own shelf (the wire names it;
+         my pins build the door — a pointer from the wire is never
+         trusted over the shelf). The trip persists while the
+         gathering lasts, so a late GO rides the same ticket. */
+      var gk=GAMES[m.game]||null;
+      jumps.set(e.code, {game:m.game, gameName:gk?gk.name:String(m.gameName||'A GAME').slice(0,24), gameRoom:String(m.gameRoom).slice(0,8), hostName:String(m.hostName||'The host').slice(0,18), ts:Date.now(), mine:false});
+      if(e.code===fgCode){ jumpFolded=false; renderJumpCard(); }
       renderRack._sig=null; renderRack();
     }
   });
@@ -803,7 +915,7 @@ function rackTick(){
       if(e.code===fgCode) visitStatus('Nobody answered — they may have stepped away. You can wait here, or head home.');
     }
   });
-  renderOpenRooms(); renderShelf(); pourHistory(); publishMsOpen(); renderRack(); renderSavedRooms(); checkSavedLiveAlerts();
+  renderOpenRooms(); renderShelf(); pourHistory(); publishMsOpen(); renderRack(); renderSavedRooms(); checkSavedLiveAlerts(); hookNetMq(); renderNetBoard(); renderJumpCard();
 }
 /* ----- THE TAP ON THE SHOULDER (David, Nov 8 18:21 + 18:23) -----
    A direct address in a PARKED room summons its holder: an explicit
@@ -925,7 +1037,7 @@ function renderRack(){
   var codes=[...entries.keys()].sort(function(a,b){ return (a===myCode?0:1)-(b===myCode?0:1); });
   var sig=codes.map(function(code){
     var e=entries.get(code), st=e.handle.state();
-    return code+':'+(code===fgCode?1:0)+':'+st.peers+':'+(roomIsLive(code)?1:0)+':'+(tapsPending.has(code)?tapsPending.get(code).count:0)+':'+(savedRoomFor(code)?1:0)+':'+entryLabel(e)+':'+(st.parked?1:0);
+    return code+':'+(code===fgCode?1:0)+':'+st.peers+':'+(roomIsLive(code)?1:0)+':'+(tapsPending.has(code)?tapsPending.get(code).count:0)+':'+(savedRoomFor(code)?1:0)+':'+entryLabel(e)+':'+(st.parked?1:0)+(jumps.has(code)?':trip':'');
   }).join('|');
   if(sig===renderRack._sig) return; renderRack._sig=sig;
   box.innerHTML='';
@@ -936,7 +1048,7 @@ function renderRack(){
     var who=document.createElement('div'); who.className='who';
     var lb=document.createElement('div'); lb.className='lb'; lb.textContent=entryLabel(e);
     var cd=document.createElement('div'); cd.className='cd';
-    cd.textContent=code+(code===fgCode?' · YOU ARE HERE':(st.parked?' · parked — you are quiet here':' · parked'));
+    cd.textContent=code+(code===fgCode?' · YOU ARE HERE':(st.parked?' · parked — you are quiet here':' · parked'))+(jumps.has(code)?' · 🎮 trip open':'');
     who.appendChild(lb); who.appendChild(cd);
     chip.appendChild(dot); chip.appendChild(who);
     var cnt=document.createElement('span'); cnt.className='cnt'; cnt.textContent='👥 '+(st.peers+1);
@@ -984,6 +1096,215 @@ function renderTapRow(){
     row.appendChild(b);
   });
 }
+/* ================================================================
+   v0.6 THE RALLY — FIND ANYONE + PLAY TOGETHER (David, Nov 8 12:25,
+   13:02, 18:42, 21:39). The gathering is the constant; games are
+   trips the room takes; the booth enters any world with everyone
+   inside. FIND ANYONE listens to all three lobby families on the
+   HOME mount's own client (the plugin's FIND hears only the comms
+   lobby): comms open calls (the merged board's data), Cube tables
+   (kodakai/cube/v1/lobby — {type:'open', room, world, need, ts};
+   that beacon carries NO name, so its row names the game and never
+   an invented host), and hosted Rooms (kodakai/room/v1/lobby —
+   {type:'beacon', code, hostName, count, live, ts}). PLAY TOGETHER
+   mints ONE jump ticket per press and publishes {type:'jump'} on
+   the room's talk topic — the messenger layer over the plugin's own
+   topics; the plugin file is untouched. GO is per-person consent;
+   there is NO QUORUM; the card persists while the gathering lasts,
+   so a late GO rides the same ticket. The room itself never closes
+   for a trip: it stays held in the rack, parked underneath — THE
+   LOADING ROOM. Talk inside the game is the game's own Blob Talk;
+   a layover literally unbroken across the page change is the
+   Portal's power — named on the card, not faked here.
+   ================================================================ */
+function hookNetMq(){
+  if(netMqHooked) return;
+  var home=entries.get(myCode);
+  if(!home || !home.handle || !home.handle._s || !home.handle._s.mq || !home.handle._s.connected) return;
+  netMqHooked=true;
+  var mq=home.handle._s.mq;
+  try{ mq.subscribe(CUBE_LOBBY_TOPIC); mq.subscribe(ROOM_LOBBY_TOPIC); }catch(e){}
+  mq.on('message', function(t, payload){
+    if(t!==CUBE_LOBBY_TOPIC && t!==ROOM_LOBBY_TOPIC) return;
+    var m; try{ m=JSON.parse(payload.toString()); }catch(e){ return; }
+    if(!m) return;
+    if(t===CUBE_LOBBY_TOPIC && m.type==='open' && m.room){
+      cubeTables.set(String(m.room), {room:String(m.room), world:String(m.world||''), need:m.need||0, ts:Date.now()});
+    } else if(t===ROOM_LOBBY_TOPIC && m.type==='beacon' && m.code){
+      var cc=cleanCode(m.code); if(!cc) return;
+      roomHosts.set(cc, {code:cc, hostName:String(m.hostName||'GUEST').slice(0,18), count:Math.max(1, +m.count||1), live:!!m.live, ts:Date.now()});
+    } else return;
+    renderNetBoard._sig=null;
+  });
+}
+function netRows(){
+  var now=Date.now(), out=[];
+  mergedOpenRooms().forEach(function(r){
+    if(r.code===myCode) return;
+    var b=msBeacons.get(r.code);
+    var g=(b && b.game && b.game.gameRoom && (now-b.ts<=30000)) ? b.game : null;
+    out.push({fam:'call', code:r.code, name:r.hostName, label:r.label||'', info:r.info||'', count:r.count||1, live:!!r.live, game:g, ts:r.ts});
+  });
+  cubeTables.forEach(function(t, room){ if(now-t.ts>30000){ cubeTables.delete(room); return; } out.push({fam:'cube', code:t.room, world:t.world, ts:t.ts}); });
+  roomHosts.forEach(function(h, code){ if(now-h.ts>30000){ roomHosts.delete(code); return; } if(code===myCode) return; out.push({fam:'room', code:h.code, name:h.hostName, count:h.count, live:h.live, ts:h.ts}); });
+  out.sort(function(a, b){ return b.ts-a.ts; });
+  return out;
+}
+function travelURLFor(r){
+  if(!r) return null;
+  if(r.fam==='cube') return gameLoaderURL(GAMES.cube, r.code, myChosenName());
+  if(r.fam==='room') return roomPageURL(r.code);
+  if(r.fam==='call' && r.game){ var g=GAMES[r.game.game]||GAMES.cube; return gameLoaderURL(g, r.game.gameRoom, myChosenName()); }
+  return null;   /* a plain call row travels by mounting, not by URL */
+}
+function doTravel(url, kind, code){
+  lastTravel={url:url, kind:kind, code:code, at:Date.now()};
+  if(holdTravel){ toast('🚪 travel held for the test — '+code); return; }
+  location.href=url;
+}
+function renderNetBoard(){
+  var box=$('msNetList'); if(!box) return;
+  var all=netRows();
+  var fEl=$('msNetFilter');
+  var f=((fEl && fEl.value) || '').trim().toLowerCase();
+  var rows=f? all.filter(function(r){ return ((r.name||'')+' '+(r.label||'')+' '+(r.info||'')+' '+r.code+' '+(r.fam==='cube'?'bunny cube game table':r.fam==='room'?'the room hosted':'open call')+' '+(r.game?r.game.gameName:'')).toLowerCase().indexOf(f)>=0; }) : all;
+  var emp=$('msNetEmpty');
+  if(emp){ emp.style.display=rows.length?'none':'block';
+    emp.textContent=(f && !rows.length)? 'Nobody live matches "'+f+'" — try fewer letters.' : "Nobody's broadcasting right now — when a friend opens a call, hosts a table, or opens THE ROOM, they appear here."; }
+  var sig=f+'|'+rows.map(function(r){ return r.fam+':'+r.code+':'+(r.name||'')+':'+(r.count||'')+':'+(r.live?1:0)+':'+(r.game?r.game.gameRoom:'')+':'+(entries.has(r.code)?1:0)+':'+(fgCode===r.code?1:0); }).join('|');
+  if(sig===renderNetBoard._sig) return; renderNetBoard._sig=sig;
+  box.innerHTML='';
+  rows.forEach(function(r){
+    var row=document.createElement('div'); row.className='ms-net-row'; row.dataset.fam=r.fam; row.dataset.code=r.code;
+    var who=document.createElement('div'); who.className='who';
+    var nm=document.createElement('div'); nm.className='nm';
+    var meta=document.createElement('div'); meta.className='meta';
+    if(r.fam==='call'){
+      nm.textContent='🎙 '+(r.name||'GUEST')+' — open call';
+      if(r.label){ var lb=document.createElement('div'); lb.className='lbl2'; lb.textContent=r.label; who.appendChild(lb); }
+      meta.textContent='room '+r.code+' · 👥 '+(r.count||1)+(r.live?' · 🎙 live':'')+(fgCode===r.code?' · YOU ARE HERE':(entries.has(r.code)?' · (on your rack)':''));
+    } else if(r.fam==='cube'){
+      nm.textContent='🐰 BUNNY CUBE — open table';
+      meta.textContent='room '+r.code+' · world '+String(r.world||'').slice(0,8)+'… · their talk rides in the game';
+    } else {
+      nm.textContent='🚪 '+(r.name||'GUEST')+' — hosting THE ROOM';
+      meta.textContent='room '+r.code+' · 👥 '+(r.count||1)+(r.live?' · 🎙 live':'');
+    }
+    who.appendChild(nm); who.appendChild(meta);
+    if(r.info){ var inf=document.createElement('div'); inf.className='info'; inf.textContent=r.info; who.appendChild(inf); }
+    if(r.fam==='call' && r.game){
+      var gl=document.createElement('div'); gl.className='gameline';
+      gl.textContent='🎮 in '+(r.game.gameName||'a game')+' now — room '+r.game.gameRoom+' · GO THERE joins their table';
+      who.appendChild(gl);
+    }
+    row.appendChild(who);
+    var doors=document.createElement('div'); doors.className='doors';
+    var talk=document.createElement('button'); talk.className='talkbtn'; talk.textContent='🎙 TALK';
+    var go=document.createElement('button'); go.className='gobtn'; go.textContent='🚪 GO THERE';
+    if(r.fam==='call' && !r.game){
+      /* a call row: TALK wears their talk here (mount + foreground);
+         GO THERE is the same mount — you ARE there (the brief's own
+         collapse at this layer; the doors part ways at game rows). */
+      talk.addEventListener('click', function(){ rackJoin(r.code, {hostName:r.name||''}); });
+      go.addEventListener('click', function(){ rackJoin(r.code, {hostName:r.name||''}); });
+      if(entries.has(r.code)) talk.textContent=(fgCode===r.code)?'🎙 YOU ARE HERE':'🎙 STEP IN';
+    } else if(r.fam==='call' && r.game){
+      var gg=GAMES[r.game.game]||GAMES.cube;
+      talk.addEventListener('click', function(){ rackJoin(r.code, {hostName:r.name||''}); });
+      go.addEventListener('click', function(){ doTravel(gameLoaderURL(gg, r.game.gameRoom, myChosenName()), 'game', r.game.gameRoom); });
+    } else if(r.fam==='cube'){
+      talk.title='their talk is in the game — this takes you there';
+      go.title='take the loader door into their game room';
+      talk.addEventListener('click', function(){ doTravel(gameLoaderURL(GAMES.cube, r.code, myChosenName()), 'game', r.code); });
+      go.addEventListener('click', function(){ doTravel(gameLoaderURL(GAMES.cube, r.code, myChosenName()), 'game', r.code); });
+    } else {
+      talk.title='their talk is in THE ROOM — this takes you there';
+      talk.addEventListener('click', function(){ doTravel(roomPageURL(r.code), 'room', r.code); });
+      go.addEventListener('click', function(){ doTravel(roomPageURL(r.code), 'room', r.code); });
+    }
+    doors.appendChild(talk); doors.appendChild(go);
+    row.appendChild(doors);
+    box.appendChild(row);
+  });
+}
+/* OPEN FROM INSIDE: while my door is 📣 OPEN, my beacon carries my
+   home room's open trip — "in BUNNY CUBE now, room XXXXX" — so a
+   friend's board can send people straight to my table mid-game.
+   The trip rides for 30 minutes or until it is closed. */
+function beaconGameField(){
+  var j=jumps.get(myCode);
+  if(!j || Date.now()-j.ts>30*60000) return null;
+  return {game:j.game, gameName:j.gameName, gameRoom:j.gameRoom};
+}
+/* PLAY TOGETHER — the host act. ONE press mints ONE ticket, shared
+   by every member's GO; the jump is published once on this room's
+   talk topic and lands in my own state by the same act (my mount
+   hears my own publish only as an echo the hook already ignores). */
+function mintJump(gameKey){
+  var e=fgCode?entries.get(fgCode):null; if(!e || !e.handle || !e.handle._s || !e.handle._s.mq) return null;
+  var g=GAMES[gameKey]; if(!g) return null;
+  var ticket=genCode();
+  var j={game:gameKey, gameName:g.name, gameRoom:ticket, hostName:e.handle.state().name, ts:Date.now(), mine:true};
+  jumps.set(fgCode, j);
+  try{ e.handle._s.mq.publish(talkTopic(fgCode), JSON.stringify({type:'jump', tid:e.handle.tid, game:gameKey, gameName:g.name, pointer:{g:g.blob, h:g.sha}, gameRoom:ticket, hostName:j.hostName, ts:j.ts}));
+    jumpsPublished.push({code:fgCode, game:gameKey, gameRoom:ticket, at:j.ts}); }catch(err){}
+  jumpFolded=false; renderJumpCard();
+  renderPlayArea._sig=null; renderPlayArea();
+  if(fgCode===myCode){ publishMsOpen._last=0; publishMsOpen(); }
+  toast('🎮 trip open — '+g.name+' · ticket '+ticket+' · everyone in this room has the GO card');
+  return j;
+}
+function renderJumpCard(){
+  var card=$('msJumpCard'); if(!card) return;
+  var j=fgCode?jumps.get(fgCode):null;
+  var sig=j?(j.gameRoom+':'+(jumpFolded?1:0)+':'+myChosenName()):'';
+  if(sig===renderJumpCard._sig) return; renderJumpCard._sig=sig;
+  if(!j){ card.classList.remove('show'); return; }
+  card.classList.add('show');
+  var g=GAMES[j.game]||GAMES.cube;
+  var url=gameLoaderURL(g, j.gameRoom, myChosenName());
+  $('msJumpText').textContent='🎮 '+j.hostName+' is taking the group to '+j.gameName;
+  var go=$('msJumpGo'); go.href=url; go.textContent='🎮 GO TOGETHER — '+j.gameName+' · room '+j.gameRoom;
+  $('msJumpFull').style.display=jumpFolded?'none':'block';
+  $('msJumpStrip').style.display=jumpFolded?'block':'none';
+  $('msJumpStripText').textContent='🎮 trip open: '+j.gameName+' · room '+j.gameRoom+' ·';
+  $('msJumpGo2').href=url;
+}
+function renderPlayArea(){
+  var btn=$('msPlayBtn'); if(!btn) return;
+  var e=fgCode?entries.get(fgCode):null;
+  var st=e?e.handle.state():null;
+  var gathered=!!(st && st.peers>=1);
+  var j=fgCode?jumps.get(fgCode):null;
+  var sig=(gathered?1:0)+':'+(j?j.gameRoom:'')+':'+(fgCode||'');
+  if(sig===renderPlayArea._sig) return; renderPlayArea._sig=sig;
+  btn.style.display=gathered?'block':'none';
+  var tl=$('msTripLine');
+  if(j){
+    tl.style.display='block'; tl.innerHTML='';
+    var t=document.createElement('div');
+    t.textContent='🎮 a trip is open from this room: '+(GAMES[j.game]?GAMES[j.game].icon+' ':'')+j.gameName+' · room '+j.gameRoom+' — minted by '+j.hostName+'. It stays open while the gathering lasts: late friends can still GO from the card at the top. This room does NOT close — it waits here, parked, underneath the trip.';
+    var x=document.createElement('button'); x.textContent='✕ CLOSE THE TRIP';
+    x.addEventListener('click', function(){ jumps.delete(fgCode); jumpFolded=false; renderJumpCard(); renderPlayArea._sig=null; renderPlayArea(); renderRack._sig=null; renderRack(); if(fgCode===myCode){ publishMsOpen._last=0; publishMsOpen(); } });
+    tl.appendChild(t); tl.appendChild(x);
+  } else tl.style.display='none';
+}
+/* ----- rally test surface ----- */
+window.__ms.rally={
+  rows:function(){ return netRows(); },
+  netHooked:function(){ return netMqHooked; },
+  jumps:function(){ var o={}; jumps.forEach(function(v,k){ o[k]=v; }); return o; },
+  published:function(){ return jumpsPublished.slice(); },
+  play:function(k){ return mintJump(k); },
+  goURL:function(code){ var j=jumps.get(code||fgCode); if(!j) return null; var g=GAMES[j.game]||GAMES.cube; return gameLoaderURL(g, j.gameRoom, myChosenName()); },
+  travelURL:function(r){ return travelURLFor(r); },
+  lastTravel:function(){ return lastTravel; },
+  setHoldTravel:function(v){ holdTravel=!!v; },
+  games:function(){ return GAMES; },
+  stores:function(){ return {cube:cubeTables, room:roomHosts}; },
+  closeTrip:function(){ if(fgCode) jumps.delete(fgCode); renderJumpCard(); renderPlayArea._sig=null; renderPlayArea(); }
+};
+
 /* ----- rack test surface ----- */
 window.__ms.rack=function(){ return [...entries.values()].map(function(e){ var st=e.handle.state(); return {code:e.code, label:entryLabel(e), foreground:e.code===fgCode, parked:!!st.parked, peers:st.peers, isVisit:e.isVisit, micOn:st.micOn, faceOn:st.faceOn, hearOn:st.hearOn, joinState:st.joinState}; }); };
 window.__ms.foregroundCode=function(){ return fgCode; };
@@ -1595,6 +1916,40 @@ function wire(){
     if(open) renderOpenRooms();
   });
   $('msOpenFilter').addEventListener('input', function(){ renderOpenRooms._sig=null; renderOpenRooms(); });
+  /* ----- v0.6 wiring: the FIND ANYONE filter, the game shelf, the
+     jump card's own buttons. The shelf is built from GAMES alone —
+     two doors today, both pins verified at build time. ----- */
+  $('msNetFilter').addEventListener('input', function(){ renderNetBoard._sig=null; renderNetBoard(); });
+  (function(){
+    var shelf=$('msPlayShelf'); shelf.innerHTML='';
+    Object.keys(GAMES).forEach(function(k){
+      var g=GAMES[k];
+      var row=document.createElement('div'); row.className='ms-game-row'; row.dataset.game=k;
+      var who=document.createElement('div'); who.className='who';
+      var nm=document.createElement('div'); nm.className='nm'; nm.textContent=g.icon+' '+g.name;
+      var meta=document.createElement('div'); meta.className='meta'; meta.textContent=g.ver+' · arrives by pointer, hash-checked · everyone lands in ONE fresh room';
+      who.appendChild(nm); who.appendChild(meta);
+      var take=document.createElement('button'); take.className='take'; take.textContent='TAKE US ▸';
+      take.addEventListener('click', function(){ mintJump(k); $('msPlayShelf').style.display='none'; $('msPlayBtn').textContent='🎮 PLAY TOGETHER — take this room into a game'; });
+      row.appendChild(who); row.appendChild(take);
+      shelf.appendChild(row);
+    });
+    $('msPlayBtn').addEventListener('click', function(){
+      var sh=$('msPlayShelf'), open=sh.style.display!=='block';
+      sh.style.display=open?'block':'none';
+      $('msPlayBtn').textContent=open?'✕ CLOSE THE GAME SHELF':'🎮 PLAY TOGETHER — take this room into a game';
+    });
+    $('msJumpFold').addEventListener('click', function(){ jumpFolded=true; renderJumpCard(); });
+    $('msJumpStrip').addEventListener('click', function(ev){ if(ev.target.id!=='msJumpGo2'){ jumpFolded=false; renderJumpCard(); } });
+    ['msJumpGo','msJumpGo2'].forEach(function(id){
+      $(id).addEventListener('click', function(ev){
+        var j=fgCode?jumps.get(fgCode):null;
+        if(!j){ ev.preventDefault(); return; }
+        lastTravel={url:ev.currentTarget.href, kind:'jump', code:j.gameRoom, at:Date.now()};
+        if(holdTravel){ ev.preventDefault(); toast('🎮 travel held for the test — ticket '+j.gameRoom); }
+      });
+    });
+  })();
   $('msImportBtn').addEventListener('click', importJarById);
   renderShelf(); renderHistoryLine(); renderSavedRooms(); renderRack();
   fitPadding();
@@ -1638,7 +1993,7 @@ function wire(){
     /* v0.4: my posture is what the FOREGROUND room says — captured
        whenever I'm not mid-switch, and carried to the next room. */
     if(Date.now()>postureHoldUntil){ posture.mic=!!st.micOn; posture.face=!!st.faceOn; posture.hear=!!st.hearOn; }
-    renderTapRow();
+    renderTapRow(); renderPlayArea();
     $('msBtnMic').classList.toggle('on', !!st.micOn);
     $('msBtnFace').classList.toggle('on', !!st.faceOn);
     $('msBtnHear').classList.toggle('on', !!st.hearOn);
