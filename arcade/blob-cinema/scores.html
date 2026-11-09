@@ -27,6 +27,24 @@ input,select{background:#0b0b1a;border:1px solid #33336a;color:#e8e8ff;border-ra
 .jarPlayer video{width:100%;border-radius:8px;background:#000;display:block}
 .jarPlayer audio{width:100%;margin-top:6px}
 .jarPlayer .fp-x{float:right;background:#2a0f1c;border:1px solid var(--red);color:var(--red);border-radius:8px;padding:2px 10px;cursor:pointer}
+.acard{display:flex;gap:10px;align-items:flex-start;background:#0d0d20;border:1px solid #26264d;border-radius:10px;padding:8px;margin:6px 0;text-align:left}
+.acardMain{flex:1;min-width:0}
+.cardFace{flex:0 0 auto;text-align:center;width:76px}
+.cardFace .faceTile{width:64px;height:64px;margin:0 auto;border:2px solid var(--gold);border-radius:10px;background:#14142e;display:flex;align-items:center;justify-content:center;font-size:2rem;overflow:hidden}
+.cardFace img.facePic,.cardFace video.faceVid{width:64px;height:64px;object-fit:cover;border:2px solid var(--gold);border-radius:10px;display:block;margin:0 auto;background:#000}
+.cardFace .privLbl{font-size:.6rem;color:var(--amber);margin-top:3px;line-height:1.3}
+.cm-chip{background:#1c0f2a;border:1px solid #c86bff;color:#c86bff;border-radius:999px;padding:3px 12px;cursor:pointer;font-size:.78rem;margin:2px 2px 2px 6px;letter-spacing:.04em}
+.cm-chip.flag{background:#2a0f1c;border-color:var(--red);color:var(--red)}
+.cmPanel{background:#0b0b1e;border:1px solid #c86bff;border-radius:10px;padding:10px;margin:8px 0;max-width:640px;text-align:left}
+.cmPanel .cm-x{float:right;background:#2a0f1c;border:1px solid var(--red);color:var(--red);border-radius:8px;padding:2px 10px;cursor:pointer}
+.cmPanel input[type=range]{width:100%;margin:6px 0}
+.cmMarks{position:relative;height:14px;margin:0 2px}
+.cmMarks i{position:absolute;top:2px;width:8px;height:8px;border-radius:50%;background:#c86bff;transform:translateX(-50%)}
+.cmNow{background:#14142e;border:1px solid #33336a;border-radius:8px;padding:6px 10px;min-height:1.2em;margin:6px 0;font-size:.9rem}
+.cmTran{max-height:180px;overflow-y:auto;margin:6px 0}
+.cmTran div{padding:3px 6px;border-bottom:1px solid #1a1a33;cursor:pointer;font-size:.85rem}
+.cmTran div.shown{color:#fff}
+.cmTran div:not(.shown){color:#9a9ac0}
 </style>
 </head>
 <body>
@@ -533,6 +551,24 @@ async function FPopen(btn, jid){
 }
 window.FP=FP; window.FPattach=FPattach; window.FPjarsFor=FPjarsFor; window.FPfill=FPfill;
 setInterval(()=>{ try{ FPfill(); }catch(e){} }, 1500);
+// ---- ARCADE CARD + COMMENTARY slot builders (Hall v2; the async fillers
+// live in the last script block). ACpriv: the world-stage opt-out label
+// renders ONLY from an explicit record field — never inferred from
+// missing jars (a record can lack jars for many other reasons).
+function ACpriv(r){ return !!(r&&(r.mediaPrivate===true||r.absentByChoice===true||r.absent_by_choice===true)); }
+function ACfaceHTML(recId, jars, emoji, r){
+  const priv=ACpriv(r);
+  const jl=(jars&&jars.length)?jars.join(","):"";
+  return "<div class='cardFace' data-rec='"+recId+"'"+(jl?" data-jars='"+jl+"'":"")+(priv?" data-priv='1'":"")+">"
+    +"<div class='faceTile'>"+emoji+"</div>"
+    +(priv?"<div class='privLbl'>face &amp; voice kept private by choice</div>":"")
+    +"</div>";
+}
+function CMslotHTML(recId, r, game){
+  if(!r||!r.tape) return "";
+  return "<span class='cmSlot' data-rec='"+recId+"' data-hash='"+(r.h||"")+"' data-tape='"+r.tape+"' data-dur='"+(r.secs||"")+"' data-game='"+(game||"cube")+"'></span>";
+}
+window.ACfaceHTML=ACfaceHTML; window.CMslotHTML=CMslotHTML; window.ACpriv=ACpriv;
 </script>
 
 <script>
@@ -574,15 +610,16 @@ async function renderCubeHall(){
   const esc=s=>String(s||"").replace(/</g,"&lt;");
   const when=ts=>{ const d=new Date(ts); return (d.getMonth()+1)+"/"+d.getDate()+" "+String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0"); };
   const watch=r=>r.tape?' <a class="btn" href="../studio/bbb-cube.html?replay='+r.tape+'">▶ WATCH</a>':"";
-  const line=x=>"<b>"+esc(x.r.winner)+"</b> · "+x.r.secs+" s · round "+x.r.round+" · hits "+(x.r.h1||0)+"/"+(x.r.h2||0)+" · "+when(x.r.ts)+" · "+(x.ok?'<span class="badge v">✓ HASH VERIFIED</span>':'<span class="badge u">✗ HASH FAILS</span>')+" · <span class='mono'>"+x.id.slice(0,12)+"…</span>"+watch(x.r)+(x.jars&&x.jars.length?'<span class="jarSlot" data-rec="'+x.id+'" data-jars="'+x.jars.join(",")+'"></span>':"");
+  const line=(x,pre)=>"<div class='acard' data-rec='"+x.id+"'>"+ACfaceHTML(x.id,x.jars,"🐰",x.r)
+    +"<div class='acardMain'>"+(pre||"")+"<b>"+esc(x.r.winner)+"</b> · "+x.r.secs+" s · round "+x.r.round+" · hits "+(x.r.h1||0)+"/"+(x.r.h2||0)+" · "+when(x.r.ts)+" · "+(x.ok?'<span class="badge v">✓ HASH VERIFIED</span>':'<span class="badge u">✗ HASH FAILS</span>')+" · <span class='mono'>"+x.id.slice(0,12)+"…</span>"+watch(x.r)+(x.jars&&x.jars.length?'<span class="jarSlot" data-rec="'+x.id+'" data-jars="'+x.jars.join(",")+'"></span>':"")+CMslotHTML(x.id,x.r,"cube")+"</div></div>";
   const fastest=recs.filter(x=>x.r.who!=="AI").slice().sort((a,b)=>a.r.secs-b.r.secs).slice(0,5);
   const hits=recs.slice().map(x=>({x, h:Math.max(x.r.h1||0, x.r.h2||0)})).filter(o=>o.h>0).sort((a,b)=>b.h-a.h).slice(0,5);
   const endu=recs.filter(x=>x.r.who==="AI").map(x=>({x, h:(x.r.h1||0)+(x.r.h2||0), score:((x.r.h1||0)+(x.r.h2||0))*x.r.secs})).filter(o=>o.h>0).sort((a,b)=>b.score-a.score).slice(0,5);
-  boards.innerHTML="<b>⚡ FASTEST WINS</b><br>"+(fastest.length?fastest.map(line).join("<br>"):"none yet")
-    +"<br><br><b>🎯 MOST HITS</b><br>"+(hits.length?hits.map(o=>"<b>"+o.h+" hits</b> — "+line(o.x)).join("<br>"):"none yet")
-    +"<br><br><b>🛡️ ENDURANCE</b> (hits × seconds)<br>"+(endu.length?endu.map(o=>"<b>"+o.score+" pts</b> — "+line(o.x)).join("<br>"):"none yet")
-    +"<br><br><span class='lbl'>seed record = the pipeline proof (first win record solidified end-to-end, test round, Nov 6) — the format every real record follows.</span>";
-  all.innerHTML=recs.slice().sort((a,b)=>b.r.ts-a.r.ts).map(line).join("<br>");
+  boards.innerHTML="<div style='margin:4px 0 2px'><b>⚡ FASTEST WINS</b></div>"+(fastest.length?fastest.map(x=>line(x)).join(""):"none yet")
+    +"<div style='margin:10px 0 2px'><b>🎯 MOST HITS</b></div>"+(hits.length?hits.map(o=>line(o.x,"<b>"+o.h+" hits</b> — ")).join(""):"none yet")
+    +"<div style='margin:10px 0 2px'><b>🛡️ ENDURANCE</b> (hits × seconds)</div>"+(endu.length?endu.map(o=>line(o.x,"<b>"+o.score+" pts</b> — ")).join(""):"none yet")
+    +"<div style='margin-top:8px'><span class='lbl'>seed record = the pipeline proof (first win record solidified end-to-end, test round, Nov 6) — the format every real record follows.</span></div>";
+  all.innerHTML=recs.slice().sort((a,b)=>b.r.ts-a.r.ts).map(x=>line(x)).join("");
   if(window.FPfill) FPfill();
 }
 async function addCubeRecord(){
@@ -610,7 +647,7 @@ async function renderZombieHall(){
   for(const id of ids){ const j=await cubeFetch(id); if(j&&j.format==="zombie-run/1") recs.push({id, r:j, ok:zHash(j)===j.h, jars:(window.FPjarsFor?FPjarsFor(id,j):[])}); }
   const good=recs.filter(x=>x.ok), bad=recs.length-good.length;
   const surv=good.filter(x=>x.r.side!=="zombie"), zom=good.filter(x=>x.r.side==="zombie");
-  const row=(x,main)=>"<div style='padding:4px 0;border-bottom:1px solid #2a2a4d'>"+main+"<br><span class='lbl'>"+new Date(x.r.ts).toLocaleDateString()+" · blob <span class='mono'>"+x.id.slice(0,12)+"…</span>"+(x.r.tape?" · <a href='../studio/zombie-player.html?replay="+x.r.tape+"' style='color:var(--blue)'>▶ WATCH</a>":"")+"</span>"+(x.jars&&x.jars.length?'<span class="jarSlot" data-rec="'+x.id+'" data-jars="'+x.jars.join(",")+'"></span>':"")+"</div>";
+  const row=(x,main)=>"<div class='acard' data-rec='"+x.id+"'>"+ACfaceHTML(x.id,x.jars,"🧟",x.r)+"<div class='acardMain'>"+main+"<br><span class='lbl'>"+new Date(x.r.ts).toLocaleDateString()+" · blob <span class='mono'>"+x.id.slice(0,12)+"…</span>"+(x.r.tape?" · <a href='../studio/zombie-player.html?replay="+x.r.tape+"' style='color:var(--blue)'>▶ WATCH</a>":"")+"</span>"+(x.jars&&x.jars.length?'<span class="jarSlot" data-rec="'+x.id+'" data-jars="'+x.jars.join(",")+'"></span>':"")+CMslotHTML(x.id,x.r,"zombie")+"</div></div>";
   boards.innerHTML="<div>⛓️ "+good.length+" record(s) hash-verified ✓"+(bad?" · ⚠ "+bad+" failed verification and were refused":"")+"</div>"
     +"<div style='margin-top:6px'><b>🌙 MOST NIGHTS</b><br>"+(surv.slice().sort((a,b)=>b.r.nights-a.r.nights).slice(0,5).map(x=>row(x,"🌙 <b>"+x.r.nights+" nights</b> · "+(x.r.n1||"P1")+" · "+x.r.secs+"s")).join("")||"<span class='lbl'>none yet</span>")+"</div>"
     +"<div style='margin-top:6px'><b>🧟 MOST KILLS</b><br>"+(surv.slice().sort((a,b)=>(b.r.k1+b.r.k2)-(a.r.k1+a.r.k2)).slice(0,5).map(x=>row(x,"🧟 <b>"+(x.r.k1+x.r.k2)+" kills</b> · "+(x.r.n1||"P1"))).join("")||"<span class='lbl'>none yet</span>")+"</div>"
@@ -703,11 +740,13 @@ function LGrender(){
   const when=ts=>{ const d=new Date(ts); return d.toLocaleDateString()+" "+String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0"); };
   el.innerHTML=LGentries.map(e=>{
     const r=e.rec;
-    let h="<div style='padding:7px 0;border-bottom:1px solid #2a2a4d'>";
+    const jars=(window.FPjarsFor?FPjarsFor(e.id,r):(Array.isArray(r.jars)?r.jars:[]));
+    let h="<div class='acard' data-rec='"+e.id+"'>"+ACfaceHTML(e.id,jars,"🐰",r)+"<div class='acardMain'>";
     h+="<b>"+when(r.ts)+"</b> · room <span class='mono'>"+LGesc(r.room||"—")+"</span> · "+LGresultLine(r);
     h+=" "+(e.ok?'<span class="badge v">✓ HASH VERIFIED</span>':'<span class="badge u">⚠ HASH FAILS — shown flagged, not trusted</span>');
     if(r.tape) h+=" <a class='btn' href='../studio/bbb-cube.html?replay="+r.tape+"'>▶ REPLAY</a>";
-    if(Array.isArray(r.jars)&&r.jars.length) h+='<span class="jarSlot" data-rec="'+e.id+'" data-jars="'+r.jars.join(",")+'"></span>';
+    if(jars.length) h+='<span class="jarSlot" data-rec="'+e.id+'" data-jars="'+jars.join(",")+'"></span>';
+    h+=CMslotHTML(e.id,r,"cube");
     h+="<br><span class='lbl mono' style='font-size:.68rem;word-break:break-all'>grab: "+e.id+"</span>";
     if(e.lapsed){
       h+="<br>⚠ <b>lapsed</b> — this record's blob no longer answers. "+(st.copies[e.id]
@@ -716,7 +755,7 @@ function LGrender(){
     } else {
       h+="<br><span class='lbl'>🧳 carried until <b>"+when(st.until[e.id]||((r.ts||Date.now())+LG_EPOCHS_MS))+"</b> — reblob to keep it · carried is kept by reblobbing; permanent is a second decision</span>";
     }
-    return h+"</div>";
+    return h+"</div></div>";
   }).join("");
   if(window.FPfill) FPfill();
 }
@@ -782,6 +821,312 @@ async function LGheal(id){
 }
 window.LGadd=LGadd; window.LGkeeper=LGkeeper; window.LGheal=LGheal;
 LGload();
+</script>
+
+<script>
+// ---- HALL v2 — THE ARCADE CARD faces + COMMENTARY side tracks ----
+// (David, Nov 8 23:55 + 23:58 EST.) The card face: when a record carries
+// face proof, the portrait IS the player's face, poured from the jar's
+// VERIFIED video track bytes (sha256 checked against the jar record
+// before a single frame is drawn) — never an unverified source, never a
+// fake face: records without face proof keep the game's tile portrait,
+// and a record carrying the explicit opt-out field (mediaPrivate /
+// absentByChoice) shows the tile + the plain label its card builder
+// already rendered — absent by choice, not missing.
+// COMMENTARY rides as a SIDE TRACK (his law): a commentary/1 record
+// TANGLES to a game record by reference (recordRef + recordHash) and by
+// the tape clock; it never enters any hashed field of the record or the
+// tape, so adding commentary can never change the record it hangs from.
+(function(){
+"use strict";
+const LADDER=(window.CUBE_LADDER)||["https://walrus-testnet.blockscope.net/v1/blobs/","https://aggregator.walrus-testnet.walrus.space/v1/blobs/"];
+const PUBLISHER="https://publisher.walrus-testnet.walrus.space/v1/blobs?epochs=30";
+const esc=s=>String(s==null?"":s).replace(/</g,"&lt;");
+
+// ---------- the card face ----------
+async function ACfetchBuf(id){ for(const base of LADDER){ try{ const r=await fetch(base+id); if(r.ok) return await r.arrayBuffer(); }catch(e){} } return null; }
+function ACstill(buf,mime){
+  return new Promise(res=>{
+    let url; try{ url=URL.createObjectURL(new Blob([buf],{type:mime||"video/webm"})); }catch(e){ return res(null); }
+    const v=document.createElement("video");
+    v.muted=true; v.setAttribute("playsinline",""); v.preload="auto"; v.src=url;
+    let done=false;
+    const fin=val=>{ if(done) return; done=true; try{ URL.revokeObjectURL(url); }catch(e){} res(val); };
+    const to=setTimeout(()=>fin(null),5000);
+    function draw(){
+      try{
+        const c=document.createElement("canvas"); c.width=128; c.height=128;
+        const g=c.getContext("2d"); const vw=v.videoWidth||128, vh=v.videoHeight||128;
+        const s=Math.max(128/vw,128/vh);
+        g.drawImage(v,(128-vw*s)/2,(128-vh*s)/2,vw*s,vh*s);
+        clearTimeout(to); fin(c.toDataURL("image/jpeg",0.85));
+      }catch(e){ clearTimeout(to); fin(null); }
+    }
+    v.addEventListener("loadeddata",()=>{ try{ v.currentTime=Math.min(0.05,(v.duration||1)/2); }catch(e){ draw(); } });
+    v.addEventListener("seeked",draw);
+    v.addEventListener("error",()=>{ clearTimeout(to); fin(null); });
+  });
+}
+async function ACfill(){
+  const slots=document.querySelectorAll(".cardFace[data-jars]:not([data-done])");
+  for(const slot of slots){
+    slot.setAttribute("data-done","1");
+    if(slot.getAttribute("data-priv")) continue; // opted out — tile + label only, by their choice
+    const jars=(slot.getAttribute("data-jars")||"").split(",").filter(x=>x.length>20);
+    for(const jid of jars){
+      const j=(window.FPjar)?await FPjar(jid):null;
+      if(!j||!window.FPhasVideo||!FPhasVideo(j)) continue;
+      const tr=((window.FPtracks)?FPtracks(j):[]).find(t=>t.type==="video");
+      if(!tr) continue;
+      const buf=await ACfetchBuf(tr.blob);
+      if(!buf) continue;
+      if(tr.sha256&&typeof sha256hex==="function"&&sha256hex(new Uint8Array(buf))!==tr.sha256){ slot.setAttribute("data-state","hash-mismatch"); continue; }
+      slot.setAttribute("data-state","verified");
+      const tile=slot.querySelector(".faceTile");
+      const dataUrl=await ACstill(buf,tr.mime);
+      if(dataUrl){
+        const img=document.createElement("img"); img.className="facePic"; img.src=dataUrl; img.alt="the face on this record";
+        if(tile) tile.replaceWith(img); else slot.prepend(img);
+      } else {
+        const v=document.createElement("video"); v.className="faceVid"; v.muted=true; v.setAttribute("playsinline",""); v.preload="auto";
+        v.src=URL.createObjectURL(new Blob([buf],{type:tr.mime||"video/webm"}));
+        if(tile) tile.replaceWith(v);
+      }
+      break;
+    }
+  }
+}
+
+// ---------- commentary ----------
+const CM={cache:{}, pendingDone:{}};
+function CMmap(){ try{ return JSON.parse(localStorage.getItem("hall-commentary-v1")||"{}"); }catch(e){ return {}; } }
+function CMsaveMap(m){ try{ localStorage.setItem("hall-commentary-v1",JSON.stringify(m)); }catch(e){} }
+function CMstoredName(){ try{ return localStorage.getItem("hall-comment-name")||""; }catch(e){ return ""; } }
+function CMsetName(n){ try{ localStorage.setItem("hall-comment-name",n); }catch(e){} }
+async function CMfetch(id){ for(const base of LADDER){ try{ const r=await fetch(base+id); if(r.ok) return await r.json(); }catch(e){} } return null; }
+function CMpublisherId(j){ if(window.LGpublisherId) return LGpublisherId(j); return (j&&j.newlyCreated&&j.newlyCreated.blobObject&&j.newlyCreated.blobObject.blobId)||(j&&j.alreadyCertified&&j.alreadyCertified.blobId)||null; }
+async function CMverify(id, ctx){
+  const j=await CMfetch(id);
+  if(!j||j.kind!=="commentary/1") return {refused:true};
+  const entries=(Array.isArray(j.entries)?j.entries:[]).filter(e=>e&&typeof e.t==="number"&&typeof e.text==="string")
+    .map(e=>({t:e.t, byName:String(e.byName||"someone"), text:String(e.text)})).sort((a,b)=>a.t-b.t);
+  return { id, title:String(j.title||"commentary"), entries, flagged:!(j.recordRef===ctx.rec&&j.recordHash===ctx.hash), raw:j };
+}
+function CMurlIds(){
+  const out=[];
+  const grab=s=>{ const m=String(s||"").match(/[#?&]commentary=([A-Za-z0-9_,-]+)/); if(m) m[1].split(",").forEach(x=>{ x=x.trim(); if(x.length>20) out.push(x); }); };
+  try{ grab(location.hash); }catch(e){}
+  try{ grab(location.search); }catch(e){}
+  return Array.from(new Set(out));
+}
+async function CMfill(){
+  const slots=document.querySelectorAll(".cmSlot:not([data-filled])");
+  for(const slot of slots){
+    slot.setAttribute("data-filled","1");
+    const ctx={ rec:slot.getAttribute("data-rec"), hash:slot.getAttribute("data-hash"), tape:slot.getAttribute("data-tape"),
+      dur:parseFloat(slot.getAttribute("data-dur"))||0, game:slot.getAttribute("data-game")||"cube" };
+    slot._ctx=ctx;
+    for(const pid of CMurlIds()){
+      if(CM.pendingDone[pid]) continue; CM.pendingDone[pid]=1;
+      const pj=await CMfetch(pid);
+      if(pj&&pj.kind==="commentary/1"&&pj.recordRef===ctx.rec){
+        const v=await CMverify(pid,ctx);
+        if(!v.refused){
+          const m=CMmap(); const arr=m[ctx.rec]||[];
+          if(!arr.some(t=>t.id===pid)){ arr.push({id:pid, title:v.title, flagged:v.flagged}); m[ctx.rec]=arr; CMsaveMap(m); }
+          CM.cache[pid]=v;
+        }
+      }
+    }
+    CMrenderSlot(slot);
+  }
+}
+function CMrenderSlot(slot){
+  const ctx=slot._ctx; if(!ctx) return;
+  slot.innerHTML="";
+  const arr=CMmap()[ctx.rec]||[];
+  for(const t of arr){
+    const b=document.createElement("button");
+    b.setAttribute("data-cmtrack",t.id);
+    if(t.flagged){ b.className="cm-chip flag"; b.textContent="⚠ COMMENTARY FLAGGED"; b.title="a commentary track claims this record, but its reference does not verify — shown flagged, never silently attached"; }
+    else{
+      const v=CM.cache[t.id];
+      b.className="cm-chip"; b.textContent="🎙 COMMENTARY · "+(v&&!v.refused?v.entries.length:"…");
+      b.title="rewatch with commentary — track "+t.id.slice(0,12)+"…";
+      if(!v) CMverify(t.id,ctx).then(vv=>{ if(!vv.refused){ CM.cache[t.id]=vv; if(slot.isConnected&&slot._ctx) CMrenderSlot(slot); } });
+    }
+    b.onclick=()=>CMopen(slot,t.id);
+    slot.appendChild(b);
+  }
+  const add=document.createElement("button");
+  add.className="cm-chip"; add.textContent="🎙 COMMENTARY ＋";
+  add.title="rewatch this record and pin comments to its tape clock — commentary rides beside the record, never inside it";
+  add.onclick=()=>CMopen(slot,null);
+  slot.appendChild(add);
+}
+function CMclosePanel(slot){ if(slot._panel){ if(slot._panel._timer) clearInterval(slot._panel._timer); slot._panel.remove(); slot._panel=null; } }
+function CMopen(slot, trackId){
+  if(slot._panel){ const was=slot._panel._trackId; CMclosePanel(slot); if(was===trackId) return; }
+  const ctx=slot._ctx; if(!ctx) return;
+  const card=slot.closest(".acard")||slot;
+  const pl=document.createElement("div");
+  pl.className="cmPanel"; pl._trackId=trackId;
+  pl.innerHTML='<button class="cm-x" title="close commentary">✕</button>'
+    +'<div style="font-size:1.02rem"><b>🎙 COMMENTARY</b> — rewatch on the tape clock</div>'
+    +'<div class="lbl">record <span class="mono">'+esc(ctx.rec.slice(0,12))+'…</span> · tape <span class="mono">'+esc(String(ctx.tape).slice(0,12))+'…</span>'
+    +(ctx.game==="zombie"
+      ? ' · <a href="../studio/zombie-player.html?replay='+esc(ctx.tape)+'" style="color:var(--blue)">▶ WATCH IN ZOMBIE WORLD</a>'
+      : ' · <a href="../studio/bbb-cube.html?replay='+esc(ctx.tape)+'" style="color:var(--blue)">▶ WATCH IN THE CUBE</a>')
+    +'</div>'
+    +'<div class="cm-tracks" style="margin:6px 0"></div>'
+    +'<div class="cm-flag lbl" style="color:var(--red)"></div>'
+    +'<div style="display:flex;gap:8px;align-items:center;margin-top:4px"><button class="btn cm-play">▶ PLAY</button><span class="lbl mono cm-clock">0.0s / '+(ctx.dur?ctx.dur.toFixed(0):"?")+'s</span></div>'
+    +'<input type="range" class="cm-seek" min="0" max="'+(ctx.dur||60)+'" step="0.1" value="0">'
+    +'<div class="cmMarks"></div>'
+    +'<div class="cmNow lbl">comments appear here as the tape clock passes them…</div>'
+    +'<div class="cmTran"></div>'
+    +'<div style="margin-top:8px"><input class="cm-name" placeholder="your chosen name" style="width:150px"> <input class="cm-text" placeholder="write a comment for this moment…" style="width:280px"> <button class="btn go cm-pin">📌 PIN AT <span class="cm-pint">0.0</span>s</button></div>'
+    +'<div style="margin-top:6px"><input class="cm-attach" placeholder="attach a commentary track by its grab id" style="width:300px"> <button class="btn cm-attachbtn">attach</button></div>'
+    +'<div class="lbl cm-status" style="margin-top:6px"></div>'
+    +'<div class="lbl mono cm-grab" style="font-size:.68rem;word-break:break-all"></div>';
+  card.after(pl); slot._panel=pl; pl._timer=null;
+  pl.querySelector(".cm-x").onclick=()=>CMclosePanel(slot);
+  const P={ ctx, slot, pl, tracks:(CMmap()[ctx.rec]||[]).slice(), cur:-1, entries:[], clock:0, playing:false, dur:ctx.dur||0, title:"" };
+  pl._P=P;
+  const nameInp=pl.querySelector(".cm-name"); nameInp.value=CMstoredName();
+  nameInp.onchange=()=>CMsetName(nameInp.value.trim());
+  if(!P.dur){
+    CMfetch(ctx.tape).then(j=>{ if(j){ const d=(j.tapeMs1||j.durMs||j.durationMs||0)/1000; if(d>0){ P.dur=d; pl.querySelector(".cm-seek").max=d; CMclockUI(P); } } });
+    P.dur=60;
+  }
+  // track chips
+  const trow=pl.querySelector(".cm-tracks");
+  function renderTrackChips(){
+    trow.innerHTML="";
+    P.tracks.forEach((t,i)=>{
+      const b=document.createElement("button");
+      b.className="cm-chip"+(t.flagged?" flag":""); b.textContent=t.flagged?"⚠ FLAGGED":("🎙 "+esc(t.title||"commentary"));
+      b.onclick=()=>CMselect(P,i);
+      trow.appendChild(b);
+    });
+    const nb=document.createElement("button");
+    nb.className="cm-chip"; nb.textContent="＋ NEW TRACK";
+    nb.onclick=()=>{ P.cur=-1; P.entries=[]; P.title=""; CMtranUI(P); CMstatus(P,"new track — pin a comment and it pours as its own commentary/1 record."); pl.querySelector(".cm-grab").textContent=""; renderTrackChips(); };
+    trow.appendChild(nb);
+  }
+  P.renderTrackChips=renderTrackChips; renderTrackChips();
+  if(trackId){ const i=P.tracks.findIndex(t=>t.id===trackId); if(i>=0) CMselect(P,i); }
+  // player wiring
+  const seek=pl.querySelector(".cm-seek");
+  seek.oninput=()=>{ P.clock=parseFloat(seek.value)||0; CMclockUI(P); };
+  pl.querySelector(".cm-play").onclick=()=>{
+    P.playing=!P.playing;
+    pl.querySelector(".cm-play").textContent=P.playing?"⏸ PAUSE":"▶ PLAY";
+    if(P.playing){
+      if(P.clock>=P.dur) P.clock=0;
+      let last=Date.now();
+      pl._timer=setInterval(()=>{ const now=Date.now(); P.clock+=(now-last)/1000; last=now; if(P.clock>=P.dur){ P.clock=P.dur; P.playing=false; pl.querySelector(".cm-play").textContent="▶ PLAY"; clearInterval(pl._timer); pl._timer=null; } seek.value=P.clock; CMclockUI(P); },100);
+    } else if(pl._timer){ clearInterval(pl._timer); pl._timer=null; }
+  };
+  pl.querySelector(".cm-pin").onclick=()=>CMpin(P);
+  pl.querySelector(".cm-attachbtn").onclick=async()=>{
+    const id=pl.querySelector(".cm-attach").value.trim(); if(!id) return;
+    CMstatus(P,"verifying the commentary track…");
+    const v=await CMverify(id,ctx);
+    if(v.refused){ CMstatus(P,"✗ that blob is not a commentary/1 record — not attached."); return; }
+    const m=CMmap(); const arr=m[ctx.rec]||[];
+    if(!arr.some(t=>t.id===id)){ arr.push({id, title:v.title, flagged:v.flagged}); m[ctx.rec]=arr; CMsaveMap(m); }
+    P.tracks=(CMmap()[ctx.rec]||[]).slice(); CM.cache[id]=v;
+    renderTrackChips(); CMrenderSlot(slot);
+    if(v.flagged){ CMstatus(P,"⚠ attached but FLAGGED — this track's record reference does not verify against this record. It is shown flagged, never silently trusted."); CMselect(P,P.tracks.findIndex(t=>t.id===id)); }
+    else { CMstatus(P,"✓ commentary track attached and verified."); CMselect(P,P.tracks.findIndex(t=>t.id===id)); }
+  };
+  CMclockUI(P); CMtranUI(P);
+}
+function CMstatus(P,msg){ const s=P.pl.querySelector(".cm-status"); if(s) s.textContent=msg; }
+function CMclockUI(P){
+  const pl=P.pl;
+  pl.querySelector(".cm-clock").textContent=P.clock.toFixed(1)+"s / "+(P.dur?P.dur.toFixed(0):"?")+"s";
+  pl.querySelector(".cm-pint").textContent=P.clock.toFixed(1);
+  const seek=pl.querySelector(".cm-seek"); if(document.activeElement!==seek) seek.value=P.clock;
+  const rows=pl.querySelectorAll(".cmTran > div");
+  let lastShown=null;
+  P.entries.forEach((e,i)=>{ const on=e.t<=P.clock; if(rows[i]) rows[i].classList.toggle("shown",on); if(on) lastShown=e; });
+  pl.querySelector(".cmNow").textContent=lastShown?("🎙 "+lastShown.t.toFixed(1)+"s · "+lastShown.byName+" — "+lastShown.text):"comments appear here as the tape clock passes them…";
+}
+function CMtranUI(P){
+  const pl=P.pl; const tran=pl.querySelector(".cmTran"); const marks=pl.querySelector(".cmMarks");
+  tran.innerHTML=P.entries.length? "":"<div class='lbl' style='border:none'>no comments on this track yet — play the tape and pin the first one.</div>";
+  marks.innerHTML="";
+  P.entries.forEach((e,i)=>{
+    const d=document.createElement("div");
+    d.innerHTML="<span class='mono'>"+e.t.toFixed(1)+"s</span> · <b>"+esc(e.byName)+"</b> — "+esc(e.text);
+    d.onclick=()=>{ P.clock=e.t; pl.querySelector(".cm-seek").value=P.clock; CMclockUI(P); };
+    tran.appendChild(d);
+    if(P.dur){ const m=document.createElement("i"); m.style.left=(100*e.t/P.dur)+"%"; m.title=e.t.toFixed(1)+"s — "+e.text; marks.appendChild(m); }
+  });
+  CMclockUI(P);
+}
+async function CMselect(P,i){
+  const t=P.tracks[i]; if(!t) return;
+  P.cur=i; P.title=t.title||"commentary";
+  const flagEl=P.pl.querySelector(".cm-flag");
+  if(t.flagged){
+    flagEl.textContent="⚠ this commentary track claims a different record than the one it hangs from (its recordRef/recordHash does not verify). It is shown flagged — its comments are NOT rendered as this record's commentary.";
+    P.entries=[]; CMtranUI(P); P.pl.querySelector(".cm-grab").textContent="grab: "+t.id; return;
+  }
+  flagEl.textContent="";
+  let v=CM.cache[t.id];
+  if(!v||v.refused) v=await CMverify(t.id,P.ctx);
+  if(v.refused){ CMstatus(P,"⚠ that commentary track is unreachable right now."); P.entries=[]; CMtranUI(P); return; }
+  CM.cache[t.id]=v;
+  if(v.flagged){ t.flagged=true; const m=CMmap(); const arr=m[P.ctx.rec]||[]; const mt=arr.find(x=>x.id===t.id); if(mt){ mt.flagged=true; CMsaveMap(m); } P.renderTrackChips(); CMrenderSlot(P.slot); return CMselect(P,i); }
+  P.entries=v.entries.slice();
+  P.pl.querySelector(".cm-grab").textContent="grab: "+t.id;
+  CMstatus(P,"🎙 track loaded — "+P.entries.length+" comment(s), poured from its blob and verified against this record.");
+  CMtranUI(P);
+}
+async function CMpin(P){
+  const pl=P.pl;
+  const byName=pl.querySelector(".cm-name").value.trim();
+  const text=pl.querySelector(".cm-text").value.trim();
+  if(!byName){ CMstatus(P,"give your commentary a name first — the name rides on the track (this device remembers it)."); return; }
+  CMsetName(byName);
+  if(!text){ CMstatus(P,"write the comment first."); return; }
+  const entry={ t:Math.round(P.clock*10)/10, byName, text };
+  const entries=P.entries.concat([entry]).sort((a,b)=>a.t-b.t);
+  const title=P.title||(byName+" — commentary");
+  const rec={ kind:"commentary/1", recordRef:P.ctx.rec, recordHash:P.ctx.hash, tapeRef:P.ctx.tape, title, entries, ts:Date.now() };
+  CMstatus(P,"pouring the commentary track…");
+  try{
+    const pr=await fetch(PUBLISHER,{method:"PUT", body:JSON.stringify(rec)});
+    if(!pr.ok) throw new Error("publisher "+pr.status);
+    const nid=CMpublisherId(await pr.json());
+    if(!nid) throw new Error("publisher returned no blob id");
+    const back=await CMfetch(nid);
+    if(!back||back.kind!=="commentary/1"||!Array.isArray(back.entries)||back.entries.length!==entries.length) throw new Error("fetch-back did not verify");
+    // adopt the new blob as this track's current id (the track is a side
+    // record; each pin re-pours the whole track, the map follows it)
+    const m=CMmap(); const arr=m[P.ctx.rec]||[];
+    if(P.cur>=0&&arr[P.cur]){ arr[P.cur]={id:nid, title}; }
+    else { arr.push({id:nid, title}); P.cur=arr.length-1; }
+    m[P.ctx.rec]=arr; CMsaveMap(m);
+    P.tracks=arr.slice(); P.entries=entries; P.title=title;
+    CM.cache[nid]={id:nid, title, entries, flagged:false, raw:back};
+    pl.querySelector(".cm-text").value="";
+    pl.querySelector(".cm-grab").textContent="grab: "+nid;
+    CMstatus(P,"✓ pinned at "+entry.t.toFixed(1)+"s — track poured + fetch-back verified. The record itself is untouched: commentary rides beside it, never inside it.");
+    P.renderTrackChips(); CMrenderSlot(P.slot); CMtranUI(P);
+  }catch(e){
+    P.entries=entries; CMtranUI(P);
+    CMstatus(P,"⚠ pour failed ("+e.message+") — the comment is held in this panel only, not yet on its track.");
+  }
+}
+window.ACfill=ACfill; window.CMfill=CMfill; window.CMopen=CMopen;
+window.CM={ fill:CMfill, open:CMopen, verify:CMverify, map:CMmap, cache:CM.cache };
+setInterval(()=>{ try{ ACfill(); }catch(e){} try{ CMfill(); }catch(e){} },1500);
+setTimeout(()=>{ try{ ACfill(); }catch(e){} try{ CMfill(); }catch(e){} },600);
+})();
 </script>
 </body>
 </html>
