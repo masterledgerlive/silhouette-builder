@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>BUNNY CUBE v1.9.8 — BONK THE BULLIES + BLOB TALK + THE LIVE SHOW + ON AIR (a 3D world from Walrus blobs)</title>
+<title>BUNNY CUBE v1.9.9 — BONK THE BULLIES + BLOB TALK + THE LIVE SHOW + ON AIR (a 3D world from Walrus blobs)</title>
 <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/mqtt@5.10.1/dist/mqtt.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -225,7 +225,7 @@ grab apples, bonk them back. First to the banner takes the round.</p>
     </div>
     <div id="showBox"></div>
     <button id="joinDock" style="display:none;position:fixed;left:50%;transform:translateX(-50%);bottom:calc(100px + env(safe-area-inset-bottom));z-index:70;width:min(430px,94vw);min-height:68px;font-size:21px;font-weight:900;letter-spacing:.02em;color:#fff;background:#1faa3d;border:3px solid #baffc9;border-radius:16px;box-shadow:0 6px 24px rgba(0,0,0,.55);cursor:pointer;padding:10px 14px">🟢 JOIN THE GAME</button>
-    <div id="verTag">🧊 CUBE v1.9.8 · THE BRADY BUNCH</div>
+    <div id="verTag">🧊 CUBE v1.9.9 · EVERY GAME COUNTS</div>
     <button id="tiltBtn">🧭 TILT</button>
     <div id="joy"><div id="joyKnob"></div></div>
     <div id="pad"><span class="pip pU">▲</span><span class="pip pD">▼</span><span class="pip pL">◀</span><span class="pip pR">▶</span><div id="padKnob"></div></div>
@@ -1265,6 +1265,87 @@ function appendWinRecord(rec){
   winChain.push(rec); saveWinChain();
   teleEvent("RECORD RECEIVED","🏆 "+rec.winner+" · ⏱ "+rec.secs+" s · "+(rec.blob?"🧊 blob "+rec.blob.slice(0,12)+"…":"sealing…"));
 }
+// ---------- v1.9.9 EVERY GAME COUNTS — THE GAME LEDGER (David, Nov 8 19:22) ----------
+// The win chain crowns ROUNDS. The ledger remembers whole GAMES: every
+// finished match — win, lose, or quit after at least one round — seals a
+// game-ledger/1 record beside the win chain (never inside it; the win
+// record's hashed field list is untouched). The record pours as a blob
+// (epochs=30) and is announced on the room's talk topic so BOTH players'
+// devices carry it. The Hall lists every one, and the records live by
+// reblob — carried, until somebody deliberately decides permanence.
+let ledgerChain=[];
+let ledgerMatchSealed=false; // true once the CURRENT match has its ledger record (or one is in flight)
+function ledgerHash(r){ const res=r.result||{}; const c={kind:r.kind, game:r.game, room:r.room, p1:r.p1, p2:r.p2, t1:r.t1, t2:r.t2, winner:res.winner, s1:res.s1, s2:res.s2, sa:res.sa, rounds:res.rounds, ts:r.ts, prev:r.prev}; return sha256hex(_enc.encode(JSON.stringify(c))); }
+function ledgerLine(r){ const res=r.result||{}; const who=r.p2?(r.p1+" + "+r.p2):r.p1+" (solo)";
+  if(res.winner==="bullies") return "🍎 THE BULLIES WIN — "+who+" fall · rounds "+res.s1+"–"+res.s2+" · bullies took "+res.sa;
+  if(res.winner==="unfinished-quit") return "🚪 UNFINISHED — quit after "+res.rounds+" round(s) · "+who+" · score "+res.s1+"–"+res.s2+" · bullies "+res.sa;
+  return "🏆 "+res.winner+" WINS THE MATCH · rounds "+res.s1+"–"+res.s2+(res.sa?" · bullies "+res.sa:"")+" · "+who; }
+function loadLedgerChain(){ try{ ledgerChain=JSON.parse(localStorage.getItem("cube-ledger-v1")||"[]"); }catch(e){ ledgerChain=[]; }
+  setTimeout(()=>{ ledgerChain.filter(r=>!r.blob).forEach(r=>sealLedgerBlob(r,false)); }, 7000); }
+function saveLedgerChain(){ try{ localStorage.setItem("cube-ledger-v1", JSON.stringify(ledgerChain)); }catch(e){} }
+async function sealLedgerBlob(rec, announce){
+  try{
+    const r=await fetch(WIN_PUBLISHER,{method:"PUT", body:JSON.stringify(rec)});
+    if(!r.ok) throw new Error("publisher "+r.status);
+    const j=await r.json();
+    const blobId=(j.newlyCreated&&j.newlyCreated.blobObject&&j.newlyCreated.blobObject.blobId)||(j.alreadyCertified&&j.alreadyCertified.blobObject&&j.alreadyCertified.blobObject.blobId);
+    if(!blobId) throw new Error("no blobId in reply");
+    rec.blob=blobId; saveLedgerChain();
+    teleEvent("LEDGER SOLIDIFIED","📜 the game is a Walrus blob now: "+blobId.slice(0,16)+"… · epochs=30 · the Hall carries it by reblob");
+  }catch(e){
+    teleEvent("LEDGER LOCAL ONLY","ledger seal failed ("+e.message+") — the game is kept on this phone, retried on next boot");
+  }
+  if(announce && NET.room){ try{ mqPub(talkTopic(), {type:"ledger", tid:TALK.id, rec}); }catch(e){} }
+}
+function ledgerSnapshot(winner){
+  // captured SYNCHRONOUSLY at the decision moment — a later match reset
+  // can never rewrite what this game was.
+  const gOn=!!(NET.guest&&NET.guest.joined); // the placeholder guest object carries a default name ("BUNNY 2") even when nobody is seated — only a JOINED guest is a player in this game
+  return { winner, room:NET.room||"SOLO", p1:myName(), p2:gOn?(NET.guest.name||""):"",
+    t1:(typeof TALK!=="undefined"&&TALK.id)||"", t2:gOn?(NET.guest.tid||""):(NET.hostTid||""),
+    s1:NET.match.P1||0, s2:NET.match.P2||0, sa:NET.match.AI||0, jars:jarRecordIds().slice() };
+}
+function recordLedger(snap, tapeId){
+  const rec={kind:"game-ledger/1", game:"bunny-cube", room:snap.room, p1:snap.p1, p2:snap.p2, t1:snap.t1, t2:snap.t2,
+    result:{winner:snap.winner, s1:snap.s1, s2:snap.s2, sa:snap.sa, rounds:snap.s1+snap.s2+snap.sa},
+    tape:tapeId||null, jars:snap.jars, ts:Date.now(), prev:ledgerChain.length?ledgerChain[ledgerChain.length-1].h:"GENESIS", blob:null};
+  rec.h=ledgerHash(rec);
+  ledgerChain.push(rec); saveLedgerChain(); ledgerMatchSealed=true;
+  teleEvent("GAME ON THE LEDGER","📜 "+ledgerLine(rec)+" · hash "+rec.h.slice(0,12)+"… · solidifying into a blob…");
+  sealLedgerBlob(rec, true);
+  return rec;
+}
+async function ledgerAfterMatch(winner){
+  const snap=ledgerSnapshot(winner);
+  ledgerMatchSealed=true; // decided — a PLAY AGAIN during the tape wait must not seal a quit over it
+  // the ledger names the match tape when it poured — give sealTape its
+  // moment (attachments ride beside the hash, never inside it)
+  if(NET.lastTape && NET.lastTape.length>10 && !NET.tapeBlob){ for(let i=0;i<40&&!NET.tapeBlob;i++){ await new Promise(r=>setTimeout(r,600)); } }
+  recordLedger(snap, NET.tapeBlob||null);
+}
+function maybeLedgerQuit(){
+  // An unfinished match still counts — PLAY AGAIN over it, or leaving the
+  // page mid-match — but only if at least one round was completed
+  // (David's line, stated in the record).
+  if(ledgerMatchSealed||NET.role==="guest") return;
+  const rounds=(NET.match.P1||0)+(NET.match.P2||0)+(NET.match.AI||0);
+  if(rounds<1) return;
+  recordLedger(ledgerSnapshot("unfinished-quit"), NET.tapeBlob||null);
+}
+// Leaving the page IS quitting the match (v1.9.9 finisher: PLAY AGAIN alone
+// could never reach this — its button lives on the match-end panel).
+// recordLedger chains + saves synchronously, so the record survives the
+// unload; the blob pour retries on next boot (loadLedgerChain).
+window.addEventListener("beforeunload", ()=>{ try{ maybeLedgerQuit(); }catch(e){} });
+function appendLedgerRecord(rec){
+  if(!rec || rec.kind!=="game-ledger/1") return;
+  if(ledgerHash(rec)!==rec.h) return;
+  const ex=ledgerChain.find(r=>r.h===rec.h);
+  if(ex){ if(rec.blob&&!ex.blob){ ex.blob=rec.blob; saveLedgerChain(); } return; }
+  ledgerChain.push(rec); saveLedgerChain();
+  teleEvent("LEDGER RECEIVED","📜 "+ledgerLine(rec)+" · this game joined this phone's ledger"+(rec.blob?" · 🧊 blob "+rec.blob.slice(0,12)+"…":""));
+  if(!rec.blob) sealLedgerBlob(rec,false);
+}
 async function keeperSweep(){
   try{
     const last=+(localStorage.getItem("cube-keeper-t")||0);
@@ -1317,7 +1398,7 @@ function renderBoard(){
   el.innerHTML=h;
 }
 function jarRecordIds(){ return jarShelf().map(en=>en.recordBlob).filter(Boolean); }
-function hallUrl(){ const ids=winChain.filter(r=>r.blob).map(r=>r.blob); let u="../blob-cinema/scores.html#cube="+ids.join(","); const j=jarRecordIds(); if(j.length) u+="&jars="+j.join(","); return u; }
+function hallUrl(){ const ids=winChain.filter(r=>r.blob).map(r=>r.blob); let u="../blob-cinema/scores.html#cube="+ids.join(","); const j=jarRecordIds(); if(j.length) u+="&jars="+j.join(","); const L=ledgerChain.filter(r=>r.blob).map(r=>r.blob); if(L.length) u+="&ledger="+L.join(","); return u; }
 function showMatchPanel(){
   const p=$("matchPanel"); if(!p) return;
   $("matchTitle").textContent="🏆🏆 MATCH — "+(NET.matchWinner||"")+" TAKES IT!";
@@ -1365,6 +1446,7 @@ function endRound(playerWon, who){
     showBanner("🏆🏆 MATCH — "+mName+" TAKES IT!", "Best of three · "+NET.match.P1+"–"+NET.match.P2+(NET.match.AI?" · bullies "+NET.match.AI:"")+" · the whole match is sealing as one tape blob…", 6000);
     if(NET.role==="host") mqSend("down",{type:"ev", matchEnd:{winner:mName, a:NET.match.P1, b:NET.match.P2, c:NET.match.AI}});
     if(NET.lastTape && NET.lastTape.length>10) sealTape();
+    if(NET.role!=="guest") ledgerAfterMatch(playerWon?wName:"bullies");
     showMatchPanel();
   }
   state.lobTimer=3.2;
@@ -1643,9 +1725,9 @@ function netEvBanner(m,s){ if(NET.role==="host") mqSend("down",{type:"ev", banne
 // network (the loader hash-checks before it opens anything), never on a stale
 // Pages copy. Re-pinned at ship time: g = this version's first PUT blob,
 // h = sha256 of the bytes that blob names.
-const PAGE_BLOB="v0I2bbYdedEu-7NBTt6b8HGVhLQQEAgv2y73IY9dQ24";
-const PAGE_SHA="4611f09910497afbc5f4de6e2f6e7e554b17cba65686f4b75f508a90f2599e37";
-function jarQrText(room){ return "https://arcade.highscores.live/arcade/blob-loader.html?g="+PAGE_BLOB+"&h="+PAGE_SHA+"&n="+encodeURIComponent("BUNNY CUBE v1.9.8")+"&room="+room+"&join="+room; }
+const PAGE_BLOB="vbO7ZAeLu1Z16cMmwxmK0I5FZHQiswmYGUVrmMz-6x4";
+const PAGE_SHA="4bae1de9a4d9a8027e40ce72b58c257720c86a7875d2fc3086ff1ff7e2fa6698";
+function jarQrText(room){ return "https://arcade.highscores.live/arcade/blob-loader.html?g="+PAGE_BLOB+"&h="+PAGE_SHA+"&n="+encodeURIComponent("BUNNY CUBE v1.9.9")+"&room="+room+"&join="+room; }
 window.__CHATSEALS=[];
 const TALK={pc:null, mic:null, micOn:false, hear:true, remote:null, peerTid:null, watcher:false, _foreign:{}, id:"t"+Math.random().toString(36).slice(2,9)};
 function talkTopic(){ return mqTopic("talk"); }
@@ -1732,6 +1814,7 @@ async function onTalkMsg(t, m){ if(!NET.room||t!==talkTopic()) return; let msg; 
   if(msg.from&&(msg.type==="chat"||msg.type==="face")){ (TALK.peerNames||(TALK.peerNames={}))[msg.tid]=String(msg.from).slice(0,14); }
   if(msg.type==="face"){ const pr=FACE.peers[msg.tid]||(FACE.peers[msg.tid]={name:msg.from||"THEM", on:false}); const wasOn=pr.on; pr.on=!!msg.on; if(msg.from) pr.name=msg.from; if(TALK.peerTid&&msg.tid!==TALK.peerTid){ if(pr.on!==wasOn) popText("📷 "+pr.name+(pr.on?" turned their face on — they are watching, so their face stays on their own screen":" turned their face off"), 2400); return; } FACE.remoteOn=!!msg.on; FACE.gossip={on:!!msg.on, t:Date.now()}; if(FACE.remoteOn) faceEnsurePlaying("gossip"); faceTiles(); facePlaneVis(); popText(msg.on?"📷 "+(msg.from||"they")+" turned their face on — say hi":"📷 "+(msg.from||"they")+" turned their face off", 2000); return; }
   if(msg.type==="jar"){ const ind=$("jarInd"); if(msg.on){ if(ind){ ind.style.display="block"; ind.textContent="● "+(msg.from||"A PLAYER")+" is jarring this room"+(msg.video?" (face + voice)":"")+" — the show is being kept as its own track"; } popText("● "+(msg.from||"a player")+" opened a jar on this room", 2200); } else if(ind){ ind.style.display="none"; ind.textContent=""; } return; }
+  if(msg.type==="ledger"){ appendLedgerRecord(msg.rec); return; }
   if(msg.type==="coverage"&&msg.receipt){ const r=msg.receipt; teleEvent("COVERAGE","📡 coverage receipt from "+(msg.from||"the host")+" · "+r.segments+" segment(s) · tape ["+r.coveredFrom+"…"+r.coveredTo+"] ms · "+((r.gaps&&r.gaps.length)?("⚠ "+r.gaps.length+" gap(s) flagged · "+r.gapMs+" ms uncovered"):("full coverage ✓"))); return; }
   if(msg.type==="onair"){ const ind=$("airInd"); if(msg.on){ if(ind){ ind.style.display="block"; ind.textContent="📡 "+(msg.from||"THE HOST")+" is ON AIR — this room is pouring a show"; } popText("📡 "+(msg.from||"the host")+" is ON AIR", 2200); } else if(ind){ ind.style.display="none"; ind.textContent=""; } return; }
   if(msg.type==="seg"){ return; }
@@ -3045,7 +3128,7 @@ $("boardHall").addEventListener("click",()=>{
 });
 $("aboutClose").addEventListener("click",()=>{ $("aboutSheet").style.display="none"; });
 (function(){ const sh=$("aboutSheet"); if(sh) document.querySelectorAll("[data-about]").forEach(el=>sh.appendChild(el)); })();
-(function(){ const ni=$("nameInput"); if(ni){ ni.value=localStorage.getItem("cube-name")||""; ni.addEventListener("input",()=>{ try{ localStorage.setItem("cube-name", ni.value); }catch(e){} }); } loadWinChain(); setTimeout(()=>{ winChain.filter(r=>!r.blob).forEach(r=>sealWinBlob(r,false)); }, 6000);
+(function(){ const ni=$("nameInput"); if(ni){ ni.value=localStorage.getItem("cube-name")||""; ni.addEventListener("input",()=>{ try{ localStorage.setItem("cube-name", ni.value); }catch(e){} }); } loadWinChain(); loadLedgerChain(); setTimeout(()=>{ winChain.filter(r=>!r.blob).forEach(r=>sealWinBlob(r,false)); }, 6000);
   const rw=$("rpWatch"); if(rw) rw.addEventListener("click",()=>startReplay(NET.lastTape,"LAST MATCH"));
   const rs=$("rpSeal"); if(rs) rs.addEventListener("click",sealTape);
   const rl=$("rpLoad"); if(rl) rl.addEventListener("click",()=>{ const v=$("rpBlobId").value.trim(); if(v) loadTapeBlob(v); });
@@ -3063,6 +3146,7 @@ $("aboutClose").addEventListener("click",()=>{ $("aboutSheet").style.display="no
   const cyb=$("cycBtn"); if(cyb) cyb.addEventListener("click",()=>{ buildSky(); SKY.cycle=!SKY.cycle; cyb.textContent=SKY.cycle?"CYCLE ON":"CYCLE OFF"; if(SKY.cycle) teleEvent("SKY CLOCK","🕐 the 24-hour cycle turns — a full day every 4 minutes"); applySky(); });
   const ma=$("matchAgain"), mw=$("matchWatch");
   if(ma) ma.addEventListener("click",()=>{ if(NET.role==="guest") return;
+    maybeLedgerQuit(); ledgerMatchSealed=false;
     NET.match={P1:0,P2:0,AI:0}; NET.matchOver=false; NET.matchTape=[]; NET.matchWinner=""; NET.matchTapeBlob=null;
     state.round=1; state.bonks=0; state.bonked=0; NET.guest.bonks=0; state.roundT0=state.t; state.started=true;
     $("matchPanel").style.display="none"; syncHUD();
