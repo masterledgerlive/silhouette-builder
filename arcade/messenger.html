@@ -67,6 +67,15 @@
      the room waits folded into its bar */
   #msStage.ms-min #msStageBody{height:0}
   #msStage.ms-min #msStageBody .bc-dock{position:absolute;left:0;top:0;width:16px;height:16px;overflow:hidden;opacity:.02;padding:0;pointer-events:none}
+  /* v0.3.2 FLOAT MODE: the stage becomes a floating box BY CHOICE —
+     and the bar rides the box (drag it by the bar; MINIMIZE and EXIT
+     never leave it). Default stays home: in the flow, like a chair in
+     the room, not a fly on the screen. */
+  #msStage.ms-float{position:fixed;width:min(94vw,400px);z-index:70;margin:0;background:rgba(8,10,18,.96);border:1.5px solid #39507a;border-radius:14px;box-shadow:0 14px 44px rgba(0,0,0,.6);padding:8px}
+  #msStage.ms-float #msStageBar{cursor:grab;touch-action:none;user-select:none}
+  #msStageBody .bc-dockbar{display:none!important}
+  .ms-watchvid{width:100%;max-height:300px;background:#000;border-radius:10px;margin-top:8px}
+  .listen.watch{border-color:#7fd4ff;color:#bfe6ff}
   #callBar{position:fixed;left:0;right:0;bottom:66px;z-index:45;background:rgba(8,10,18,.96);border-top:1.5px solid #2c3350;padding:10px 10px 8px;max-width:640px;margin:0 auto}
   #callBar .togs{display:flex;gap:10px;justify-content:space-between}
   .tog{flex:1;height:72px;min-width:64px;font-size:31px;border-radius:16px}
@@ -128,6 +137,7 @@
 <div id="msStage">
   <div id="msStageBar">
     <span id="msStageCount">👥 1 here</span>
+    <button id="msStageDock">🖥 DOCK: HOME</button>
     <button id="msStageMin">⌄ MINIMIZE</button>
     <button id="msStageExit">✕ EXIT ROOM</button>
   </div>
@@ -247,14 +257,43 @@ home: arcade.highscores.live/arcade/messenger.html — add it to your home scree
 
 <script>
 /* ================================================================
-   BLOB MESSENGER v0.3.1 "THE STUCK BOX" — the flagship
+   BLOB MESSENGER v0.3.2 "EVERY SWITCH IS ITS OWN" — the flagship
    face of the blob engine. The page supplies presentation + contacts;
    the ENGINE is the BLOB COMMS plugin, recalled by its blob and
    verified by its sha256 before a line of it runs (the loader
-   pattern). This page pins plugin v1.3 "THE STUCK BOX" — blob
-   4xEsQxFN…, sha b9b96770… — and inherits its media-context banner,
-   frame-advance ghost law, independent toggles and clean-meter
-   plumbing.
+   pattern). This page pins plugin v1.4 "EVERY SWITCH IS ITS OWN" —
+   blob dwSC-qyD…, sha ad9c3d2d… — and inherits its toggle law (switches are source-only: no toggle
+   ever rebuilds a connection or drops the other party's channel),
+   per-channel gossip, the voice tile (a live waveform where a face
+   isn't), the persistent self tile, two-track call jars and dock
+   modes.
+   v0.3.2 (David, Nov 8 20:09–20:10, from his phone — v0.3.1's stage,
+   name cards, jars and clean meter all working): the field defect was
+   COUPLING — pictures existed only when ALL parties had BOTH voice
+   and face on; one person's one switch dropped the OTHER person's
+   picture and sound, and the self tile vanished outright. Plugin v1.4
+   carries the fix (diagnosis + law in PLUGIN-NOTES). This page adds:
+   CALL JARS on the shelf (call-jar/1 accepted beside voice-jar/1,
+   singly and via history redemption; LISTEN pours the AUDIO track —
+   never the video-first tracks[0]; a 👁 WATCH button pours the VIDEO
+   track and plays it in the shelf while the sound rides its own
+   track beside it; per-track grab lines already print from tracks[]);
+   and the DOCK choice on the stage bar (🖥 DOCK: HOME | FLOATING,
+   persisted) — floating is a draggable box whose bar never leaves it.
+   v0.3.1 (David, Nov 8 18:12–18:16, from his phone): THE STAGE GETS A
+   HOME + AN EXIT. In v0.3 the plugin's face dock stayed position:fixed
+   and floated over the panels — a silent peer's black tile covered MY
+   SAVED CALLS with no way to move or dismiss it. Now the page ADOPTS
+   the dock node into an in-flow stage section at the top of the page,
+   under a slim stage bar: 👥 count · ⌄ MINIMIZE (the stage folds to
+   the bar; tiles park Cube-style — 16px at opacity .02, never
+   display:none — so their streams keep flowing; a room waits without
+   letting go) · ✕ EXIT ROOM (ends the visit — back to your own code's
+   home state). Plugin v1.3's frame-advance watchdog makes the silent
+   tile a name card ("camera quiet") instead of a black box. And every
+   shelf entry gains PER-TRACK grab lines — Law 4 surfaced: a jar's
+   tracks are separable, timestamp-linked in its record, grabbable one
+   by one (for the studio: clips pull as audio-only or video-only).
    v0.3.1 (David, Nov 8 18:12–18:16, from his phone): THE STAGE GETS A
    HOME + AN EXIT. In v0.3 the plugin's face dock stayed position:fixed
    and floated over the panels — a silent peer's black tile covered MY
@@ -287,12 +326,12 @@ home: arcade.highscores.live/arcade/messenger.html — add it to your home scree
    ================================================================ */
 (function(){
 'use strict';
-var PLUGIN_BLOB='4xEsQxFNJxWvLIUAIBaw5-3JI1XTbe3O0ULOafW_8d0';
-var PLUGIN_SHA='b9b9677035f8c55bbb6cd54f56b6113be75a9fbdd2abda517d0a31c263be5685';
+var PLUGIN_BLOB='dwSC-qyDtJnrLUMEsIMMC_RI9HpoM6Wjn-4luW3L-40';
+var PLUGIN_SHA='ad9c3d2ddf6f562832697ae73c91b82b8b13cf085b51a73e2bb14dad7e0d27f6';
 var PUBLISHER='https://publisher.walrus-testnet.walrus.space/v1/blobs?epochs=30';
 var LOBBY_TOPIC='kodakai/comms/v1/lobby';
-var MS_PAGE_BLOB='ZZDmII2S2wlh0oDiETRqAoONCEZIyt2Z8cXoISm4dJY';   /* QR pin — candidate blob, two-step (the Cube's pattern) */
-var MS_PAGE_SHA='c47da85cfc29eb80e687972960d22db139355377eab68fb4ac002f627a2184f1';     /* QR pin — sha256 of the candidate bytes */
+var MS_PAGE_BLOB='hzXFUV9VwjOeFxNPJP4umMkKNHV86HtD4rACtqKhSLQ';   /* QR pin — candidate blob, two-step (the Cube's pattern) */
+var MS_PAGE_SHA='9811f4c8886c75c0b95b74aaf8c25a35e5462ee2945b81c9229542c381774864';     /* QR pin — sha256 of the candidate bytes */
 var PAGES_URL='https://arcade.highscores.live/arcade/messenger.html';
 var LOADER='https://arcade.highscores.live/arcade/blob-loader.html';
 var MIRRORS=['https://aggregator.walrus-testnet.walrus.space','https://walrus-testnet.blockscope.net'];
@@ -519,13 +558,24 @@ window.__ms.openRooms=function(){ return (handle&&handle._s)?[...handle._s.openR
 var shelfSig='', shelfRendered=false, histInFlight=false, histLastSig='', lastListenOk=null;
 function normJar(rec, recordBlob, mine){
   if(!rec || !recordBlob) return null;
-  var t0=(rec.tracks && rec.tracks[0]) || null;
+  /* v0.3.2: tracks are SPLIT by kind — a call-jar's tracks[] is
+     video-first, and the shelf's ▶ LISTEN must pour the AUDIO track,
+     never the picture. Legacy voice-jars name the audio at rec.blob /
+     tracks[0]; call-jars name it in tracks[] — both resolve here. */
+  var tracks=(rec.tracks||[]).map(function(t){ return {type:(t&&t.type)||'', blob:(t&&t.blob)||null, sha256:(t&&t.sha256)||null, mime:(t&&t.mime)||''}; }).filter(function(t){ return !!t.blob; });
+  var aTrk=tracks.filter(function(t){ return t.type==='audio'; })[0]||null;
+  var vTrk=tracks.filter(function(t){ return t.type==='video'; })[0]||null;
+  var t0=tracks[0]||null;
   return {recordBlob:recordBlob, kind:rec.kind||'voice-jar/1', room:rec.room||'?', from:rec.from||'',
-    startedAt:rec.startedAt||null, durMs:rec.durMs||0,
-    tracks:(rec.tracks||[]).map(function(t){ return {type:(t&&t.type)||'', blob:(t&&t.blob)||null}; }).filter(function(t){ return !!t.blob; }),
-    trackBlob:rec.blob || (t0 && t0.blob) || null, trackSha:rec.sha256 || (t0 && t0.sha256) || null,
-    mime:rec.mime || (t0 && t0.mime) || 'audio/webm', clean:rec.clean||null, mine:!!mine};
+    startedAt:rec.startedAt||rec.ts||null, durMs:rec.durMs||rec.ms||0,
+    tracks:tracks,
+    trackBlob:(aTrk && aTrk.blob) || rec.blob || (t0 && t0.blob) || null,
+    trackSha:(aTrk && aTrk.sha256) || (tracks.length===1 && t0 && t0.sha256) || rec.sha256 || null,
+    mime:(aTrk && aTrk.mime) || rec.mime || (aTrk && aTrk.blob ? 'audio/webm' : ((t0 && t0.mime)||'audio/webm')),
+    videoBlob:(vTrk && vTrk.blob)||null, videoSha:(vTrk && vTrk.sha256)||null, videoMime:(vTrk && vTrk.mime)||'video/webm',
+    note:rec.note||'', clean:rec.clean||null, mine:!!mine};
 }
+function isJarKind(k){ return k==='voice-jar/1' || k==='call-jar/1'; } /* v0.3.2: call jars join voice jars on the shelf */
 function loadImported(){
   try{ return JSON.parse(localStorage.getItem('messenger-imported-jars')||'[]'); }catch(e){ return []; }
 }
@@ -563,7 +613,19 @@ function renderShelf(){
     var b=document.createElement('button'); b.className='listen'; b.textContent='▶ LISTEN';
     var st=document.createElement('div'); st.className='lstat';
     b.addEventListener('click', function(){ listenToJar(j, st); });
-    row.appendChild(b); row.appendChild(st);
+    row.appendChild(b);
+    /* v0.3.2: a call jar's VIDEO track gets its own 👁 WATCH — the
+       picture pours as its own blob and plays in the shelf, while the
+       sound rides its own track beside it (the Cube's jar viewer
+       pattern: two elements, one clock each, honestly synced). */
+    if(j.videoBlob){
+      var wb=document.createElement('button'); wb.className='listen watch'; wb.textContent='👁 WATCH THE PICTURE';
+      var wv=document.createElement('video'); wv.className='ms-watchvid'; wv.id='msWatchVid'; wv.controls=true; wv.playsInline=true; wv.style.display='none';
+      wb.addEventListener('click', function(){ watchJar(j, st, wv); });
+      row.appendChild(wb); row.appendChild(wv);
+    }
+    if(j.note){ var nt=document.createElement('div'); nt.className='jm'; nt.textContent=j.note; row.appendChild(nt); }
+    row.appendChild(st);
     var g=document.createElement('div'); g.className='grab'; g.textContent='grab: '+j.recordBlob;
     row.appendChild(g);
     /* v0.3.1 PER-TRACK GRAB (Law 4 surfaced): a jar's tracks ride its
@@ -603,6 +665,22 @@ async function listenToJar(j, statEl){
   lastListenOk=true;
 }
 window.__ms.listenState=function(){ return lastListenOk; };
+async function watchJar(j, statEl, vidEl){
+  function say(s){ if(statEl) statEl.textContent=s; }
+  if(!j.videoBlob){ say('this jar kept no picture — audio only'); return; }
+  say('pouring the picture…');
+  var buf=null;
+  for(var i=0;i<MIRRORS.length && !buf;i++){
+    try{ var r=await fetch(MIRRORS[i]+'/v1/blobs/'+j.videoBlob); if(r.ok) buf=await r.arrayBuffer(); }catch(e){}
+  }
+  if(!buf){ say('the picture would not pour — the network may still be waking it; try again in a bit'); return; }
+  var got=await sha256hex(new Uint8Array(buf));
+  if(j.videoSha && got!==j.videoSha){ say('⚠ the poured picture FAILED its sha check — not shown'); return; }
+  vidEl.src=URL.createObjectURL(new Blob([buf], {type:j.videoMime||'video/webm'}));
+  vidEl.style.display='block';
+  try{ await vidEl.play(); }catch(e){}
+  say('✓ picture poured + sha-verified — playing. The sound rides its own track: tap ▶ LISTEN and it plays beside the picture.');
+}
 function buildHistoryRecord(){
   return {kind:'history/1', jars:readShelfAll().map(function(j){ return {record:j.recordBlob, kind:j.kind, room:j.room, ts:j.startedAt, ms:j.durMs}; }), updated:new Date().toISOString()};
 }
@@ -650,7 +728,7 @@ async function importJarById(){
       if(!jtxt) continue;
       var jrec=null; try{ jrec=JSON.parse(jtxt); }catch(e){}
       var jn=normJar(jrec, jr.record, false);
-      if(!jn || jn.kind!=='voice-jar/1' || !jn.trackBlob) continue;
+      if(!jn || !isJarKind(jn.kind) || !jn.trackBlob) continue;
       imp2.push(Object.assign({}, jrec, {recordBlob:jr.record})); have[jr.record]=1; added++;
     }
     try{ localStorage.setItem('messenger-imported-jars', JSON.stringify(imp2)); }catch(e){}
@@ -660,7 +738,7 @@ async function importJarById(){
     return;
   }
   var n=normJar(rec, id, false);
-  if(!n || n.kind!=='voice-jar/1' || !n.trackBlob){ say('that blob is not a voice jar record'); return; }
+  if(!n || !isJarKind(n.kind) || !n.trackBlob){ say('that blob is not a jar record'); return; }
   var imp=loadImported();
   if(imp.some(function(x){ return x.recordBlob===id; })){ say('that jar is already on your shelf'); return; }
   imp.push(Object.assign({}, rec, {recordBlob:id}));
@@ -778,6 +856,49 @@ function wire(){
     if(room!==myCode){ if(handle) handle.join(myCode); }
     else toast('you are in your own room — this is home 🏠');
   });
+  /* ----- v0.3.2: DOCK MODE — the stage sits HOME in the page flow, or
+     FLOATS as a box the person chose, dragged by its bar. The bar
+     (count · DOCK · MINIMIZE · EXIT) rides the box in both modes —
+     floating is a choice now, never a trap (the v0.3 lesson). ----- */
+  var dockMode='stage'; try{ dockMode=localStorage.getItem('messenger-dock-mode')||'stage'; }catch(e){}
+  function applyFloatPos(){
+    var st=$('msStage'); if(dockMode!=='float') return;
+    var pos=null; try{ pos=JSON.parse(localStorage.getItem('messenger-float-pos')||'null'); }catch(e){}
+    if(pos && pos.left!=null){ st.style.left=pos.left+'px'; st.style.top=pos.top+'px'; }
+    else { st.style.left=Math.max(4, innerWidth-Math.min(innerWidth*0.94,400)-8)+'px'; st.style.top='64px'; }
+  }
+  window.__ms.dockMode=function(){ return dockMode; };
+  window.__ms.setDockMode=function(m){
+    dockMode=(m==='float')?'float':'stage';
+    try{ localStorage.setItem('messenger-dock-mode', dockMode); }catch(e){}
+    $('msStage').classList.toggle('ms-float', dockMode==='float');
+    $('msStageDock').textContent=dockMode==='float'?'🖥 DOCK: FLOATING':'🖥 DOCK: HOME';
+    if(handle && handle.setDockMode) handle.setDockMode(dockMode);
+    applyFloatPos();
+    return dockMode;
+  };
+  $('msStageDock').addEventListener('click', function(){ window.__ms.setDockMode(dockMode==='float'?'stage':'float'); });
+  (function(){
+    var bar=$('msStageBar'), drag=null;
+    bar.addEventListener('pointerdown', function(ev){
+      if(dockMode!=='float' || ev.target.closest('button')) return;
+      var r=$('msStage').getBoundingClientRect();
+      drag={dx:ev.clientX-r.left, dy:ev.clientY-r.top};
+      try{ bar.setPointerCapture(ev.pointerId); }catch(e){}
+    });
+    bar.addEventListener('pointermove', function(ev){
+      if(!drag) return;
+      var st=$('msStage');
+      st.style.left=Math.max(0, Math.min(innerWidth-70, ev.clientX-drag.dx))+'px';
+      st.style.top=Math.max(0, Math.min(innerHeight-50, ev.clientY-drag.dy))+'px';
+    });
+    function endDrag(){ if(!drag) return; drag=null;
+      var st=$('msStage'), r=st.getBoundingClientRect();
+      try{ localStorage.setItem('messenger-float-pos', JSON.stringify({left:Math.round(r.left), top:Math.round(r.top)})); }catch(e){}
+    }
+    bar.addEventListener('pointerup', endDrag); bar.addEventListener('pointercancel', endDrag);
+  })();
+  window.__ms.setDockMode(dockMode);
   $('msQrBtn').addEventListener('click', function(){ closePluginSheets(); renderMyQr(); $('msQrSheet').classList.add('open'); });
   $('msQrClose').addEventListener('click', function(){ $('msQrSheet').classList.remove('open'); });
   $('msCopyBtn').addEventListener('click', function(){
@@ -884,10 +1005,12 @@ window.__msReady=(async function(){
   if(!bytes) throw lastErr||new Error('plugin blob unreachable');
   var url=URL.createObjectURL(new Blob([bytes],{type:'text/javascript'}));
   await new Promise(function(res, rej){ var s=document.createElement('script'); s.src=url; s.onload=res; s.onerror=rej; document.head.appendChild(s); });
+  var savedDock='stage'; try{ savedDock=localStorage.getItem('messenger-dock-mode')||'stage'; }catch(e){}
   handle=window.BlobComms.mount($('msMount'), {
     ns:'messenger',
     canonical:PAGES_URL,
     room:room,
+    dockMode:(savedDock==='float')?'float':'stage',
     name:savedName||undefined,
     onPeerStream:function(tid, stream, info){ window.__ms.evts.push({ev:'peerStream', tid:tid, self:!!info.self, hasAudio:info.hasAudio, hasVideo:info.hasVideo}); },
     onPeerGone:function(tid){ window.__ms.evts.push({ev:'peerGone', tid:tid}); },
