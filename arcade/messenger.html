@@ -83,6 +83,25 @@
   .tog small{display:block;font-size:11.5px;letter-spacing:1px;color:#9fb6cc;margin-top:2px}
   #msBtnJar{width:100%;height:64px;margin-top:10px;font-size:21px;border-radius:16px}
   #msBtnJar.on{background:#5b1212;border-color:#ff7a6a;color:#ffd9d2}
+  #msBtnRec{width:100%;height:64px;margin-top:10px;font-size:21px;border-radius:16px;border:1.5px solid #ff5347;background:#2a0d10;color:#ffd9d2}
+  #msBtnRec.on{background:#8f1616;border-color:#ff8f86;color:#fff}
+  .consentline{font-size:13.5px;color:#9fb6cc;line-height:1.5;margin:8px 2px 0;text-align:center}
+  #msRecLine{font-size:14px;color:#ffb0a5;text-align:center;min-height:18px;margin-top:4px;word-break:break-all}
+  #msRecBanner{display:none;margin:10px 0 0;background:rgba(59,10,14,.97);border:1.5px solid #ff5347;border-radius:12px;padding:10px 12px;color:#ffd9d2;font-size:16.5px;text-align:center;line-height:1.45}
+  #msRecBanner.show{display:block}
+  .ms-sess{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+  .ms-sess-tile{width:calc(50% - 4px);background:#0b0e1a;border:1px solid #39507a;border-radius:10px;padding:6px;box-sizing:border-box}
+  .ms-sess-tile video{width:100%;aspect-ratio:4/3;background:#000;border-radius:8px;display:block}
+  .ms-sess-cap{font-size:14.5px;color:#cfd8ea;text-align:center;margin-top:4px}
+  .ms-sess-mute{width:100%;min-height:44px;font-size:15px;margin-top:4px}
+  .ms-sess-mute.off{background:#5b1212;color:#ffd9d2;border-color:#ff7a6a}
+  .ms-sess-bar{display:flex;gap:8px;margin-top:8px;width:100%}
+  .ms-sess-bar button{flex:1;min-height:48px;font-size:16px}
+  .ms-tracks{display:none;margin-top:8px}
+  .ms-tracks.open{display:block}
+  .ms-tracks .seghd{font-size:15px;color:#ffd76a;margin-top:8px}
+  .ms-tracks .silentline{font-size:13.5px;color:#9fb6cc;margin-top:2px}
+  .ms-tracks .gapline{font-size:13.5px;color:#ffb0a5;margin-top:2px}
   #consent{font-size:13.5px;color:#9fb6cc;line-height:1.5;margin:8px 2px 0;text-align:center}
   #msJarLine{font-size:14px;color:#ffb0a5;text-align:center;min-height:18px;margin-top:4px}
   .overlay{position:fixed;inset:0;z-index:80;background:rgba(4,5,10,.94);display:none;align-items:center;justify-content:center;padding:16px}
@@ -176,6 +195,7 @@
   <div id="msLiveAlert" style="display:none"></div>
 </div>
 
+<div id="msRecBanner"></div>
 <div id="msStage">
   <div id="msStageBar">
     <span id="msStageCount">👥 1 here</span>
@@ -252,7 +272,7 @@
 
 <div class="card">
   <h2>🫙 MY SAVED CALLS</h2>
-  <p>Every call you jarred on this device, newest first — these jars are your history. Tap LISTEN to pour one back and hear it; anyone holding a jar's <i>grab</i> id can pull that call out of the network.</p>
+  <p>Every call you jarred on this device, newest first — these jars are your history. Tap LISTEN to pour one back and hear it; anyone holding a jar's <i>grab</i> id can pull that call out of the network. 🔴 SESSION BOXES land here too — a whole room, everyone's voice and face as separate tracks: tap PLAY THE SESSION to pour it back, person by person.</p>
   <div id="msShelf"></div>
   <div class="empty" id="msShelfEmpty">No saved calls yet. In a call, tap 🫙 SAVE THIS CALL and it lands here.</div>
   <audio id="msPlayer" controls playsinline></audio>
@@ -260,8 +280,8 @@
     <div class="histline" id="msHistoryLine">YOUR HISTORY — one pointer: …</div>
     <div class="histgrab" id="msHistoryGrab"></div>
   </div>
-  <label class="lbl" for="msImportIn">ADD A JAR BY ITS ID — a jar someone handed you joins your shelf</label>
-  <input type="text" id="msImportIn" placeholder="paste a jar record id" style="font-size:16px"/>
+  <label class="lbl" for="msImportIn">ADD A JAR OR A SESSION BOX BY ITS ID — one someone handed you joins your shelf</label>
+  <input type="text" id="msImportIn" placeholder="paste a jar or session-box record id" style="font-size:16px"/>
   <button class="savebtn" id="msImportBtn">➕ ADD IT TO MY SHELF</button>
   <div class="lstat" id="msImportStat" style="font-size:14px;color:#ffb0a5;min-height:16px;margin-top:4px"></div>
 </div>
@@ -280,6 +300,9 @@ home: arcade.highscores.live/arcade/messenger.html — add it to your home scree
   <button id="msBtnJar">🫙 SAVE THIS CALL</button>
   <div id="consent">Only saves when you turn it on. The badge shows while it saves.<br/>Nobody else can save your face without the badge.</div>
   <div id="msJarLine"></div>
+  <button id="msBtnRec">🔴 RECORD THE WHOLE ROOM</button>
+  <div class="consentline">Records EVERYONE in this room — every voice and every face as its own track, in one box.<br/>The 🔴 badge shows on every screen in the room while it records. Recorded on this device from what it received — if a connection dropped a moment, the box has a gap and says so.</div>
+  <div id="msRecLine"></div>
   <div id="msMeter">🎞 frames clean: —</div>
   <div id="msMeterCap">the meter watches the road; the seal proves the record</div>
 </div>
@@ -321,12 +344,12 @@ home: arcade.highscores.live/arcade/messenger.html — add it to your home scree
 
 <script>
 /* ================================================================
-   BLOB MESSENGER v0.4 "THE RACK" — the flagship
+   BLOB MESSENGER v0.5 "THE SESSION BOX" — the flagship
    face of the blob engine. The page supplies presentation + contacts;
    the ENGINE is the BLOB COMMS plugin, recalled by its blob and
    verified by its sha256 before a line of it runs (the loader
-   pattern). This page pins plugin v1.5 "THE RACK" —
-   blob sX39w9Pa…, sha 747b8b77… — and inherits its toggle law (switches are source-only: no toggle
+   pattern). This page pins plugin v1.6 "THE SESSION BOX" —
+   blob Px046YmR…, sha 9728b1e0… — and inherits its toggle law (switches are source-only: no toggle
    ever rebuilds a connection or drops the other party's channel),
    per-channel gossip, the voice tile (a live waveform where a face
    isn't), the persistent self tile, two-track call jars and dock
@@ -408,15 +431,33 @@ home: arcade.highscores.live/arcade/messenger.html — add it to your home scree
    that room without moving (your seal publishes there; your voice
    does not jump), OPEN THE ROOM, or CLOSE (badge clears, room
    re-parks). Names are the ones people CHOSE — never legal names.
+   v0.5 "THE SESSION BOX" (David, Nov 8 21:39 — plugin v1.6): SAVE
+   THE CALL grows up to the game's standard. Beside the keeper's-own
+   jar button (unchanged — it keeps YOUR call, two tracks), the call
+   bar gains 🔴 RECORD THE WHOLE ROOM: the foreground room's recorder
+   keeps EVERY participant's voice AND face as their OWN separate
+   tracks, all at once, in 10-second segments under ONE sealed
+   room-rec/1 record — the SESSION BOX — with a coverage receipt
+   that names its gaps instead of hiding them. Consent is the jar
+   law, room-wide: while it records, every screen in the room shows
+   the 🔴 banner. The box lands in MY SAVED CALLS: participants by
+   chosen name, 🎬 PLAY THE SESSION pours the segments in order with
+   a tile per person and a mute per person (the mix is derived at
+   the listener — Law 11), and SHOW EVERY TRACK lists each track
+   with its own grab line (Law 4). Switching rooms seals the box
+   first — its receipt says 'switched rooms'. Honest label, in the
+   UI where David reads it: recorded on this device from what it
+   received — if a connection dropped a moment, the box has a gap
+   and says so.
    ================================================================ */
 (function(){
 'use strict';
-var PLUGIN_BLOB='sX39w9Pa11B8Snv6gjkfWwJKMp0hIlhGYILZiqSYrBE';
-var PLUGIN_SHA='747b8b77b3e4d480ff4414c6b30601eff0b8ecd218fd4beea021ba0b442f1e8f';
+var PLUGIN_BLOB='Px046YmRZY4ttQsdd_ADlWiK_NInC8g6roIBZuA388I';
+var PLUGIN_SHA='9728b1e0adfd8a5fbb6bf994728e3f00a06587cbdcdb8f07c03d765f03c58f2a';
 var PUBLISHER='https://publisher.walrus-testnet.walrus.space/v1/blobs?epochs=30';
 var LOBBY_TOPIC='kodakai/comms/v1/lobby';
-var MS_PAGE_BLOB='k-XPHQ4DXR5z1CoNS68JU997xyhONmWwawoeoHUQVio';   /* QR pin — candidate blob, two-step (the Cube's pattern) */
-var MS_PAGE_SHA='dd84f701eb41df84bd0f9aaa66e9946ca272c8047dea5d65f017bc75a1e20913';     /* QR pin — sha256 of the candidate bytes */
+var MS_PAGE_BLOB='qRg7FPrGXPb4tbIr5sTkrPntAIGUC6tAb0U8wtmmOjI';   /* QR pin — candidate blob, two-step (the Cube's pattern) */
+var MS_PAGE_SHA='a5036ccd55e308295eaf3ce90afcd5cec1c221d89ad5c41b7f5033bf2ea8bc37';     /* QR pin — sha256 of the candidate bytes */
 var PAGES_URL='https://arcade.highscores.live/arcade/messenger.html';
 var LOADER='https://arcade.highscores.live/arcade/blob-loader.html';
 var MIRRORS=['https://aggregator.walrus-testnet.walrus.space','https://walrus-testnet.blockscope.net'];
@@ -651,6 +692,12 @@ function createEntry(code, opts){
   entries.set(code, e);
   h.on('tap', function(from, text, sealOk){ onTapHeard(e, from, text, sealOk); });
   h.on('chat', function(from, text, sealOk){ onChatHeard(e, from, text, sealOk); });
+  /* v0.5: when THIS entry's recorder seals a session box, the shelf
+     re-reads (the plugin already committed it) and the history jar
+     re-pours, so the box travels by the one history pointer too. */
+  h.on('roomRec', function(ev){
+    if(ev && ev.phase==='sealed'){ shelfSig=''; renderShelf(); pourHistory(); if(code===fgCode) toast('🔴 session box sealed — it is in MY SAVED CALLS', 3400); }
+  });
   if(h._el){ [h._el.sChat, h._el.sFind, h._el.sQr, h._el.sUp].forEach(function(bn){ if(bn) bn.addEventListener('click', closeMsOverlays); }); }
   return e;
 }
@@ -955,6 +1002,14 @@ window.__ms.sendTap=function(text){ if(handle) return handle.sendTap(text||'is t
 window.__ms.posture=function(){ return {mic:posture.mic, face:posture.face, hear:posture.hear}; };
 window.__ms.visit=function(){ var e=fgCode?entries.get(fgCode):null; return e?{phase:e.visit.phase, knocked:e.visit.knocked, hostName:e.visit.hostName}:{phase:'idle', knocked:false, hostName:''}; };
 window.__ms.openRooms=function(){ return (handle&&handle._s)?[...handle._s.openRooms.values()]:[]; };
+/* ----- v0.5 session-box test surface ----- */
+window.__ms.recState=function(){ var e=fgCode?entries.get(fgCode):null; if(!e) return null; var s=e.handle.state(); return {recOn:s.recOn, remoteRec:s.remoteRec, rec:s.rec, lastRec:s.lastRec}; };
+window.__ms.startRec=function(){ if(handle) return handle.startRoomRec(); };
+window.__ms.stopRec=function(r){ if(handle) return handle.stopRoomRec(r||'stopped'); };
+window.__ms.setRecSegMs=function(ms){ if(handle) return handle.setRecSegMs(ms); };
+window.__ms.openSess=function(id){ var b=document.querySelector('#msShelf [data-record="'+id+'"] .listen.sess'); if(!b) return false; b.click(); return true; };
+window.__ms.sessState=function(){ return sessState(); };
+window.__ms.closeSess=function(){ closeSess(); };
 
 /* ================================================================
    THE JAR VAULT (v0.3) — MY SAVED CALLS. The plugin shelf (this
@@ -982,9 +1037,17 @@ function normJar(rec, recordBlob, mine){
     trackSha:(aTrk && aTrk.sha256) || (tracks.length===1 && t0 && t0.sha256) || rec.sha256 || null,
     mime:(aTrk && aTrk.mime) || rec.mime || (aTrk && aTrk.blob ? 'audio/webm' : ((t0 && t0.mime)||'audio/webm')),
     videoBlob:(vTrk && vTrk.blob)||null, videoSha:(vTrk && vTrk.sha256)||null, videoMime:(vTrk && vTrk.mime)||'video/webm',
-    note:rec.note||'', clean:rec.clean||null, mine:!!mine};
+    note:rec.note||'', clean:rec.clean||null, mine:!!mine,
+    /* v0.5: a room-rec/1 SESSION BOX carries its people + segments +
+       coverage through normalization untouched — the shelf renders
+       the box from these, never from the flat jar fields. */
+    participants:(rec.participants||[]).map(function(p){ return {tid:(p&&p.tid)||'', name:(p&&p.name)||'GUEST'}; }),
+    segments:Array.isArray(rec.segments)?rec.segments:[],
+    coverage:rec.coverage||null, stopReason:rec.stopReason||'',
+    recorder:rec.recorder||'', recorderName:rec.recorderName||''};
 }
-function isJarKind(k){ return k==='voice-jar/1' || k==='call-jar/1'; } /* v0.3.2: call jars join voice jars on the shelf */
+function isJarKind(k){ return k==='voice-jar/1' || k==='call-jar/1' || k==='room-rec/1'; } /* v0.3.2: call jars join voice jars on the shelf · v0.5: session boxes too */
+function jarHasMedia(n){ return !!n && (!!n.trackBlob || (n.kind==='room-rec/1' && n.segments && n.segments.length>0)); }
 function loadImported(){
   try{ return JSON.parse(localStorage.getItem('messenger-imported-jars')||'[]'); }catch(e){ return []; }
 }
@@ -1009,6 +1072,7 @@ function renderShelf(){
   box.innerHTML='';
   jars.forEach(function(j){
     var row=document.createElement('div'); row.className='ms-jar-row'; row.dataset.record=j.recordBlob;
+    if(j.kind==='room-rec/1'){ renderRecRow(j, row); box.appendChild(row); return; }
     var t=document.createElement('div'); t.className='jt';
     t.textContent='🫙 '+fmtWhen(j.startedAt)+' · room '+j.room+' · '+Math.round((j.durMs||0)/100)/10+'s';
     row.appendChild(t);
@@ -1054,6 +1118,201 @@ function renderShelf(){
     box.appendChild(row);
   });
   renderHistoryLine();
+}
+/* ----- v0.5 THE SESSION BOX on the shelf -----
+   A room-rec/1 entry is not a jar: it is a BOX of separate tracks.
+   Its row names everyone in it (by chosen name), states its coverage
+   honestly (gaps named, never hidden), plays as a SESSION (segments
+   in order, a tile per person, a mute per person — the mix derived
+   at the listener, Law 11), and expands to EVERY track with its own
+   grab line (per-track grab law, Law 4). */
+function recName(j, tid){
+  var p=(j.participants||[]).filter(function(x){ return x.tid===tid; })[0];
+  return p?p.name:'GUEST';
+}
+function renderRecRow(j, row){
+  var t=document.createElement('div'); t.className='jt';
+  t.textContent='🔴 THE WHOLE ROOM · '+fmtWhen(j.startedAt)+' · room '+j.room+' · '+Math.round((j.durMs||0)/100)/10+'s';
+  row.appendChild(t);
+  var names=(j.participants||[]).map(function(p){ return p.name; }).join(', ');
+  var m=document.createElement('div'); m.className='jm';
+  m.textContent='with '+(names||'the room')+' · recorded by '+(j.mine?'you (this device)':(j.recorderName||'someone'));
+  row.appendChild(m);
+  var cv=j.coverage;
+  if(cv){
+    var c=document.createElement('div'); c.className='clean';
+    var nTracks=j.segments.reduce(function(a,s){ return a+((s.tracks||[]).length); }, 0);
+    if(!cv.gaps || !cv.gaps.length) c.textContent='✓ the box covers the whole session — '+cv.segments+' segments · '+nTracks+' separate tracks · no holes in time';
+    else c.textContent='⚠ coverage: '+Math.round((cv.gapMs||0)/100)/10+'s missing in '+(cv.gaps||[]).length+' hole'+(cv.gaps.length===1?'':'s')+' · the receipt names them below';
+    if(cv.trackGaps) { c.textContent+=' · '+cv.trackGaps+' track gap'+(cv.trackGaps===1?'':'s')+' named in the segments'; }
+    row.appendChild(c);
+  }
+  if(j.stopReason && j.stopReason!=='stopped'){
+    var sr=document.createElement('div'); sr.className='jm'; sr.textContent='stopped because: '+j.stopReason;
+    row.appendChild(sr);
+  }
+  var st=document.createElement('div'); st.className='lstat';
+  var pb=document.createElement('button'); pb.className='listen sess'; pb.textContent='🎬 PLAY THE SESSION';
+  var host=document.createElement('div'); host.className='ms-sess-host';
+  pb.addEventListener('click', function(){ playSession(j, st, host); });
+  row.appendChild(pb);
+  var xb=document.createElement('button'); xb.className='listen'; xb.textContent='▸ SHOW EVERY TRACK';
+  var xdiv=document.createElement('div'); xdiv.className='ms-tracks';
+  xb.addEventListener('click', function(){
+    var open=xdiv.classList.toggle('open');
+    xb.textContent=open?'▾ HIDE THE TRACKS':'▸ SHOW EVERY TRACK';
+    if(open && !xdiv.dataset.built){ xdiv.dataset.built='1'; buildTrackList(j, xdiv); }
+  });
+  row.appendChild(xb); row.appendChild(xdiv); row.appendChild(host);
+  if(j.note){ var nt=document.createElement('div'); nt.className='jm'; nt.textContent=j.note; row.appendChild(nt); }
+  row.appendChild(st);
+  var g=document.createElement('div'); g.className='grab'; g.textContent='grab: '+j.recordBlob+' — the whole box, one id';
+  row.appendChild(g);
+}
+function buildTrackList(j, host){
+  (j.segments||[]).forEach(function(sg){
+    var hd=document.createElement('div'); hd.className='seghd';
+    hd.textContent='— segment '+(sg.seq+1)+' · '+Math.round(sg.t0/100)/10+'s–'+Math.round(sg.t1/100)/10+'s —';
+    host.appendChild(hd);
+    (sg.tracks||[]).forEach(function(tr){
+      var d=document.createElement('div'); d.className='grab trackgrab';
+      d.textContent=(tr.channel==='video'?'🎬 ':'🎙 ')+recName(j, tr.who)+(tr.channel==='video'?' face':' voice')+' · grab: '+tr.blob;
+      host.appendChild(d);
+    });
+    (sg.silent||[]).forEach(function(s){
+      var d=document.createElement('div'); d.className='silentline';
+      d.textContent='🔇 '+recName(j, s.who)+(s.channel==='video'?' face':' voice')+' — '+s.reason;
+      host.appendChild(d);
+    });
+    (sg.gaps||[]).forEach(function(gp){
+      var d=document.createElement('div'); d.className='gapline';
+      d.textContent='⚠ '+recName(j, gp.who)+(gp.channel==='video'?' face':' voice')+' — GAP: '+gp.reason;
+      host.appendChild(d);
+    });
+  });
+}
+/* ----- the session player: pour the box back, segment by segment.
+   Every participant gets a tile: their face on a muted <video>, their
+   voice on its own <audio> — separate elements, separate tracks, one
+   shared segment clock. A person's mute silences ONLY their audio
+   element (Law 11: the mix is derived at the listener). Tracks are
+   sha-verified as they pour, down the same mirror ladder as jars. */
+var sess=null, sessUrlList=[];
+function sessState(){
+  if(!sess) return {open:false};
+  var t={};
+  Object.keys(sess.tiles).forEach(function(k){ var x=sess.tiles[k];
+    t[k]={muted:x.muted, audMuted:!!x.aud.muted, hasAud:!!x.aud.getAttribute('src'), hasVid:!!x.vid.getAttribute('src'), audPaused:x.aud.paused, vidPaused:x.vid.paused}; });
+  return {open:true, seg:sess.segIdx, segs:sess.rec.segments.length, playing:sess.playing, tiles:t};
+}
+function closeSess(){
+  if(!sess) return;
+  if(sess.timer) clearTimeout(sess.timer);
+  if(sess.poll) clearInterval(sess.poll);
+  Object.keys(sess.tiles).forEach(function(k){ var x=sess.tiles[k]; try{ x.aud.pause(); x.vid.pause(); }catch(e){} });
+  sessUrlList.forEach(function(u){ try{ URL.revokeObjectURL(u); }catch(e){} });
+  sessUrlList=[];
+  if(sess.wrap && sess.wrap.parentNode) sess.wrap.parentNode.removeChild(sess.wrap);
+  sess=null;
+}
+async function sessFetch(id){
+  for(var i=0;i<MIRRORS.length;i++){
+    try{ var r=await fetch(MIRRORS[i]+'/v1/blobs/'+id); if(r.ok) return await r.arrayBuffer(); }catch(e){}
+  }
+  return null;
+}
+async function sessSetSrc(el, trk){
+  if(sess.urls[trk.blob]){ el.src=sess.urls[trk.blob]; return true; }
+  var buf=await sessFetch(trk.blob);
+  if(!buf) return false;
+  var got=await sha256hex(new Uint8Array(buf));
+  if(trk.sha256 && got!==trk.sha256) return false;
+  var url=URL.createObjectURL(new Blob([buf], {type:trk.mime||'audio/webm'}));
+  sess.urls[trk.blob]=url; sessUrlList.push(url);
+  el.src=url;
+  return true;
+}
+async function playSession(j, statEl, hostEl){
+  function say(s){ if(statEl) statEl.textContent=s; }
+  closeSess();
+  if(!j.segments || !j.segments.length){ say('this box names no segments — nothing to play'); return false; }
+  var wrap=document.createElement('div'); wrap.className='ms-sesswrap';
+  var grid=document.createElement('div'); grid.className='ms-sess'; wrap.appendChild(grid);
+  var tiles={};
+  (j.participants||[]).forEach(function(p){
+    var cell=document.createElement('div'); cell.className='ms-sess-tile';
+    var vid=document.createElement('video'); vid.muted=true; vid.playsInline=true; cell.appendChild(vid);
+    var aud=document.createElement('audio'); aud.style.display='none'; cell.appendChild(aud);
+    var cap=document.createElement('div'); cap.className='ms-sess-cap'; cap.textContent=p.name||'GUEST'; cell.appendChild(cap);
+    var mb=document.createElement('button'); mb.className='ms-sess-mute'; mb.textContent='🔊 HEAR THEM';
+    var tile={vid:vid, aud:aud, muted:false};
+    mb.addEventListener('click', function(){ tile.muted=!tile.muted; tile.aud.muted=tile.muted; mb.textContent=tile.muted?'🔇 MUTED':'🔊 HEAR THEM'; mb.classList.toggle('off', tile.muted); });
+    cell.appendChild(mb);
+    grid.appendChild(cell);
+    tiles[p.tid]=tile;
+  });
+  var bar=document.createElement('div'); bar.className='ms-sess-bar';
+  var pp=document.createElement('button'); pp.textContent='⏸ PAUSE';
+  var cl=document.createElement('button'); cl.textContent='✕ CLOSE THE BOX';
+  bar.appendChild(pp); bar.appendChild(cl); wrap.appendChild(bar);
+  var stLine=document.createElement('div'); stLine.className='lstat'; wrap.appendChild(stLine);
+  hostEl.appendChild(wrap);
+  sess={rec:j, tiles:tiles, wrap:wrap, segIdx:-1, playing:true, statEl:statEl, stLine:stLine, urls:{}, timer:null, poll:null};
+  pp.addEventListener('click', function(){ if(!sess) return; if(sess.playing){ sessPause(); pp.textContent='▶ PLAY'; } else { sessResume(); pp.textContent='⏸ PAUSE'; } });
+  cl.addEventListener('click', function(){ closeSess(); });
+  say('pouring the session box…');
+  await sessPlaySeg(0);
+  return true;
+}
+async function sessPlaySeg(i){
+  if(!sess) return;
+  var j=sess.rec, segs=j.segments;
+  if(i>=segs.length){ sess.stLine.textContent='✓ the whole box played — '+segs.length+' segments, every track on its own stem'; sess.playing=false; if(sess.statEl) sess.statEl.textContent='✓ session played'; return; }
+  sess.segIdx=i;
+  var sg=segs[i];
+  sess.stLine.textContent='pouring segment '+(i+1)+' of '+segs.length+'…';
+  var byWho={};
+  (sg.tracks||[]).forEach(function(t){ (byWho[t.who]=byWho[t.who]||{})[t.channel]=t; });
+  var tids=Object.keys(sess.tiles);
+  for(var k=0;k<tids.length;k++){
+    var tile=sess.tiles[tids[k]], got=byWho[tids[k]]||{};
+    if(got.video) await sessSetSrc(tile.vid, got.video); else { tile.vid.removeAttribute('src'); try{ tile.vid.load(); }catch(e){} }
+    if(got.audio) await sessSetSrc(tile.aud, got.audio); else { tile.aud.removeAttribute('src'); try{ tile.aud.load(); }catch(e){} }
+  }
+  tids.forEach(function(k2){ var x=sess.tiles[k2];
+    if(x.vid.getAttribute('src')){ var pv=x.vid.play(); if(pv) pv.catch(function(){}); }
+    if(x.aud.getAttribute('src')){ var pa=x.aud.play(); if(pa) pa.catch(function(){}); }
+  });
+  sess.stLine.textContent='▶ segment '+(i+1)+' of '+segs.length+' — every voice and face on its own track';
+  if(sess.timer) clearTimeout(sess.timer);
+  if(sess.poll) clearInterval(sess.poll);
+  var dur=Math.max(600, (sg.t1-sg.t0)+1200);
+  sess.timer=setTimeout(function(){ sessPlaySeg(i+1); }, dur);
+  sess.poll=setInterval(function(){
+    if(!sess || sess.segIdx!==i || !sess.playing) return;
+    var any=false, allDone=true;
+    Object.keys(sess.tiles).forEach(function(k3){ var x=sess.tiles[k3];
+      [x.vid, x.aud].forEach(function(mm){ if(mm.getAttribute('src')){ any=true; if(!mm.ended && !mm.paused) allDone=false; } });
+    });
+    if(any && allDone) sessPlaySeg(i+1);
+  }, 400);
+}
+function sessPause(){
+  if(!sess) return;
+  sess.playing=false;
+  if(sess.timer) clearTimeout(sess.timer);
+  Object.keys(sess.tiles).forEach(function(k){ var x=sess.tiles[k]; try{ x.aud.pause(); x.vid.pause(); }catch(e){} });
+}
+function sessResume(){
+  if(!sess || sess.segIdx<0) return;
+  sess.playing=true;
+  Object.keys(sess.tiles).forEach(function(k){ var x=sess.tiles[k];
+    if(x.aud.getAttribute('src')){ var pa=x.aud.play(); if(pa) pa.catch(function(){}); }
+    if(x.vid.getAttribute('src')){ var pv=x.vid.play(); if(pv) pv.catch(function(){}); }
+  });
+  var sg=sess.rec.segments[sess.segIdx];
+  if(sess.timer) clearTimeout(sess.timer);
+  sess.timer=setTimeout(function(){ sessPlaySeg(sess.segIdx+1); }, Math.max(600, (sg.t1-sg.t0)+1200));
 }
 async function listenToJar(j, statEl){
   lastListenOk=null;
@@ -1137,7 +1396,7 @@ async function importJarById(){
       if(!jtxt) continue;
       var jrec=null; try{ jrec=JSON.parse(jtxt); }catch(e){}
       var jn=normJar(jrec, jr.record, false);
-      if(!jn || !isJarKind(jn.kind) || !jn.trackBlob) continue;
+      if(!jn || !isJarKind(jn.kind) || !jarHasMedia(jn)) continue;
       imp2.push(Object.assign({}, jrec, {recordBlob:jr.record})); have[jr.record]=1; added++;
     }
     try{ localStorage.setItem('messenger-imported-jars', JSON.stringify(imp2)); }catch(e){}
@@ -1147,7 +1406,7 @@ async function importJarById(){
     return;
   }
   var n=normJar(rec, id, false);
-  if(!n || !isJarKind(n.kind) || !n.trackBlob){ say('that blob is not a jar record'); return; }
+  if(!n || !isJarKind(n.kind) || !jarHasMedia(n)){ say('that blob is not a jar record'); return; }
   var imp=loadImported();
   if(imp.some(function(x){ return x.recordBlob===id; })){ say('that jar is already on your shelf'); return; }
   imp.push(Object.assign({}, rec, {recordBlob:id}));
@@ -1360,6 +1619,7 @@ function wire(){
   $('msBtnHear').addEventListener('click', function(){ if(handle) handle.toggleHear(); });
   $('msBtnChat').addEventListener('click', function(){ closeMsOverlays(); if(handle && handle._el && handle._el.sChat) handle._el.sChat.click(); });
   $('msBtnJar').addEventListener('click', function(){ if(handle) handle.toggleJar(); });
+  $('msBtnRec').addEventListener('click', function(){ if(handle) handle.toggleRoomRec(); });
   if(location.protocol==='blob:'){
     $('msHomeCard').style.display='block';
     $('msHomeBtn').href=PAGES_URL+'?room='+room;
@@ -1392,6 +1652,24 @@ function wire(){
     var jl=$('msJarLine');
     if(st.jarOn) jl.textContent='🫙 saving this call — the badge is on, everyone can see it';
     else if(st.lastJar && st.lastJar.recordBlob) jl.textContent='🫙 last call saved · jar '+String(st.lastJar.recordBlob).slice(0,14)+'… · '+Math.round((st.lastJar.durMs||0)/1000)+'s of talk, sealed';
+    /* v0.5: the session-box line + the page banner mirror the plugin's
+       consent badge — armed (mine or theirs) is always on screen. */
+    $('msBtnRec').classList.toggle('on', !!st.recOn);
+    $('msBtnRec').textContent=st.recOn?'🔴 RECORDING — TAP TO SEAL THE BOX':'🔴 RECORD THE WHOLE ROOM';
+    var rl=$('msRecLine'), rb=$('msRecBanner');
+    if(st.recOn && st.rec){
+      rl.textContent='🔴 recording the whole room · '+Math.floor((st.rec.elapsedMs||0)/1000)+'s · segment '+(st.rec.segments+1)+' · '+st.rec.parts+' tracks live';
+      rb.textContent='🔴 YOU ARE RECORDING THIS WHOLE ROOM — every voice and face is being kept as separate tracks · '+Math.floor((st.rec.elapsedMs||0)/1000)+'s';
+      rb.classList.add('show');
+    } else if(st.remoteRec){
+      rl.textContent='🔴 '+st.remoteRec.name+' is recording this room — the badge is up on your screen';
+      rb.textContent='🔴 THIS ROOM IS BEING RECORDED — '+st.remoteRec.name+' is keeping every voice and face as separate tracks';
+      rb.classList.add('show');
+    } else {
+      if(st.lastRec && st.lastRec.recordBlob) rl.textContent='🔴 last session box sealed · it is in MY SAVED CALLS · grab: '+st.lastRec.recordBlob;
+      else rl.textContent='';
+      rb.classList.remove('show');
+    }
     /* the clean meter (v0.3): the plugin samples getStats; we speak it plainly */
     var mt=$('msMeter'), c=st.clean;
     if(mt && c){
