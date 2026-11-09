@@ -106,7 +106,7 @@ function sha256hex(data){
 }
 const MIRRORS = ["https://aggregator.walrus-testnet.walrus.space/v1/blobs/", "https://walrus-testnet.blockscope.net/v1/blobs/"];
 const PUBLISHER = "https://publisher.walrus-testnet.walrus.space/v1/blobs";
-const LIBRARY_ROOT = "96_wq5JLoSEOBcNuCKH4AulU-zgEVLkcZVHtSeBZv_Y";
+const LIBRARY_ROOT = "-Pf5lfueNjU59iWgxkMoUW6GkOwUpPTb5ngLbfAngIo";
 async function recall(id){ let last=null;
   for(const m of MIRRORS){ try{ const r = await fetch(m + id, {cache:"no-store"}); if(r.ok) return await r.arrayBuffer(); last = new Error("HTTP " + r.status); }catch(e){ last = e; } }
   throw last || new Error("no mirror answered");
@@ -152,7 +152,7 @@ const ITEMS = {
     trigger:"seals every chat line; the other side echoes it back ✓✓ — a forged line gets a loud ⚠ and no echo", does:"per-line seals + echo receipts", needsTags:[], needsPkg:["talk"] },
   sky: { id:"sky", kind:"layer", emoji:"🌞", name:"SKY & CLOCK", blob:"9ytG2kDy2cAgc5ifMo2FdqjZ6Sq2Ejbh8B8xUs-m8FE",
     trigger:"a four-minute day over the world — sun, moon and words take turns holding the light; night changes the pressures", does:"day/night cycle + world pressures", needsTags:["sky"], needsPkg:[] },
-  comms: { id:"comms", kind:"layer", emoji:"📡", name:"BLOB COMMS", blob:"l01Dt4cC3yPp6oMM_PEpeKHcllwpXj5fMI4QSmdWV0k", worldOnly:true,
+  comms: { id:"comms", kind:"layer", emoji:"📡", name:"BLOB COMMS", blob:"niRe8LCygoR_7oRAXSVGeQCpCpXK_xdSpQkukpKcP3Y", worldOnly:true,
     trigger:"a simple layover on any screen — room presence, voice, faces, sealed chat, FIND for open rooms, and voice jars, speaking our blob encoding", does:"voice + chat + presence + find + jars on any screen", needsTags:[], needsPkg:[] },
   /* ——— MECHANICS (mechanic/1 records, blobbed Nov 7–8) ——— */
   throw: { id:"throw", kind:"mechanic", emoji:"🍎", name:"THROW", blob:"FnOM7X5_B-nii9JDxWbTDCwFaQA65mlhjGc1xcTV6t8",
