@@ -396,12 +396,12 @@ home: arcade.highscores.live/arcade/messenger.html — add it to your home scree
 
 <script>
 /* ================================================================
-   BLOB MESSENGER v0.6 "THE RALLY" — the flagship
+   BLOB MESSENGER v0.7 "TRACK FACES" — the flagship
    face of the blob engine. The page supplies presentation + contacts;
    the ENGINE is the BLOB COMMS plugin, recalled by its blob and
    verified by its sha256 before a line of it runs (the loader
-   pattern). This page pins plugin v1.6 "THE SESSION BOX" —
-   blob Px046YmR…, sha 9728b1e0… — and inherits its toggle law (switches are source-only: no toggle
+   pattern). This page pins plugin v1.7 "RUBIX TRACK FACES" —
+   blob FPB7POTn…, sha e4e4afb7… — and inherits its toggle law (switches are source-only: no toggle
    ever rebuilds a connection or drops the other party's channel),
    per-channel gossip, the voice tile (a live waveform where a face
    isn't), the persistent self tile, two-track call jars and dock
@@ -523,15 +523,24 @@ home: arcade.highscores.live/arcade/messenger.html — add it to your home scree
    OPEN FROM INSIDE: while 📣 OPEN, my ms-open beacon carries my
    room's open trip ("in BUNNY CUBE now — room XXXXX"), so the
    board's GO THERE for my call joins my table mid-game.
+   v0.7 "TRACK FACES" (Nov 9, 2026 — plugin v1.7; The Adoption's
+   ADAPT verdict on Rubix, under the Director's Delegation): the
+   Session Box's records now carry DECLARED FACES — every track
+   names {who, channel, segment, transform} inside the sealed
+   record, and every silence names its face too. This page's only
+   change beyond the pin: SHOW EVERY TRACK speaks each track's
+   faces in words ("ALICE · audio · segment 1 · opus stem")
+   beside its grab line. Faceless v1.6 boxes render exactly as
+   before — faces are additive, never required.
    ================================================================ */
 (function(){
 'use strict';
-var PLUGIN_BLOB='Px046YmRZY4ttQsdd_ADlWiK_NInC8g6roIBZuA388I';
-var PLUGIN_SHA='9728b1e0adfd8a5fbb6bf994728e3f00a06587cbdcdb8f07c03d765f03c58f2a';
+var PLUGIN_BLOB='FPB7POTnLp-RmaMmKaFnam1JDDiUv6J3SDpOgyUFEQY';
+var PLUGIN_SHA='e4e4afb7e9893529e77200986c4071ed18491790ed3670fe5624e0d69218c85d';
 var PUBLISHER='https://publisher.walrus-testnet.walrus.space/v1/blobs?epochs=30';
 var LOBBY_TOPIC='kodakai/comms/v1/lobby';
-var MS_PAGE_BLOB='TNFOQDrUPxAHsT9JEKcTm03iRaRhnDczvkOdRZD_Mro';   /* QR pin — candidate blob, two-step (the Cube's pattern) */
-var MS_PAGE_SHA='b2a2fb73e1b8a5219acd932a4643ab905737c85363d99017040318afddbe1054';     /* QR pin — sha256 of the candidate bytes */
+var MS_PAGE_BLOB='meX_D9qKKeMBkKYsYvD1EJOugEtVC2V3R5_gvWJO1qk';   /* QR pin — candidate blob, two-step (the Cube's pattern) */
+var MS_PAGE_SHA='2dc2a301baa424944b93b1f4244271eb967667d5713872b2682dc9ae12290ce3';     /* QR pin — sha256 of the candidate bytes */
 var PAGES_URL='https://arcade.highscores.live/arcade/messenger.html';
 var LOADER='https://arcade.highscores.live/arcade/blob-loader.html';
 var MIRRORS=['https://aggregator.walrus-testnet.walrus.space','https://walrus-testnet.blockscope.net'];
@@ -1497,7 +1506,11 @@ function buildTrackList(j, host){
     host.appendChild(hd);
     (sg.tracks||[]).forEach(function(tr){
       var d=document.createElement('div'); d.className='grab trackgrab';
-      d.textContent=(tr.channel==='video'?'🎬 ':'🎙 ')+recName(j, tr.who)+(tr.channel==='video'?' face':' voice')+' · grab: '+tr.blob;
+      var line=(tr.channel==='video'?'🎬 ':'🎙 ')+recName(j, tr.who)+(tr.channel==='video'?' face':' voice');
+      if(tr.faces && tr.faces.who){   /* v0.7: the track's declared faces, in words */
+        line+=' · '+tr.faces.who+' · '+tr.faces.channel+' · segment '+((+tr.faces.segment||0)+1)+' · '+String(tr.faces.transform||'').replace(/-/g,' ').replace(/\/1$/,'');
+      }
+      d.textContent=line+' · grab: '+tr.blob;
       host.appendChild(d);
     });
     (sg.silent||[]).forEach(function(s){
