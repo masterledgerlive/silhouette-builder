@@ -123,6 +123,41 @@
   .ms-open-row .meta{font-size:15px;color:#9fb6cc;margin-top:2px}
   .ms-open-row .go{font-size:19px;color:#3ec97f;white-space:nowrap}
   .ms-open-row.here{opacity:.6}
+  .ms-open-row .savebtn2{flex:none;min-height:58px;font-size:19px;padding:0 14px}
+  /* v0.4 THE RACK — chips for every room you hold; one is in front */
+  #msRackChips{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}
+  .ms-chip{display:flex;align-items:center;gap:9px;min-height:52px;background:#16233c;border:2px solid #39507a;border-radius:14px;padding:7px 10px;cursor:pointer;flex:1 1 46%;text-align:left;color:#f2ecd8;font-family:inherit}
+  .ms-chip.fg{border-color:#3ec97f;background:#0f2a1c}
+  .ms-chip .dot{flex:none;width:14px;height:14px;border-radius:50%;background:#3a4358}
+  .ms-chip .dot.live{background:#3ec97f;box-shadow:0 0 8px #3ec97f}
+  .ms-chip .who{flex:1;min-width:0}
+  .ms-chip .lb{font-size:18.5px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ms-chip .cd{font-size:13.5px;color:#9fb6cc;letter-spacing:1.5px}
+  .ms-chip .mini{flex:none;min-width:44px;min-height:44px;font-size:17px;border-radius:11px;padding:4px 8px}
+  .ms-chip .cnt{flex:none;font-size:15.5px;color:#bfe6ff}
+  .ms-tapbadge{flex:none;max-width:150px;background:#5b1212;border:1.5px solid #ff7a6a;color:#ffd9d2;border-radius:11px;font-size:14px;padding:7px 9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;min-height:44px}
+  @keyframes msflash{0%,100%{box-shadow:0 0 0 0 rgba(255,80,80,0)}50%{box-shadow:0 0 0 5px rgba(255,80,80,.95)}}
+  .ms-flash{animation:msflash .9s ease-in-out infinite}
+  #msLiveAlert{margin-top:12px;background:#2b1215;border:2px solid #ff7a6a;border-radius:14px;padding:12px;font-size:18px;color:#ffd9d2;line-height:1.45}
+  #msLiveAlert button{min-height:52px;font-size:18px;padding:6px 16px;margin-top:8px;background:#14532d;border-color:#3ec97f;color:#d9ffe6}
+  .ms-saved-row{display:flex;align-items:center;gap:10px;min-height:72px;background:#16233c;border:1px solid #39507a;border-radius:12px;padding:8px 10px;margin:8px 0}
+  .ms-saved-row .dot{flex:none;width:14px;height:14px;border-radius:50%;background:#3a4358}
+  .ms-saved-row .dot.live{background:#3ec97f;box-shadow:0 0 8px #3ec97f}
+  .ms-saved-row .who{flex:1;min-width:0}
+  .ms-saved-row .nm{font-size:20px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ms-saved-row .cd{font-size:14.5px;color:#9fb6cc;margin-top:1px}
+  .ms-saved-row .join{min-height:56px;font-size:18px;padding:0 16px;background:#14532d;border-color:#3ec97f;color:#d9ffe6}
+  .ms-saved-row .del{min-height:56px;width:50px;font-size:17px;color:#c9a7ff}
+  /* THE TAP — the peek card: read + answer a parked room without moving */
+  #msPeek{position:fixed;left:50%;transform:translateX(-50%);top:10px;z-index:75;width:min(94vw,440px);background:#141021;border:2px solid #ff7a6a;border-radius:16px;padding:14px;display:none;box-shadow:0 16px 48px rgba(0,0,0,.65)}
+  #msPeek.open{display:block}
+  #msPeekRoom{font-size:14px;color:#9fb6cc;letter-spacing:1px}
+  #msPeekFrom{font-size:20px;color:#ffd9d2;margin-top:4px}
+  #msPeekText{font-size:19px;color:#fff;line-height:1.45;margin:8px 0;background:#1d1430;border-radius:10px;padding:10px 12px}
+  #msPeekIn{font-size:18px}
+  #msPeek .btnrow button{flex:1;min-height:54px;font-size:16.5px;padding:6px}
+  #msTapRow{display:none;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px;background:#101a30;border:1.5px solid #39507a;border-radius:12px;padding:8px 10px;font-size:16px;color:#9fb6cc}
+  #msTapRow button{min-height:48px;font-size:16.5px;padding:6px 12px}
 </style>
 </head>
 <body>
@@ -134,6 +169,13 @@
   <div id="msGuestLine" style="display:none"></div>
   <div id="msVisitStatus"></div>
 </div>
+<div class="card" id="msRackCard">
+  <h2>🗂 YOUR ROOMS — THE RACK</h2>
+  <p>Every room you hold sits here on a chip. ONE room is in front — that&rsquo;s where your voice and face live. The others wait <b>parked</b>: their people and their writing stay, their chat keeps arriving, and you are honestly quiet there (your mic and camera are off in a parked room — nobody hears a room you&rsquo;re not standing in). Tap a chip to step into that room; your talk comes with you.</p>
+  <div id="msRackChips"></div>
+  <div id="msLiveAlert" style="display:none"></div>
+</div>
+
 <div id="msStage">
   <div id="msStageBar">
     <span id="msStageCount">👥 1 here</span>
@@ -141,6 +183,7 @@
     <button id="msStageMin">⌄ MINIMIZE</button>
     <button id="msStageExit">✕ EXIT ROOM</button>
   </div>
+  <div id="msTapRow"></div>
   <div id="msStageBody"></div>
 </div>
 
@@ -153,8 +196,9 @@
 
 <div class="card" id="visitCard" style="display:none">
   <h2>👋 YOU'RE VISITING</h2>
-  <p>You came in through a link — you're in room <b id="msVisitCode"></b>. Say hello below: 🎙 for your voice, 📷 for your face.</p>
+  <p>You came in through a link — you're in room <b id="msVisitCode"></b>. Say hello below: 🎙 for your voice, 📷 for your face. This room stays on your rack, parked, when you step home — ✕ EXIT on its chip leaves it for good.</p>
   <button class="visitbtn" id="msSaveVisit">💾 SAVE THIS ROOM AS A CONTACT</button>
+  <button class="visitbtn" id="msSaveVisitRoom">🗂 SAVE IT AS A SAVED ROOM</button>
   <button class="visitbtn" id="msGoHome">🏠 LEAVE — BACK TO MY ROOM</button>
 </div>
 
@@ -197,6 +241,13 @@
   <input type="text" id="msCName" maxlength="24" placeholder="their name — Grandma, David…"/>
   <input type="text" id="msCCode" maxlength="8" placeholder="their code" style="margin-top:8px;font-size:22px;letter-spacing:3px;text-transform:uppercase"/>
   <button class="savebtn" id="msSaveContact">➕ SAVE CONTACT</button>
+</div>
+
+<div class="card" id="msSavedCard">
+  <h2>💾 SAVED ROOMS</h2>
+  <p>Rooms you keep, like contacts — yours and other people&rsquo;s. A green dot means that room is LIVE right now. When a saved room lights up, it FLASHES here on this screen — alerts live on this page while this Messenger window is open. Nothing reaches a closed phone yet: that kind of push comes with the Portal window, and it is not promised today.</p>
+  <div id="msSavedList"></div>
+  <div class="empty" id="msSavedEmpty">No saved rooms yet. Save one from the 🔎 board, from a room&rsquo;s chip in the rack, or while visiting — then it&rsquo;s one tap to join, and you&rsquo;ll see it light up when it goes live.</div>
 </div>
 
 <div class="card">
@@ -253,16 +304,29 @@ home: arcade.highscores.live/arcade/messenger.html — add it to your home scree
 </div>
 
 <div id="msToast"></div>
+
+<div id="msPeek">
+  <div id="msPeekRoom"></div>
+  <div id="msPeekFrom"></div>
+  <div id="msPeekText"></div>
+  <input type="text" id="msPeekIn" placeholder="answer in writing — you stay right here" maxlength="300"/>
+  <div class="btnrow">
+    <button id="msPeekSend">✍ SEND — STAY HERE</button>
+    <button id="msPeekOpen">🚪 OPEN THE ROOM</button>
+    <button id="msPeekClose">✕ CLOSE</button>
+  </div>
+</div>
+
 <div id="msMount"></div>
 
 <script>
 /* ================================================================
-   BLOB MESSENGER v0.3.2 "EVERY SWITCH IS ITS OWN" — the flagship
+   BLOB MESSENGER v0.4 "THE RACK" — the flagship
    face of the blob engine. The page supplies presentation + contacts;
    the ENGINE is the BLOB COMMS plugin, recalled by its blob and
    verified by its sha256 before a line of it runs (the loader
-   pattern). This page pins plugin v1.4 "EVERY SWITCH IS ITS OWN" —
-   blob dwSC-qyD…, sha ad9c3d2d… — and inherits its toggle law (switches are source-only: no toggle
+   pattern). This page pins plugin v1.5 "THE RACK" —
+   blob sX39w9Pa…, sha 747b8b77… — and inherits its toggle law (switches are source-only: no toggle
    ever rebuilds a connection or drops the other party's channel),
    per-channel gossip, the voice tile (a live waveform where a face
    isn't), the persistent self tile, two-track call jars and dock
@@ -323,15 +387,36 @@ home: arcade.highscores.live/arcade/messenger.html — add it to your home scree
    reserved status slot, sheets mutually exclusive across the page
    and the plugin, the media banner docked clear of the stage and
    call bar mid-call, bottom padding that tracks the real chrome.
+   v0.4 "THE RACK" (David, Nov 8 18:16–18:42): MANY ROOMS, ONE PERSON.
+   The engine is now plugin v1.5 (multi-mount: the one-mount singleton
+   is gone; every mount is an independent room). This page holds a
+   RACK of rooms: chips with label/code/👥/live dot; ONE room is
+   FOREGROUND (its stage shows; your voice+face live there); parked
+   rooms keep presence + incoming chat flowing while you are honestly
+   QUIET there (plugin setParked closes your channels at the source).
+   Joining a room — by code, board GO, contact CALL, or saved room —
+   mounts it HERE, on this page; nothing reloads. Your posture (mic/
+   face/hear as you left them) travels to the room you step into.
+   SAVED ROOMS live like contacts (mine + theirs; save from board
+   rows, rack chips, or the visit card) with LIVE dots, and VISUAL-
+   FIRST alerts when a saved room lights up (David is deaf — the
+   alert is a flash he can SEE; no push is promised: alerts live
+   while this window is open). THE TAP ON THE SHOULDER: a sealed 🔔
+   TAP (plugin v1.5) — or your CHOSEN name written in a parked room's
+   sealed chat — flashes that room's chip with a badge carrying the
+   words; the badge opens a PEEK CARD: quick-reply IN WRITING into
+   that room without moving (your seal publishes there; your voice
+   does not jump), OPEN THE ROOM, or CLOSE (badge clears, room
+   re-parks). Names are the ones people CHOSE — never legal names.
    ================================================================ */
 (function(){
 'use strict';
-var PLUGIN_BLOB='dwSC-qyDtJnrLUMEsIMMC_RI9HpoM6Wjn-4luW3L-40';
-var PLUGIN_SHA='ad9c3d2ddf6f562832697ae73c91b82b8b13cf085b51a73e2bb14dad7e0d27f6';
+var PLUGIN_BLOB='sX39w9Pa11B8Snv6gjkfWwJKMp0hIlhGYILZiqSYrBE';
+var PLUGIN_SHA='747b8b77b3e4d480ff4414c6b30601eff0b8ecd218fd4beea021ba0b442f1e8f';
 var PUBLISHER='https://publisher.walrus-testnet.walrus.space/v1/blobs?epochs=30';
 var LOBBY_TOPIC='kodakai/comms/v1/lobby';
-var MS_PAGE_BLOB='hzXFUV9VwjOeFxNPJP4umMkKNHV86HtD4rACtqKhSLQ';   /* QR pin — candidate blob, two-step (the Cube's pattern) */
-var MS_PAGE_SHA='9811f4c8886c75c0b95b74aaf8c25a35e5462ee2945b81c9229542c381774864';     /* QR pin — sha256 of the candidate bytes */
+var MS_PAGE_BLOB='k-XPHQ4DXR5z1CoNS68JU997xyhONmWwawoeoHUQVio';   /* QR pin — candidate blob, two-step (the Cube's pattern) */
+var MS_PAGE_SHA='dd84f701eb41df84bd0f9aaa66e9946ca272c8047dea5d65f017bc75a1e20913';     /* QR pin — sha256 of the candidate bytes */
 var PAGES_URL='https://arcade.highscores.live/arcade/messenger.html';
 var LOADER='https://arcade.highscores.live/arcade/blob-loader.html';
 var MIRRORS=['https://aggregator.walrus-testnet.walrus.space','https://walrus-testnet.blockscope.net'];
@@ -390,7 +475,7 @@ window.__ms={ evts:[], myCode:myCode, room:room, qrPayload:'', pagePin:{blob:MS_
 var handle=null;
 function renderState(st, count){
   var el=$('msState');
-  if(st==='in'){ el.textContent='✓ YOU\'RE IN — room '+room+' · '+count+' here'; el.classList.add('in'); }
+  if(st==='in'){ el.textContent='✓ YOU\'RE IN — room '+(fgCode||room)+' · '+count+' here'; el.classList.add('in'); }
   else { el.textContent='You\'re the first one here — share your code or QR to bring them in'; el.classList.remove('in'); }
 }
 
@@ -407,7 +492,7 @@ function renderContacts(){
     var cd=document.createElement('div'); cd.className='cd'; cd.textContent=c.code;
     who.appendChild(nm); who.appendChild(cd);
     var call=document.createElement('button'); call.className='call'; call.textContent='📞 CALL';
-    call.addEventListener('click', function(){ setPendingVisit(c.code); if(handle) handle.join(c.code); });
+    call.addEventListener('click', function(){ rackJoin(c.code, {hostName:c.name}); });
     var del=document.createElement('button'); del.className='del'; del.textContent='✕'; del.title='forget '+c.name;
     del.addEventListener('click', function(){ var l=loadContacts(); l.splice(idx,1); saveContacts(l); renderContacts(); });
     row.appendChild(who); row.appendChild(call); row.appendChild(del);
@@ -427,11 +512,16 @@ function renderContacts(){
    No answer in ~6.5s is also a truth, said plainly. The plugin's own
    router ignores both message types; a second listener rides the same
    mqtt client through the _s test hook. */
+/* v0.4: visit state is PER ENTRY now (see THE RACK core below) — a page
+   holds many visits at once, each with its own phase/knock/hostName. */
 var VISIT_KEY='messenger-pending-visit';
-var visit={ phase:'idle', knocked:false, knockAt:0, hostName:'', mqHooked:false };
 function talkTopic(code){ return 'kodakai/comms/v1/messenger/'+code+'/talk'; }
 function hostNameFor(code){
   var cs=loadContacts(); for(var i=0;i<cs.length;i++) if(cs[i].code===code) return cs[i].name;
+  var sv=savedRoomFor(code); if(sv && sv.name) return sv.name;
+  var found='';
+  entries.forEach(function(e){ if(!found && e.handle && e.handle._s && e.handle._s.openRooms.has(code)) found=e.handle._s.openRooms.get(code).hostName; });
+  if(found) return found;
   if(handle && handle._s && handle._s.openRooms.has(code)) return handle._s.openRooms.get(code).hostName;
   return '';
 }
@@ -472,79 +562,398 @@ function renderOpenRooms(){
   if(sig===renderOpenRooms._sig) return; renderOpenRooms._sig=sig;
   box.innerHTML='';
   rooms.forEach(function(r){
-    var here=r.code===room;
+    var here=entries.has(r.code);
     var row=document.createElement('div'); row.className='ms-open-row'+(here?' here':''); row.dataset.code=r.code;
     var who=document.createElement('div'); who.className='who';
     var nm=document.createElement('div'); nm.className='nm'; nm.textContent='🏠 '+r.hostName;
     if(r.label){ var lb=document.createElement('div'); lb.className='lbl2'; lb.textContent=r.label; who.appendChild(lb); }
     var meta=document.createElement('div'); meta.className='meta';
-    meta.textContent=r.code+' · 👥 '+r.count+(r.live?' · 🎙 live':'')+(here?' · (you are here)':'');
+    meta.textContent=r.code+' · 👥 '+r.count+(r.live?' · 🎙 live':'')+(here?' · (on your rack)':'');
     who.appendChild(nm); who.appendChild(meta);
     if(r.info){ var inf=document.createElement('div'); inf.className='info'; inf.textContent=r.info; who.appendChild(inf); }
     row.appendChild(who);
+    if(!savedRoomFor(r.code)){
+      var sv=document.createElement('button'); sv.className='savebtn2'; sv.textContent='💾'; sv.title='save this room';
+      sv.addEventListener('click', function(){ saveRoom(r.code, r.hostName, r.label, r.code===myCode); toast('💾 room saved — it sits under SAVED ROOMS now'); });
+      row.appendChild(sv);
+    }
     if(!here){
       var go=document.createElement('button'); go.className='gobtn'; go.textContent='GO ▸'; row.appendChild(go);
-      go.addEventListener('click', function(){ setPendingVisit(r.code); if(handle) handle.join(r.code); });
+      go.addEventListener('click', function(){ rackJoin(r.code, {hostName:r.hostName}); });
     }
     box.appendChild(row);
   });
 }
-/* ----- v0.3: my own ms-open beacon — label + info ride the lobby ----- */
+/* ----- my own ms-open beacon — label + info ride the lobby.
+   v0.4: the beacon belongs to the HOME room's mount, whichever room
+   is in front — 📣 OPEN lists MY door, never a room I'm visiting. */
 function publishMsOpen(){
-  if(!handle || !handle._s || !handle._s.mq || !handle._s.connected) return;
-  if(!handle.state().open) return;
+  var home=entries.get(myCode); if(!home || !home.handle || !home.handle._s || !home.handle._s.mq || !home.handle._s.connected) return;
+  if(!home.handle.state().open) return;
   if(publishMsOpen._last && Date.now()-publishMsOpen._last<9000) return;
   publishMsOpen._last=Date.now();
-  try{ handle._s.mq.publish(LOBBY_TOPIC, JSON.stringify({type:'ms-open', tid:handle.tid, ns:'messenger', code:myCode,
-    name:handle.state().name, label:roomLabel, info:roomInfo,
-    count:(room===myCode? handle.state().peers+1 : 1), ts:Date.now()})); }catch(e){}
+  try{ home.handle._s.mq.publish(LOBBY_TOPIC, JSON.stringify({type:'ms-open', tid:home.handle.tid, ns:'messenger', code:myCode,
+    name:home.handle.state().name, label:roomLabel, info:roomInfo,
+    count:home.handle.state().peers+1, ts:Date.now()})); }catch(e){}
 }
 function visitStatus(txt){ var el=$('msVisitStatus'); if(el) el.textContent=txt; }
-function hookMq(){
-  if(visit.mqHooked || !handle || !handle._s || !handle._s.mq) return;
-  visit.mqHooked=true;
-  var myTopic=talkTopic(room);
-  try{ handle._s.mq.subscribe(LOBBY_TOPIC); }catch(e){}
-  handle._s.mq.on('message', function(t, payload){
+/* ================================================================
+   v0.4 THE RACK — many rooms, one person (David, Nov 8 18:16–18:42).
+   Plugin v1.5 mounts MANY independent rooms on this one page. Each
+   room I hold is an ENTRY: its own mount, its own host element, its
+   own visit state. ONE entry is FOREGROUND — its dock sits in the
+   stage, its strip is the visible one, and the page-level `handle`
+   alias points at it, so every v0.3.2 surface (call bar, meter, jar
+   line) keeps meaning "the room I'm standing in". Parked entries
+   have their host hidden and their channels closed at the source by
+   the plugin's setParked — presence + chat keep flowing underneath
+   (that is how a parked room can still tap me). My POSTURE — mic /
+   face / hear as I last left them — travels to the room I step into.
+   ================================================================ */
+var entries=new Map();          /* code -> entry */
+var fgCode=null;                /* the foreground room's code */
+var posture={mic:false, face:false, hear:false};
+var postureHoldUntil=0;         /* posture is not re-captured mid-switch */
+var tapsPending=new Map();      /* code -> {from, text, kind, ts, count} */
+var peekCode=null;
+var savedLivePrev=null;         /* Map code->bool; null until first sighting */
+var lastAlert=null;             /* {code,name,at} — latch of the most recent live alert (proof it fired) */
+var tapLog=[];                  /* every summons heard, sealed or not */
+
+function ownTids(){ var s=new Set(); entries.forEach(function(e){ s.add(e.handle.tid); }); return s; }
+function entryLabel(e){
+  if(!e) return '';
+  if(e.code===myCode) return roomLabel || 'My room';
+  var sv=savedRoomFor(e.code); if(sv && sv.label) return sv.label;
+  if(sv && sv.name) return sv.name+'’s room';
+  if(e.hostName) return e.hostName+'’s room';
+  if(e.visit && e.visit.hostName) return e.visit.hostName+'’s room';
+  return 'Room '+e.code;
+}
+function dockHome(e){
+  if(!e || !e.handle || !e.handle._el) return;
+  var wrap=e.hostEl.querySelector('.bc-wrap'), dock=e.handle._el.dock;
+  if(wrap && dock && dock.parentElement!==wrap) wrap.appendChild(dock);
+}
+function createEntry(code, opts){
+  opts=opts||{};
+  if(entries.has(code)) return entries.get(code);
+  var hostEl=document.createElement('div'); hostEl.className='ms-mhost'; hostEl.dataset.code=code; hostEl.style.display='none';
+  $('msMount').appendChild(hostEl);
+  var h=window.BlobComms.mount(hostEl, {
+    ns:'messenger', canonical:PAGES_URL, room:code, dockMode:'stage', name:savedName||undefined,
+    onPeerStream:function(tid, stream, info){ window.__ms.evts.push({ev:'peerStream', room:code, tid:tid, self:!!info.self, hasAudio:info.hasAudio, hasVideo:info.hasVideo}); },
+    onPeerGone:function(tid){ window.__ms.evts.push({ev:'peerGone', room:code, tid:tid}); },
+    onJoinState:function(st, count){ if(code===fgCode) renderState(st, count); }
+  });
+  var e={code:code, handle:h, hostEl:hostEl, isVisit:!!opts.visit, hostName:opts.hostName||'',
+    visit:{phase:'idle', knocked:false, knockAt:0, hostName:opts.hostName||'', knockWanted:!!opts.knock}, mqHooked:false};
+  entries.set(code, e);
+  h.on('tap', function(from, text, sealOk){ onTapHeard(e, from, text, sealOk); });
+  h.on('chat', function(from, text, sealOk){ onChatHeard(e, from, text, sealOk); });
+  if(h._el){ [h._el.sChat, h._el.sFind, h._el.sQr, h._el.sUp].forEach(function(bn){ if(bn) bn.addEventListener('click', closeMsOverlays); }); }
+  return e;
+}
+function applyPosture(e){
+  var st=e.handle.state();
+  if(posture.mic && !st.micOn) e.handle.toggleMic();
+  if(posture.face && !st.faceOn) e.handle.toggleFace();
+  if(posture.hear !== !!st.hearOn) e.handle.toggleHear();
+}
+function foreground(code){
+  var e=entries.get(code); if(!e) return;
+  var prev=fgCode?entries.get(fgCode):null;
+  if(prev && prev!==e){
+    prev.handle.setParked(true);
+    dockHome(prev);
+    prev.hostEl.style.display='none';
+  }
+  fgCode=code; handle=e.handle;
+  e.hostEl.style.display='block';
+  e.handle.setParked(false);
+  var dock=e.handle._el && e.handle._el.dock;
+  if(dock) $('msStageBody').appendChild(dock);
+  postureHoldUntil=Date.now()+3000;
+  applyPosture(e);
+  updateVisitCard();
+  var st=e.handle.state(); renderState(st.joinState, st.peers+1);
+  renderRack._sig=null; renderRack();
+  renderTapRow._sig=null; renderTapRow();
+}
+function rackJoin(code, opts){
+  opts=opts||{};
+  code=cleanCode(code); if(!code) return null;
+  var e=entries.get(code);
+  if(!e) e=createEntry(code, {visit:code!==myCode, hostName:opts.hostName||hostNameFor(code)||'', knock:code!==myCode});
+  foreground(code);
+  return e;
+}
+function rackExit(code){
+  var e=entries.get(code); if(!e) return;
+  if(code===myCode){ toast('you are in your own room — this is home 🏠'); return; }
+  dockHome(e);
+  var wasFg=(fgCode===code);
+  e.handle.destroy();
+  if(e.hostEl.parentNode) e.hostEl.parentNode.removeChild(e.hostEl);
+  entries.delete(code); tapsPending.delete(code);
+  if(peekCode===code) closePeek();
+  renderRack._sig=null;
+  if(wasFg) foreground(myCode); else renderRack();
+  toast('✕ left room '+code+' — gone from your rack');
+}
+function updateVisitCard(){
+  var e=fgCode?entries.get(fgCode):null;
+  var show=!!(e && e.isVisit);
+  var card=$('visitCard'); if(card) card.style.display=show?'block':'none';
+  if(show) $('msVisitCode').textContent=e.code;
+}
+/* ----- per-entry visit machinery (the v0.2 invite bond, rack-shaped):
+   each entry listens on its OWN mount's client. The home entry answers
+   knocks; a visit entry knocks when its join asked it to, and hears
+   its welcome on its own topic. ----- */
+function hookEntryMq(e){
+  if(e.mqHooked || !e.handle || !e.handle._s || !e.handle._s.mq) return;
+  e.mqHooked=true;
+  var myTopic=talkTopic(e.code);
+  e.handle._s.mq.on('message', function(t, payload){
     if(t===LOBBY_TOPIC){
-      var lm; try{ lm=JSON.parse(payload.toString()); }catch(e){ return; }
-      if(lm && lm.type==='ms-open' && lm.tid!==handle.tid && lm.ns==='messenger'){
+      var lm; try{ lm=JSON.parse(payload.toString()); }catch(err){ return; }
+      if(lm && lm.type==='ms-open' && lm.ns==='messenger' && !ownTids().has(lm.tid)){
         var cc=cleanCode(lm.code||'');
         if(cc) msBeacons.set(cc, {code:cc, name:String(lm.name||'GUEST').slice(0,18), label:String(lm.label||'').slice(0,28), info:String(lm.info||'').slice(0,60), count:lm.count||1, ts:Date.now()});
       }
       return;
     }
     if(t!==myTopic) return;
-    var m; try{ m=JSON.parse(payload.toString()); }catch(e){ return; }
-    if(!m || m.tid===handle.tid) return;
-    if(m.type==='visit-knock' && room===myCode){
-      try{ handle._s.mq.publish(myTopic, JSON.stringify({type:'visit-welcome', tid:handle.tid, to:m.tid, hostName:handle.state().name, count:handle.state().peers+1})); }catch(e){}
-      var gl=$('msGuestLine'); if(gl){ gl.style.display='block'; gl.textContent='\u{1F44B} '+(m.name||'A friend')+' came to visit'; }
-      toast('\u{1F44B} '+(m.name||'A friend')+' came to visit', 3200);
+    var m; try{ m=JSON.parse(payload.toString()); }catch(err){ return; }
+    if(!m || m.tid===e.handle.tid) return;
+    if(m.type==='visit-knock' && e.code===myCode){
+      try{ e.handle._s.mq.publish(myTopic, JSON.stringify({type:'visit-welcome', tid:e.handle.tid, to:m.tid, hostName:e.handle.state().name, count:e.handle.state().peers+1})); }catch(err){}
+      var gl=$('msGuestLine'); if(gl){ gl.style.display='block'; gl.textContent='👋 '+(m.name||'A friend')+' came to visit'; }
+      toast('👋 '+(m.name||'A friend')+' came to visit', 3200);
     }
-    else if(m.type==='visit-welcome' && m.to===handle.tid && visiting && visit.phase!=='in'){
-      visit.phase='in'; visit.hostName=m.hostName||visit.hostName;
-      visitStatus('You\'re visiting '+(visit.hostName||'your host')+' — say hi! \u{1F44B}');
+    else if(m.type==='visit-welcome' && m.to===e.handle.tid && e.isVisit && e.visit.phase!=='in'){
+      e.visit.phase='in'; if(m.hostName) e.visit.hostName=m.hostName;
+      if(e.code===fgCode) visitStatus('You\'re visiting '+(e.visit.hostName||'your host')+' — say hi! 👋');
+      renderRack._sig=null; renderRack();
     }
   });
 }
-function knockOnce(){
-  visit.phase='knocking'; visit.knocked=true; visit.knockAt=Date.now();
-  var hn=hostNameFor(room); if(hn) visit.hostName=hn;
-  visitStatus('\u{1F6AA} Knocking on '+(visit.hostName||'the door')+'…');
-  try{ handle._s.mq.publish(talkTopic(room), JSON.stringify({type:'visit-knock', tid:handle.tid, name:handle.state().name})); }catch(e){}
+function knockFor(e){
+  if(!e.isVisit || e.visit.knocked || !e.visit.knockWanted) return;
+  if(!e.handle._s || !e.handle._s.connected) return;
+  e.visit.phase='knocking'; e.visit.knocked=true; e.visit.knockAt=Date.now();
+  var hn=hostNameFor(e.code); if(hn) e.visit.hostName=hn;
+  if(e.code===fgCode) visitStatus('🚪 Knocking on '+(e.visit.hostName||'the door')+'…');
+  try{ e.handle._s.mq.publish(talkTopic(e.code), JSON.stringify({type:'visit-knock', tid:e.handle.tid, name:e.handle.state().name})); }catch(err){}
 }
-function visitTick(){
-  hookMq(); renderOpenRooms(); renderShelf(); pourHistory(); publishMsOpen();
-  if(!visiting || visit.phase==='in') return;
-  if(!visit.knocked){
-    if(handle && handle._s && handle._s.connected && (takePendingVisit(room) || hostNameFor(room))) knockOnce();
-  } else if(visit.phase==='knocking' && Date.now()-visit.knockAt>6500){
-    visit.phase='unanswered';
-    visitStatus('Nobody answered — they may have stepped away. You can wait here, or head home.');
-  }
+function rackTick(){
+  entries.forEach(function(e){
+    hookEntryMq(e);
+    knockFor(e);
+    if(e.visit.phase==='knocking' && Date.now()-e.visit.knockAt>6500){
+      e.visit.phase='unanswered';
+      if(e.code===fgCode) visitStatus('Nobody answered — they may have stepped away. You can wait here, or head home.');
+    }
+  });
+  renderOpenRooms(); renderShelf(); pourHistory(); publishMsOpen(); renderRack(); renderSavedRooms(); checkSavedLiveAlerts();
 }
-window.__ms.visit=function(){ return {phase:visit.phase, knocked:visit.knocked, hostName:visit.hostName}; };
+/* ----- THE TAP ON THE SHOULDER (David, Nov 8 18:21 + 18:23) -----
+   A direct address in a PARKED room summons its holder: an explicit
+   sealed 🔔 TAP (the reliable primitive), or the holder's CHOSEN name
+   appearing in that room's sealed chat (the bonus matcher — chosen
+   names only, never legal names, and only on a seal that checks).
+   The summons is visual first: the room's chip flashes with a badge
+   carrying the words; the badge opens the PEEK card — read, answer
+   IN WRITING without moving, step in, or close and let it re-park. */
+function onTapHeard(e, from, text, sealOk){
+  tapLog.push({code:e.code, from:from, text:text, kind:'tap', sealOk:!!sealOk, ts:Date.now()});
+  if(!sealOk) return;
+  if(e.code===fgCode){ toast('🔔 '+from+' tapped you: '+text, 4000); return; }
+  var prev=tapsPending.get(e.code);
+  tapsPending.set(e.code, {from:from, text:text, kind:'tap', ts:Date.now(), count:(prev?prev.count:0)+1});
+  renderRack._sig=null; renderRack();
+}
+function onChatHeard(e, from, text, sealOk){
+  if(!sealOk || e.code===fgCode) return;
+  var home=entries.get(myCode);
+  var myName=home?home.handle.state().name:(savedName||'');
+  if(!myName || myName==='GUEST') return;
+  if(String(text).toLowerCase().indexOf(myName.toLowerCase())<0) return;
+  var prev=tapsPending.get(e.code);
+  tapsPending.set(e.code, {from:from, text:text, kind:'mention', ts:Date.now(), count:(prev?prev.count:0)+1});
+  tapLog.push({code:e.code, from:from, text:text, kind:'mention', sealOk:true, ts:Date.now()});
+  renderRack._sig=null; renderRack();
+}
+function openPeek(code){
+  var t=tapsPending.get(code), e=entries.get(code); if(!t || !e) return;
+  peekCode=code;
+  $('msPeekRoom').textContent=entryLabel(e)+' · room '+code+(t.count>1?' · '+t.count+' summons waiting':'');
+  $('msPeekFrom').textContent='🔔 '+t.from+(t.kind==='mention'?' mentioned you in that room\'s chat':' tapped your shoulder');
+  $('msPeekText').textContent=t.text;
+  $('msPeekIn').value='';
+  $('msPeek').classList.add('open');
+}
+function closePeek(){ peekCode=null; var p=$('msPeek'); if(p) p.classList.remove('open'); }
+function peekSend(){
+  var e=peekCode?entries.get(peekCode):null; if(!e) return;
+  var v=$('msPeekIn').value.trim(); if(!v){ toast('write the answer first'); return; }
+  e.handle.sendChat(v);
+  tapsPending.delete(peekCode);
+  var lbl=entryLabel(e);
+  closePeek(); renderRack._sig=null; renderRack();
+  toast('✍ sent into '+lbl+' — you stayed right here');
+}
+/* ----- SAVED ROOMS — rooms kept like contacts (David, Nov 8 18:17) ----- */
+function loadSavedRooms(){ try{ var v=JSON.parse(localStorage.getItem('messenger-saved-rooms')||'[]'); return Array.isArray(v)?v:[]; }catch(e){ return []; } }
+function saveSavedRooms(l){ try{ localStorage.setItem('messenger-saved-rooms', JSON.stringify(l)); }catch(e){} }
+function savedRoomFor(code){ var l=loadSavedRooms(); for(var i=0;i<l.length;i++) if(l[i].code===code) return l[i]; return null; }
+function saveRoom(code, name, label, mine){
+  code=cleanCode(code); if(!code) return;
+  var l=loadSavedRooms().filter(function(r){ return r.code!==code; });
+  l.push({code:code, name:String(name||'').slice(0,24), label:String(label||'').slice(0,28), mine:!!mine, ts:Date.now()});
+  saveSavedRooms(l);
+  /* baseline AT SAVE TIME: a room saved dark that later lights up must
+     ALWAYS alert — never depend on which tick happens to run first. */
+  if(savedLivePrev) savedLivePrev.set(code, roomIsLive(code));
+  renderSavedRooms._sig=null; renderSavedRooms(); renderRack._sig=null; renderRack();
+}
+function roomIsLive(code){
+  if(code===myCode) return false;
+  var held=entries.get(code);
+  if(held && held.handle.state().peers>=1) return true;
+  return mergedOpenRooms().some(function(r){ return r.code===code; });
+}
+function renderSavedRooms(){
+  var box=$('msSavedList'); if(!box) return;
+  var l=loadSavedRooms();
+  var emp=$('msSavedEmpty'); if(emp) emp.style.display=l.length?'none':'block';
+  var sig=l.map(function(r){ return r.code+':'+(roomIsLive(r.code)?1:0)+':'+(entries.has(r.code)?1:0); }).join('|');
+  if(sig===renderSavedRooms._sig) return; renderSavedRooms._sig=sig;
+  box.innerHTML='';
+  l.forEach(function(r){
+    var live=roomIsLive(r.code);
+    var row=document.createElement('div'); row.className='ms-saved-row'; row.dataset.code=r.code;
+    var dot=document.createElement('span'); dot.className='dot'+(live?' live':'');
+    var who=document.createElement('div'); who.className='who';
+    var nm=document.createElement('div'); nm.className='nm'; nm.textContent=(r.label||r.name||('Room '+r.code))+(r.mine?' (mine)':'');
+    var cd=document.createElement('div'); cd.className='cd'; cd.textContent=(r.name?r.name+' · ':'')+r.code+(live?' · 🔴 LIVE now':'');
+    who.appendChild(nm); who.appendChild(cd);
+    var join=document.createElement('button'); join.className='join'; join.textContent=entries.has(r.code)?'🚪 STEP IN':'🚪 JOIN';
+    join.addEventListener('click', function(){ dismissLiveAlert(); rackJoin(r.code, {hostName:r.name||''}); });
+    var del=document.createElement('button'); del.className='del'; del.textContent='✕'; del.title='forget this room';
+    del.addEventListener('click', function(){ saveSavedRooms(loadSavedRooms().filter(function(x){ return x.code!==r.code; })); renderSavedRooms._sig=null; renderSavedRooms(); renderRack._sig=null; renderRack(); });
+    row.appendChild(dot); row.appendChild(who); row.appendChild(join); row.appendChild(del);
+    box.appendChild(row);
+  });
+}
+/* VISUAL-FIRST live alerts (David is deaf — a flash, not a sound):
+   a saved room that lights up while this window is open flashes its
+   banner until he joins or waves it off. No push is promised. */
+function checkSavedLiveAlerts(){
+  var l=loadSavedRooms(); if(!l.length) return;
+  if(!savedLivePrev){ savedLivePrev=new Map(); l.forEach(function(r){ savedLivePrev.set(r.code, roomIsLive(r.code)); }); return; }
+  l.forEach(function(r){
+    var live=roomIsLive(r.code), was=savedLivePrev.get(r.code);
+    savedLivePrev.set(r.code, live);
+    if(live && was===false && r.code!==fgCode && !entries.has(r.code)) showLiveAlert(r);
+  });
+}
+function showLiveAlert(r){
+  lastAlert={code:r.code, name:r.name||'', at:Date.now()};
+  var box=$('msLiveAlert'); if(!box) return;
+  box.style.display='block'; box.classList.add('ms-flash'); box.innerHTML='';
+  var t=document.createElement('div'); t.textContent='🔴 '+(r.name||'A saved room')+'’s room '+(r.label?('“'+r.label+'” '):'')+'('+r.code+') just went LIVE';
+  var b=document.createElement('button'); b.textContent='🚪 JOIN IT';
+  b.addEventListener('click', function(){ dismissLiveAlert(); rackJoin(r.code, {hostName:r.name||''}); });
+  var x=document.createElement('button'); x.textContent='✕ not now'; x.style.background='#1a2438'; x.style.borderColor='#39507a'; x.style.color='#f2ecd8'; x.style.marginLeft='8px';
+  x.addEventListener('click', dismissLiveAlert);
+  box.appendChild(t); box.appendChild(b); box.appendChild(x);
+  clearTimeout(showLiveAlert._t); showLiveAlert._t=setTimeout(dismissLiveAlert, 25000);
+}
+function dismissLiveAlert(){ var box=$('msLiveAlert'); if(box){ box.style.display='none'; box.classList.remove('ms-flash'); } }
+/* ----- THE RACK, rendered: one chip per room held ----- */
+function renderRack(){
+  var box=$('msRackChips'); if(!box) return;
+  var codes=[...entries.keys()].sort(function(a,b){ return (a===myCode?0:1)-(b===myCode?0:1); });
+  var sig=codes.map(function(code){
+    var e=entries.get(code), st=e.handle.state();
+    return code+':'+(code===fgCode?1:0)+':'+st.peers+':'+(roomIsLive(code)?1:0)+':'+(tapsPending.has(code)?tapsPending.get(code).count:0)+':'+(savedRoomFor(code)?1:0)+':'+entryLabel(e)+':'+(st.parked?1:0);
+  }).join('|');
+  if(sig===renderRack._sig) return; renderRack._sig=sig;
+  box.innerHTML='';
+  codes.forEach(function(code){
+    var e=entries.get(code), st=e.handle.state();
+    var chip=document.createElement('div'); chip.className='ms-chip'+(code===fgCode?' fg':''); chip.dataset.code=code;
+    var dot=document.createElement('span'); dot.className='dot'+(((roomIsLive(code)||st.peers>=1))?' live':'');
+    var who=document.createElement('div'); who.className='who';
+    var lb=document.createElement('div'); lb.className='lb'; lb.textContent=entryLabel(e);
+    var cd=document.createElement('div'); cd.className='cd';
+    cd.textContent=code+(code===fgCode?' · YOU ARE HERE':(st.parked?' · parked — you are quiet here':' · parked'));
+    who.appendChild(lb); who.appendChild(cd);
+    chip.appendChild(dot); chip.appendChild(who);
+    var cnt=document.createElement('span'); cnt.className='cnt'; cnt.textContent='👥 '+(st.peers+1);
+    chip.appendChild(cnt);
+    var tp=tapsPending.get(code);
+    if(tp){
+      var badge=document.createElement('button'); badge.className='ms-tapbadge ms-flash'; badge.textContent='🔔 '+tp.from+': '+tp.text;
+      badge.title='read it + answer in writing — without moving';
+      badge.addEventListener('click', function(ev){ ev.stopPropagation(); openPeek(code); });
+      chip.appendChild(badge);
+    }
+    if(code===fgCode && code!==myCode){
+      var park=document.createElement('button'); park.className='mini'; park.textContent='⌄'; park.title='park this room — step home; it waits, holding its people';
+      park.addEventListener('click', function(ev){ ev.stopPropagation(); foreground(myCode); });
+      chip.appendChild(park);
+    }
+    if(code!==myCode && !savedRoomFor(code)){
+      var sv=document.createElement('button'); sv.className='mini'; sv.textContent='💾'; sv.title='save this room';
+      sv.addEventListener('click', function(ev){ ev.stopPropagation(); saveRoom(code, e.hostName||'', '', false); toast('💾 room saved — find it under SAVED ROOMS'); });
+      chip.appendChild(sv);
+    }
+    if(code!==myCode){
+      var x=document.createElement('button'); x.className='mini'; x.textContent='✕'; x.title='leave this room for good';
+      x.addEventListener('click', function(ev){ ev.stopPropagation(); rackExit(code); });
+      chip.appendChild(x);
+    }
+    chip.addEventListener('click', function(){ if(code!==fgCode) foreground(code); });
+    box.appendChild(chip);
+  });
+}
+/* ----- the TAP row: tap someone in the room you're standing in.
+   A tap rides the room's talk topic — it summons whoever HOLDS this
+   room parked on their own screen. ----- */
+function renderTapRow(){
+  var row=$('msTapRow'); if(!row || !handle) return;
+  var peers=[]; handle.peers.forEach(function(p){ peers.push({tid:p.tid, name:p.name||'GUEST'}); });
+  var sig=(handle.code||'')+':'+peers.map(function(p){ return p.tid; }).join(',');
+  if(sig===renderTapRow._sig) return; renderTapRow._sig=sig;
+  if(!peers.length){ row.style.display='none'; row.innerHTML=''; return; }
+  row.style.display='flex'; row.innerHTML='';
+  var lab=document.createElement('span'); lab.textContent='🔔 TAP — land on their screen, wherever they are:'; row.appendChild(lab);
+  peers.forEach(function(p){
+    var b=document.createElement('button'); b.textContent='🔔 '+p.name;
+    b.addEventListener('click', function(){ if(handle) handle.sendTap('for '+p.name+' — come look 🔔'); toast('🔔 you tapped for '+p.name); });
+    row.appendChild(b);
+  });
+}
+/* ----- rack test surface ----- */
+window.__ms.rack=function(){ return [...entries.values()].map(function(e){ var st=e.handle.state(); return {code:e.code, label:entryLabel(e), foreground:e.code===fgCode, parked:!!st.parked, peers:st.peers, isVisit:e.isVisit, micOn:st.micOn, faceOn:st.faceOn, hearOn:st.hearOn, joinState:st.joinState}; }); };
+window.__ms.foregroundCode=function(){ return fgCode; };
+window.__ms.handles=function(){ var o={}; entries.forEach(function(e){ o[e.code]=e.handle; }); return o; };
+window.__ms.rackJoin=function(code){ return rackJoin(code); };
+window.__ms.rackExit=function(code){ rackExit(code); };
+window.__ms.foreground=function(code){ foreground(code); };
+window.__ms.savedRooms=function(){ return loadSavedRooms(); };
+window.__ms.lastAlert=function(){ return lastAlert; };
+window.__ms.saveRoom=function(code, name, label){ saveRoom(code, name||'', label||'', code===myCode); };
+window.__ms.taps=function(){ var o={}; tapsPending.forEach(function(v,k){ o[k]=v; }); return o; };
+window.__ms.tapLog=function(){ return tapLog.slice(); };
+window.__ms.openPeek=function(code){ openPeek(code); };
+window.__ms.peek=function(){ return peekCode; };
+window.__ms.sendTap=function(text){ if(handle) return handle.sendTap(text||'is tapping you — come look 🔔'); };
+window.__ms.posture=function(){ return {mic:posture.mic, face:posture.face, hear:posture.hear}; };
+window.__ms.visit=function(){ var e=fgCode?entries.get(fgCode):null; return e?{phase:e.visit.phase, knocked:e.visit.knocked, hostName:e.visit.hostName}:{phase:'idle', knocked:false, hostName:''}; };
 window.__ms.openRooms=function(){ return (handle&&handle._s)?[...handle._s.openRooms.values()]:[]; };
 
 /* ================================================================
@@ -761,8 +1170,12 @@ function closeMsOverlays(){
   if(typeof scanStream!=='undefined' && scanStream) stopScan();
   else $('msScanSheet').classList.remove('open');
 }
+function fgStrip(){
+  var e=fgCode?entries.get(fgCode):null;
+  return e?e.hostEl.querySelector('.bc-strip'):document.querySelector('#msMount .bc-strip');
+}
 function fitPadding(){
-  var strip=document.querySelector('#msMount .bc-strip');
+  var strip=fgStrip();
   var sh=strip?strip.offsetHeight:0, ch=$('callBar').offsetHeight;
   var want=sh+ch+28;
   if(Math.abs(parseFloat(document.body.style.paddingBottom||'0')-want)>2) document.body.style.paddingBottom=want+'px';
@@ -825,35 +1238,37 @@ function wire(){
   $('msPinPlugin').textContent=PLUGIN_BLOB.slice(0,12)+'… / '+PLUGIN_SHA.slice(0,12)+'…';
   var nm=$('msName'); nm.value=savedName||'';
   nm.addEventListener('change', function(){
-    var v=nm.value.trim().slice(0,18); nm.value=v;
+    var v=nm.value.trim().slice(0,18); nm.value=v; savedName=v;
     try{ localStorage.setItem('messenger-name', v); localStorage.setItem('blobcomms-name', v); }catch(e){}
-    if(handle && handle._el && handle._el.name){ handle._el.name.value=v; handle._el.name.dispatchEvent(new Event('change')); }
+    /* v0.4: my chosen name is ONE name in every room I hold — each
+       mount hears it and gossips it in its own room. */
+    entries.forEach(function(en){ if(en.handle && en.handle._el && en.handle._el.name){ en.handle._el.name.value=v; en.handle._el.name.dispatchEvent(new Event('change')); } });
+    renderRack._sig=null; renderRack();
   });
-  if(visiting){
-    $('visitCard').style.display='block';
-    $('msVisitCode').textContent=room;
-    $('msCodeIn').value=room;
-    $('msGoHome').addEventListener('click', function(){ if(handle) handle.join(myCode); });
-    $('msSaveVisit').addEventListener('click', function(){ $('msCCode').value=room; $('msCName').focus(); $('msCName').scrollIntoView({block:'center'}); });
-  }
-  /* ----- v0.3.1: THE STAGE — adopt the plugin's dock into the page flow.
-     The plugin keeps its el.dock reference; moving the NODE is safe —
-     tiles are appended to the node wherever it lives. The strip, sheets
-     and banner stay in the plugin's fixed chrome; only the tiles come
-     home to the stage, where they take real space and scroll away. ----- */
-  var stageDock=(handle && handle._el && handle._el.dock) || null;
-  if(stageDock) $('msStageBody').appendChild(stageDock);
+  if(visiting) $('msCodeIn').value=room;
+  updateVisitCard();
+  /* the visit card's buttons act on the FOREGROUND entry (v0.4):
+     LEAVE ends that visit for good (its mount is destroyed and the
+     home room comes to the front); saving is by contact or by room. */
+  $('msGoHome').addEventListener('click', function(){ if(fgCode && fgCode!==myCode) rackExit(fgCode); });
+  $('msSaveVisit').addEventListener('click', function(){ var e=fgCode?entries.get(fgCode):null; if(!e) return; $('msCCode').value=e.code; $('msCName').focus(); $('msCName').scrollIntoView({block:'center'}); });
+  $('msSaveVisitRoom').addEventListener('click', function(){ var e=fgCode?entries.get(fgCode):null; if(!e) return; saveRoom(e.code, e.visit.hostName||e.hostName||hostNameFor(e.code)||'', '', false); toast('🗂 saved — it sits under SAVED ROOMS now'); });
+  /* ----- THE STAGE — the FOREGROUND mount's dock lives in the page
+     flow (v0.3.1's adoption, rack-shaped in v0.4): foreground() moves
+     the dock node into #msStageBody when a room comes to the front
+     and returns it to its parked wrap when the room steps back. The
+     plugin keeps its el.dock reference throughout; moving the NODE
+     is safe — tiles are appended to the node wherever it lives. ----- */
   var stageMin=false;
-  window.__ms.stageDock=function(){ return stageDock; };
+  window.__ms.stageDock=function(){ var e=fgCode?entries.get(fgCode):null; return (e && e.handle && e.handle._el && e.handle._el.dock) || null; };
   window.__ms.stageMin=function(){ return stageMin; };
   window.__ms.setStageMin=function(v){ stageMin=!!v; $('msStage').classList.toggle('ms-min', stageMin); $('msStageMin').textContent=stageMin?'⌃ SHOW FACES':'⌄ MINIMIZE'; };
   $('msStageMin').addEventListener('click', function(){ window.__ms.setStageMin(!stageMin); });
   $('msStageExit').addEventListener('click', function(){
-    /* ✕ EXIT ROOM — end the visit / leave this room's presence and land
-       back in your own code's home state (the plugin's join navigates —
-       the same road the v0.2 LEAVE button walks). At home there is
-       nowhere to exit to; say so plainly. */
-    if(room!==myCode){ if(handle) handle.join(myCode); }
+    /* ✕ EXIT ROOM — leave the FOREGROUND room for good: its mount is
+       destroyed, its chip leaves the rack, and home comes to the
+       front. At home there is nowhere to exit to; say so plainly. */
+    if(fgCode && fgCode!==myCode) rackExit(fgCode);
     else toast('you are in your own room — this is home 🏠');
   });
   /* ----- v0.3.2: DOCK MODE — the stage sits HOME in the page flow, or
@@ -906,7 +1321,7 @@ function wire(){
     if(navigator.clipboard) navigator.clipboard.writeText(link).then(function(){ toast('🔗 your link is copied — send it to anyone'); }, function(){ toast(link); });
     else toast(link);
   });
-  $('msOpenBtn').addEventListener('click', function(){ if(handle) handle.setOpen(!handle.state().open); });
+  $('msOpenBtn').addEventListener('click', function(){ var home=entries.get(myCode); if(home) home.handle.setOpen(!home.handle.state().open); });
   /* ----- v0.3 wiring: label + info, the SEARCH board, the vault ----- */
   var labEl=$('msRoomLabel'), infEl=$('msRoomInfo');
   labEl.value=roomLabel; infEl.value=roomInfo;
@@ -922,17 +1337,13 @@ function wire(){
   });
   $('msOpenFilter').addEventListener('input', function(){ renderOpenRooms._sig=null; renderOpenRooms(); });
   $('msImportBtn').addEventListener('click', importJarById);
-  renderShelf(); renderHistoryLine();
-  /* ----- sheets mutually exclusive across page + plugin (v0.3) ----- */
-  if(handle && handle._el){
-    [handle._el.sChat, handle._el.sFind, handle._el.sQr, handle._el.sUp].forEach(function(bn){ if(bn) bn.addEventListener('click', closeMsOverlays); });
-  }
+  renderShelf(); renderHistoryLine(); renderSavedRooms(); renderRack();
   fitPadding();
   $('msJoinBtn').addEventListener('click', function(){
     var v=cleanCode($('msCodeIn').value);
     if(!v){ toast('type their code first — it\'s on their screen, big letters'); return; }
-    if(v===room){ toast('you\'re already in room '+v); return; }
-    if(handle) handle.join(v);
+    if(v===fgCode){ toast('you\'re already standing in room '+v); return; }
+    rackJoin(v);
   });
   $('msScanBtn').addEventListener('click', function(){ closePluginSheets(); startScan(); });
   $('msScanClose').addEventListener('click', stopScan);
@@ -953,22 +1364,31 @@ function wire(){
     $('msHomeCard').style.display='block';
     $('msHomeBtn').href=PAGES_URL+'?room='+room;
   }
+  $('msPeekSend').addEventListener('click', peekSend);
+  $('msPeekIn').addEventListener('keydown', function(ev){ if(ev.key==='Enter') peekSend(); });
+  $('msPeekOpen').addEventListener('click', function(){ var c=peekCode; if(!c) return; tapsPending.delete(c); closePeek(); foreground(c); });
+  $('msPeekClose').addEventListener('click', function(){ if(peekCode) tapsPending.delete(peekCode); closePeek(); renderRack._sig=null; renderRack(); });
   renderContacts();
-  setInterval(visitTick, 700);
+  setInterval(rackTick, 700);
   /* keep the big face of the messenger in sync with the engine */
   setInterval(function(){
     if(!handle) return;
     var st=handle.state(); if(!st) return;
     renderState(st.joinState, st.peers+1);
+    /* v0.4: my posture is what the FOREGROUND room says — captured
+       whenever I'm not mid-switch, and carried to the next room. */
+    if(Date.now()>postureHoldUntil){ posture.mic=!!st.micOn; posture.face=!!st.faceOn; posture.hear=!!st.hearOn; }
+    renderTapRow();
     $('msBtnMic').classList.toggle('on', !!st.micOn);
     $('msBtnFace').classList.toggle('on', !!st.faceOn);
     $('msBtnHear').classList.toggle('on', !!st.hearOn);
     $('msBtnJar').classList.toggle('on', !!st.jarOn);
     $('msBtnJar').textContent=st.jarOn?'🫙 SAVING… TAP TO SEAL IT':'🫙 SAVE THIS CALL';
-    $('msOpenBtn').classList.toggle('on', !!st.open);
-    $('msOpenBtn').textContent=st.open?'📣 OPEN ✓':'📣 OPEN';
+    var homeE=entries.get(myCode), homeOpen=homeE?!!homeE.handle.state().open:false;
+    $('msOpenBtn').classList.toggle('on', homeOpen);
+    $('msOpenBtn').textContent=homeOpen?'📣 OPEN ✓':'📣 OPEN';
     document.body.classList.toggle('stage-on', st.peers>=1 || st.faceOn);
-    var scEl=$('msStageCount'); if(scEl) scEl.textContent='👥 '+(st.peers+1)+' here';
+    var scEl=$('msStageCount'); if(scEl){ var fe=fgCode?entries.get(fgCode):null; scEl.textContent='👥 '+(st.peers+1)+' here'+(fe?' · '+entryLabel(fe):''); }
     var jl=$('msJarLine');
     if(st.jarOn) jl.textContent='🫙 saving this call — the badge is on, everyone can see it';
     else if(st.lastJar && st.lastJar.recordBlob) jl.textContent='🫙 last call saved · jar '+String(st.lastJar.recordBlob).slice(0,14)+'… · '+Math.round((st.lastJar.durMs||0)/1000)+'s of talk, sealed';
@@ -983,7 +1403,7 @@ function wire(){
     var bn=handle._el && handle._el.mediaBanner;
     if(bn){
       if(st.peers>=1 && bn.classList.contains('bc-open')){
-        var strip=document.querySelector('#msMount .bc-strip');
+        var strip=fgStrip();
         bn.style.top='auto'; bn.style.bottom=(($('callBar').offsetHeight)+(strip?strip.offsetHeight:0)+10)+'px';
       } else { bn.style.top=''; bn.style.bottom=''; }
     }
@@ -1005,18 +1425,25 @@ window.__msReady=(async function(){
   if(!bytes) throw lastErr||new Error('plugin blob unreachable');
   var url=URL.createObjectURL(new Blob([bytes],{type:'text/javascript'}));
   await new Promise(function(res, rej){ var s=document.createElement('script'); s.src=url; s.onload=res; s.onerror=rej; document.head.appendChild(s); });
-  var savedDock='stage'; try{ savedDock=localStorage.getItem('messenger-dock-mode')||'stage'; }catch(e){}
-  handle=window.BlobComms.mount($('msMount'), {
-    ns:'messenger',
-    canonical:PAGES_URL,
-    room:room,
-    dockMode:(savedDock==='float')?'float':'stage',
-    name:savedName||undefined,
-    onPeerStream:function(tid, stream, info){ window.__ms.evts.push({ev:'peerStream', tid:tid, self:!!info.self, hasAudio:info.hasAudio, hasVideo:info.hasVideo}); },
-    onPeerGone:function(tid){ window.__ms.evts.push({ev:'peerGone', tid:tid}); },
-    onJoinState:function(st, count){ renderState(st, count); }
-  });
+  /* v0.4 BOOT — the rack assembles: the HOME mount always exists
+     (parked when a link carried me somewhere else), and the boot
+     room — my own code, or the room the link named — comes to the
+     front. Link arrivals keep the v0.2 knock discipline: the knock
+     is armed when a pending visit or a known host (contact / saved
+     room / live beacon) says this arrival has a door to knock on. */
+  var homeEntry=createEntry(myCode, {visit:false});
+  var bootEntry=homeEntry;
+  if(room!==myCode){
+    var knockWanted=takePendingVisit(room) || !!hostNameFor(room);
+    bootEntry=createEntry(room, {visit:true, hostName:hostNameFor(room)||'', knock:knockWanted});
+  }
+  fgCode=bootEntry.code; handle=bootEntry.handle;
+  bootEntry.hostEl.style.display='block';
+  if(bootEntry!==homeEntry) homeEntry.handle.setParked(true);
+  var bd=bootEntry.handle._el && bootEntry.handle._el.dock;
+  if(bd) $('msStageBody').appendChild(bd);
   wire();
+  foreground(bootEntry.code);
   renderState(handle.state().joinState, handle.state().peers+1);
   return handle;
 })();
