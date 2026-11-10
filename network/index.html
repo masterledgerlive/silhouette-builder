@@ -6758,6 +6758,15 @@ setTimeout(function(){ post("ray", "parked the rig, kept the radio on. this is t
 .bm-float.bm-fbig{width:min(520px,calc(100vw - 20px))}
 .bm-fhead{display:flex;align-items:center;gap:8px;background:var(--ink);color:var(--bg);padding:9px 10px 9px 13px;cursor:grab;touch-action:none;user-select:none;flex:0 0 auto}
 .bm-fhead:active{cursor:grabbing}
+/* Drag shield — an embedded iframe (the movie player above all) eats every
+   pointermove that crosses it, which froze float drags mid-move ("can't
+   move"). While a float is being dragged or resized, its iframe/video get
+   pointer-events:none and the header keeps the pointer via capture; both
+   are restored the moment the pointer is released. */
+.bm-float.bm-dragging iframe,.bm-float.bm-resizing iframe,.bm-float.bm-dragging video,.bm-float.bm-resizing video{pointer-events:none !important}
+body.bm-anydrag #bmFloats iframe,body.bm-anydrag #bmFloats video{pointer-events:none !important}
+.bm-float.bm-dragging,.bm-float.bm-resizing{user-select:none}
+.bm-float.bm-dragging .bm-fhead{cursor:grabbing}
 .bm-fname{font-weight:800;font-size:.95rem;flex:1 1 auto;min-width:0;line-height:1.25}
 .bm-fname small{display:block;font-family:"IBM Plex Mono",monospace;font-size:.66rem;color:var(--amber2);font-weight:600}
 .bm-fbtn{min-height:40px;min-width:40px;padding:6px 9px;border-radius:9px;border:2px solid var(--amber2);background:transparent;color:var(--bg);font-weight:800;font-size:.85rem;flex:none}
@@ -6925,21 +6934,27 @@ body.bm-popout .bm-wrist{display:flex}
 /* ===== Portal Bar v8 — Movies & TV: blob movie lists + easy playback =====
    The bar's cinema bay. Films and shows are pointer records in the library
    shape — sources with where/when last played and a working / point-only
-   mark — seeded from the house Blob Cinema. PULL TO PLAY loads a record
+   mark — seeded from the house Blob Player. PULL TO PLAY loads a record
    into the mini player right in the panel; POP OUT floats the film as a
    free-transform video box in the v5 box system (#bmFloats: drag by the
    header, ◢ resize grip, minimize, bigger, snap/tidy via the same chip)
    that stays up while you play games or surf the page. Honesty rule: a
    record is only an in-bar stream when it carries a direct stream source;
-   the Blob Cinema films are POINT / CINEMA — the mini player and the box
-   say so plainly and carry the Blob Cinema door, never a fake stream. */
+   the Blob Player films play here for real by spinning up the Cinema's
+   own BLOB PLAYER page in an iframe (that page serves framable), labeled
+   PLAYS HERE — FROM THE BLOB PLAYER, with the ↗ door kept as the secondary
+   open-full-player option. POINT ONLY records still say so plainly. */
 #bmMovies{pointer-events:auto;align-self:center;width:min(1040px,calc(100vw - 16px));margin:0 0 10px;background:var(--panel);color:var(--ink);border:2px solid var(--amber2);border-radius:18px;box-shadow:var(--shadow);display:none;flex-direction:column;overflow:hidden;max-height:calc(100vh - 190px);max-height:calc(100dvh - 190px)}
 #bmMovies.bm-open{display:flex;animation:bmRise .3s ease}
 #bmMovies .bm-lhead .bm-cinemalink{background:var(--amber2);color:#16130e;text-decoration:none;display:inline-flex;align-items:center}
 #bmMovies.bm-movmini .bm-lsec:not(#bmSecMovNow){display:none}
-.bm-movplayer{border:2px solid var(--ink);border-radius:14px;overflow:hidden;background:#141210;color:#f5efe2}
+.bm-movplayer{border:2px solid var(--ink);border-radius:14px;overflow:hidden;background:#141210;color:#f5efe2;width:min(340px,calc(100vw - 32px));max-width:340px;margin-inline:auto}
 .bm-movscreen{position:relative;aspect-ratio:16/9;background:#0c0a08;display:flex}
+#bmMovPlayer .bm-movscreen{width:100%;max-width:340px;margin-inline:auto}
 .bm-movscreen video{width:100%;height:100%;display:block;background:#000}
+.bm-movscreen iframe{width:100%;height:100%;display:block;border:0;background:#000}
+.bm-movfloatdoor{display:flex;padding:8px 12px 2px}
+.bm-movfloatdoor a.bm-movdoor{min-height:44px;padding:8px 14px;border-radius:11px;background:var(--ink);color:var(--bg);font-weight:800;text-decoration:none;display:inline-flex;align-items:center;font-size:.85rem}
 .bm-movface{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;text-align:center;padding:16px;background:radial-gradient(circle at 50% 35%,#3a3427,#141210 78%)}
 .bm-movface .bm-movbig{font-size:2.2rem;line-height:1}
 .bm-movface .bm-movfacetitle{font-weight:800;font-size:1.08rem;line-height:1.3}
@@ -6976,7 +6991,7 @@ body.bm-popout .bm-wrist{display:flex}
 .bm-movform .bm-movformrow{display:grid;grid-template-columns:1fr 1fr;gap:9px}
 @media(max-width:640px){.bm-movcard{flex-direction:column}.bm-movart{flex-basis:auto;min-height:84px}.bm-movform .bm-movformrow{grid-template-columns:1fr}}
 /* Pop-out movie box — a v5 float with a resize grip and its own screen */
-.bm-float.bm-movfloat{width:min(430px,calc(100vw - 20px))}
+.bm-float.bm-movfloat{width:min(340px,calc(100vw - 20px))}
 .bm-float.bm-movfloat.bm-fbig{width:min(680px,calc(100vw - 20px))}
 .bm-movfloat .bm-movscreen{border-radius:0}
 .bm-movfloat .bm-movstatusline{padding:9px 12px 11px;font-size:.85rem;line-height:1.45;border-top:1px solid var(--line)}
@@ -7263,13 +7278,14 @@ body.bm-popout .bm-wrist{display:flex}
         <p class="bm-lstatus" id="bmLiveStatus" aria-live="polite"></p>
       </div>
       <div class="bm-lsec" id="bmSecMoviesTeaser">
-        <h3>🎬 MOVIES &amp; TV — BLOB CINEMA IN THE BAR</h3>
+        <h3>🎬 MOVIES &amp; TV — BLOB PLAYER IN THE BAR</h3>
         <p class="bm-lhint">The blob movie lists live in the bar too: pull a film into the mini player, or pop it out as a floating video box and keep watching while you play games or surf the network. SEE EVERYTHING keeps this door right here.</p>
         <div class="bm-bigctl">
           <button type="button" class="bm-cbtn" data-movopen="list">🎬 OPEN MOVIES &amp; TV</button>
           <button type="button" class="bm-cbtn" data-movpop="big-buck-bunny">🟦 POP OUT: BIG BUCK BUNNY</button>
           <button type="button" class="bm-cbtn" data-movpop="night-of-the-living-dead">🟦 POP OUT: NIGHT OF THE LIVING DEAD</button>
           <button type="button" class="bm-cbtn" data-movpop="robin-hood">🟦 POP OUT: ROBIN HOOD</button>
+          <button type="button" class="bm-cbtn" data-movpop="charade">🟦 POP OUT: CHARADE</button>
         </div>
       </div>
     </div>
@@ -7357,17 +7373,18 @@ body.bm-popout .bm-wrist{display:flex}
   <section id="bmMovies" aria-label="Movies and TV — blob movie lists, mini player and pop-out video boxes">
     <div class="bm-lhead">
       <span class="bm-ltitle">🎬 MOVIES &amp; TV — THE BLOB MOVIE SHELF</span>
-      <span class="bm-lsub">Blob movie lists in the portal bar: pointer records pointing at the Blob Cinema — sources with where &amp; when they last played and a working / point-only mark. Pull a film into the mini player, pop it out and free-transform it, and keep watching while you play games or surf the network. Compact on purpose — it stays out of the way of gameplay.</span>
-      <a class="bm-lbtn bm-cinemalink" href="https://arcade.highscores.live/arcade/blob-cinema/" target="_blank" rel="noopener">🎬 BLOB CINEMA ↗</a>
+      <span class="bm-lsub">Blob movie lists in the portal bar: pointer records whose films spin up right here from the Blob Player page — sources with where &amp; when they last played and an honest playing mark. Pull a film into the mini player, pop it out small and free-transform it, and keep watching while you play games or surf the network. Compact on purpose — it stays out of the way of gameplay.</span>
+      <a class="bm-lbtn bm-cinemalink" href="https://arcade.highscores.live/arcade/studio/blob-player.html" target="_blank" rel="noopener">🎬 BLOB PLAYER ↗</a>
       <button type="button" class="bm-lbtn" id="bmMovClose">✕ CLOSE</button>
     </div>
     <div class="bm-lscroll" id="bmMovScroll">
       <div class="bm-lsec" id="bmSecMovNow">
         <h3>📺 NOW WATCHING — MINI PLAYER</h3>
-        <p class="bm-lhint">Pull a tile below and it lands here. A record marked <b>POINT / CINEMA</b> does not stream inside the bar — the player says so honestly and carries the Blob Cinema door instead of faking a stream. Pop the film out and it floats over the page while you play and surf.</p>
+        <p class="bm-lhint">Pull a tile below and it lands here — small, just a little bigger than a face box. Cinema films spin up <b>right here</b> from the Blob Player page: the player loads inside the bar and you pick the film inside it, exactly as you do at the player itself. The ↗ door stays as the secondary <b>open full player</b> option. Pop the film out and it floats over the page while you play and surf.</p>
         <div class="bm-movplayer" id="bmMovPlayer">
           <div class="bm-movscreen" id="bmMovScreen">
             <video id="bmMovVideo" controls preload="none" hidden></video>
+            <iframe id="bmMovFrame" title="Blob Player — the film plays here, spun up from the Blob Player page" hidden loading="lazy" allow="autoplay; fullscreen; encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
             <div class="bm-movface" id="bmMovFace">
               <span class="bm-movbig" aria-hidden="true">🎬</span>
               <span class="bm-movfacetitle" id="bmMovFaceTitle">Nothing pulled yet</span>
@@ -7392,7 +7409,7 @@ body.bm-popout .bm-wrist{display:flex}
       </div>
       <div class="bm-lsec" id="bmSecMovList">
         <h3>🎞 THE SHELF — TILES, SEARCH &amp; GENRE</h3>
-        <p class="bm-lhint">Every tile is a pointer record in the shared library's shape: its source list, where &amp; when each source last played, and a <b>✓ WORKING</b> or <b>POINT ONLY / POINT / CINEMA</b> mark. The bar plays the best available source — a broken or point-only source is never dressed up as a stream.</p>
+        <p class="bm-lhint">Every tile is a pointer record in the shared library's shape: its source list, where &amp; when each source last played, and a <b>✓ WORKING</b> mark — <b>PLAYS HERE — FROM THE BLOB PLAYER</b> for the player films, <b>POINT ONLY</b> for sources the bar only points at. The bar plays the best available source, spun up from the location it plays.</p>
         <input type="search" class="bm-movsearch" id="bmMovSearch" placeholder="🔎 SEARCH MOVIES &amp; SHOWS — title, genre, source…" aria-label="Search the movie shelf by title, genre or source" autocomplete="off" style="min-height:58px;font-size:1.08rem">
         <div class="bm-movchips" id="bmMovGenreChips" role="group" aria-label="Filter the shelf by genre">
           <button type="button" class="bm-movchip bm-on" data-movgenre="ALL">ALL</button>
@@ -7408,14 +7425,14 @@ body.bm-popout .bm-wrist{display:flex}
             <div class="bm-movposter" aria-hidden="true"><span class="bm-movemoji">🐰</span><span class="bm-movartlab">TITLE TILE — COVER ART NOT ON FILE IN THE BAR</span></div>
             <div class="bm-movtilebody">
               <div class="bm-movtitle">Big Buck Bunny</div>
-              <div><span class="bm-movpill">MOVIE</span> <span class="bm-movpill">FAMILY · ANIMATION</span> <span class="bm-movpill bm-movwork">✓ WORKING</span> <span class="bm-movpill bm-movpoint">POINT / CINEMA</span></div>
-              <p class="bm-movmeta">POINTER RECORD · SOURCE 1: BLOB CINEMA — arcade.highscores.live/arcade/blob-cinema/ · ✓ WORKING — PLAYBACK PASS · LAST PLAYED: AT BLOB CINEMA — FIRST FRAME ~1s · BEST AVAILABLE: BLOB CINEMA (POINT / CINEMA)<span class="bm-movlast"></span></p>
-              <p class="bm-movdesc">The Blob Cinema's proven opener — playback passed, first frame in about a second.</p>
+              <div><span class="bm-movpill">MOVIE</span> <span class="bm-movpill">FAMILY · ANIMATION</span> <span class="bm-movpill bm-movwork">✓ WORKING</span> <span class="bm-movpill bm-movwork">▶ PLAYS HERE — FROM THE BLOB PLAYER</span></div>
+              <p class="bm-movmeta">POINTER RECORD · SOURCE 1: BLOB PLAYER — arcade.highscores.live/arcade/studio/blob-player.html · ✓ WORKING — PLAYBACK PASS · LAST PLAYED: AT BLOB PLAYER — FIRST FRAME ~1s · BEST AVAILABLE: THE THEATER PAGE, SPUN UP AND PLAYING RIGHT HERE IN THE BAR<span class="bm-movlast"></span></p>
+              <p class="bm-movdesc">The Blob Player's proven opener — playback passed, first frame in about a second.</p>
               <div class="bm-movbtns">
                 <button type="button" class="bm-movbtn bm-movpull" data-mov-pull>▶ PULL TO PLAY</button>
                 <button type="button" class="bm-movbtn" data-mov-pop>🟦 POP OUT</button>
                 <button type="button" class="bm-movbtn bm-movfavbtn" data-mov-fav aria-pressed="false">⭐ FAV</button>
-                <a class="bm-movbtn bm-movcinema" href="https://arcade.highscores.live/arcade/blob-cinema/" target="_blank" rel="noopener">🎬 OPEN IN BLOB CINEMA ↗</a>
+                <a class="bm-movbtn bm-movcinema" href="https://arcade.highscores.live/arcade/studio/blob-player.html" target="_blank" rel="noopener">🎬 OPEN FULL PLAYER ↗</a>
               </div>
             </div>
           </article>
@@ -7423,14 +7440,14 @@ body.bm-popout .bm-wrist{display:flex}
             <div class="bm-movposter" aria-hidden="true"><span class="bm-movemoji">🧟</span><span class="bm-movartlab">TITLE TILE — COVER ART NOT ON FILE IN THE BAR</span></div>
             <div class="bm-movtilebody">
               <div class="bm-movtitle">Night of the Living Dead</div>
-              <div><span class="bm-movpill">MOVIE</span> <span class="bm-movpill">HORROR · CLASSIC</span> <span class="bm-movpill bm-movwork">✓ WORKING</span> <span class="bm-movpill bm-movpoint">POINT / CINEMA</span></div>
-              <p class="bm-movmeta">POINTER RECORD · SOURCE 1: BLOB CINEMA — arcade.highscores.live/arcade/blob-cinema/ · ✓ WORKING — PLAYBACK PASS · 222 SECTIONS ON THE BLOB · PUBLIC DOMAIN · LAST PLAYED: AT BLOB CINEMA · BEST AVAILABLE: BLOB CINEMA (POINT / CINEMA)<span class="bm-movlast"></span></p>
+              <div><span class="bm-movpill">MOVIE</span> <span class="bm-movpill">HORROR · CLASSIC</span> <span class="bm-movpill bm-movwork">✓ WORKING</span> <span class="bm-movpill bm-movwork">▶ PLAYS HERE — FROM THE BLOB PLAYER</span></div>
+              <p class="bm-movmeta">POINTER RECORD · SOURCE 1: BLOB PLAYER — arcade.highscores.live/arcade/studio/blob-player.html · ✓ WORKING — PLAYBACK PASS · 222 SECTIONS ON THE BLOB · PUBLIC DOMAIN · LAST PLAYED: AT BLOB PLAYER · BEST AVAILABLE: THE THEATER PAGE, SPUN UP AND PLAYING RIGHT HERE IN THE BAR<span class="bm-movlast"></span></p>
               <p class="bm-movdesc">The public-domain classic, held on the blob in 222 sections — playback passed.</p>
               <div class="bm-movbtns">
                 <button type="button" class="bm-movbtn bm-movpull" data-mov-pull>▶ PULL TO PLAY</button>
                 <button type="button" class="bm-movbtn" data-mov-pop>🟦 POP OUT</button>
                 <button type="button" class="bm-movbtn bm-movfavbtn" data-mov-fav aria-pressed="false">⭐ FAV</button>
-                <a class="bm-movbtn bm-movcinema" href="https://arcade.highscores.live/arcade/blob-cinema/" target="_blank" rel="noopener">🎬 OPEN IN BLOB CINEMA ↗</a>
+                <a class="bm-movbtn bm-movcinema" href="https://arcade.highscores.live/arcade/studio/blob-player.html" target="_blank" rel="noopener">🎬 OPEN FULL PLAYER ↗</a>
               </div>
             </div>
           </article>
@@ -7438,14 +7455,29 @@ body.bm-popout .bm-wrist{display:flex}
             <div class="bm-movposter" aria-hidden="true"><span class="bm-movemoji">🏹</span><span class="bm-movartlab">TITLE TILE — COVER ART NOT ON FILE IN THE BAR</span></div>
             <div class="bm-movtilebody">
               <div class="bm-movtitle">Robin Hood</div>
-              <div><span class="bm-movpill">MOVIE</span> <span class="bm-movpill">ADVENTURE · CLASSIC</span> <span class="bm-movpill bm-movwork">✓ WORKING</span> <span class="bm-movpill bm-movpoint">POINT / CINEMA</span></div>
-              <p class="bm-movmeta">POINTER RECORD · SOURCE 1: BLOB CINEMA — arcade.highscores.live/arcade/blob-cinema/ · ✓ WORKING — PLAYBACK PASS · 222 SECTIONS — HEALED 222/222 AFTER A SECTION EXPIRY · LAST PLAYED: AT BLOB CINEMA · BEST AVAILABLE: BLOB CINEMA (POINT / CINEMA)<span class="bm-movlast"></span></p>
+              <div><span class="bm-movpill">MOVIE</span> <span class="bm-movpill">ADVENTURE · CLASSIC</span> <span class="bm-movpill bm-movwork">✓ WORKING</span> <span class="bm-movpill bm-movwork">▶ PLAYS HERE — FROM THE BLOB PLAYER</span></div>
+              <p class="bm-movmeta">POINTER RECORD · SOURCE 1: BLOB PLAYER — arcade.highscores.live/arcade/studio/blob-player.html · ✓ WORKING — PLAYBACK PASS · 222 SECTIONS — HEALED 222/222 AFTER A SECTION EXPIRY · LAST PLAYED: AT BLOB PLAYER · BEST AVAILABLE: THE THEATER PAGE, SPUN UP AND PLAYING RIGHT HERE IN THE BAR<span class="bm-movlast"></span></p>
               <p class="bm-movdesc">222 sections on the blob — healed back to 222/222 after a section expired.</p>
               <div class="bm-movbtns">
                 <button type="button" class="bm-movbtn bm-movpull" data-mov-pull>▶ PULL TO PLAY</button>
                 <button type="button" class="bm-movbtn" data-mov-pop>🟦 POP OUT</button>
                 <button type="button" class="bm-movbtn bm-movfavbtn" data-mov-fav aria-pressed="false">⭐ FAV</button>
-                <a class="bm-movbtn bm-movcinema" href="https://arcade.highscores.live/arcade/blob-cinema/" target="_blank" rel="noopener">🎬 OPEN IN BLOB CINEMA ↗</a>
+                <a class="bm-movbtn bm-movcinema" href="https://arcade.highscores.live/arcade/studio/blob-player.html" target="_blank" rel="noopener">🎬 OPEN FULL PLAYER ↗</a>
+              </div>
+            </div>
+          </article>
+          <article class="bm-movtile" data-mov-id="charade" data-mov-title="Charade" data-mov-type="MOVIE" data-mov-genre="MYSTERY CLASSIC" data-mov-kind="cinema" data-mov-src="" data-mov-emoji="🗼">
+            <div class="bm-movposter" aria-hidden="true"><span class="bm-movemoji">🗼</span><span class="bm-movartlab">TITLE TILE — COVER ART NOT ON FILE IN THE BAR</span></div>
+            <div class="bm-movtilebody">
+              <div class="bm-movtitle">Charade</div>
+              <div><span class="bm-movpill">MOVIE</span> <span class="bm-movpill">MYSTERY · CLASSIC</span> <span class="bm-movpill bm-movwork">✓ WORKING</span> <span class="bm-movpill bm-movwork">▶ PLAYS HERE — FROM THE BLOB PLAYER</span></div>
+              <p class="bm-movmeta">POINTER RECORD · SOURCE 1: BLOB PLAYER — arcade.highscores.live/arcade/studio/blob-player.html · ✓ WORKING — PLAYBACK PASS · 231 SECTIONS ON THE BLOB · 236 MB VERIFIED · PUBLIC DOMAIN · PLAYBACK PROVEN ON DESKTOP AND PHONE (231/231) · LAST PLAYED: AT BLOB PLAYER · BEST AVAILABLE: THE THEATER PAGE, SPUN UP AND PLAYING RIGHT HERE IN THE BAR<span class="bm-movlast"></span></p>
+              <p class="bm-movdesc">Audrey Hepburn and Cary Grant, Paris, 1963 — the public-domain classic, blobbed in 231 sections and playing clean on desktop and phone alike.</p>
+              <div class="bm-movbtns">
+                <button type="button" class="bm-movbtn bm-movpull" data-mov-pull>▶ PULL TO PLAY</button>
+                <button type="button" class="bm-movbtn" data-mov-pop>🟦 POP OUT</button>
+                <button type="button" class="bm-movbtn bm-movfavbtn" data-mov-fav aria-pressed="false">⭐ FAV</button>
+                <a class="bm-movbtn bm-movcinema" href="https://arcade.highscores.live/arcade/studio/blob-player.html" target="_blank" rel="noopener">🎬 OPEN FULL PLAYER ↗</a>
               </div>
             </div>
           </article>
@@ -7480,7 +7512,7 @@ body.bm-popout .bm-wrist{display:flex}
           </div>
           <label>How it plays
             <select id="bmMovAddKind">
-              <option value="cinema">🎬 POINT / CINEMA — plays at the Blob Cinema</option>
+              <option value="cinema">🎬 BLOB PLAYER — plays here, spun up from the Blob Player page</option>
               <option value="direct">▶ DIRECT STREAM — a stream URL that plays in the bar</option>
               <option value="point">↗ POINT ONLY — a page URL we point at</option>
             </select>
@@ -7618,7 +7650,7 @@ body.bm-popout .bm-wrist{display:flex}
     <button type="button" class="bm-tbtn" data-tmov="open" data-tip="MOVIES &amp; TV — the blob movie shelf: tiles, favorites, search and genre, mini player and pop-out boxes" aria-label="Movies and TV — open the blob movie shelf"><span class="bm-tsym" aria-hidden="true">🎬</span><span class="bm-tlab">MOVIES</span></button>
     <button type="button" class="bm-tbtn" data-tmov="favs" data-tip="FAVORITES — your pinned picks at the top of the movie shelf, one tap to play" aria-label="Favorites — your pinned movie picks"><span class="bm-tsym" aria-hidden="true">⭐</span><span class="bm-tlab">FAV MOVIES</span></button>
     <button type="button" class="bm-tbtn" data-tmov="pop" data-tip="POP OUT MOVIE — float the now-watching film as a free-transform box while you play or surf" aria-label="Pop out movie — float the now-watching film"><span class="bm-tsym" aria-hidden="true">🟦</span><span class="bm-tlab">POP MOVIE</span></button>
-    <button type="button" class="bm-tbtn" data-tmov="cinema" data-tip="BLOB CINEMA — open the Blob Cinema, where the shelf's films play" aria-label="Blob Cinema — open the Blob Cinema"><span class="bm-tsym" aria-hidden="true">🎞</span><span class="bm-tlab">CINEMA ↗</span></button>
+    <button type="button" class="bm-tbtn" data-tmov="cinema" data-tip="BLOB PLAYER — open the Blob Player, where the shelf's films play" aria-label="Blob Player — open the Blob Player"><span class="bm-tsym" aria-hidden="true">🎞</span><span class="bm-tlab">PLAYER ↗</span></button>
   </div>
   <div class="bm-tgroup" role="group" aria-label="Tiny bar — view options">
     <span class="bm-tgcap" aria-hidden="true">VIEW</span>
@@ -8246,13 +8278,15 @@ function openFloat(id){
   head.addEventListener("pointerdown", function(e){
     if(e.target.closest("button")) return;
     var r=w.getBoundingClientRect(), dx=e.clientX-r.left, dy=e.clientY-r.top;
+    w.classList.add("bm-dragging"); document.body.classList.add("bm-anydrag");
+    try{ head.setPointerCapture(e.pointerId); }catch(err){}
     function mv(ev){
       var nl=Math.max(0, Math.min(window.innerWidth-70, ev.clientX-dx));
       var nt=Math.max(0, Math.min(window.innerHeight-52, ev.clientY-dy));
       w.style.left=nl+"px"; w.style.top=nt+"px";
     }
-    function up(){ document.removeEventListener("pointermove",mv); document.removeEventListener("pointerup",up); }
-    document.addEventListener("pointermove",mv); document.addEventListener("pointerup",up);
+    function up(){ w.classList.remove("bm-dragging"); document.body.classList.remove("bm-anydrag"); document.removeEventListener("pointermove",mv); document.removeEventListener("pointerup",up); document.removeEventListener("pointercancel",up); }
+    document.addEventListener("pointermove",mv); document.addEventListener("pointerup",up); document.addEventListener("pointercancel",up);
     e.preventDefault();
   });
   floatPost(w, id, "Hey — direct line open. My video box rides with this chat, so you always know who you're talking to. 💬");
@@ -8534,12 +8568,14 @@ function openMyFloat(){
   head.addEventListener("pointerdown", function(e){
     if(e.target.closest("button")) return;
     var r=w.getBoundingClientRect(), dx=e.clientX-r.left, dy=e.clientY-r.top;
+    w.classList.add("bm-dragging"); document.body.classList.add("bm-anydrag");
+    try{ head.setPointerCapture(e.pointerId); }catch(err){}
     function mv(ev){
       w.style.left=Math.max(0, Math.min(window.innerWidth-70, ev.clientX-dx))+"px";
       w.style.top=Math.max(0, Math.min(window.innerHeight-52, ev.clientY-dy))+"px";
     }
-    function up(){ document.removeEventListener("pointermove",mv); document.removeEventListener("pointerup",up); }
-    document.addEventListener("pointermove",mv); document.addEventListener("pointerup",up);
+    function up(){ w.classList.remove("bm-dragging"); document.body.classList.remove("bm-anydrag"); document.removeEventListener("pointermove",mv); document.removeEventListener("pointerup",up); document.removeEventListener("pointercancel",up); }
+    document.addEventListener("pointermove",mv); document.addEventListener("pointerup",up); document.addEventListener("pointercancel",up);
     e.preventDefault();
   });
 }
@@ -8970,13 +9006,19 @@ renderKept();
 <script>
 /* ===== Portal Bar v8 — Movies & TV + Quick Game Entrance =====
    MOVIES: the shelf's tiles are pointer records (sources + where/when
-   last played + working / point-only marks) seeded from the Blob Cinema.
-   PULL TO PLAY loads a record into the mini player; only a record with a
-   direct stream source streams in the bar — POINT / CINEMA and POINT
-   ONLY records say so and carry their door, never a fake stream. POP OUT
-   floats the film as a free-transform box in #bmFloats (the v5 system:
-   drag header, ◢ resize grip, minimize, bigger; snap/tidy/save ride the
-   same chip) that stays up while you play games or surf the page.
+   last played + honest playing marks) seeded from the Blob Player.
+   PULL TO PLAY loads a record into the mini player: a direct stream
+   source streams in the bar, and a CINEMA record spins up the Blob
+   Cinema BLOB PLAYER page itself in an iframe (the location the film
+   actually plays from — the player serves framable, and the viewer
+   picks the film inside it, as in the player) — labeled PLAYS HERE —
+   FROM BLOB PLAYER, with the ↗ door kept as the secondary open-full-
+   cinema option. POINT ONLY records still say so and carry their door,
+   never a fake stream. POP OUT floats the film as a SMALL free-
+   transform box in #bmFloats (default ~340px wide, a little bigger
+   than a face box; the v5 system: drag header, ◢ resize grip,
+   minimize, bigger; snap/tidy/save ride the same chip) that stays up
+   while you play games or surf the page.
    Favorites and added records are session-only, in this page's memory.
    ASK AS A TRIGGER rides v7's Ask the Library — no second search.
    GAMES: the shelf is the quick entrance to every game we build — rows
@@ -8987,7 +9029,9 @@ renderKept();
 "use strict";
 function $(id){ return document.getElementById(id); }
 function el(tag, cls, txt){ var e=document.createElement(tag); if(cls) e.className=cls; if(txt!=null) e.textContent=txt; return e; }
-var CINEMA="https://arcade.highscores.live/arcade/blob-cinema/";
+var PLAYER="https://arcade.highscores.live/arcade/studio/blob-player.html";
+var CINEMA=PLAYER;
+var THEATER=PLAYER;
 var panel=$("bmMovies"), scrollEl=$("bmMovScroll"), current=null, zMov=4460;
 
 /* ---------- panel open / close, from every door ---------- */
@@ -9025,7 +9069,7 @@ function recById(id){
 }
 function mstatus(msg){ var s=$("bmMovStatus"); if(s) s.textContent=msg; }
 function doorFor(rec){
-  return rec.kind==="cinema" ? {href:CINEMA, label:"🎬 OPEN IN BLOB CINEMA ↗"}
+  return rec.kind==="cinema" ? {href:THEATER, label:"🎬 OPEN FULL PLAYER ↗"}
        : {href:rec.src||CINEMA, label:"↗ OPEN THE SOURCE ↗"};
 }
 function ensureDoor(face, rec){
@@ -9042,28 +9086,37 @@ function pullRecord(rec, silent){
   if(rec.tile) rec.tile.classList.add("bm-nowplaying");
   var last=rec.tile? rec.tile.querySelector(".bm-movlast") : null;
   if(last) last.textContent=" · LAST PULLED: JUST NOW IN THIS BAR (THIS SESSION)";
-  var vid=$("bmMovVideo"), face=$("bmMovFace");
-  $("bmMovNowTitle").textContent="🎬 NOW WATCHING: "+rec.title+" — "+(rec.kind==="direct" ? "streaming in the mini player" : rec.kind==="cinema" ? "via the Blob Cinema (POINT / CINEMA)" : "pointed source (POINT ONLY)");
+  var vid=$("bmMovVideo"), face=$("bmMovFace"), frame=$("bmMovFrame");
+  $("bmMovNowTitle").textContent="🎬 NOW WATCHING: "+rec.title+" — "+(rec.kind==="direct" ? "streaming in the mini player" : rec.kind==="cinema" ? "playing here — spun up from the Blob Player" : "pointed source (POINT ONLY)");
   if(rec.kind==="direct" && rec.src){
+    if(frame){ frame.hidden=true; frame.removeAttribute("src"); }
     face.style.display="none"; vid.hidden=false;
     if(vid.getAttribute("src")!==rec.src){ vid.src=rec.src; }
     var pr=vid.play(); if(pr&&pr.catch) pr.catch(function(){});
     mstatus("▶ "+rec.title+" — streaming from its direct source, right in the bar. Pop it out and it keeps floating while you play games or surf.");
+  } else if(rec.kind==="cinema"){
+    if(vid){ vid.pause(); vid.hidden=true; }
+    face.style.display="none";
+    if(frame){
+      frame.hidden=false;
+      if(frame.getAttribute("src")!==THEATER) frame.src=THEATER;
+    }
+    mstatus("▶ "+rec.title+" — PLAYS HERE, spun up from the Blob Player page, right in the mini player. Pick the film inside the player, just like at the player itself. Pop it out small and it keeps playing while you game or surf; the ↗ door on the tile opens the full cinema.");
   } else {
     if(vid){ vid.pause(); vid.hidden=true; }
+    if(frame){ frame.hidden=true; frame.removeAttribute("src"); }
     face.style.display="flex";
     $("bmMovFaceTitle").textContent=rec.emoji+" "+rec.title;
-    $("bmMovFaceState").textContent= rec.kind==="cinema"
-      ? "POINT / CINEMA — THIS FILM PLAYS AT THE BLOB CINEMA, NOT AS A STREAM INSIDE THE BAR. SOURCE: BLOB CINEMA · ✓ WORKING — PLAYBACK PASS. POP IT OUT AND THE BOX CARRIES THE CINEMA DOOR WITH IT."
-      : "POINT ONLY — THE BAR POINTS AT THIS SOURCE; IT DOES NOT STREAM INSIDE THE BAR. USE THE DOOR TO WATCH IT WHERE IT LIVES.";
+    $("bmMovFaceState").textContent="POINT ONLY — THE BAR POINTS AT THIS SOURCE; IT DOES NOT STREAM INSIDE THE BAR. USE THE DOOR TO WATCH IT WHERE IT LIVES.";
     ensureDoor(face, rec);
-    mstatus(rec.emoji+" "+rec.title+" — pulled in as a POINT / CINEMA record: best available source is the Blob Cinema. The door is in the player; POP OUT floats the box with the door on it.");
+    mstatus(rec.emoji+" "+rec.title+" — pulled in as a POINT ONLY record: the bar points at its source. Use the door to watch it where it lives.");
   }
-  var listen=$("bmListen"); if(listen) listen.textContent="🎬 Watching: "+rec.title+(rec.kind==="direct" ? " — streaming in the portal bar" : " — via the Blob Cinema");
+  var listen=$("bmListen"); if(listen) listen.textContent="🎬 Watching: "+rec.title+(rec.kind==="direct" ? " — streaming in the portal bar" : rec.kind==="cinema" ? " — playing in the portal bar, from the Blob Player" : " — pointed source");
   if(!silent) openMovies("bmSecMovNow");
 }
 if($("bmMovStopBtn")) $("bmMovStopBtn").addEventListener("click", function(){
   var vid=$("bmMovVideo"); if(vid){ vid.pause(); vid.removeAttribute("src"); vid.load(); vid.hidden=true; }
+  var fr=$("bmMovFrame"); if(fr){ fr.hidden=true; fr.removeAttribute("src"); }
   current=null;
   document.querySelectorAll(".bm-movtile.bm-nowplaying").forEach(function(t){ t.classList.remove("bm-nowplaying"); });
   var face=$("bmMovFace"); face.style.display="flex";
@@ -9090,55 +9143,69 @@ function popOutMovie(rec){
   if(!floats) return;
   var pid="mov-"+rec.id;
   var ex=floats.querySelector('[data-pid="'+pid+'"]');
-  if(ex){ ex.classList.add("bm-open"); ex.classList.remove("bm-fmin"); ex.style.zIndex=++zMov; return; }
+  if(ex){ ex.classList.add("bm-open"); ex.classList.remove("bm-fmin"); ex.style.zIndex=++zMov; var efi=ex.querySelector("iframe"); if(efi && !efi.getAttribute("src")) efi.src=THEATER; return; }
   var w=el("section","bm-float bm-movfloat bm-open");
   w.setAttribute("data-pid", pid); w.setAttribute("aria-label","Movie box — "+rec.title);
   w.style.left="24px"; w.style.top="84px"; w.style.zIndex=++zMov;
   var head=el("div","bm-fhead");
   var nm=el("span","bm-fname");
   nm.appendChild(document.createTextNode("🎬 "+rec.title));
-  nm.appendChild(el("small",null, rec.kind==="direct" ? "streaming in the bar — pop-out box" : rec.kind==="cinema" ? "POINT / CINEMA — plays at the Blob Cinema" : "POINT ONLY — pointed source"));
+  nm.appendChild(el("small",null, rec.kind==="direct" ? "streaming in the bar — pop-out box" : rec.kind==="cinema" ? "PLAYS HERE — FROM THE BLOB PLAYER · pop-out box" : "POINT ONLY — pointed source"));
   head.appendChild(nm);
   function hb(label, tip){ var b=el("button","bm-fbtn",label); b.type="button"; b.setAttribute("aria-label",tip); head.appendChild(b); return b; }
   var bMin=hb("—","Minimize this movie box"), bBig=hb("▣","Make this movie box regular / bigger"), bX=hb("✕","Close this movie box");
   w.appendChild(head);
   var bodyEl=el("div","bm-fbody");
   var screen=el("div","bm-movscreen");
+  var doorRow=null;
   if(rec.kind==="direct" && rec.src){
     var v=el("video"); v.controls=true; v.preload="none"; v.src=rec.src;
     screen.appendChild(v);
     var mv=$("bmMovVideo"); if(mv) mv.pause();
+  } else if(rec.kind==="cinema"){
+    var fr2=el("iframe"); fr2.title="Blob Player — "+rec.title; fr2.src=THEATER;
+    fr2.setAttribute("allow","autoplay; fullscreen; encrypted-media; picture-in-picture");
+    fr2.setAttribute("allowfullscreen","");
+    fr2.setAttribute("referrerpolicy","strict-origin-when-cross-origin");
+    screen.appendChild(fr2);
+    doorRow=el("div","bm-movfloatdoor"); ensureDoor(doorRow, rec);
+    var mf=$("bmMovFrame"); if(mf){ mf.hidden=true; mf.removeAttribute("src"); }
   } else {
     var face=el("div","bm-movface");
     face.appendChild(el("span","bm-movbig", rec.emoji));
     face.appendChild(el("span","bm-movfacetitle", rec.title));
-    face.appendChild(el("span","bm-movfacestate", rec.kind==="cinema" ? "POINT / CINEMA — PLAYS AT THE BLOB CINEMA" : "POINT ONLY — WATCH IT WHERE IT LIVES"));
+    face.appendChild(el("span","bm-movfacestate", "POINT ONLY — WATCH IT WHERE IT LIVES"));
     ensureDoor(face, rec);
     screen.appendChild(face);
   }
   bodyEl.appendChild(screen);
+  if(doorRow) bodyEl.appendChild(doorRow);
   bodyEl.appendChild(el("div","bm-movstatusline","🟦 Movie blob — this box stays up while you play games or surf the network. Drag it by the header, pull the ◢ corner to resize it, snap/tidy it with the pop-out chip."));
   var grip=el("span","bm-movgrip","◢"); grip.setAttribute("aria-hidden","true"); bodyEl.appendChild(grip);
   w.appendChild(bodyEl);
   floats.appendChild(w);
   bMin.addEventListener("click", function(){ w.classList.toggle("bm-fmin"); });
   bBig.addEventListener("click", function(){ w.classList.toggle("bm-fbig"); w.classList.remove("bm-fmin"); w.style.width=""; w.style.height=""; });
-  bX.addEventListener("click", function(){ var fv=w.querySelector("video"); if(fv) fv.pause(); w.classList.remove("bm-open"); });
+  bX.addEventListener("click", function(){ var fv=w.querySelector("video"); if(fv) fv.pause(); var fi=w.querySelector("iframe"); if(fi) fi.removeAttribute("src"); w.classList.remove("bm-open"); });
   w.addEventListener("pointerdown", function(){ w.style.zIndex=++zMov; });
   head.addEventListener("pointerdown", function(e){
     if(e.target.closest("button")) return;
     var r=w.getBoundingClientRect(), dx=e.clientX-r.left, dy=e.clientY-r.top;
+    w.classList.add("bm-dragging"); document.body.classList.add("bm-anydrag");
+    try{ head.setPointerCapture(e.pointerId); }catch(err){}
     function mv(ev){ w.style.left=Math.max(0,Math.min(window.innerWidth-70,ev.clientX-dx))+"px"; w.style.top=Math.max(0,Math.min(window.innerHeight-52,ev.clientY-dy))+"px"; }
-    function up(){ document.removeEventListener("pointermove",mv); document.removeEventListener("pointerup",up); }
-    document.addEventListener("pointermove",mv); document.addEventListener("pointerup",up);
+    function up(){ w.classList.remove("bm-dragging"); document.body.classList.remove("bm-anydrag"); document.removeEventListener("pointermove",mv); document.removeEventListener("pointerup",up); document.removeEventListener("pointercancel",up); }
+    document.addEventListener("pointermove",mv); document.addEventListener("pointerup",up); document.addEventListener("pointercancel",up);
     e.preventDefault();
   });
   grip.addEventListener("pointerdown", function(e){
     var r=w.getBoundingClientRect(), sx=e.clientX, sy=e.clientY, sw=r.width, sh=r.height;
     w.classList.remove("bm-fbig");
+    w.classList.add("bm-resizing"); document.body.classList.add("bm-anydrag");
+    try{ grip.setPointerCapture(e.pointerId); }catch(err){}
     function mv(ev){ w.style.width=Math.max(240,Math.min(window.innerWidth-16,sw+(ev.clientX-sx)))+"px"; w.style.height=Math.max(180,Math.min(window.innerHeight-16,sh+(ev.clientY-sy)))+"px"; }
-    function up(){ document.removeEventListener("pointermove",mv); document.removeEventListener("pointerup",up); }
-    document.addEventListener("pointermove",mv); document.addEventListener("pointerup",up);
+    function up(){ w.classList.remove("bm-resizing"); document.body.classList.remove("bm-anydrag"); document.removeEventListener("pointermove",mv); document.removeEventListener("pointerup",up); document.removeEventListener("pointercancel",up); }
+    document.addEventListener("pointermove",mv); document.addEventListener("pointerup",up); document.addEventListener("pointercancel",up);
     e.preventDefault(); e.stopPropagation();
   });
   mstatus("🟦 "+rec.title+" is popped out — it stays up while you play games or surf. Drag it anywhere, pull ◢ to resize.");
@@ -9228,7 +9295,7 @@ if($("bmMovAskInput")) $("bmMovAskInput").addEventListener("keydown", function(e
 /* ---------- ADD A RECORD — grow the shelf (session-only) ---------- */
 function kindPills(kind){
   if(kind==="direct") return '<span class="bm-movpill bm-movwork">▶ DIRECT STREAM</span>';
-  if(kind==="cinema") return '<span class="bm-movpill bm-movwork">✓ WORKING</span> <span class="bm-movpill bm-movpoint">POINT / CINEMA</span>';
+  if(kind==="cinema") return '<span class="bm-movpill bm-movwork">✓ WORKING</span> <span class="bm-movpill bm-movwork">▶ PLAYS HERE — FROM THE BLOB PLAYER</span>';
   return '<span class="bm-movpill bm-movpoint">POINT ONLY</span>';
 }
 if($("bmMovAddBtn")) $("bmMovAddBtn").addEventListener("click", function(){
@@ -9237,7 +9304,7 @@ if($("bmMovAddBtn")) $("bmMovAddBtn").addEventListener("click", function(){
   var type=$("bmMovAddType").value, genre=$("bmMovAddGenre").value, kind=$("bmMovAddKind").value;
   var src=$("bmMovAddSrc").value.trim();
   if(!title){ st.textContent="Give the record a title first."; return; }
-  if(kind!=="cinema" && !/^https?:\/\//i.test(src)){ st.textContent="That kind needs a source URL starting https:// — or pick POINT / CINEMA to point at the Blob Cinema."; return; }
+  if(kind!=="cinema" && !/^https?:\/\//i.test(src)){ st.textContent="That kind needs a source URL starting https:// — or pick BLOB PLAYER to play from the Blob Player page."; return; }
   if(kind==="cinema") src="";
   var id="added-"+title.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"")+"-"+document.querySelectorAll(".bm-movtile").length;
   var emoji= type==="TV SHOW" ? "📺" : "🎬";
@@ -9253,7 +9320,7 @@ if($("bmMovAddBtn")) $("bmMovAddBtn").addEventListener("click", function(){
   body.appendChild(el("div","bm-movtitle",title));
   var pills=el("div"); pills.innerHTML='<span class="bm-movpill">'+type+"</span> "+'<span class="bm-movpill">'+genre+"</span> "+kindPills(kind);
   body.appendChild(pills);
-  var metaTxt= kind==="cinema" ? "POINTER RECORD · SOURCE 1: BLOB CINEMA — arcade.highscores.live/arcade/blob-cinema/ · ADDED THIS SESSION · NOT YET PULLED · BEST AVAILABLE: BLOB CINEMA (POINT / CINEMA)"
+  var metaTxt= kind==="cinema" ? "POINTER RECORD · SOURCE 1: BLOB PLAYER — arcade.highscores.live/arcade/studio/blob-player.html · ADDED THIS SESSION · NOT YET PULLED · BEST AVAILABLE: THE THEATER PAGE, SPUN UP AND PLAYING RIGHT HERE IN THE BAR"
     : "POINTER RECORD · SOURCE 1: "+src+" · ADDED THIS SESSION · NOT YET PULLED · BEST AVAILABLE: "+(kind==="direct" ? "DIRECT STREAM — PLAYS IN THE BAR" : "POINT ONLY");
   var meta=el("p","bm-movmeta",metaTxt); meta.appendChild(el("span","bm-movlast")); body.appendChild(meta);
   body.appendChild(el("p","bm-movdesc","Added from the bar this session — it lives on this shelf for this visit."));
@@ -9261,8 +9328,8 @@ if($("bmMovAddBtn")) $("bmMovAddBtn").addEventListener("click", function(){
   var bp=el("button","bm-movbtn bm-movpull","▶ PULL TO PLAY"); bp.type="button"; bp.setAttribute("data-mov-pull",""); btns.appendChild(bp);
   var bo=el("button","bm-movbtn","🟦 POP OUT"); bo.type="button"; bo.setAttribute("data-mov-pop",""); btns.appendChild(bo);
   var bf=el("button","bm-movbtn bm-movfavbtn","⭐ FAV"); bf.type="button"; bf.setAttribute("data-mov-fav",""); bf.setAttribute("aria-pressed","false"); btns.appendChild(bf);
-  var door= kind==="cinema" ? CINEMA : src;
-  var ba=el("a","bm-movbtn bm-movcinema", kind==="cinema" ? "🎬 OPEN IN BLOB CINEMA ↗" : "↗ OPEN THE SOURCE ↗");
+  var door= kind==="cinema" ? THEATER : src;
+  var ba=el("a","bm-movbtn bm-movcinema", kind==="cinema" ? "🎬 OPEN FULL PLAYER ↗" : "↗ OPEN THE SOURCE ↗");
   ba.href=door; ba.target="_blank"; ba.rel="noopener"; btns.appendChild(ba);
   body.appendChild(btns);
   tile.appendChild(body);
@@ -9283,7 +9350,7 @@ document.querySelectorAll("[data-tmov]").forEach(function(b){
       if(!current){ var first=document.querySelector(".bm-movtile"); if(first) pullRecord(tileRec(first),true); }
       if(current){ popOutMovie(current); if(tinyName) tinyName.textContent="▸ 🟦 POP MOVIE — "+current.title+" is floating. It stays up while you play games or surf."; }
     }
-    else if(act==="cinema"){ window.open(CINEMA,"_blank","noopener"); if(tinyName) tinyName.textContent="▸ 🎞 BLOB CINEMA ↗ — opened in a new tab, where the shelf's films play."; }
+    else if(act==="cinema"){ window.open(CINEMA,"_blank","noopener"); if(tinyName) tinyName.textContent="▸ 🎞 BLOB PLAYER ↗ — opened in a new tab, where the shelf's films play."; }
   });
 });
 
