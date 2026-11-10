@@ -6656,6 +6656,190 @@ setTimeout(function(){ post("ray", "parked the rig, kept the radio on. this is t
   .bm-tbtn:hover::after,.bm-tbtn:focus-visible::after,.bm-tbtn.bm-tipshow::after{opacity:1;transform:translateX(-50%) translateY(0)}
   @media (prefers-reduced-motion: reduce){ #bmShell,#bmTab,#bmTiny{transition:none} #bmPanel.bm-open,#bmGames.bm-open{animation:none} .bm-gart span{animation:none} .bm-tbtn::after{transition:none} }
 </style>
+<style>
+/* ===== Portal Bar v4 — proper chat build: call controls, who's-in-room,
+   direct-chat windows, record + jars, SEE EVERYTHING mode ===== */
+.bm-callrow{display:flex;gap:8px;flex:1 1 100%;flex-wrap:wrap;align-items:center;padding:8px 2px 2px;border-top:1px solid rgba(245,158,11,.45);margin-top:6px}
+.bm-callrow .bm-clabel{font-family:"IBM Plex Mono",monospace;font-size:.72rem;font-weight:700;letter-spacing:.08em;color:var(--amber2);flex:0 0 auto}
+.bm-cbtn{min-height:52px;padding:10px 15px;border-radius:12px;border:2px solid var(--amber2);background:transparent;color:var(--bg);font-weight:800;font-size:.92rem;white-space:nowrap;display:inline-flex;align-items:center;gap:7px}
+.bm-cbtn[aria-pressed="true"]{background:var(--amber2);color:#16130e}
+.bm-cbtn.bm-rec[aria-pressed="true"]{background:var(--red);border-color:var(--red);color:#fff}
+.bm-cbtn.bm-allbtn{background:var(--bg);color:var(--ink);border-color:var(--bg)}
+.bm-cbtn:active{transform:translateY(1px)}
+.bm-recdot{display:none;width:10px;height:10px;border-radius:50%;background:#fff;animation:pulse 1s infinite}
+.bm-cbtn.bm-rec[aria-pressed="true"] .bm-recdot{display:inline-block}
+.bm-rectime{font-family:"IBM Plex Mono",monospace;font-size:.82rem;color:var(--amber2);min-width:5ch}
+/* Live room panel — sits above the bar like the games shelf; every section
+   stacked visibly in one scroll, nothing behind tabs. */
+#bmLive{pointer-events:auto;align-self:center;width:min(1040px,calc(100vw - 16px));margin:0 0 10px;background:var(--panel);color:var(--ink);border:2px solid var(--amber2);border-radius:18px;box-shadow:var(--shadow);display:none;flex-direction:column;overflow:hidden;max-height:calc(100vh - 190px);max-height:calc(100dvh - 190px)}
+#bmLive.bm-open{display:flex;animation:bmRise .3s ease}
+#bmLive.bm-all{position:fixed;inset:10px;width:auto;max-height:none;z-index:4500;margin:0}
+.bm-lhead{display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding:12px 14px;background:var(--ink);color:var(--bg);flex:0 0 auto}
+.bm-ltitle{font-family:"Bebas Neue",sans-serif;font-size:1.5rem;letter-spacing:.05em;line-height:1.05}
+.bm-lhead .bm-lsub{font-family:"IBM Plex Mono",monospace;font-size:.75rem;color:var(--amber2);flex:1 1 200px}
+.bm-lbtn{min-height:48px;padding:9px 15px;border-radius:11px;border:2px solid var(--amber2);background:transparent;color:var(--bg);font-weight:800;font-size:.9rem;white-space:nowrap}
+.bm-lbtn.bm-lhot{background:var(--amber2);color:#16130e}
+.bm-lscroll{overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px;display:flex;flex-direction:column;gap:18px;min-height:0}
+.bm-lsec>h3{font-family:"Bebas Neue",sans-serif;font-size:1.35rem;letter-spacing:.04em;margin:0 0 4px;line-height:1.1}
+.bm-lsec .bm-lhint{font-size:.88rem;color:var(--muted);margin:0 0 10px}
+.bm-bigctl{display:flex;flex-wrap:wrap;gap:10px}
+.bm-bigctl .bm-cbtn{border-color:var(--ink);color:var(--ink);min-height:58px;font-size:1rem;padding:12px 18px}
+.bm-bigctl .bm-cbtn[aria-pressed="true"]{background:var(--amber);border-color:var(--amber);color:#fff}
+.bm-bigctl .bm-cbtn.bm-rec[aria-pressed="true"]{background:var(--red);border-color:var(--red)}
+.bm-bigctl .bm-rectime{color:var(--red)}
+/* Stage — one video box per person, showing what they're doing */
+.bm-stage{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
+.bm-vbox{border:2px solid var(--line);border-radius:14px;overflow:hidden;background:#141210;color:#f5efe2;display:flex;flex-direction:column}
+.bm-vbox.bm-speaking{border-color:var(--amber2);box-shadow:0 0 0 3px rgba(245,158,11,.4)}
+.bm-vface{aspect-ratio:16/9;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:radial-gradient(circle at 50% 35%,#3a3427,#141210 75%);padding:10px;text-align:center}
+.bm-vav{width:58px;height:58px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:1.25rem;color:#fff;flex:none}
+.bm-vact{font-size:.85rem;color:#fbbf24;font-weight:700;line-height:1.3}
+.bm-vnovideo{font-family:"IBM Plex Mono",monospace;font-size:.7rem;color:#b8ad97;letter-spacing:.05em}
+.bm-vmeta{padding:9px 12px 11px;display:flex;flex-direction:column;gap:7px}
+.bm-vname{font-weight:800;font-size:1rem;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.bm-talkdot{width:9px;height:9px;border-radius:50%;background:#3f3a30;flex:none}
+.bm-speaking .bm-talkdot{background:#f0523f;animation:pulse 1s infinite}
+.bm-vchips{display:flex;flex-wrap:wrap;gap:5px}
+.bm-vchip{font-family:"IBM Plex Mono",monospace;font-size:.66rem;font-weight:700;padding:2px 8px;border-radius:99px;border:1.5px solid #57534e;color:#d6d0c2;white-space:nowrap}
+.bm-vchip.bm-on{border-color:var(--teal);color:#2dd4bf}
+.bm-vchip.bm-off{opacity:.75}
+.bm-vacts{display:flex;gap:7px;flex-wrap:wrap}
+.bm-vbtn{min-height:44px;padding:8px 13px;border-radius:10px;border:2px solid var(--amber2);background:transparent;color:#f5efe2;font-weight:800;font-size:.85rem}
+.bm-vbtn[aria-pressed="true"]{background:var(--red);border-color:var(--red);color:#fff}
+/* Two-column zone: who's in room + room chat (stacks on phone) */
+.bm-duo{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
+@media(max-width:760px){.bm-duo{grid-template-columns:1fr}}
+.bm-person{display:flex;gap:11px;align-items:center;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:9px}
+.bm-person .bm-vav{width:44px;height:44px;font-size:1rem}
+.bm-pinfo{flex:1 1 auto;min-width:0}
+.bm-pname{font-weight:800;line-height:1.25}
+.bm-pact{font-size:.83rem;color:var(--muted);line-height:1.35}
+.bm-pbtns{display:flex;flex-direction:column;gap:6px;flex:none}
+.bm-pbtn{min-height:42px;padding:7px 12px;border-radius:10px;border:2px solid var(--ink);background:var(--panel);color:var(--ink);font-weight:800;font-size:.83rem;white-space:nowrap}
+.bm-pbtn[aria-pressed="true"]{background:var(--red);border-color:var(--red);color:#fff}
+.bm-pbtn.bm-chatgo{background:var(--ink);color:var(--bg)}
+/* Chat lanes (room chat + direct windows share the look) */
+.bm-chatfeed{display:flex;flex-direction:column;gap:9px;max-height:300px;overflow-y:auto;padding:4px 2px}
+#bmLive.bm-all .bm-chatfeed{max-height:420px}
+.bm-cmsg{display:flex;gap:9px;font-size:.92rem}
+.bm-cmsg .bm-vav{width:32px;height:32px;font-size:.78rem}
+.bm-cmsg .bm-cwho{font-weight:800;font-size:.85rem}
+.bm-cmsg .bm-cwhen{font-family:"IBM Plex Mono",monospace;font-size:.68rem;color:var(--muted);margin-left:6px;font-weight:400}
+.bm-cmsg .bm-ctxt{line-height:1.4}
+.bm-composer{display:flex;gap:8px;margin-top:10px}
+.bm-composer input{flex:1;min-width:0;min-height:52px;padding:11px 13px;border:1.5px solid var(--line);border-radius:11px;background:var(--panel2);color:var(--ink);font:inherit}
+.bm-composer button{min-height:52px;padding:10px 18px;border-radius:11px;border:2px solid var(--ink);background:var(--ink);color:var(--bg);font-weight:800}
+/* Jars */
+.bm-jarsearch{width:100%;min-height:54px;padding:11px 14px;border-radius:12px;border:2px solid var(--amber);background:var(--panel2);color:var(--ink);font-size:1rem;font-weight:600;margin-bottom:10px}
+.bm-jar{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:11px 13px;margin-bottom:9px}
+.bm-jar .bm-jname{font-weight:800;flex:1 1 220px;line-height:1.3}
+.bm-jar .bm-jmeta{font-family:"IBM Plex Mono",monospace;font-size:.72rem;color:var(--muted);flex-basis:100%}
+.bm-jbtn{min-height:46px;padding:9px 14px;border-radius:10px;border:2px solid var(--ink);background:var(--panel);color:var(--ink);font-weight:800;font-size:.86rem}
+.bm-jbtn.bm-jhot{background:var(--amber);border-color:var(--amber);color:#fff}
+.bm-replay{border:2px solid var(--amber);border-radius:14px;padding:13px 14px;background:var(--panel2);display:none}
+.bm-replay.bm-open{display:block}
+.bm-replay .bm-rname{font-weight:800;font-size:1.02rem;margin-bottom:9px}
+.bm-track{border:1px solid var(--line);border-radius:11px;background:var(--panel);padding:10px 12px;margin-bottom:9px}
+.bm-track .bm-thead{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.bm-track .bm-tname{font-weight:800}
+.bm-track .bm-ttime{font-family:"IBM Plex Mono",monospace;font-size:.78rem;color:var(--muted)}
+.bm-track input[type=range]{width:100%;margin-top:8px}
+.bm-tbtn{min-height:44px;padding:8px 13px;border-radius:10px;border:2px solid var(--ink);background:var(--ink);color:var(--bg);font-weight:800;font-size:.85rem}
+.bm-tbtn.bm-tmute{background:transparent;color:var(--ink)}
+.bm-tbtn.bm-tmute[aria-pressed="true"]{background:var(--red);border-color:var(--red);color:#fff}
+.bm-vtrackface{height:74px;border-radius:8px;margin-top:9px;background:radial-gradient(circle at 50% 40%,#3a3427,#141210 78%);color:#fbbf24;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.88rem;text-align:center;padding:8px}
+.bm-atrackface{height:20px;border-radius:99px;margin-top:9px;background:repeating-linear-gradient(90deg,var(--amber2) 0 5px,transparent 5px 11px);opacity:.35}
+.bm-track.bm-tplaying .bm-atrackface{opacity:1}
+.bm-lstatus{font-family:"IBM Plex Mono",monospace;font-size:.8rem;color:var(--muted);min-height:1.3em;margin:0}
+/* Floating direct-chat windows — video box + chat built in, draggable */
+#bmFloats{position:fixed;inset:0;z-index:4300;pointer-events:none}
+.bm-float{position:absolute;width:min(340px,calc(100vw - 20px));background:var(--panel);color:var(--ink);border:2px solid var(--ink);border-radius:16px;box-shadow:var(--shadow);pointer-events:auto;display:none;flex-direction:column;overflow:hidden;max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px)}
+.bm-float.bm-open{display:flex}
+.bm-float.bm-fbig{width:min(520px,calc(100vw - 20px))}
+.bm-fhead{display:flex;align-items:center;gap:8px;background:var(--ink);color:var(--bg);padding:9px 10px 9px 13px;cursor:grab;touch-action:none;user-select:none;flex:0 0 auto}
+.bm-fhead:active{cursor:grabbing}
+.bm-fname{font-weight:800;font-size:.95rem;flex:1 1 auto;min-width:0;line-height:1.25}
+.bm-fname small{display:block;font-family:"IBM Plex Mono",monospace;font-size:.66rem;color:var(--amber2);font-weight:600}
+.bm-fbtn{min-height:40px;min-width:40px;padding:6px 9px;border-radius:9px;border:2px solid var(--amber2);background:transparent;color:var(--bg);font-weight:800;font-size:.85rem;flex:none}
+.bm-fbody{display:flex;flex-direction:column;min-height:0}
+.bm-float.bm-fmin .bm-fbody{display:none}
+.bm-float .bm-vbox{border:0;border-radius:0}
+.bm-float .bm-chatfeed{max-height:190px;padding:10px 12px 4px}
+.bm-float .bm-composer{padding:0 12px 12px}
+.bm-tiny2{width:40px;height:40px;font-size:1.05rem}
+@media (prefers-reduced-motion: reduce){ #bmLive.bm-open{animation:none} .bm-recdot,.bm-speaking .bm-talkdot{animation:none} }
+</style>
+<style>
+/* ===== Portal Bar v5 — pop-out only boxes: layover blob boxes you can
+   place anywhere, snap into order, and save & recall the order ===== */
+/* Every popped box wears a blob chip naming the room its blob is attached to */
+.bm-blobbar{display:flex;align-items:center;gap:7px;background:var(--amber2);color:#16130e;font-family:"IBM Plex Mono",monospace;font-size:.68rem;font-weight:700;letter-spacing:.03em;padding:5px 12px;line-height:1.35;flex:0 0 auto}
+#bmFloats.bm-gliding .bm-float{transition:left .38s ease,top .38s ease,width .38s ease}
+.bm-poprow{display:flex;flex-wrap:wrap;gap:9px;align-items:center}
+.bm-poprow+.bm-poprow{margin-top:10px}
+.bm-pobtn{min-height:52px;padding:10px 15px;border-radius:12px;border:2px solid var(--ink);background:var(--panel);color:var(--ink);font-weight:800;font-size:.92rem;display:inline-flex;align-items:center;gap:7px}
+.bm-pobtn[aria-pressed="true"]{background:var(--amber);border-color:var(--amber);color:#fff}
+.bm-pobtn:disabled{opacity:.45}
+.bm-pobtn.bm-pohot{background:var(--ink);color:var(--bg)}
+.bm-attachsel{min-height:52px;padding:10px 12px;border-radius:12px;border:2px solid var(--amber);background:var(--panel2);color:var(--ink);font:inherit;font-weight:700}
+.bm-attachlab{font-weight:800}
+/* Pop-out only view: the whole page dims away — just the boxes stay,
+   plus the control chip, the wrist portals and the tiny cluster */
+body.bm-popout{overflow:hidden}
+body.bm-popout>*:not(#bmFloats):not(#bmPopCtl):not(#bmWristL):not(#bmWristR):not(#bmTiny){opacity:.08;pointer-events:none;filter:saturate(.35)}
+#bmPopCtl{position:fixed;top:10px;left:50%;transform:translateX(-50%) translateY(-220%);z-index:4700;display:flex;flex-wrap:wrap;gap:7px;align-items:center;justify-content:center;width:min(1060px,calc(100vw - 16px));background:var(--ink);color:var(--bg);border:2px solid var(--amber2);border-radius:15px;box-shadow:var(--shadow);padding:9px 11px;transition:transform .35s ease}
+#bmPopCtl.bm-on{transform:translateX(-50%) translateY(0)}
+.bm-pctitle{font-family:"Bebas Neue",sans-serif;font-size:1.15rem;letter-spacing:.04em;line-height:1.1;white-space:nowrap}
+.bm-pcroom{font-family:"IBM Plex Mono",monospace;font-size:.7rem;color:var(--amber2);line-height:1.3}
+.bm-pcbtn{min-height:46px;padding:8px 13px;border-radius:11px;border:2px solid var(--amber2);background:transparent;color:var(--bg);font-weight:800;font-size:.85rem;white-space:nowrap}
+.bm-pcbtn[aria-pressed="true"]{background:var(--amber2);color:#16130e}
+.bm-pcbtn:disabled{opacity:.45}
+.bm-pcbtn.bm-pcexit{background:var(--red);border-color:var(--red);color:#fff}
+.bm-wrist{position:fixed;bottom:calc(14px + env(safe-area-inset-bottom));z-index:4700;width:60px;height:60px;border-radius:50%;border:2px solid var(--amber2);background:var(--ink);color:var(--bg);font-size:1.25rem;line-height:1;display:none;flex-direction:column;align-items:center;justify-content:center;gap:1px;box-shadow:var(--shadow);cursor:pointer;padding:0}
+.bm-wrist .bm-wcap{font-size:.52rem;font-weight:800;letter-spacing:.06em}
+#bmWristL{left:12px}
+#bmWristR{right:12px}
+body.bm-popout .bm-wrist{display:flex}
+.bm-wrist::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);border:1px solid var(--amber2);padding:5px 9px;border-radius:8px;font-size:.68rem;font-weight:800;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .15s ease}
+.bm-wrist:hover::after,.bm-wrist:focus-visible::after{opacity:1}
+.bm-mystatus{padding:10px 12px 12px;font-size:.88rem;line-height:1.45;border-top:1px solid var(--line)}
+@media (prefers-reduced-motion: reduce){ #bmFloats.bm-gliding .bm-float{transition:none} #bmPopCtl{transition:none} .bm-wrist::after{transition:none} }
+</style>
+<style>
+/* ===== Portal Bar v6 — tiny bar: EVERY option in small, findable by name =====
+   The old tiny cluster was one non-wrapping row of 36px symbol-only circles:
+   on a phone most of it ran off the edge of the screen, the names only showed
+   on hover (which a phone does not have), and the tap name-flash vanished
+   after 1.2s. Now the tiny bar is a wrapping panel: every full-bar option has
+   a small version here — including the whole boxes-grid set (one ▦ GRID
+   toggle — up, or back down hidden away — plus TIDY, SNAP, SAVE ORDER,
+   RECALL ORDER) — each button is at least 44px,
+   carries its name as a visible label underneath by default, and tapping any
+   button stamps its full name into the readout strip at the top of the panel,
+   where it STAYS until another button is tapped. A LABELS button switches the
+   words off for a compact icon-only cluster (tap-pop names then persist the
+   same way, via the bm-tipstay class). */
+#bmTiny{flex-direction:column;align-items:stretch;gap:6px;width:min(620px,calc(100vw - 16px));max-height:58vh;max-height:58dvh;overflow-y:auto;overflow-x:hidden;background:var(--ink);border:2px solid var(--amber2);border-radius:16px;padding:8px;box-shadow:var(--shadow)}
+#bmTinyName{background:var(--panel);color:var(--ink);border:1.5px solid var(--amber2);border-radius:10px;padding:8px 11px;font-weight:800;font-size:.84rem;line-height:1.35;min-height:2.5em;display:flex;align-items:center}
+.bm-tgroup{display:flex;flex-wrap:wrap;gap:6px;align-items:stretch}
+.bm-tgcap{flex:0 0 46px;display:flex;align-items:center;font-family:"IBM Plex Mono",monospace;font-size:.58rem;font-weight:700;letter-spacing:.05em;line-height:1.2;color:var(--amber2)}
+#bmTiny .bm-tbtn{width:auto;min-width:58px;height:54px;border-radius:14px;flex-direction:column;gap:2px;padding:5px 8px 4px}
+#bmTiny .bm-tsym{font-size:1.18rem;line-height:1.05}
+#bmTiny .bm-tlab{font-size:.62rem;font-weight:800;letter-spacing:.04em;line-height:1.1;text-align:center;white-space:nowrap;color:var(--bg)}
+#bmTiny .bm-tbtn.bm-trestore{background:var(--amber2)}
+#bmTiny .bm-tbtn.bm-trestore .bm-tlab{color:#16130e}
+#bmTiny .bm-tbtn.bm-tready{border-color:var(--teal);box-shadow:0 0 0 2px var(--teal)}
+#bmTiny .bm-tbtn::after{font-size:.8rem;padding:8px 12px;border-width:2px;z-index:9}
+#bmTiny .bm-tbtn.bm-tipstay::after{opacity:1;transform:translateX(-50%) translateY(0)}
+#bmTiny .bm-tbtn:focus-visible{outline:3px solid var(--teal);outline-offset:2px}
+/* LABELS off — compact icons only, still 44px targets, names on tap-pop/readout */
+#bmTiny.bm-nolabels{width:auto}
+#bmTiny.bm-nolabels .bm-tlab{display:none}
+#bmTiny.bm-nolabels .bm-tbtn{width:44px;height:44px;min-width:44px;border-radius:50%;padding:0}
+#bmTiny.bm-nolabels .bm-tgcap{flex-basis:100%}
+@media (prefers-reduced-motion: reduce){ #bmTiny .bm-tbtn::after{transition:none} }
+</style>
+
 <div id="bmShell">
   <section id="bmPanel" role="dialog" aria-label="Blob Messenger panel">
     <div class="bm-phead">
@@ -6695,6 +6879,114 @@ setTimeout(function(){ post("ray", "parked the rig, kept the radio on. this is t
     <p class="bm-gempty" id="bmGameEmpty" hidden>No games match that search — tap ALL or clear the search box.</p>
     <a class="bm-gfoot" href="https://arcade.highscores.live/arcade/" target="_blank" rel="noopener">🗂 ALL GAMES — FULL CATALOG</a>
   </section>
+  <section id="bmLive" aria-label="Live room — call controls, who is in the room, chat and jars">
+    <div class="bm-lhead">
+      <span class="bm-ltitle">🎙 LIVE ROOM — KODA KAI RADIO LOBBY</span>
+      <span class="bm-lsub" id="bmLiveSub">6 people in the room · video, voice, chat, record &amp; jars — everything on this one surface</span>
+      <button type="button" class="bm-lbtn" id="bmLiveRegular">▣ REGULAR SIZE</button>
+      <button type="button" class="bm-lbtn bm-lhot" id="bmLiveAll">⛶ SEE EVERYTHING</button>
+      <button type="button" class="bm-lbtn" id="bmLiveClose">✕ CLOSE</button>
+    </div>
+    <div class="bm-lscroll" id="bmLiveScroll">
+      <div class="bm-lsec" id="bmSecControls">
+        <h3>🎛 CALL CONTROLS</h3>
+        <p class="bm-lhint">Your video, your mic, the room speaker — and Record, which saves the room into a jar when you stop it.</p>
+        <div class="bm-bigctl">
+          <button type="button" class="bm-cbtn bm-sync" data-ctl="video" aria-pressed="false">🎥 VIDEO — OFF</button>
+          <button type="button" class="bm-cbtn bm-sync" data-ctl="mic" aria-pressed="false">🎙 MIC — OFF</button>
+          <button type="button" class="bm-cbtn bm-sync" data-ctl="speaker" aria-pressed="true">🔊 SPEAKER — ON</button>
+          <button type="button" class="bm-cbtn bm-sync" data-ctl="muteall" aria-pressed="false">🔇 MUTE EVERYONE</button>
+          <button type="button" class="bm-cbtn bm-rec bm-sync" data-ctl="record" aria-pressed="false"><span class="bm-recdot" aria-hidden="true"></span>⏺ RECORD</button>
+          <span class="bm-rectime" id="bmRecTime2" aria-live="polite"></span>
+        </div>
+      </div>
+      <div class="bm-lsec" id="bmSecStage">
+        <h3>📺 WHO'S ON — THE VIDEO BOXES</h3>
+        <p class="bm-lhint">Every box shows the person, what they're doing, and whether they're talking right now. The glowing border is whoever is talking live.</p>
+        <div class="bm-stage" id="bmStage"></div>
+      </div>
+      <div class="bm-lsec" id="bmSecPop">
+        <h3>🟦 POP-OUT BOXES — LAYOVER BLOBS</h3>
+        <p class="bm-lhint">Every person's box is a little blob program that lays over the page — the pop-out boxes from in game, attached to this bar. Pop one out, drag it anywhere, snap the set into a tidy order, or save your order and recall it later. Each box wears a chip naming the room its blob is attached to. Portal access rides along: the 📱 PHONE button is the arcade phone, and in pop-out view your ⌚ left wrist opens the phone while your ⌚ right wrist opens everything — this bar is the one all-portal bar.</p>
+        <div class="bm-poprow" role="group" aria-label="Pop out a person's box">
+          <button type="button" class="bm-pobtn bm-pohot" data-pop="you">🟦 MY BOX</button>
+          <button type="button" class="bm-pobtn" data-pop="kacy">🎧 KACY</button>
+          <button type="button" class="bm-pobtn" data-pop="bob">💬 BOB</button>
+          <button type="button" class="bm-pobtn" data-pop="mabel">💃 MABEL</button>
+          <button type="button" class="bm-pobtn" data-pop="ray">🚚 RAY</button>
+          <button type="button" class="bm-pobtn" data-pop="tammy">🎁 TAMMY</button>
+        </div>
+        <div class="bm-poprow" role="group" aria-label="Box layout controls">
+          <button type="button" class="bm-pobtn bm-pohot" id="bmPopOnlyBtn">🟦 POP-OUT ONLY VIEW</button>
+          <button type="button" class="bm-pobtn" id="bmSnapBtn" aria-pressed="false">🧲 SNAP — OFF (FREE)</button>
+          <button type="button" class="bm-pobtn" id="bmTidyBtn">▦ TIDY ORDER</button>
+          <button type="button" class="bm-pobtn" id="bmSaveBtn">💾 SAVE ORDER</button>
+          <button type="button" class="bm-pobtn" id="bmRecallBtn" disabled>↩ RECALL ORDER</button>
+        </div>
+        <div class="bm-poprow">
+          <label class="bm-attachlab" for="bmAttachRoom">🟦 Attach the boxes' blobs to:</label>
+          <select class="bm-attachsel" id="bmAttachRoom">
+            <option value="ARCADE ROOM" selected>🎮 ARCADE ROOM — main hangout</option>
+            <option value="RADIO LOBBY">📻 RADIO LOBBY</option>
+            <option value="BUNNY GAME ROOM">🐰 BUNNY GAME ROOM</option>
+            <option value="WATCH FLOOR">🗳 WATCH FLOOR</option>
+          </select>
+        </div>
+        <p class="bm-lstatus" id="bmPopStatus" aria-live="polite"></p>
+      </div>
+      <div class="bm-duo">
+        <div class="bm-lsec" id="bmSecPeople">
+          <h3>👥 WHO'S IN THE ROOM</h3>
+          <p class="bm-lhint">Mute a person, or open a direct chat with them — the chat window carries their video box with it.</p>
+          <div id="bmPeople"></div>
+        </div>
+        <div class="bm-lsec" id="bmSecChat">
+          <h3>💬 ROOM CHAT</h3>
+          <p class="bm-lhint">Chat with the whole room here. For one person, use CHAT on their row — that opens their own window.</p>
+          <div class="bm-chatfeed" id="bmRoomFeed" aria-live="polite"></div>
+          <div class="bm-composer">
+            <input type="text" id="bmRoomInput" placeholder="Say something to the room…" aria-label="Message the room" autocomplete="off">
+            <button type="button" id="bmRoomSend">SEND</button>
+          </div>
+        </div>
+      </div>
+      <div class="bm-lsec" id="bmSecJars">
+        <h3>🫙 JARS — RECORDINGS YOU CAN REPLAY</h3>
+        <p class="bm-lhint">Every recording is saved as a jar with the audio and the video kept as separate tracks — replay both together, or play one track on its own.</p>
+        <input type="search" class="bm-jarsearch" id="bmJarSearch" placeholder="🔎 SEARCH JARS — by name, person or day…" aria-label="Search jars" autocomplete="off">
+        <div id="bmJarList"></div>
+        <p class="bm-lstatus" id="bmJarEmpty" hidden>No jars match that search — clear the box to see them all.</p>
+        <div class="bm-replay" id="bmReplay" aria-label="Jar replay — separate audio and video tracks">
+          <div class="bm-rname" id="bmReplayName">🫙 Replay</div>
+          <div class="bm-track" id="bmTrackAudio">
+            <div class="bm-thead">
+              <span class="bm-tname">🔊 AUDIO TRACK</span>
+              <button type="button" class="bm-tbtn" data-track="audio" data-tact="play">▶ PLAY AUDIO</button>
+              <button type="button" class="bm-tbtn bm-tmute" data-track="audio" data-tact="mute" aria-pressed="false">🔊 SOUND ON</button>
+              <span class="bm-ttime" data-ttime="audio">0:00 / 0:00</span>
+            </div>
+            <div class="bm-atrackface" aria-hidden="true"></div>
+            <input type="range" min="0" max="100" value="0" step="1" data-tseek="audio" aria-label="Audio track position">
+          </div>
+          <div class="bm-track" id="bmTrackVideo">
+            <div class="bm-thead">
+              <span class="bm-tname">🎥 VIDEO TRACK</span>
+              <button type="button" class="bm-tbtn" data-track="video" data-tact="play">▶ PLAY VIDEO</button>
+              <button type="button" class="bm-tbtn bm-tmute" data-track="video" data-tact="mute" aria-pressed="false">👁 PICTURE ON</button>
+              <span class="bm-ttime" data-ttime="video">0:00 / 0:00</span>
+            </div>
+            <div class="bm-vtrackface" id="bmVideoFace">🎥 Video track ready</div>
+            <input type="range" min="0" max="100" value="0" step="1" data-tseek="video" aria-label="Video track position">
+          </div>
+          <div class="bm-bigctl">
+            <button type="button" class="bm-jbtn bm-jhot" id="bmPlayBoth">▶▶ PLAY BOTH TRACKS TOGETHER</button>
+            <button type="button" class="bm-jbtn" id="bmReplayClose">✕ CLOSE REPLAY</button>
+          </div>
+        </div>
+        <p class="bm-lstatus" id="bmLiveStatus" aria-live="polite"></p>
+      </div>
+    </div>
+  </section>
   <footer id="bmBar">
     <span class="bm-label">🌐 PORTAL BAR — BLOB MESSENGER</span>
     <button type="button" class="bm-rooms" id="bmRoomsBtn">🟢 ROOMS OPEN — tap to see who's live</button>
@@ -6707,6 +6999,20 @@ setTimeout(function(){ post("ray", "parked the rig, kept the radio on. this is t
       <button type="button" class="bm-btn bm-live" id="bmLiveBtn">🎙 GO LIVE</button>
       <button type="button" class="bm-btn bm-grip" id="bmTuckBtn" aria-label="Slide the messenger bar down" title="Slide down">⬍</button>
       <button type="button" class="bm-btn bm-mini" id="bmMiniBtn" aria-label="Shrink the portal bar to tiny buttons" title="Tiny mode">· MINI</button>
+    </div>
+    <div class="bm-callrow" aria-label="Call controls — video, mic, speaker, record, room, chat and jars">
+      <span class="bm-clabel">CALL:</span>
+      <button type="button" class="bm-cbtn bm-sync" data-ctl="video" aria-pressed="false">🎥 VIDEO</button>
+      <button type="button" class="bm-cbtn bm-sync" data-ctl="mic" aria-pressed="false">🎙 MIC</button>
+      <button type="button" class="bm-cbtn bm-sync" data-ctl="speaker" aria-pressed="true">🔊 SPEAKER</button>
+      <button type="button" class="bm-cbtn bm-rec bm-sync" data-ctl="record" aria-pressed="false"><span class="bm-recdot" aria-hidden="true"></span>⏺ RECORD</button>
+      <span class="bm-rectime" id="bmRecTime" aria-live="polite"></span>
+      <button type="button" class="bm-cbtn" id="bmRoomBoxBtn" aria-expanded="false">👥 WHO'S IN ROOM</button>
+      <button type="button" class="bm-cbtn" id="bmChatBtn">💬 CHAT</button>
+      <button type="button" class="bm-cbtn" id="bmJarsBtn">🫙 JARS</button>
+      <button type="button" class="bm-cbtn" id="bmBoxesBtn">🟦 BOXES</button>
+      <button type="button" class="bm-cbtn" id="bmGridBtn" aria-pressed="false">▦ GRID</button>
+      <button type="button" class="bm-cbtn bm-allbtn" id="bmAllBtn" aria-expanded="false">⛶ SEE EVERYTHING</button>
     </div>
     <div class="bm-quick" id="bmQuick" aria-label="Blob Messenger quick doors — slide sideways for more">
       <button type="button" class="bm-qbtn" data-door="big">📣 OPEN MY ROOM</button>
@@ -6734,15 +7040,57 @@ setTimeout(function(){ post("ray", "parked the rig, kept the radio on. this is t
   <button type="button" id="bmTabUp" aria-label="Slide the messenger bar back up">💬 MESSENGER ▲</button>
   <button type="button" id="bmTabTiny" aria-label="Shrink to tiny buttons">— TINY</button>
 </div>
-<div id="bmTiny" aria-label="Tiny portal buttons">
-  <button type="button" class="bm-tbtn" data-act="bar" data-tip="MESSENGER" aria-label="Messenger — restore the portal bar">💬</button>
-  <button type="button" class="bm-tbtn" data-act="phone" data-tip="PHONE" aria-label="Open the phone panel">📱</button>
-  <button type="button" class="bm-tbtn" data-act="big" data-tip="BIG" aria-label="Open the big panel">⛶</button>
-  <button type="button" class="bm-tbtn" data-act="live" data-tip="GO LIVE" aria-label="Go live">🎙</button>
-  <button type="button" class="bm-tbtn" data-act="games" data-tip="GAMES" aria-label="Open the games library">🎮</button>
-  <button type="button" class="bm-tbtn" data-act="search" data-tip="SEARCH ROOMS" aria-label="Search open rooms">🔎</button>
-  <button type="button" class="bm-tbtn" data-act="share" data-tip="SHARE MY ROOM" aria-label="Share my room">📣</button>
-  <button type="button" class="bm-tbtn bm-trestore" data-act="restore" data-tip="FULL BAR" aria-label="Restore the full portal bar">⬆</button>
+<div id="bmTiny" aria-label="Tiny portal bar — every option from the full bar in small, with names">
+  <div id="bmTinyName" role="status" aria-live="polite">TINY BAR — every option from the full bar is here in small, names written under the symbols. Tap any button: its full name stays in this strip until you tap another.</div>
+  <div class="bm-tgroup" role="group" aria-label="Tiny bar — bar and rooms">
+    <span class="bm-tgcap" aria-hidden="true">BAR &amp; ROOMS</span>
+    <button type="button" class="bm-tbtn" data-act="bar" data-tip="MESSENGER — back to the full portal bar" aria-label="Messenger — back to the full portal bar"><span class="bm-tsym" aria-hidden="true">💬</span><span class="bm-tlab">MESSENGER</span></button>
+    <button type="button" class="bm-tbtn" data-act="phone" data-tip="PHONE — the arcade phone panel" aria-label="Phone — open the arcade phone panel"><span class="bm-tsym" aria-hidden="true">📱</span><span class="bm-tlab">PHONE</span></button>
+    <button type="button" class="bm-tbtn" data-act="big" data-tip="BIG — the big messenger panel" aria-label="Big — open the big messenger panel"><span class="bm-tsym" aria-hidden="true">⛶</span><span class="bm-tlab">BIG</span></button>
+    <button type="button" class="bm-tbtn" data-act="live" data-tip="GO LIVE — big panel, camera and mic on" aria-label="Go live"><span class="bm-tsym" aria-hidden="true">🔴</span><span class="bm-tlab">GO LIVE</span></button>
+    <button type="button" class="bm-tbtn" data-act="games" data-tip="GAMES — the games library" aria-label="Games — open the games library"><span class="bm-tsym" aria-hidden="true">🎮</span><span class="bm-tlab">GAMES</span></button>
+    <button type="button" class="bm-tbtn" data-act="search" data-tip="SEARCH ROOMS — find an open room" aria-label="Search open rooms"><span class="bm-tsym" aria-hidden="true">🔎</span><span class="bm-tlab">SEARCH</span></button>
+    <button type="button" class="bm-tbtn" data-act="share" data-tip="SHARE MY ROOM — copy your room invite" aria-label="Share my room"><span class="bm-tsym" aria-hidden="true">📣</span><span class="bm-tlab">SHARE</span></button>
+    <button type="button" class="bm-tbtn" data-tgo="tuck" data-tip="HIDE BAR — slide the whole bar down, out of the way" aria-label="Hide bar — slide the whole bar down out of the way"><span class="bm-tsym" aria-hidden="true">⬇</span><span class="bm-tlab">HIDE BAR</span></button>
+  </div>
+  <div class="bm-tgroup" role="group" aria-label="Tiny bar — quick doors, the full bar's door strip in small">
+    <span class="bm-tgcap" aria-hidden="true">QUICK DOORS</span>
+    <button type="button" class="bm-tbtn" data-tdoor="OPEN MY ROOM" data-tip="OPEN MY ROOM — the full bar's door; opens in the big messenger panel" aria-label="Open my room — the full bar's quick door, in small"><span class="bm-tsym" aria-hidden="true">📣</span><span class="bm-tlab">OPEN MY ROOM</span></button>
+    <button type="button" class="bm-tbtn" data-tdoor="CREATE ROOM" data-tip="CREATE ROOM — the full bar's door; opens in the big messenger panel" aria-label="Create room — the full bar's quick door, in small"><span class="bm-tsym" aria-hidden="true">➕</span><span class="bm-tlab">CREATE ROOM</span></button>
+    <button type="button" class="bm-tbtn" data-tdoor="SEARCH OPEN ROOMS" data-tip="SEARCH OPEN ROOMS — the full bar's door; opens in the big messenger panel" aria-label="Search open rooms — the full bar's quick door, in small"><span class="bm-tsym" aria-hidden="true">🔎</span><span class="bm-tlab">SEARCH OPEN ROOMS</span></button>
+    <button type="button" class="bm-tbtn" data-tdoor="WHO'S OPEN" data-tip="WHO'S OPEN — the full bar's door; opens in the big messenger panel" aria-label="Who's open — the full bar's quick door, in small"><span class="bm-tsym" aria-hidden="true">🟢</span><span class="bm-tlab">WHO'S OPEN</span></button>
+    <button type="button" class="bm-tbtn" data-tdoor="THE RACK" data-tip="THE RACK — the full bar's door; opens in the big messenger panel" aria-label="The rack — the full bar's quick door, in small"><span class="bm-tsym" aria-hidden="true">🗂</span><span class="bm-tlab">THE RACK</span></button>
+    <button type="button" class="bm-tbtn" data-tdoor="SCAN" data-tip="SCAN — the full bar's door; opens in the phone panel" aria-label="Scan — the full bar's quick door, in small"><span class="bm-tsym" aria-hidden="true">📷</span><span class="bm-tlab">SCAN</span></button>
+    <button type="button" class="bm-tbtn" data-tdoor="MY QR" data-tip="MY QR — the full bar's door; opens in the big messenger panel" aria-label="My QR — the full bar's quick door, in small"><span class="bm-tsym" aria-hidden="true">▦</span><span class="bm-tlab">MY QR</span></button>
+    <button type="button" class="bm-tbtn" data-tdoor="CALL SOMEBODY" data-tip="CALL SOMEBODY — the full bar's door; opens in the big messenger panel" aria-label="Call somebody — the full bar's quick door, in small"><span class="bm-tsym" aria-hidden="true">📞</span><span class="bm-tlab">CALL SOMEBODY</span></button>
+    <button type="button" class="bm-tbtn" data-tdoor="SAVED CALLS" data-tip="SAVED CALLS — the full bar's door; opens in the big messenger panel" aria-label="Saved calls — the full bar's quick door, in small"><span class="bm-tsym" aria-hidden="true">💾</span><span class="bm-tlab">SAVED CALLS</span></button>
+  </div>
+  <div class="bm-tgroup" role="group" aria-label="Tiny bar — call controls">
+    <span class="bm-tgcap" aria-hidden="true">CALL</span>
+    <button type="button" class="bm-tbtn bm-tiny2" data-act2="video" data-tip="VIDEO — turn my camera on or off" aria-label="Video — turn my camera on or off"><span class="bm-tsym" aria-hidden="true">🎥</span><span class="bm-tlab">VIDEO</span></button>
+    <button type="button" class="bm-tbtn bm-tiny2" data-act2="mic" data-tip="MIC — turn my microphone on or off" aria-label="Mic — turn my microphone on or off"><span class="bm-tsym" aria-hidden="true">🎙</span><span class="bm-tlab">MIC</span></button>
+    <button type="button" class="bm-tbtn" data-tctl="speaker" data-tip="SPEAKER — turn the room speaker on or off" aria-label="Speaker — turn the room speaker on or off"><span class="bm-tsym" aria-hidden="true">🔊</span><span class="bm-tlab">SPEAKER</span></button>
+    <button type="button" class="bm-tbtn" data-tctl="muteall" data-tip="MUTE EVERYONE — mute or unmute the whole room for you" aria-label="Mute everyone — mute or unmute the whole room for you"><span class="bm-tsym" aria-hidden="true">🔇</span><span class="bm-tlab">MUTE ALL</span></button>
+    <button type="button" class="bm-tbtn" data-tctl="record" data-tip="RECORD — record the room; stop to save it as a jar" aria-label="Record — record the room; stop to save it as a jar"><span class="bm-tsym" aria-hidden="true">⏺</span><span class="bm-tlab">RECORD</span></button>
+    <button type="button" class="bm-tbtn bm-tiny2" data-act2="room" data-tip="WHO'S IN ROOM — the room box, who is here and what they're doing" aria-label="Who's in room — show the room box"><span class="bm-tsym" aria-hidden="true">👥</span><span class="bm-tlab">IN ROOM</span></button>
+    <button type="button" class="bm-tbtn bm-tiny2" data-act2="chat" data-tip="CHAT — the room chat lane" aria-label="Chat — open the room chat"><span class="bm-tsym" aria-hidden="true">💬</span><span class="bm-tlab">CHAT</span></button>
+    <button type="button" class="bm-tbtn bm-tiny2" data-act2="jars" data-tip="JARS — recordings; search jars and replay audio and video as separate tracks" aria-label="Jars — open recordings and replay"><span class="bm-tsym" aria-hidden="true">🫙</span><span class="bm-tlab">JARS</span></button>
+    <button type="button" class="bm-tbtn bm-tiny2" data-act2="all" data-tip="SEE EVERYTHING — controls, boxes, room, chat and jars all open at once" aria-label="See everything — open everything at once"><span class="bm-tsym" aria-hidden="true">⛶</span><span class="bm-tlab">SEE ALL</span></button>
+  </div>
+  <div class="bm-tgroup" role="group" aria-label="Tiny bar — pop-out boxes grid controls">
+    <span class="bm-tgcap" aria-hidden="true">BOXES GRID</span>
+    <button type="button" class="bm-tbtn bm-tiny2" data-act3="popout" data-tip="POP-OUT BOXES — just the people's boxes, on their own" aria-label="Pop-out boxes — show just the people's boxes on their own"><span class="bm-tsym" aria-hidden="true">🟦</span><span class="bm-tlab">BOXES</span></button>
+    <button type="button" class="bm-tbtn" id="bmTinyGrid" data-tgrid="toggle" aria-pressed="false" data-tip="GRID — bring my chosen boxes up as a grid; tap GRID again to put them back down, hidden away" aria-label="Grid — bring my chosen boxes up as a grid; tap again to put them back down, hidden away"><span class="bm-tsym" aria-hidden="true">▦</span><span class="bm-tlab">GRID</span></button>
+    <button type="button" class="bm-tbtn" data-tgrid="tidy" data-tip="TIDY ORDER — line the boxes up in a neat grid" aria-label="Tidy order — line the boxes up in a neat grid"><span class="bm-tsym" aria-hidden="true">▦</span><span class="bm-tlab">TIDY</span></button>
+    <button type="button" class="bm-tbtn" data-tgrid="snap" data-tip="SNAP — dropped boxes glide into the grid order, or stay free" aria-label="Snap — toggle boxes gliding into the grid order"><span class="bm-tsym" aria-hidden="true">🧲</span><span class="bm-tlab">SNAP</span></button>
+    <button type="button" class="bm-tbtn" data-tgrid="save" data-tip="SAVE ORDER — stamp this box grid as my saved order" aria-label="Save order — stamp this box grid as my saved order"><span class="bm-tsym" aria-hidden="true">💾</span><span class="bm-tlab">SAVE</span></button>
+    <button type="button" class="bm-tbtn" id="bmTinyRecall" data-tgrid="recall" data-tip="RECALL ORDER — bring back my saved box grid, every box where I left it" aria-label="Recall order — bring back my saved box grid"><span class="bm-tsym" aria-hidden="true">↩</span><span class="bm-tlab">RECALL</span></button>
+  </div>
+  <div class="bm-tgroup" role="group" aria-label="Tiny bar — view options">
+    <span class="bm-tgcap" aria-hidden="true">VIEW</span>
+    <button type="button" class="bm-tbtn" id="bmTinyLabels" data-tgo="labels" aria-pressed="true" data-tip="LABELS — words under the symbols, on or off" aria-label="Labels — turn the words under the symbols on or off"><span class="bm-tsym" aria-hidden="true">Aa</span><span class="bm-tlab">LABELS</span></button>
+    <button type="button" class="bm-tbtn bm-trestore" data-act="restore" data-tip="FULL BAR — restore the whole portal bar" aria-label="Full bar — restore the whole portal bar"><span class="bm-tsym" aria-hidden="true">⬆</span><span class="bm-tlab">FULL BAR</span></button>
+  </div>
 </div>
 <script>
 (function(){
@@ -7005,6 +7353,821 @@ setTimeout(function(){ post("ray", "parked the rig, kept the radio on. this is t
       });
     })(tbtns[ti]);
   }
+})();
+</script>
+
+<div id="bmFloats" aria-label="Direct chat windows"></div>
+<div id="bmPopCtl" aria-label="Pop-out boxes control chip">
+  <span class="bm-pctitle">🟦 POP-OUT BOXES</span>
+  <span class="bm-pcroom" id="bmPopRoomName">blobs attached to: ARCADE ROOM</span>
+  <button type="button" class="bm-pcbtn" id="bmChipSnap" aria-pressed="false">🧲 SNAP</button>
+  <button type="button" class="bm-pcbtn" id="bmChipTidy">▦ TIDY</button>
+  <button type="button" class="bm-pcbtn" id="bmChipSave">💾 SAVE ORDER</button>
+  <button type="button" class="bm-pcbtn" id="bmChipRecall" disabled>↩ RECALL</button>
+  <button type="button" class="bm-pcbtn" id="bmChipPhone">📱 ARCADE PHONE</button>
+  <button type="button" class="bm-pcbtn bm-pcexit" id="bmChipExit">✕ EXIT</button>
+</div>
+<button type="button" class="bm-wrist" id="bmWristL" data-tip="LEFT WRIST — ARCADE PHONE" aria-label="Left wrist — open the arcade phone"><span aria-hidden="true">⌚</span><span class="bm-wcap">LEFT</span></button>
+<button type="button" class="bm-wrist" id="bmWristR" data-tip="RIGHT WRIST — SEE EVERYTHING" aria-label="Right wrist — open everything"><span aria-hidden="true">⌚</span><span class="bm-wcap">RIGHT</span></button>
+<script>
+(function(){
+"use strict";
+function $(id){ return document.getElementById(id); }
+function el(tag, cls, txt){ var e=document.createElement(tag); if(cls) e.className=cls; if(txt!=null) e.textContent=txt; return e; }
+function fmt(s){ s=Math.max(0,Math.round(s)); var m=Math.floor(s/60), r=s%60; return m+":"+(r<10?"0":"")+r; }
+function nowTime(){ var d=new Date(), h=d.getHours(), ap=h>=12?"PM":"AM"; h=h%12||12; var m=d.getMinutes(); return h+":"+(m<10?"0":"")+m+" "+ap; }
+
+/* ---------- people in the room (the room this page already runs) ---------- */
+var PEOPLE=[
+ {id:"you",  name:"You (David)", ini:"DJ", color:"#b45309", act:"Hosting — at the portal bar", video:false, mic:false, you:true},
+ {id:"kacy", name:"Kacy — DJ", ini:"KC", color:"#c2261b", act:"DJing — running the radio show", video:true, mic:true},
+ {id:"bob",  name:"Bob", ini:"BO", color:"#2563eb", act:"In the chat — caps lock ready", video:true, mic:true},
+ {id:"mabel",name:"Mabel", ini:"MA", color:"#0f766e", act:"Dancing in the kitchen", video:true, mic:false},
+ {id:"ray",  name:"Ray", ini:"RA", color:"#7c2d12", act:"Listening from the truck cab", video:false, mic:true},
+ {id:"tammy",name:"Tammy", ini:"TA", color:"#9333ea", act:"Watching the gift board", video:false, mic:false}
+];
+var byId={}; PEOPLE.forEach(function(p){ p.muted=false; byId[p.id]=p; });
+var talkingId="kacy";
+var ctl={video:false, mic:false, speaker:true, muteall:false, record:false};
+var recSec=0, recTimer=null;
+
+/* ---------- live room panel: open / regular / SEE EVERYTHING ---------- */
+var live=$("bmLive"), liveOpen=false, liveAll=false, scrollEl=$("bmLiveScroll");
+var shell=$("bmShell"), tinyEl=$("bmTiny");
+function openLive(section, all){
+  if(all){ liveAll=true; live.classList.add("bm-all"); }
+  liveOpen=true; live.classList.add("bm-open");
+  var ab=$("bmAllBtn"); if(ab) ab.setAttribute("aria-expanded", liveAll?"true":"false");
+  var rb=$("bmRoomBoxBtn"); if(rb) rb.setAttribute("aria-expanded","true");
+  if(section){ var t=$(section); if(t&&scrollEl) setTimeout(function(){ scrollEl.scrollTop=Math.max(0,t.offsetTop-70); },60); }
+}
+function closeLive(){
+  liveOpen=false; liveAll=false; live.classList.remove("bm-open","bm-all");
+  var ab=$("bmAllBtn"); if(ab) ab.setAttribute("aria-expanded","false");
+  var rb=$("bmRoomBoxBtn"); if(rb) rb.setAttribute("aria-expanded","false");
+}
+$("bmLiveClose").addEventListener("click", closeLive);
+$("bmLiveAll").addEventListener("click", function(){ openLive(null,true); });
+$("bmLiveRegular").addEventListener("click", function(){ liveAll=false; live.classList.remove("bm-all"); var ab=$("bmAllBtn"); if(ab) ab.setAttribute("aria-expanded","false"); });
+$("bmRoomBoxBtn").addEventListener("click", function(){ liveOpen? closeLive() : openLive("bmSecStage",false); });
+$("bmChatBtn").addEventListener("click", function(){ openLive("bmSecChat",false); var i=$("bmRoomInput"); if(i) setTimeout(function(){ i.focus({preventScroll:true}); },350); });
+$("bmJarsBtn").addEventListener("click", function(){ openLive("bmSecJars",false); });
+$("bmAllBtn").addEventListener("click", function(){ liveAll? closeLive() : openLive(null,true); });
+document.addEventListener("keydown", function(e){ if(e.key==="Escape"&&liveOpen) closeLive(); });
+
+/* ---------- stage boxes + people list (one render, every mode) ---------- */
+var stage=$("bmStage"), peopleBox=$("bmPeople");
+function chips(p){
+  var v=p.you? ctl.video : p.video, m=p.you? (ctl.mic&&!p.muted) : (p.mic&&!p.muted);
+  return '<span class="bm-vchip '+(v?"bm-on":"bm-off")+'">'+(v?"🎥 VIDEO ON":"🎥 NO VIDEO")+'</span>'+
+         '<span class="bm-vchip '+(m?"bm-on":"bm-off")+'">'+(m?"🎙 MIC LIVE":"🎙 MIC OFF")+'</span>'+
+         (p.muted?'<span class="bm-vchip bm-off">🔇 MUTED BY YOU</span>':'')+
+         (talkingId===p.id?'<span class="bm-vchip bm-on">🔴 TALKING NOW</span>':'');
+}
+function renderPeople(){
+  stage.innerHTML=""; peopleBox.innerHTML="";
+  PEOPLE.forEach(function(p){
+    var v=p.you? ctl.video : p.video;
+    var box=el("div","bm-vbox"+(talkingId===p.id?" bm-speaking":"")); box.id="bmBox-"+p.id;
+    var face=el("div","bm-vface");
+    var av=el("span","bm-vav",p.ini); av.style.background=p.color; face.appendChild(av);
+    face.appendChild(el("span","bm-vact", v? p.act : p.act));
+    if(!v) face.appendChild(el("span","bm-vnovideo","VIDEO OFF — VOICE & CHAT STILL LIVE"));
+    box.appendChild(face);
+    var meta=el("div","bm-vmeta");
+    var nm=el("div","bm-vname"); nm.appendChild(el("span","bm-talkdot")); nm.appendChild(el("span",null,p.name)); meta.appendChild(nm);
+    var ch=el("div","bm-vchips"); ch.innerHTML=chips(p); meta.appendChild(ch);
+    var acts=el("div","bm-vacts");
+    if(!p.you){
+      var mb=el("button","bm-vbtn", p.muted?"🔊 UNMUTE":"🔇 MUTE"); mb.type="button"; mb.setAttribute("aria-pressed", p.muted?"true":"false");
+      mb.addEventListener("click", function(){ toggleMute(p); });
+      var cb=el("button","bm-vbtn","💬 CHAT"); cb.type="button";
+      cb.addEventListener("click", function(){ openFloat(p.id); });
+      acts.appendChild(mb); acts.appendChild(cb);
+    } else {
+      var yb=el("button","bm-vbtn", ctl.video?"🎥 MY VIDEO IS ON":"🎥 TURN MY VIDEO ON"); yb.type="button";
+      yb.addEventListener("click", function(){ setCtl("video", !ctl.video); });
+      acts.appendChild(yb);
+    }
+    meta.appendChild(acts); box.appendChild(meta); stage.appendChild(box);
+    /* people row */
+    var row=el("div","bm-person");
+    var av2=el("span","bm-vav",p.ini); av2.style.background=p.color; row.appendChild(av2);
+    var info=el("div","bm-pinfo");
+    info.appendChild(el("div","bm-pname", p.name+(talkingId===p.id?" · 🔴 talking now":"")));
+    info.appendChild(el("div","bm-pact", p.act+" — "+(v?"video on":"video off")+", "+((p.you?ctl.mic:p.mic)&&!p.muted?"mic live":"mic off")));
+    row.appendChild(info);
+    var btns=el("div","bm-pbtns");
+    if(!p.you){
+      var mb2=el("button","bm-pbtn", p.muted?"🔊 UNMUTE":"🔇 MUTE THEM"); mb2.type="button"; mb2.setAttribute("aria-pressed", p.muted?"true":"false");
+      mb2.addEventListener("click", function(){ toggleMute(p); });
+      var cb2=el("button","bm-pbtn bm-chatgo","💬 CHAT DIRECTLY"); cb2.type="button";
+      cb2.addEventListener("click", function(){ openFloat(p.id); });
+      btns.appendChild(mb2); btns.appendChild(cb2);
+    } else {
+      var sb=el("button","bm-pbtn", ctl.speaker?"🔊 SPEAKER ON":"🔇 SPEAKER OFF"); sb.type="button";
+      sb.addEventListener("click", function(){ setCtl("speaker", !ctl.speaker); });
+      btns.appendChild(sb);
+    }
+    row.appendChild(btns); peopleBox.appendChild(row);
+  });
+  syncFloatHeads();
+}
+function toggleMute(p){
+  p.muted=!p.muted;
+  status((p.muted?"🔇 You muted ":"🔊 You unmuted ")+p.name+" — only for you; they can keep talking to the room.");
+  renderPeople();
+}
+/* who's talking rotates so the room always shows live talk */
+setInterval(function(){
+  var pool=PEOPLE.filter(function(p){ return !p.muted && (p.you? ctl.mic : p.mic); });
+  if(!pool.length) return;
+  var next=pool[Math.floor(Math.random()*pool.length)];
+  if(next.id!==talkingId){ talkingId=next.id; renderPeople(); }
+}, 3800);
+
+/* ---------- call controls (bar row + big panel stay in sync) ---------- */
+function status(msg){ var s=$("bmLiveStatus"); if(s) s.textContent=msg; }
+function renderCtl(){
+  document.querySelectorAll(".bm-sync").forEach(function(b){
+    var k=b.getAttribute("data-ctl"), on=!!ctl[k];
+    b.setAttribute("aria-pressed", on?"true":"false");
+    if(b.closest("#bmSecControls")){
+      if(k==="video") b.textContent=(on?"🎥 VIDEO — ON":"🎥 VIDEO — OFF");
+      if(k==="mic") b.textContent=(on?"🎙 MIC — ON":"🎙 MIC — OFF");
+      if(k==="speaker") b.textContent=(on?"🔊 SPEAKER — ON":"🔇 SPEAKER — OFF");
+      if(k==="muteall") b.textContent=(on?"🔊 UNMUTE EVERYONE":"🔇 MUTE EVERYONE");
+      if(k==="record") b.innerHTML='<span class="bm-recdot" aria-hidden="true"></span>'+(on?"⏹ STOP & SAVE JAR":"⏺ RECORD");
+    }
+  });
+  var you=byId.you; you.video=ctl.video; you.mic=ctl.mic;
+}
+function setCtl(k, val){
+  ctl[k]=val;
+  if(k==="muteall"){ PEOPLE.forEach(function(p){ if(!p.you) p.muted=val; }); status(val?"🔇 Everyone is muted for you.":"🔊 Everyone is unmuted."); }
+  if((k==="video"||k==="mic")&&val&&!liveOpen) openLive("bmSecStage",false);
+  if(k==="video") status(val?"🎥 Your video is on — your box is live in the room.":"🎥 Your video is off — your box stays up so the room still sees you.");
+  if(k==="mic") status(val?"🎙 Your mic is on — the room can hear you.":"🎙 Your mic is off.");
+  if(k==="speaker") status(val?"🔊 Room speaker on.":"🔇 Room speaker off — chat and video still live.");
+  if(k==="record"){ val? startRec() : stopRec(); }
+  renderCtl(); renderPeople();
+}
+document.querySelectorAll(".bm-sync").forEach(function(b){
+  b.addEventListener("click", function(){ var k=b.getAttribute("data-ctl"); setCtl(k, !ctl[k]); });
+});
+
+/* ---------- record -> jar ---------- */
+function recTick(){
+  recSec++;
+  var t="⏺ "+fmt(recSec), a=$("bmRecTime"), b=$("bmRecTime2");
+  if(a) a.textContent=t; if(b) b.textContent=t;
+}
+function startRec(){ recSec=0; recTick(); recTimer=setInterval(recTick,1000); status("⏺ Recording the room — audio and video as separate tracks. Stop to save the jar."); }
+function stopRec(){
+  clearInterval(recTimer); recTimer=null;
+  var dur=Math.max(1,recSec);
+  JARS.unshift({name:"Room recording — "+nowTime(), meta:"RECORDED JUST NOW · BY YOU · IN THIS ROOM", dur:dur, audio:true, video:true, face:"🎥 Your room, recorded live"});
+  recSec=0; var a=$("bmRecTime"), b=$("bmRecTime2"); if(a) a.textContent=""; if(b) b.textContent="";
+  renderJars($("bmJarSearch").value);
+  status("🫙 Saved as a new jar at the top of the list — replay its audio and video tracks below.");
+  if(!liveOpen) openLive("bmSecJars",false);
+}
+
+/* ---------- jars + search + separate-track replay ---------- */
+var JARS=[
+ {name:"Lobby — morning song break", meta:"TODAY · 9:12 AM · KACY, BOB, MABEL IN THE ROOM", dur:276, audio:true, video:true, face:"🎥 Kacy at the DJ booth, room dancing"},
+ {name:"Watch Floor — votes round", meta:"TODAY · 10:05 AM · THE WHOLE LOBBY", dur:138, audio:true, video:true, face:"🎥 The votes board, room reacting"},
+ {name:"Voice note — Ray from the cab", meta:"YESTERDAY · 6:40 PM · RAY ONLY · AUDIO ONLY JAR", dur:47, audio:true, video:false, face:"🎥 No video in this jar — audio track only"},
+ {name:"Bunny game room — play test", meta:"YESTERDAY · 8:15 PM · TAMMY, BOB, LIL K", dur:362, audio:true, video:true, face:"🎥 The bunny arena, play test run"}
+];
+var jarList=$("bmJarList");
+function renderJars(q){
+  q=(q||"").toLowerCase().trim(); jarList.innerHTML=""; var shown=0;
+  JARS.forEach(function(j, idx){
+    if(q && (j.name+" "+j.meta).toLowerCase().indexOf(q)<0) return;
+    shown++;
+    var row=el("div","bm-jar");
+    row.appendChild(el("span","bm-jname","🫙 "+j.name));
+    var b1=el("button","bm-jbtn bm-jhot","▶ REPLAY BOTH"); b1.type="button";
+    b1.addEventListener("click", function(){ openReplay(idx,true); });
+    row.appendChild(b1);
+    if(j.audio){ var b2=el("button","bm-jbtn","🔊 AUDIO ONLY"); b2.type="button"; b2.addEventListener("click", function(){ openReplay(idx,false,"audio"); }); row.appendChild(b2); }
+    if(j.video){ var b3=el("button","bm-jbtn","🎥 VIDEO ONLY"); b3.type="button"; b3.addEventListener("click", function(){ openReplay(idx,false,"video"); }); row.appendChild(b3); }
+    row.appendChild(el("span","bm-jmeta", j.meta+" · LENGTH "+fmt(j.dur)+(j.audio?" · 🔊 AUDIO TRACK":"")+(j.video?" · 🎥 VIDEO TRACK":"")));
+    jarList.appendChild(row);
+  });
+  $("bmJarEmpty").hidden=shown>0;
+}
+$("bmJarSearch").addEventListener("input", function(){ renderJars(this.value); });
+renderJars("");
+
+var RP={jar:null, dur:0, a:{pos:0,playing:false,muted:false}, v:{pos:0,playing:false,muted:false}, timer:null};
+function trackEls(k){ return { box:$(k==="audio"?"bmTrackAudio":"bmTrackVideo"),
+  play:document.querySelector('[data-track="'+k+'"][data-tact="play"]'),
+  mute:document.querySelector('[data-track="'+k+'"][data-tact="mute"]'),
+  time:document.querySelector('[data-ttime="'+k+'"]'),
+  seek:document.querySelector('[data-tseek="'+k+'"]') }; }
+function renderTrack(k){
+  var t=RP[k], e=trackEls(k); if(!e.play) return;
+  e.play.textContent=t.playing?(k==="audio"?"⏸ PAUSE AUDIO":"⏸ PAUSE VIDEO"):(k==="audio"?"▶ PLAY AUDIO":"▶ PLAY VIDEO");
+  e.mute.setAttribute("aria-pressed", t.muted?"true":"false");
+  e.mute.textContent=k==="audio"?(t.muted?"🔇 AUDIO MUTED":"🔊 SOUND ON"):(t.muted?"🙈 PICTURE OFF":"👁 PICTURE ON");
+  e.time.textContent=fmt(t.pos)+" / "+fmt(RP.dur);
+  e.seek.value=RP.dur? Math.round(t.pos/RP.dur*100):0;
+  e.box.classList.toggle("bm-tplaying", t.playing);
+  if(k==="video"){ var f=$("bmVideoFace"); if(f) f.style.opacity=t.muted? .25 : 1; }
+}
+function rpTick(){
+  ["a","v"].forEach(function(key){
+    var t=RP[key];
+    if(t.playing){ t.pos+=0.25; if(t.pos>=RP.dur){ t.pos=RP.dur; t.playing=false; } renderTrack(key==="a"?"audio":"video"); }
+  });
+  if(!RP.a.playing&&!RP.v.playing){ clearInterval(RP.timer); RP.timer=null; }
+}
+function rpPlay(k, on){
+  var t=RP[k==="audio"?"a":"v"];
+  t.playing=on;
+  if(on&&t.pos>=RP.dur) t.pos=0;
+  renderTrack(k);
+  if(on&&!RP.timer) RP.timer=setInterval(rpTick,250);
+}
+function openReplay(idx, both, only){
+  var j=JARS[idx]; RP.jar=j; RP.dur=j.dur;
+  RP.a.pos=0; RP.a.playing=false; RP.v.pos=0; RP.v.playing=false;
+  clearInterval(RP.timer); RP.timer=null;
+  $("bmReplayName").textContent="🫙 Replaying: "+j.name+" — "+fmt(j.dur);
+  var vf=$("bmVideoFace"); if(vf) vf.textContent=j.video? j.face : "🎥 This jar has no video track";
+  $("bmTrackAudio").style.display=j.audio?"":"none";
+  $("bmTrackVideo").style.display=j.video?"":"none";
+  $("bmReplay").classList.add("bm-open");
+  renderTrack("audio"); renderTrack("video");
+  if(both){ if(j.audio) rpPlay("audio",true); if(j.video) rpPlay("video",true); }
+  else if(only) rpPlay(only,true);
+  var r=$("bmReplay"); if(r&&scrollEl) setTimeout(function(){ scrollEl.scrollTop=Math.max(0,r.offsetTop-70); },60);
+}
+document.querySelectorAll("[data-tact]").forEach(function(b){
+  b.addEventListener("click", function(){
+    var k=b.getAttribute("data-track");
+    if(b.getAttribute("data-tact")==="play"){ var t=RP[k==="audio"?"a":"v"]; rpPlay(k, !t.playing); }
+    else { var t2=RP[k==="audio"?"a":"v"]; t2.muted=!t2.muted; renderTrack(k); }
+  });
+});
+document.querySelectorAll("[data-tseek]").forEach(function(s){
+  s.addEventListener("input", function(){
+    var k=s.getAttribute("data-tseek"), t=RP[k==="audio"?"a":"v"];
+    t.pos=RP.dur*(Number(s.value)/100); renderTrack(k);
+  });
+});
+$("bmPlayBoth").addEventListener("click", function(){ if(RP.jar){ RP.a.pos=RP.v.pos=Math.min(RP.a.pos,RP.v.pos); if(RP.jar.audio) rpPlay("audio",true); if(RP.jar.video) rpPlay("video",true); } });
+$("bmReplayClose").addEventListener("click", function(){ RP.a.playing=RP.v.playing=false; clearInterval(RP.timer); RP.timer=null; $("bmReplay").classList.remove("bm-open"); });
+
+/* ---------- room chat ---------- */
+var feed=$("bmRoomFeed");
+function roomPost(who, txt){
+  var p=byId[who]||byId.you;
+  var m=el("div","bm-cmsg");
+  var av=el("span","bm-vav",p.ini); av.style.background=p.color; m.appendChild(av);
+  var body=el("div");
+  var head=el("div"); head.appendChild(el("span","bm-cwho",p.name)); head.appendChild(el("span","bm-cwhen",nowTime()));
+  body.appendChild(head); body.appendChild(el("div","bm-ctxt",txt));
+  m.appendChild(body); feed.appendChild(m); feed.scrollTop=feed.scrollHeight;
+}
+roomPost("kacy","Welcome to the lobby — video, voice and chat are all right here in the bar now. Turn your camera on and your box lights up. 🎙");
+roomPost("bob","I CAN SEE EVERYBODY. THIS IS THE GOOD STUFF");
+roomPost("mabel","and if we miss anything, it goes in a jar and we play it back 🎂");
+var REPLIES=["got it — loud and clear from in here 🎙","say more, the room is listening","that's going in the jar if we record it 🫙","HA — okay that one's getting read on air"];
+function sendRoom(){
+  var inp=$("bmRoomInput"), txt=inp.value.trim(); if(!txt) return;
+  roomPost("you", txt); inp.value="";
+  setTimeout(function(){ roomPost(Math.random()<0.5?"kacy":"bob", REPLIES[Math.floor(Math.random()*REPLIES.length)]); }, 1100);
+}
+$("bmRoomSend").addEventListener("click", sendRoom);
+$("bmRoomInput").addEventListener("keydown", function(e){ if(e.key==="Enter") sendRoom(); });
+
+/* ---------- floating direct chats: video box + chat, draggable ---------- */
+var floats=$("bmFloats"), floatState={}, zTop=4310, cascade=0;
+function syncFloatHeads(){
+  Object.keys(floatState).forEach(function(id){
+    var w=floatState[id]; if(!w) return; var p=byId[id];
+    var st=w.querySelector(".bm-fname small"); if(st) st.textContent=(talkingId===id?"🔴 TALKING NOW · ":"")+(p.muted?"🔇 MUTED BY YOU · ":"")+p.act;
+    var vb=w.querySelector(".bm-vbox"); if(vb){ vb.className="bm-vbox"+(talkingId===id?" bm-speaking":""); var ch=vb.querySelector(".bm-vchips"); if(ch) ch.innerHTML=chips(p); }
+  });
+}
+function floatPost(w, who, txt){
+  var p=byId[who], feedEl=w.querySelector(".bm-chatfeed");
+  var m=el("div","bm-cmsg");
+  var av=el("span","bm-vav",p.ini); av.style.background=p.color; m.appendChild(av);
+  var body=el("div");
+  var head=el("div"); head.appendChild(el("span","bm-cwho",p.name)); head.appendChild(el("span","bm-cwhen",nowTime()));
+  body.appendChild(head); body.appendChild(el("div","bm-ctxt",txt));
+  m.appendChild(body); feedEl.appendChild(m); feedEl.scrollTop=feedEl.scrollHeight;
+}
+function openFloat(id){
+  var p=byId[id]; if(!p||p.you) return;
+  if(floatState[id]){ var ex=floatState[id]; ex.classList.add("bm-open"); ex.classList.remove("bm-fmin"); ex.style.zIndex=++zTop; return; }
+  var w=el("section","bm-float bm-open"); w.setAttribute("aria-label","Direct chat with "+p.name);
+  var left=Math.max(8, Math.min(window.innerWidth-360, 30+cascade*36));
+  var top=Math.max(8, 60+cascade*30);
+  cascade=(cascade+1)%5;
+  w.style.left=left+"px"; w.style.top=top+"px"; w.style.zIndex=++zTop;
+  var head=el("div","bm-fhead");
+  var nm=el("span","bm-fname"); nm.appendChild(document.createTextNode("💬 "+p.name)); nm.appendChild(el("small",null,p.act)); head.appendChild(nm);
+  function hbtn(label, tip){ var b=el("button","bm-fbtn",label); b.type="button"; b.setAttribute("aria-label",tip); head.appendChild(b); return b; }
+  var bMin=hbtn("—","Minimize this chat window");
+  var bBig=hbtn("▣","Make this chat window regular / bigger");
+  var bMute=hbtn("🔇","Mute or unmute this person");
+  var bX=hbtn("✕","Close this chat window");
+  w.appendChild(head);
+  var bodyEl=el("div","bm-fbody");
+  var vb=el("div","bm-vbox");
+  var face=el("div","bm-vface");
+  var av=el("span","bm-vav",p.ini); av.style.background=p.color; face.appendChild(av);
+  face.appendChild(el("span","bm-vact", p.video? p.act : p.act+" (voice only)"));
+  if(!p.video) face.appendChild(el("span","bm-vnovideo","VIDEO OFF — VOICE & CHAT LIVE"));
+  vb.appendChild(face);
+  var vmeta=el("div","bm-vmeta");
+  var vch=el("div","bm-vchips"); vch.innerHTML=chips(p); vmeta.appendChild(vch);
+  vb.appendChild(vmeta); bodyEl.appendChild(vb);
+  var fd=el("div","bm-chatfeed"); bodyEl.appendChild(fd);
+  var comp=el("div","bm-composer");
+  var inp=el("input"); inp.type="text"; inp.placeholder="Message "+p.name.split(" ")[0]+" directly…"; inp.setAttribute("aria-label","Message "+p.name+" directly"); inp.autocomplete="off";
+  var send=el("button",null,"SEND"); send.type="button";
+  comp.appendChild(inp); comp.appendChild(send); bodyEl.appendChild(comp);
+  w.appendChild(bodyEl);
+  floats.appendChild(w); floatState[id]=w;
+  function doSend(){
+    var txt=inp.value.trim(); if(!txt) return;
+    floatPost(w,"you",txt); inp.value="";
+    setTimeout(function(){ floatPost(w,id, REPLIES[Math.floor(Math.random()*REPLIES.length)]); }, 1200);
+  }
+  send.addEventListener("click", doSend);
+  inp.addEventListener("keydown", function(e){ if(e.key==="Enter") doSend(); });
+  bMin.addEventListener("click", function(){ w.classList.toggle("bm-fmin"); });
+  bBig.addEventListener("click", function(){ w.classList.toggle("bm-fbig"); w.classList.remove("bm-fmin"); });
+  bMute.addEventListener("click", function(){ toggleMute(p); });
+  bX.addEventListener("click", function(){ w.classList.remove("bm-open"); });
+  w.addEventListener("pointerdown", function(){ w.style.zIndex=++zTop; });
+  /* drag by the header */
+  head.addEventListener("pointerdown", function(e){
+    if(e.target.closest("button")) return;
+    var r=w.getBoundingClientRect(), dx=e.clientX-r.left, dy=e.clientY-r.top;
+    function mv(ev){
+      var nl=Math.max(0, Math.min(window.innerWidth-70, ev.clientX-dx));
+      var nt=Math.max(0, Math.min(window.innerHeight-52, ev.clientY-dy));
+      w.style.left=nl+"px"; w.style.top=nt+"px";
+    }
+    function up(){ document.removeEventListener("pointermove",mv); document.removeEventListener("pointerup",up); }
+    document.addEventListener("pointermove",mv); document.addEventListener("pointerup",up);
+    e.preventDefault();
+  });
+  floatPost(w, id, "Hey — direct line open. My video box rides with this chat, so you always know who you're talking to. 💬");
+  syncFloatHeads();
+}
+
+/* ---------- tiny mode: every control stays one tap away ---------- */
+document.querySelectorAll("[data-act2]").forEach(function(b){
+  b.addEventListener("click", function(){
+    var act=b.getAttribute("data-act2");
+    if(act==="video") setCtl("video", !ctl.video);
+    else if(act==="mic") setCtl("mic", !ctl.mic);
+    else if(act==="room") openLive("bmSecPeople",false);
+    else if(act==="chat") openLive("bmSecChat",false);
+    else if(act==="jars") openLive("bmSecJars",false);
+    else if(act==="all") openLive(null,true);
+  });
+});
+/* The bar's ROOMS OPEN line and GO LIVE also open the room surface */
+var roomsBtn=$("bmRoomsBtn"); if(roomsBtn) roomsBtn.addEventListener("click", function(){ openLive("bmSecPeople",false); });
+var goLive=$("bmLiveBtn"); if(goLive) goLive.addEventListener("click", function(){ if(!ctl.video) setCtl("video",true); if(!ctl.mic) setCtl("mic",true); openLive("bmSecStage",false); });
+
+renderCtl(); renderPeople();
+})();
+</script>
+<script>
+/* ===== Portal Bar v5 — pop-out only boxes (layover blobs) =====
+   Builds on the v4 floats: every person's box is a layover blob that can
+   be popped out on its own, dragged anywhere (free transform), snapped
+   into a tidy order, and stamped into a saved order for this session.
+   Layout state is in-memory only — nothing is stored or sent anywhere. */
+(function(){
+"use strict";
+function $(id){ return document.getElementById(id); }
+function el(tag, cls, txt){ var e=document.createElement(tag); if(cls) e.className=cls; if(txt!=null) e.textContent=txt; return e; }
+var floats=$("bmFloats");
+var NAME2ID={"Kacy — DJ":"kacy","Mabel":"mabel","Tammy":"tammy","Bob":"bob","Ray":"ray"};
+var ORDER=["you","kacy","bob","mabel","ray","tammy"];
+var snapOn=false, savedLayout=null, attachRoom="ARCADE ROOM", popoutOn=false, zTop2=4390;
+function pstatus(m){ var s=$("bmPopStatus"); if(s) s.textContent=m; }
+
+/* ---------- blob chips: every box names the room its blob is attached to ---------- */
+function blobText(){ return "🟦 LAYOVER BLOB · ATTACHED TO: "+attachRoom; }
+function decorate(w){
+  if(!w) return;
+  if(!w.getAttribute("data-pid")){
+    var nm=w.querySelector(".bm-fname");
+    if(nm){ for(var k in NAME2ID){ if(nm.textContent.indexOf(k)>-1){ w.setAttribute("data-pid", NAME2ID[k]); break; } } }
+  }
+  if(w.querySelector(".bm-blobbar")) return;
+  var head=w.querySelector(".bm-fhead"); if(!head || !head.parentNode) return;
+  head.parentNode.insertBefore(el("div","bm-blobbar", blobText()), head.nextSibling);
+}
+function retag(){
+  var bars=floats.querySelectorAll(".bm-blobbar");
+  for(var i=0;i<bars.length;i++) bars[i].textContent=blobText();
+  var rn=$("bmPopRoomName"); if(rn) rn.textContent="blobs attached to: "+attachRoom;
+}
+new MutationObserver(function(muts){
+  muts.forEach(function(m){
+    for(var i=0;i<m.addedNodes.length;i++){
+      var n=m.addedNodes[i];
+      if(n.nodeType===1 && n.classList && n.classList.contains("bm-float")) decorate(n);
+    }
+  });
+}).observe(floats,{childList:true});
+$("bmAttachRoom").addEventListener("change", function(){
+  attachRoom=this.value; retag();
+  pstatus("🟦 Every box's blob chip now reads: attached to "+attachRoom+".");
+});
+
+/* ---------- opening boxes (people ride the v4 CHAT buttons; my box is v5) ---------- */
+function openPersonBox(id){
+  if(id==="you"){ openMyFloat(); return; }
+  var box=$("bmBox-"+id); if(!box) return;
+  var btns=box.querySelectorAll("button");
+  for(var i=0;i<btns.length;i++){ if(btns[i].textContent.indexOf("CHAT")>-1){ btns[i].click(); return; } }
+}
+document.querySelectorAll("[data-pop]").forEach(function(b){
+  b.addEventListener("click", function(){
+    var id=b.getAttribute("data-pop");
+    openPersonBox(id);
+    pstatus(id==="you" ? "🟦 Your own box is out — drag it anywhere, snap it, save the order."
+                       : "🟦 Box out — drag it anywhere, snap it, or save the order.");
+  });
+});
+function openBoxes(){
+  var out=[], ws=floats.querySelectorAll(".bm-float.bm-open");
+  for(var i=0;i<ws.length;i++) out.push(ws[i]);
+  return out;
+}
+
+/* ---------- layout: tidy pack, snap-on-release, save & recall (session only) ---------- */
+function glide(fn){ floats.classList.add("bm-gliding"); fn(); setTimeout(function(){ floats.classList.remove("bm-gliding"); },480); }
+function packPos(boxes){
+  var pos=[], x=12, y=76, rowH=0, W=window.innerWidth;
+  boxes.forEach(function(w){
+    var bw=w.offsetWidth||340, bh=w.offsetHeight||300;
+    if(x>12 && x+bw>W-12){ x=12; y+=rowH+12; rowH=0; }
+    pos.push({x:x, y:y}); x+=bw+12; rowH=Math.max(rowH,bh);
+  });
+  return pos;
+}
+function tidy(){
+  var boxes=openBoxes();
+  if(!boxes.length){ pstatus("No boxes are out yet — pop one out first."); return; }
+  var pos=packPos(boxes);
+  glide(function(){ boxes.forEach(function(w,i){ w.style.left=pos[i].x+"px"; w.style.top=pos[i].y+"px"; }); });
+  pstatus("▦ Boxes snapped into tidy order — "+boxes.length+" box"+(boxes.length===1?"":"es")+" lined up.");
+}
+var dragFloat=null;
+document.addEventListener("pointerdown", function(e){
+  var h=(e.target && e.target.closest) ? e.target.closest(".bm-fhead") : null;
+  dragFloat=h ? h.closest(".bm-float") : null;
+}, true);
+document.addEventListener("pointerup", function(){
+  var w=dragFloat; dragFloat=null;
+  if(!snapOn || !w || !w.classList.contains("bm-open")) return;
+  var boxes=openBoxes(), pos=packPos(boxes);
+  var cx=parseFloat(w.style.left)||0, cy=parseFloat(w.style.top)||0, best=null, bd=Infinity;
+  pos.forEach(function(p){
+    var occupied=boxes.some(function(o){ return o!==w && Math.abs((parseFloat(o.style.left)||0)-p.x)<26 && Math.abs((parseFloat(o.style.top)||0)-p.y)<26; });
+    if(occupied) return;
+    var d=(p.x-cx)*(p.x-cx)+(p.y-cy)*(p.y-cy);
+    if(d<bd){ bd=d; best=p; }
+  });
+  if(best) glide(function(){ w.style.left=best.x+"px"; w.style.top=best.y+"px"; });
+});
+function setSnap(on){
+  snapOn=on;
+  var a=$("bmSnapBtn");
+  if(a){ a.textContent=on?"🧲 SNAP — ON":"🧲 SNAP — OFF (FREE)"; a.setAttribute("aria-pressed", on?"true":"false"); }
+  var c=$("bmChipSnap"); if(c) c.setAttribute("aria-pressed", on?"true":"false");
+  pstatus(on ? "🧲 Snap is ON — let go of a box and it glides into the tidy order."
+             : "🧲 Snap is OFF — boxes stay exactly where you drop them (free transform).");
+}
+$("bmSnapBtn").addEventListener("click", function(){ setSnap(!snapOn); });
+$("bmChipSnap").addEventListener("click", function(){ setSnap(!snapOn); });
+$("bmTidyBtn").addEventListener("click", tidy);
+$("bmChipTidy").addEventListener("click", tidy);
+function saveOrder(){
+  var boxes=openBoxes();
+  if(!boxes.length){ pstatus("No boxes are out yet — pop one out, place it, then save."); return; }
+  savedLayout=[];
+  boxes.forEach(function(w){
+    var id=w.getAttribute("data-pid"); if(!id) return;
+    savedLayout.push({id:id, left:w.style.left, top:w.style.top, big:w.classList.contains("bm-fbig"), min:w.classList.contains("bm-fmin")});
+  });
+  if(!savedLayout.length){ pstatus("Those boxes carry no name stamp yet — reopen one and try again."); return; }
+  $("bmRecallBtn").disabled=false; $("bmChipRecall").disabled=false;
+  pstatus("💾 Order saved — "+savedLayout.length+" boxes stamped for this session. RECALL ORDER puts them right back.");
+}
+function recallOrder(){
+  if(!savedLayout){ pstatus("No saved order yet — place your boxes, then SAVE ORDER."); return; }
+  savedLayout.forEach(function(s){ openPersonBox(s.id); });
+  setTimeout(function(){
+    glide(function(){
+      savedLayout.forEach(function(s){
+        var w=floats.querySelector('[data-pid="'+s.id+'"]'); if(!w) return;
+        w.classList.add("bm-open");
+        w.classList.toggle("bm-fbig", !!s.big);
+        w.classList.toggle("bm-fmin", !!s.min);
+        w.style.left=s.left; w.style.top=s.top; w.style.zIndex=++zTop2;
+      });
+    });
+    pstatus("↩ Saved order recalled — every box back where you stamped it.");
+  }, 90);
+}
+$("bmSaveBtn").addEventListener("click", saveOrder);
+$("bmChipSave").addEventListener("click", saveOrder);
+$("bmRecallBtn").addEventListener("click", recallOrder);
+$("bmChipRecall").addEventListener("click", recallOrder);
+
+/* ---------- pop-out only view: just the boxes ---------- */
+function enterPopout(){
+  if(!openBoxes().length){
+    ORDER.forEach(openPersonBox);
+    setTimeout(tidy, 140);
+  }
+  popoutOn=true;
+  document.body.classList.add("bm-popout");
+  $("bmPopCtl").classList.add("bm-on");
+  var tiny=$("bmTiny"); if(tiny) tiny.classList.add("bm-show");
+  pstatus("🟦 Pop-out only view — just the boxes, live. Drag them anywhere; ✕ EXIT on the chip brings the page back.");
+}
+function exitPopout(){
+  popoutOn=false;
+  document.body.classList.remove("bm-popout");
+  $("bmPopCtl").classList.remove("bm-on");
+  var sh=$("bmShell"), tiny=$("bmTiny");
+  if(tiny && !(sh && sh.classList.contains("bm-tiny"))) tiny.classList.remove("bm-show");
+}
+$("bmPopOnlyBtn").addEventListener("click", enterPopout);
+$("bmChipExit").addEventListener("click", exitPopout);
+document.addEventListener("keydown", function(e){ if(e.key==="Escape" && popoutOn) exitPopout(); });
+document.querySelectorAll("[data-act3]").forEach(function(b){
+  b.addEventListener("click", function(){ enterPopout(); });
+});
+$("bmTiny").addEventListener("click", function(e){
+  if(e.target.closest && e.target.closest("[data-act3]")) return;
+  if(popoutOn) exitPopout();
+});
+
+/* ---------- portal access: arcade phone + wrists ---------- */
+function goPhone(){ exitPopout(); var pb=$("bmPhoneBtn"); if(pb) pb.click(); }
+function goAll(){ exitPopout(); var ab=$("bmAllBtn"); if(ab) ab.click(); }
+$("bmChipPhone").addEventListener("click", goPhone);
+$("bmWristL").addEventListener("click", goPhone);
+$("bmWristR").addEventListener("click", goAll);
+$("bmBoxesBtn").addEventListener("click", function(){
+  var live=$("bmLive");
+  if(live && !live.classList.contains("bm-open")){ var jb=$("bmJarsBtn"); if(jb) jb.click(); }
+  setTimeout(function(){
+    var sc=$("bmLiveScroll"), sec=$("bmSecPop");
+    if(sc && sec) sc.scrollTop=Math.max(0, sec.offsetTop-70);
+  }, 90);
+});
+
+/* ---------- my own box (v4 floats are direct chats; this one is yours) ---------- */
+function myCtl(k){
+  var b=document.querySelector('#bmBar [data-ctl="'+k+'"]');
+  return !!b && b.getAttribute("aria-pressed")==="true";
+}
+function refreshMy(){
+  var ch=$("bmMyChips");
+  if(ch){
+    var v=myCtl("video"), m=myCtl("mic");
+    ch.innerHTML='<span class="bm-vchip '+(v?"bm-on":"bm-off")+'">'+(v?"🎥 VIDEO ON":"🎥 NO VIDEO")+'</span>'+
+                 '<span class="bm-vchip '+(m?"bm-on":"bm-off")+'">'+(m?"🎙 MIC LIVE":"🎙 MIC OFF")+'</span>'+
+                 '<span class="bm-vchip bm-on">🟦 MY BOX</span>';
+  }
+  var nv=$("bmMyNoVideo"); if(nv) nv.style.display=myCtl("video")?"none":"";
+  var vb=$("bmMyVidBtn"); if(vb) vb.textContent=myCtl("video")?"🎥 MY VIDEO IS ON":"🎥 TURN MY VIDEO ON";
+  var st=$("bmMyStatus");
+  if(st){
+    var room=$("bmRoom");
+    st.textContent="📍 You are in: "+(room?room.textContent:"KODA KAI RADIO — LOBBY")+" · Portal access: 📱 the arcade phone (PHONE button up top) · ⌚ left wrist · ⌚ right wrist — this bar is the one all-portal bar.";
+  }
+}
+function openMyFloat(){
+  var ex=$("bmMyFloat");
+  if(ex){ ex.classList.add("bm-open"); ex.classList.remove("bm-fmin"); ex.style.zIndex=++zTop2; refreshMy(); return; }
+  var w=el("section","bm-float bm-open");
+  w.id="bmMyFloat"; w.setAttribute("data-pid","you"); w.setAttribute("aria-label","Your own pop-out box");
+  w.style.left="18px"; w.style.top="70px"; w.style.zIndex=++zTop2;
+  var head=el("div","bm-fhead");
+  var nm=el("span","bm-fname");
+  nm.appendChild(document.createTextNode("🟦 You (David) — MY BOX"));
+  nm.appendChild(el("small",null,"your own box — it rides with you room to room"));
+  head.appendChild(nm);
+  function hb(label,tip){ var b=el("button","bm-fbtn",label); b.type="button"; b.setAttribute("aria-label",tip); head.appendChild(b); return b; }
+  var bMin=hb("—","Minimize my box"), bBig=hb("▣","Make my box regular / bigger"), bX=hb("✕","Close my box");
+  w.appendChild(head);
+  var bodyEl=el("div","bm-fbody");
+  var vb=el("div","bm-vbox");
+  var face=el("div","bm-vface");
+  var av=el("span","bm-vav","DJ"); av.style.background="#b45309"; face.appendChild(av);
+  face.appendChild(el("span","bm-vact","Hosting — at the portal bar"));
+  var nv=el("span","bm-vnovideo","VIDEO OFF — VOICE & CHAT STILL LIVE"); nv.id="bmMyNoVideo"; face.appendChild(nv);
+  vb.appendChild(face);
+  var vmeta=el("div","bm-vmeta");
+  var vch=el("div","bm-vchips"); vch.id="bmMyChips"; vmeta.appendChild(vch);
+  var vacts=el("div","bm-vacts");
+  var vbtn=el("button","bm-vbtn","🎥 TURN MY VIDEO ON"); vbtn.type="button"; vbtn.id="bmMyVidBtn";
+  vbtn.addEventListener("click", function(){
+    var b=document.querySelector('#bmBar .bm-callrow [data-ctl="video"]'); if(b) b.click();
+    setTimeout(refreshMy, 60);
+  });
+  vacts.appendChild(vbtn); vmeta.appendChild(vacts);
+  vb.appendChild(vmeta); bodyEl.appendChild(vb);
+  var st=el("div","bm-mystatus"); st.id="bmMyStatus"; bodyEl.appendChild(st);
+  w.appendChild(bodyEl);
+  floats.appendChild(w);
+  decorate(w); refreshMy();
+  bMin.addEventListener("click", function(){ w.classList.toggle("bm-fmin"); });
+  bBig.addEventListener("click", function(){ w.classList.toggle("bm-fbig"); w.classList.remove("bm-fmin"); });
+  bX.addEventListener("click", function(){ w.classList.remove("bm-open"); });
+  w.addEventListener("pointerdown", function(){ w.style.zIndex=++zTop2; });
+  head.addEventListener("pointerdown", function(e){
+    if(e.target.closest("button")) return;
+    var r=w.getBoundingClientRect(), dx=e.clientX-r.left, dy=e.clientY-r.top;
+    function mv(ev){
+      w.style.left=Math.max(0, Math.min(window.innerWidth-70, ev.clientX-dx))+"px";
+      w.style.top=Math.max(0, Math.min(window.innerHeight-52, ev.clientY-dy))+"px";
+    }
+    function up(){ document.removeEventListener("pointermove",mv); document.removeEventListener("pointerup",up); }
+    document.addEventListener("pointermove",mv); document.addEventListener("pointerup",up);
+    e.preventDefault();
+  });
+}
+retag();
+})();
+</script>
+<script>
+/* ===== Portal Bar v6 — tiny bar wiring: every option in small + findability =====
+   Adds the tiny-bar buttons the earlier builds never gave a small version:
+   SPEAKER / MUTE ALL / RECORD (they press the full bar's own synced controls),
+   and the whole boxes-grid set — one ▦ GRID toggle (chosen boxes up: the saved
+   order if one is stamped, otherwise every chosen box popped out and tidied;
+   tap GRID again and they go back down, hidden away — the full bar's call row
+   carries the same ▦ GRID button), TIDY, SNAP, SAVE ORDER and RECALL ORDER
+   (they press the Live Room / pop-out chip's own buttons, so tiny and full
+   can never disagree), and the QUICK DOORS group — OPEN MY ROOM, CREATE
+   ROOM, SEARCH OPEN ROOMS, WHO'S OPEN, THE RACK, SCAN, MY QR, CALL
+   SOMEBODY, SAVED CALLS — which presses the full bar's own door-strip
+   buttons the same way. Findability: a tap stamps the button's full name into
+   the #bmTinyName readout and pops its name bubble with bm-tipstay — both
+   stay on screen until another button is tapped (no 1.2s vanish); hover and
+   keyboard focus update the readout too. LABELS toggles the words under the
+   symbols. All state stays in this session's memory, like the rest of v5. */
+(function(){
+"use strict";
+function $(id){ return document.getElementById(id); }
+var tiny=$("bmTiny"); if(!tiny) return;
+var readout=$("bmTinyName");
+function say(msg){ if(readout) readout.textContent=msg; }
+function nameOf(b){ return b.getAttribute("data-tip")||b.getAttribute("aria-label")||""; }
+function markStay(b){
+  var all=tiny.querySelectorAll(".bm-tbtn.bm-tipstay");
+  for(var i=0;i<all.length;i++) all[i].classList.remove("bm-tipstay");
+  if(b) b.classList.add("bm-tipstay");
+}
+function syncRecallReady(){
+  var full=$("bmRecallBtn"), t=$("bmTinyRecall");
+  if(full && t) t.classList.toggle("bm-tready", !full.disabled);
+}
+/* persistent name: hover / focus previews, tap stamps it until the next tap */
+tiny.querySelectorAll(".bm-tbtn").forEach(function(b){
+  b.addEventListener("pointerenter", function(){ say("▸ "+nameOf(b)); });
+  b.addEventListener("focus", function(){ say("▸ "+nameOf(b)); });
+  b.addEventListener("click", function(){ markStay(b); say("▸ "+nameOf(b)); });
+});
+/* call controls with no tiny version before: press the bar's own buttons */
+tiny.querySelectorAll("[data-tctl]").forEach(function(b){
+  b.addEventListener("click", function(){
+    var k=b.getAttribute("data-tctl");
+    var target=document.querySelector(k==="muteall" ? '#bmSecControls [data-ctl="muteall"]' : '#bmBar [data-ctl="'+k+'"]');
+    if(!target){ say("That control lives in the full bar — FULL BAR brings it back."); return; }
+    target.click();
+    setTimeout(function(){
+      var on=target.getAttribute("aria-pressed")==="true";
+      if(k==="speaker") say(on?"🔊 SPEAKER — ON. The room plays out loud.":"🔇 SPEAKER — OFF. Chat and video still live.");
+      else if(k==="muteall") say(on?"🔇 MUTE ALL — everyone is muted for you.":"🔊 MUTE ALL — off. Everyone is unmuted.");
+      else if(k==="record") say(on?"⏺ RECORD — ON. Stop it (RECORD again) to save the room as a jar.":"⏺ RECORD — stopped. The jar is saved at the top of JARS.");
+      markStay(b); syncRecallReady();
+    }, 90);
+  });
+});
+/* announce video / mic state in the readout as well (v4 handlers do the work) */
+tiny.querySelectorAll("[data-act2]").forEach(function(b){
+  b.addEventListener("click", function(){
+    var act=b.getAttribute("data-act2");
+    if(act!=="video" && act!=="mic") return;
+    setTimeout(function(){
+      var t=document.querySelector('#bmBar [data-ctl="'+act+'"]');
+      var on=t && t.getAttribute("aria-pressed")==="true";
+      say(act==="video" ? (on?"🎥 VIDEO — ON. Your box is live in the room.":"🎥 VIDEO — OFF. Your box stays up; voice and chat still live.")
+                        : (on?"🎙 MIC — ON. The room can hear you.":"🎙 MIC — OFF."));
+      markStay(b);
+    }, 90);
+  });
+});
+/* ---------- the boxes grid: ONE ▦ GRID toggle — up, or back down hidden ---------- */
+function openBoxes(){ return document.querySelectorAll("#bmFloats .bm-float.bm-open"); }
+function syncGridBtns(){
+  var up=openBoxes().length>0, on=up?"true":"false";
+  var tg=$("bmTinyGrid"); if(tg) tg.setAttribute("aria-pressed", on);
+  var fb=$("bmGridBtn"); if(fb){ fb.setAttribute("aria-pressed", on); fb.textContent=up?"▦ GRID — UP (tap: back down)":"▦ GRID"; }
+}
+function gridUp(silent){
+  var rb=$("bmRecallBtn");
+  if(rb && !rb.disabled){ rb.click(); if(!silent) say("▦ GRID — your saved box grid is back up, every box where you left it. Tap GRID again to put it back down."); setTimeout(syncGridBtns, 200); return "saved"; }
+  document.querySelectorAll("[data-pop]").forEach(function(pb){ pb.click(); });
+  setTimeout(function(){ var tb=$("bmTidyBtn"); if(tb) tb.click(); }, 220);
+  if(!silent) say("▦ GRID — all your chosen boxes are up, lined into a tidy grid. Tap GRID again to put them back down, hidden away. SAVE stamps this order; RECALL brings it back.");
+  setTimeout(syncGridBtns, 320);
+  return "all";
+}
+function gridDown(){
+  var was=document.body.classList.contains("bm-popout");
+  document.querySelectorAll("#bmFloats .bm-float.bm-open").forEach(function(w){ w.classList.remove("bm-open"); });
+  if(was){ var ex=$("bmChipExit"); if(ex) ex.click(); }
+  syncGridBtns();
+  say("▦ GRID — the boxes are back down, hidden away. Tap GRID to bring the grid back up.");
+}
+function gridToggle(){ if(openBoxes().length) gridDown(); else gridUp(false); }
+var fbBtn=$("bmGridBtn"); if(fbBtn) fbBtn.addEventListener("click", gridToggle);
+tiny.querySelectorAll("[data-tgrid]").forEach(function(b){
+  b.addEventListener("click", function(){
+    var g=b.getAttribute("data-tgrid");
+    if(g==="toggle"){ gridToggle(); }
+    else if(g==="tidy"){
+      if(!openBoxes().length){ gridUp(true); setTimeout(function(){ say("▦ TIDY ORDER — boxes up and lined into the grid."); }, 300); }
+      else { var tb=$("bmTidyBtn"); if(tb) tb.click(); say("▦ TIDY ORDER — boxes lined up in the neat grid."); }
+    }
+    else if(g==="snap"){
+      var sb=$("bmSnapBtn"); if(sb) sb.click();
+      setTimeout(function(){ say(sb && sb.getAttribute("aria-pressed")==="true" ? "🧲 SNAP — ON. Let go of a box and it glides into the grid order." : "🧲 SNAP — OFF. Boxes stay exactly where you drop them (free)."); markStay(b); }, 60);
+    }
+    else if(g==="save"){
+      if(!openBoxes().length){ say("💾 SAVE ORDER — no boxes are up yet. Tap GRID first, place them, then SAVE."); }
+      else { var sv=$("bmSaveBtn"); if(sv) sv.click(); setTimeout(function(){ syncRecallReady(); say("💾 SAVE ORDER — this grid is stamped. RECALL (lit green when ready) brings it back."); markStay(b); }, 90); }
+    }
+    else if(g==="recall"){
+      var rb2=$("bmRecallBtn");
+      if(!rb2 || rb2.disabled){ say("↩ RECALL ORDER — no saved grid yet. Tap GRID, arrange the boxes, SAVE ORDER — then RECALL brings that exact grid back."); }
+      else { rb2.click(); say("↩ RECALL ORDER — your saved box grid is back up, every box where you stamped it."); }
+    }
+    setTimeout(syncRecallReady, 160);
+    setTimeout(syncGridBtns, 260);
+  });
+});
+/* ---------- quick doors: the full bar's door strip, in small ----------
+   Each tiny door presses the full bar's own door-strip button (matched by
+   the name on its face), so a tiny door and its full-size door always open
+   the same panel — BIG for the room doors, PHONE for SCAN. */
+tiny.querySelectorAll("[data-tdoor]").forEach(function(b){
+  b.addEventListener("click", function(){
+    var name=b.getAttribute("data-tdoor"), target=null;
+    document.querySelectorAll("#bmQuick [data-door]").forEach(function(q){
+      if(!target && q.textContent.replace(/\s+/g," ").trim().indexOf(name)>-1) target=q;
+    });
+    if(!target){ say("That door lives in the full bar — FULL BAR brings it back."); return; }
+    target.click();
+    setTimeout(function(){
+      say("▸ "+name+" — open in the "+(target.getAttribute("data-door")==="phone" ? "phone panel" : "big messenger panel")+", same as the full bar's door.");
+      markStay(b);
+    }, 90);
+  });
+});
+/* ---------- view: labels toggle + hide the whole bar away ---------- */
+var labelsBtn=$("bmTinyLabels");
+if(labelsBtn) labelsBtn.addEventListener("click", function(){
+  var off=tiny.classList.toggle("bm-nolabels");
+  labelsBtn.setAttribute("aria-pressed", off?"false":"true");
+  say(off ? "Aa LABELS — OFF. Icons only; tap any button and its name pops and stays here."
+          : "Aa LABELS — ON. Every button's name is written under its symbol.");
+  markStay(labelsBtn);
+});
+tiny.querySelectorAll('[data-tgo="tuck"]').forEach(function(b){
+  b.addEventListener("click", function(){
+    var shell=$("bmShell"), tab=$("bmTab");
+    if(shell) shell.classList.remove("bm-tiny");
+    tiny.classList.remove("bm-show");
+    if(shell) shell.classList.add("bm-tucked");
+    if(tab) tab.classList.add("bm-show");
+  });
+});
+syncRecallReady();
+syncGridBtns();
 })();
 </script>
 
