@@ -1,0 +1,250 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NODAL — CHEAT SHEETS · every sheet, one room, math only</title><style>
+body{background:#070b14;color:#eef2fa;font-family:-apple-system,'Segoe UI',Roboto,Arial,sans-serif;padding:16px;max-width:1240px;margin:0 auto}
+.logo{font-size:26px;font-weight:800;letter-spacing:3px}.logo span{color:#f5b942}
+.note{color:#8fa3c4;font-size:12.5px;line-height:1.6}
+.box{background:#0b111f;border:1px solid #1e2c47;border-radius:12px;padding:14px;margin-top:12px}
+.box h2{font-size:13px;letter-spacing:2px;color:#f5b942;text-transform:uppercase;margin:0 0 8px}
+.box h3{font-size:13px;letter-spacing:1px;color:#2dd4bf;margin:12px 0 6px}
+.box p,.box li{color:#c9d6ee;font-size:13.5px;line-height:1.65}
+table{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:6px}
+td,th{padding:6px 8px;border-bottom:1px solid #1e2c47;text-align:left;color:#c9d6ee}
+th{color:#8fa3c4;font-size:12px;letter-spacing:1px}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+.bar{background:#1e2c47;border-radius:6px;height:14px;min-width:120px;position:relative}
+.bar i{display:block;height:14px;border-radius:6px;background:#f5b942}
+.bar.teal i{background:#2dd4bf}.bar.red i{background:#f4506a}.bar.grn i{background:#3ddc84}
+.big{font-size:22px;font-weight:800;color:#eef2fa}
+.tag{display:inline-block;border:1px solid #1e2c47;border-radius:8px;padding:3px 9px;margin:3px 4px 3px 0;font-size:12px;color:#c9d6ee;background:#101a2e}
+.tag.house{border-color:#f5b942;color:#f5b942}
+.tag.dead{border-color:#f4506a;color:#f4506a;text-decoration:line-through}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}@media(max-width:900px){.grid{grid-template-columns:1fr}}
+.rule{border:1px solid #f5b942;border-radius:10px;padding:12px;background:#0d1526}
+.rule b{color:#f5b942}
+.deadbox{border:1px solid #f4506a;border-radius:10px;padding:12px;background:#160d18}
+button{background:#1a2438;color:#eef2fa;border:1px solid #1e2c47;border-radius:9px;padding:8px 14px;font-size:14px;font-weight:700;cursor:pointer}
+button.on{border-color:#f5b942;color:#f5b942}
+.cross td{text-align:center;font-size:12.5px;padding:5px 4px}
+.cross th{text-align:center}
+footer{color:#8fa3c4;font-size:12px;line-height:1.7;margin-top:16px}
+a{color:#f5b942}
+svg text{fill:#c9d6ee;font-size:11px}
+</style></head><body>
+<!-- nodal-badge phase1 --><div class="nodal-badge" style="font-size:12px;color:#8fa3c4;border:1px solid #1e2c47;border-radius:8px;padding:6px 10px;margin-bottom:12px;background:#0b111f"><b style="color:#f5b942;letter-spacing:1px">SNAPSHOT</b> · the cheat sheets room — every number traced to a desk source file, named on the sheet · <a href="index.html" style="color:#f5b942">NODAL hub</a></div>
+<div class="logo">CHEAT <span>SHEETS</span></div>
+<div class="note">Every mathematical cheat sheet the desk owns, in one room — probability by set, by state, by point. <b style="color:#eef2fa">Nothing on this page is invented:</b> each sheet names its source file and its sample. Three kinds of truth live here and are labeled as such — <b style="color:#2dd4bf">CENSUS</b> (counted from the tour archive), <b style="color:#2dd4bf">SLAM TAPE</b> (counted from point-by-point Slam data), and <b style="color:#f5b942">HOUSE RULE</b> (the desk's entry/exit law — a rule, not a statistic). Where the desk tested a tell and it failed, the tell is shown dead. Where the desk holds no data, the gap is printed, not papered over.</div>
+
+<div class="box"><h2>Sheet 1 — After Set 1 · the exact-score slope</h2>
+<p>Source: <b>COMBO-KEY.md (P-009)</b> / combo_census.json — Sackmann ATP+WTA, best-of-3, completed matches: <b>53,529 matches · 125,586 sets</b>, seats re-based to the Set-1 winner. The first set is not one fact, it is a slope: every game of margin moves the dial.</p>
+<h3>The set alphabet — share of all 125,586 sets</h3>
+<table>
+<tr><th>Set score</th><th class="num">Share %</th><th style="width:45%">Frequency</th></tr>
+<tr><td>6-4</td><td class="num">23.11</td><td><div class="bar"><i style="width:100%"></i></div></td></tr>
+<tr><td>6-3</td><td class="num">22.21</td><td><div class="bar"><i style="width:96%"></i></div></td></tr>
+<tr><td>6-2</td><td class="num">16.12</td><td><div class="bar"><i style="width:70%"></i></div></td></tr>
+<tr><td>7-6</td><td class="num">14.44</td><td><div class="bar"><i style="width:62%"></i></div></td></tr>
+<tr><td>6-1</td><td class="num">10.77</td><td><div class="bar"><i style="width:47%"></i></div></td></tr>
+<tr><td>7-5</td><td class="num">9.33</td><td><div class="bar"><i style="width:40%"></i></div></td></tr>
+<tr><td>6-0</td><td class="num">3.92</td><td><div class="bar"><i style="width:17%"></i></div></td></tr>
+</table>
+<p>Seven scores = 99.97% of all sets (COMBO-KEY.md). 6-1 + 6-2 alone = 26.9% of sets.</p>
+<h3>Set-1 winner's match % by the exact Set-1 score — tap a score</h3>
+<div id="s1btns">
+<button data-s="6-0">6-0</button> <button data-s="6-1">6-1</button> <button data-s="6-2">6-2</button> <button data-s="6-3" class="on">6-3</button> <button data-s="6-4">6-4</button> <button data-s="7-5">7-5</button> <button data-s="7-6">7-6</button>
+</div>
+<div id="s1out" style="margin-top:10px"><p>Pick a score above — or read the full table (the table is the sheet; the buttons are a shortcut).</p></div>
+<table>
+<tr><th>S1 score</th><th class="num">n</th><th class="num">Match %</th><th style="width:30%">Match-win bar</th><th class="num">Straights %</th><th class="num">Wins in 3 %</th><th class="num">Loses in 3 %</th></tr>
+<tr><td>6-0</td><td class="num">1,940</td><td class="num"><b>90.2</b></td><td><div class="bar grn"><i style="width:90%"></i></div></td><td class="num">78.2</td><td class="num">11.9</td><td class="num">9.8</td></tr>
+<tr><td>6-1</td><td class="num">5,532</td><td class="num"><b>86.1</b></td><td><div class="bar grn"><i style="width:86%"></i></div></td><td class="num">72.0</td><td class="num">14.2</td><td class="num">13.9</td></tr>
+<tr><td>6-2</td><td class="num">8,201</td><td class="num"><b>85.4</b></td><td><div class="bar grn"><i style="width:85%"></i></div></td><td class="num">70.5</td><td class="num">14.9</td><td class="num">14.6</td></tr>
+<tr><td>6-3</td><td class="num">12,181</td><td class="num"><b>81.9</b></td><td><div class="bar"><i style="width:82%"></i></div></td><td class="num">65.9</td><td class="num">16.0</td><td class="num">18.1</td></tr>
+<tr><td>6-4</td><td class="num">12,423</td><td class="num"><b>79.7</b></td><td><div class="bar"><i style="width:80%"></i></div></td><td class="num">61.8</td><td class="num">18.0</td><td class="num">20.3</td></tr>
+<tr><td>7-5</td><td class="num">5,135</td><td class="num"><b>79.5</b></td><td><div class="bar"><i style="width:80%"></i></div></td><td class="num">63.4</td><td class="num">16.2</td><td class="num">20.5</td></tr>
+<tr><td>7-6</td><td class="num">8,116</td><td class="num"><b>76.9</b></td><td><div class="bar"><i style="width:77%"></i></div></td><td class="num">58.7</td><td class="num">18.3</td><td class="num">23.1</td></tr>
+</table>
+<p>This is the same ladder coded in nodal/tells.py as the FLIP DIAL — keyed there by the loser's games: 0→90.2 · 1→86.1 · 2→85.4 · 3→81.9 · 4→79.7 · 5→79.5 · 6→76.9.</p>
+<h3>What remains after Set 1 — by how the set was won (combo_census.json, remaining_after_S1)</h3>
+<table>
+<tr><th>S1 shape</th><th class="num">n</th><th class="num">WW %</th><th class="num">WLW %</th><th class="num">WLL %</th></tr>
+<tr><td>Blowout (loser held to ≤2)</td><td class="num">15,673</td><td class="num">72.0</td><td class="num">14.3</td><td class="num">13.7</td></tr>
+<tr><td>Mid (loser got 3–4)</td><td class="num">24,605</td><td class="num">63.8</td><td class="num">17.0</td><td class="num">19.2</td></tr>
+<tr><td>Close (loser got ≥5)</td><td class="num">13,251</td><td class="num">60.5</td><td class="num">17.4</td><td class="num">22.1</td></tr>
+</table>
+<h3>The 612 file (COMBO-KEY.md)</h3>
+<p><span class="tag">A 6-1 or 6-2 set appears in 51.2% of all matches (27,422)</span><span class="tag">That set's winner takes the match 80.2%</span><span class="tag">612 combo, either order: 1,676 matches — 3.13% of all, 4.79% of straights</span><span class="tag">6-1→6-2: 847 · 6-2→6-1: 828</span><span class="tag">6-2 6-2: 1,215 — 7th most common scoreline overall</span><span class="tag">Any straight win conceding ≤2 in both sets: 9.19% of matches, 14.05% of straights</span></p>
+<p><b>Honesty stamp:</b> the digit 2 as a stopper, by itself, is <b>NOT SUPPORTED</b> — graded three times (COMBO-KEY.md). S1 6-2 at 85.4% sits between 6-1 (86.1) and 6-3 (81.9). The power is the margin slope, not the digit.</p>
+</div>
+
+<div class="box"><h2>Sheet 2 — After Set 2 · the decider</h2>
+<p>Sets split. Now the only question is the third — and the census says the second set's <i>shape</i> deals it. Sources: <b>COMBO-KEY.md</b>, combo_census.json, nodal/tells.py.</p>
+<h3>The three families — every best-of-3 wears one of these shapes (census shares)</h3>
+<table>
+<tr><th>Family</th><th>Shape</th><th class="num">Share of all matches %</th><th style="width:35%">Share bar</th></tr>
+<tr><td><b>WW</b></td><td>Straight-through — S1 winner closes in two</td><td class="num">65.3</td><td><div class="bar grn"><i style="width:65%"></i></div></td></tr>
+<tr><td><b>LWW</b></td><td>The comeback — S1 loser takes S2 and the decider</td><td class="num">18.5</td><td><div class="bar teal"><i style="width:19%"></i></div></td></tr>
+<tr><td><b>WLW</b></td><td>The sawtooth — S1 winner drops S2, wins the decider</td><td class="num">16.3</td><td><div class="bar"><i style="width:16%"></i></div></td></tr>
+</table>
+<p>And its mirror, WLL — win S1, lose the match — is the collapse string counted on Sheet 5. In split-set matches, the S2 winner takes the decider 53.2% of the time (desk census note, filed with the 2026-11-06 live deck).</p>
+<h3>The Dead-Stopper ladder — S1 winner's decider % by how many games he was held to in the lost S2</h3>
+<table>
+<tr><th class="num">Games in lost S2</th><th class="num">n</th><th class="num">S1 winner's decider %</th><th style="width:35%">Decider bar</th></tr>
+<tr><td class="num">0</td><td class="num">433</td><td class="num"><b>39.7</b></td><td><div class="bar red"><i style="width:40%"></i></div></td></tr>
+<tr><td class="num">1</td><td class="num">1,678</td><td class="num"><b>43.2</b></td><td><div class="bar red"><i style="width:43%"></i></div></td></tr>
+<tr><td class="num">2</td><td class="num">2,270</td><td class="num"><b>44.4</b></td><td><div class="bar red"><i style="width:44%"></i></div></td></tr>
+<tr><td class="num">3</td><td class="num">4,743</td><td class="num"><b>47.1</b></td><td><div class="bar"><i style="width:47%"></i></div></td></tr>
+<tr><td class="num">4</td><td class="num">4,156</td><td class="num"><b>48.7</b></td><td><div class="bar"><i style="width:49%"></i></div></td></tr>
+<tr><td class="num">5</td><td class="num">1,911</td><td class="num"><b>46.3</b></td><td><div class="bar"><i style="width:46%"></i></div></td></tr>
+<tr><td class="num">6</td><td class="num">3,337</td><td class="num"><b>50.5</b></td><td><div class="bar teal"><i style="width:51%"></i></div></td></tr>
+</table>
+<p>Read it as a slope, not a cliff: stopped cold (0–2 games) the S1 winner is a decider <i>underdog</i>; even losing S2 in a tiebreak only restores him to 50.5. This ladder is coded in nodal/tells.py as DEAD_STOPPER. Mirror cells (COMBO-KEY.md): the S1 winner held to exactly 2 in the lost S2 wins the decider 44.4% — the man who dealt the 2 takes it 55.6% (n=2,270). A player held to ≤2 in S1 who rallied to win S2 is still only a 49.4% decider underdog.</p>
+<h3>THE CROSS — split matches: S1 winner's decider %</h3>
+<p>Rows = games the S1 <i>loser</i> won in Set 1 · Columns = games the S1 <i>winner</i> won in the lost Set 2 · Cell = S1 winner's decider %. Full grid from combo_census.json ("cross"); hover a cell for its n. Highlighted: the 2,2 cell = 48.3 (n=325) — double-2 leans to the S2 winner. A dash means the census holds no cell there.</p>
+<table class="cross"><tr><th>S1 loser \ S1 winner in lost S2</th><th>0</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th></tr>
+<tr><th>0</th><td style="color:#8fa3c4">—</td><td style="color:#8fa3c4">—</td><td style="color:#8fa3c4">—</td><td title="n=104" style="background:#123f2a;">56.7</td><td title="n=101" style="background:#123f2a;">57.4</td><td style="color:#8fa3c4">—</td><td style="color:#8fa3c4">—</td></tr>
+<tr><th>1</th><td style="color:#8fa3c4">—</td><td title="n=142" style="background:#101a2e;">45.1</td><td title="n=166" style="background:#2b1626;">44.6</td><td title="n=436" style="background:#0d2b26;">51.8</td><td title="n=335" style="background:#123f2a;">53.1</td><td title="n=169" style="background:#101a2e;">46.2</td><td title="n=271" style="background:#123f2a;">55.4</td></tr>
+<tr><th>2</th><td style="color:#8fa3c4">—</td><td title="n=190" style="background:#2b1626;">41.1</td><td title="n=325" style="background:#101a2e;border:2px solid #f5b942;font-weight:800">48.3</td><td title="n=600" style="background:#0d2b26;">52.2</td><td title="n=578" style="background:#0d2b26;">52.6</td><td title="n=257" style="background:#123f2a;">53.7</td><td title="n=412" style="background:#0d2b26;">51.0</td></tr>
+<tr><th>3</th><td title="n=104" style="background:#2b1626;">42.3</td><td title="n=406" style="background:#101a2e;">45.1</td><td title="n=477" style="background:#101a2e;">45.7</td><td title="n=1153" style="background:#101a2e;">47.9</td><td title="n=828" style="background:#101a2e;">47.0</td><td title="n=449" style="background:#2b1626;">44.1</td><td title="n=733" style="background:#101a2e;">49.8</td></tr>
+<tr><th>4</th><td title="n=118" style="background:#2b1626;">42.4</td><td title="n=493" style="background:#2b1626;">44.6</td><td title="n=558" style="background:#2b1626;">44.6</td><td title="n=1318" style="background:#101a2e;">45.5</td><td title="n=954" style="background:#101a2e;">49.8</td><td title="n=469" style="background:#2b1626;">42.4</td><td title="n=842" style="background:#0d2b26;">52.5</td></tr>
+<tr><th>5</th><td style="color:#8fa3c4">—</td><td title="n=150" style="background:#3a1420;">33.3</td><td title="n=271" style="background:#2b1626;">40.6</td><td title="n=393" style="background:#2b1626;">42.2</td><td title="n=482" style="background:#101a2e;">45.0</td><td title="n=182" style="background:#0d2b26;">51.6</td><td title="n=355" style="background:#101a2e;">48.5</td></tr>
+<tr><th>6</th><td style="color:#8fa3c4">—</td><td title="n=266" style="background:#2b1626;">42.1</td><td title="n=415" style="background:#2b1626;">41.2</td><td title="n=739" style="background:#2b1626;">43.3</td><td title="n=878" style="background:#101a2e;">46.1</td><td title="n=333" style="background:#101a2e;">45.9</td><td title="n=654" style="background:#101a2e;">46.3</td></tr>
+</table>
+</div>
+
+<div class="box"><h2>Sheet 3 — Live Set 2 states · the grave, the print, the serve-out</h2>
+<p>Source: <b>PATTERNS.md (P-008)</b> and nodal/tells.py — states <i>inside</i> the second set, counted on the same archive.</p>
+<div class="grid">
+<div class="deadbox"><h3 style="color:#f4506a;margin-top:0">☠ THE GRAVE — 7.7%</h3>
+<p>S1 loser who also trails <b>0-2 in Set 2</b>: wins the <b>set 11.0%</b> · wins the <b>match 7.7%</b> (n=2,038). P-008 graded the hopeful reading of this state and killed it: it is a grave, not a trap. On the desk this is a salvage question, not a hold. The states around it: at 1-2 down — set 20.4% / match 13.4%; at 2-2 — set 37.1% / match 22.4%, still below the 2-1 control (47.2%).</p></div>
+<div class="rule"><h3 style="color:#2dd4bf;margin-top:0">⚑ THE EARLY-LEAD PRINT — ~70%</h3>
+<p>S1 loser who <b>leads Set 2 by 2-0</b>: takes Set 2 <b>69.3–72.1%</b> of the time (PATTERNS.md P-008; tells.py rounds it to ~70%). This is the strongest "the flip is live" read the desk owns — the exact mirror image of the Grave, one break of serve apart. Direction, not hope: when the print fires, the turnaround is the statistical side.</p></div>
+</div>
+<h3>Serve-out watch (nodal/tells.py)</h3>
+<p>A player a game from banking a set at 5-x with a lead of 2+ games arms the serve-out watch. What happens at that price band is a house rule, not a census cell — it lives on Sheet 4, where it belongs.</p>
+<svg viewBox="0 0 900 120" style="width:100%;display:block" role="img" aria-label="Set 2 state ladder for the set-1 loser">
+<rect x="10" y="30" width="270" height="52" rx="9" fill="#3a1420" stroke="#f4506a"/><text x="30" y="52" font-weight="700">S2 0-2 down — THE GRAVE</text><text x="30" y="72">match 7.7% · set 11.0%</text>
+<rect x="315" y="30" width="270" height="52" rx="9" fill="#101a2e" stroke="#1e2c47"/><text x="335" y="52" font-weight="700">S2 2-2 — mildly live</text><text x="335" y="72">match 22.4% · set 37.1%</text>
+<rect x="620" y="30" width="270" height="52" rx="9" fill="#0d2b26" stroke="#2dd4bf"/><text x="640" y="52" font-weight="700">S2 2-0 up — EARLY-LEAD PRINT</text><text x="640" y="72">takes the set 69.3–72.1%</text>
+</svg>
+<p>The whole of Sheet 3 in one line: the same player, the same set, three states — and the price of the next two games is the distance between 7.7% and ~70%.</p>
+</div>
+
+<div class="box"><h2>Sheet 4 — Turning points · entry / exit</h2>
+<p><b>HOUSE RULES — the desk's law, not census statistics.</b> These are the rules the overlay trades by; they were written off live matches and are labeled as rules wherever they appear in the desk.</p>
+<div class="grid">
+<div class="rule"><p><b>CLEAR SIGN — ENTRY.</b> Act only on an obvious zone: the model's forward price at <b>≥88%</b>, <b>or</b> a market price <b>≥15¢ under the model's fair</b> with the modal path still intact. Anything else is <b>NO CLEAR SIGN</b> — no position, no apology. The 2026-11-06 worked example on Sheet 6 sat ~14¢ under fair and was correctly left alone: close is not a sign.</p></div>
+<div class="rule"><p><b>SERVE-OUT CASH — EXIT.</b> Priced <b>88–95</b> with a serve-out game pending and a documented re-open cell behind it → <b>the peak IS the exit</b>. Written 2026-11-04 off a live flip: a leader priced 91 serving for the match was called "roughly fair" at the desk, got broken back, and the rule was carved from the miss. When the serve-out and the price band arrive together, cash — do not wait for the last points.</p></div>
+<div class="rule"><p><b>THE 25-POINT FALL — EXIT.</b> When the live reprice falls <b>≥25 points against the frozen favorite</b>, the position's story is over — exit fast. This is the same ≥25-point move the watch loop uses as its reporting trigger: what is loud enough to report is loud enough to leave.</p></div>
+<div class="rule"><p><b>SATO RULE — PRIORITY.</b> A live position's exit watch outranks all other desk work. Turning-point sheets are read for the position you hold before the match you fancy.</p></div>
+</div>
+<svg viewBox="0 0 900 110" style="width:100%;display:block" role="img" aria-label="Price band diagram">
+<rect x="10" y="35" width="880" height="26" rx="8" fill="#101a2e" stroke="#1e2c47"/>
+<rect x="10" y="35" width="440" height="26" rx="8" fill="#1e2c47"/>
+<rect x="450" y="35" width="308" height="26" fill="#8a6a1f"/>
+<rect x="758" y="35" width="62" height="26" fill="#f5b942"/>
+<rect x="820" y="35" width="70" height="26" rx="8" fill="#3ddc84"/>
+<text x="20" y="28">0 — NO CLEAR SIGN territory</text><text x="455" y="28">fair-value zone — modal path decides</text><text x="700" y="28" fill="#f5b942" font-weight="700">88–95 SERVE-OUT CASH</text><text x="824" y="28">95+</text>
+<text x="20" y="85">Entry needs ≥88 forward — or ≥15¢ under fair with the route intact</text><text x="560" y="85">A ≥25-pt fall against the favorite = exit</text>
+</svg>
+</div>
+
+<div class="box"><h2>Sheet 5 — The Setup · P-010 THE REVEAL</h2>
+<p>Source: <b>COMBO-KEY.md (P-010)</b>, same census. The setup layer: a player can win a set in a way that spends the match. The census can see the shape — cruise, get caught, sometimes fold.</p>
+<h3>Cruise-then-caught — S1 winner still loses Set 2</h3>
+<table>
+<tr><th>S1 won by</th><th class="num">n</th><th class="num">Loses S2 %</th><th style="width:35%">Caught bar</th><th class="num">Full collapse (WLL) %</th></tr>
+<tr><td>6-0</td><td class="num">1,940</td><td class="num"><b>21.8</b></td><td><div class="bar teal"><i style="width:22%"></i></div></td><td class="num">9.8</td></tr>
+<tr><td>6-1</td><td class="num">5,532</td><td class="num"><b>28.0</b></td><td><div class="bar"><i style="width:28%"></i></div></td><td class="num">13.9</td></tr>
+<tr><td>6-2</td><td class="num">8,201</td><td class="num"><b>29.5</b></td><td><div class="bar"><i style="width:30%"></i></div></td><td class="num">14.6</td></tr>
+<tr><td>6-3</td><td class="num">12,181</td><td class="num"><b>34.1</b></td><td><div class="bar"><i style="width:34%"></i></div></td><td class="num">18.1</td></tr>
+</table>
+<p>The read the census supports: a true demolition (6-0) carries — only 21.8% lose the next set. A 6-1 / 6-2 "pro cruise" is the catchable one, exactly the shape that looks safest on the scoreboard. And when the cruise is caught, the caught set is a <b>cheap dump</b> — the winner scores ≤2 games — <b>21.9–23.6%</b> of the time: the mirror-dump is a real sub-shape of the catch.</p>
+<h3>Point-tape decay — the scoreboard lying, measured (SLAM TAPE)</h3>
+<p>Source: COMBO-KEY.md P-010, Slam point-by-point mirror (history/points), <b>n=647 matches parsed clean</b>. Point-win % in the first third of the match vs the last third:</p>
+<table>
+<tr><th>Measure</th><th class="num">First third %</th><th class="num">Last third %</th><th class="num">Move (pts)</th></tr>
+<tr><td>Eventual winner — all points</td><td class="num">53.6</td><td class="num">57.8</td><td class="num">+4.2</td></tr>
+<tr><td>Eventual loser — all points</td><td class="num">46.4</td><td class="num">42.2</td><td class="num">−4.2</td></tr>
+<tr><td>Eventual winner — serve points won</td><td class="num">64.5</td><td class="num">68.1</td><td class="num">+3.6</td></tr>
+<tr><td>Eventual loser — serve points won</td><td class="num">57.0</td><td class="num">52.2</td><td class="num"><b>−4.8</b></td></tr>
+<tr><td>Rally length (shots)</td><td class="num">4.12</td><td class="num">4.10</td><td class="num">flat</td></tr>
+</table>
+<p><b>Fade ≥5 pts</b> of point-win % from first to last third: eventual <b>losers fade in 43.3%</b> of matches; eventual <b>winners in only 12.8%</b>. At Slam level winners normally <i>rise</i> late — so a leader whose point-win % (above all his serve %) is decaying while the scoreboard still favors him is swimming against the base rate. The loser's serve, −4.8 pts, is the biggest single decay on the tape. <b>Desk live rule (from COMBO-KEY.md):</b> track serve-points-won by match third; a leader down ≥4–5 pts on his own early serve level = the scoreboard is lying — weight the trailer. Label: Slam-level, n=647, directional.</p>
+<div class="deadbox"><h3 style="color:#f4506a;margin-top:0"><span style="text-decoration:line-through">THE GRIND INDEX — long sets tire the S1 winner</span> · NOT SUPPORTED</h3>
+<p>S1 winner's decider % by total games in S1+S2: ≤17 games → 48.0 · 18–20 → 47.2 · 21–22 → 45.1 · 23+ → 48.4. <b>Flat.</b> Long sets do not tire the S1 winner into decider losses at tour level — both players pay the same toll, so set scores carry no fatigue signal. Tested, falsified, kept on the sheet crossed out so nobody quotes it back to life. (Match minutes — blowout-S1 avg 88, mid 102, close-S1 121 — are a length measure, not a fatigue measure.)</p></div>
+</div>
+
+<div class="box"><h2>Sheet 6 — Finite moves · the checkmate routes</h2>
+<p>Source: <b>nodal/price_state.py</b> — the desk's exact dynamic-programming repricer. A tennis match is a finite game: from any live state there is a countable set of routes to the end, and the DP walks <i>all</i> of them.</p>
+<p>How it deals: two point probabilities — each player's chance of winning a point <i>on their own serve</i>, read off their cards (serve vs the opponent's return: A serving vs B = (A.serve + (100 − B.return)) / 2). From those two numbers the recursion builds, exactly: point → game (win 4-0 / 4-1 / 4-2, then the deuce race p²/(p²+q²)) → tiebreak (serve pattern 1, then 2s) → set (games recursion, tiebreak at 6-6) → match (first to 2 sets). No simulation, no sampling noise: every remaining route is enumerated and weighted, so the price for <i>this exact state</i> — sets, games, next server — is exact for the two inputs. Change the state by one game and the whole board re-deals in milliseconds.</p>
+<h3>Stop-in-tracks cells — where the DP and the census agree a route has collapsed</h3>
+<p><span class="tag">☠ THE GRAVE: down a set, 0-2 in S2 — match 7.7% (P-008)</span><span class="tag">Dead-stopper at 0: S1 winner held to 0 in lost S2 — decider 39.7%</span><span class="tag">Dead-stopper at 2: decider 44.4% — the dealer of the 2 owns the third, 55.6%</span><span class="tag">Cross 5,1 cell: S1 winner's decider % 33.3 — the coldest readable cell in THE CROSS</span></p>
+<p>These are the checkmate squares: not "likely to lose" — cells where every enumerated route forward is a narrow door, and both instruments (the counted census and the exact DP) point the same way.</p>
+<h3>Worked example — Abbas vs Metwally, live deck, 2026-11-06</h3>
+<p>UTR PTT Fayetteville Women. State from David's screenshot: Abbas took S1 6-4, Metwally took S2 7-6(5), decider 2-2, Abbas serving at 30-40 — break point to Metwally. Market: Abbas 55¢ / Metwally 46¢. David's side: Metwally. Full record: desk memory files, 2026-11-07 / 2026-11-08 run notes.</p>
+<p><b>Assumption, labeled:</b> neither player is in the archive (UTR sits below the Sackmann waterline), so no cards were invented — the DP ran on a <b>symmetric serve-point grid (0.54 / 0.56 / 0.58)</b>, and the read barely moved across it. This is the Live Machine form: real tape, base rates, labeled assumptions.</p>
+<table>
+<tr><th>Branch from 30-40</th><th class="num">Metwally fair</th><th>What it means</th></tr>
+<tr><td>P(break converts from 30-40)</td><td class="num"><b>≈65%</b> (62–69 across the grid)</td><td>The point in front of her is worth more than the game score suggests</td></tr>
+<tr><td>Break → decider 3-2, Metwally serves</td><td class="num"><b>≈69–73</b></td><td>The route opens — not a cash zone yet</td></tr>
+<tr><td>Back to deuce</td><td class="num"><b>≈51</b></td><td>A coin flip with serve still to face</td></tr>
+<tr><td>Hold → decider 2-3</td><td class="num"><b>≈37–40</b></td><td>The door narrows hard</td></tr>
+<tr><td><b>Blended fair, right now</b></td><td class="num"><b>≈59–60</b></td><td>vs market 46 — about 14¢ under fair</td></tr>
+</table>
+<p>Census cross-check run at the time: in split-set matches the S2 winner takes the decider 53.2%. Desk verdict delivered: <b>NO CLEAR SIGN</b> — a real discount, but ~14¢ is under the 15¢ dip bar (Sheet 4) and the 88+ forward zone was not in sight. Hold grid given: break → ~71 · deuce → ~51 · hold → ~39; if she later served for the match priced in the high 80s, that was the Serve-Out Cash zone. (Final result was never stamped at the desk — the deck stands as dealt.)</p>
+</div>
+
+<div class="box"><h2>Sheet 7 — The Tells · per-point signs, read off the player's own card</h2>
+<p>Sources: <b>flaws.json</b> — the flaws board: <b>1,144 players</b>, built from the Slam point-by-point tape 2011–2024 (history/points), <b>1,906,627 points</b>, minimum 300 serve points to board — and <b>history/point_profiles.json</b> (per-player pressure / tilt / decider deltas). These are <i>per-player inputs</i>: the same sign means different things on different cards, so this sheet lists what to read, never a universal threshold — <b>the desk holds no census ace/DF thresholds, and none are printed here.</b></p>
+<h3>The card fields (flaws.json — definitions as filed in the board itself)</h3>
+<table>
+<tr><th>Field</th><th>What it counts</th><th>The live sign</th></tr>
+<tr><td>ace_pct</td><td>Aces per serve point (zero_ace flags a rate under 1% — ~0)</td><td>Aces <i>clustering</i> mid-match = serve heating up; a card whose ace rate was already ~0 going silent is no news — it's the card</td></tr>
+<tr><td>double_fault_pct</td><td>Double faults per serve point</td><td><b>DF clusters</b> — the loudest live crack; read against the player's own rate, and against bp_faced below</td></tr>
+<tr><td>first_serve_in_pct / first_serve_missed_pct</td><td>Share of serve points played on a first serve / its complement ("always missing 1st serves")</td><td>A falling first-serve share pushes the match onto the second serve — which is where the next field prices it</td></tr>
+<tr><td>first_serve_won_pct</td><td>Points won behind the first serve</td><td>The leader's serve decay (Sheet 5) shows up here first</td></tr>
+<tr><td>second_serve_won_pct</td><td>Points won on second serve (a DF counts as lost) — "the punishment number"</td><td><b>2nd-serve points collapsing</b> = the returner is eating; every hold becomes a negotiation</td></tr>
+<tr><td>bp_faced_per_svc_game · pct_svc_games_facing_bp</td><td>Break points faced per service game · share of service games facing one</td><td>Rising BP pressure per game = the hold is being priced down game by game</td></tr>
+<tr><td>bp_saved_pct</td><td>Break points saved</td><td>High save rate with rising BPs faced = living on the edge, not cruising</td></tr>
+<tr><td>hold_pct</td><td>Service games held</td><td>The summary the other fields explain</td></tr>
+<tr><td>breaks_per_100_ret_games</td><td>Breaks won per 100 return games — "return futility: low = the flaw"</td><td><b>No-return games</b>: a returner winning ~0 points in a service game, repeatedly, is a route closing — check it against this card number before calling it a bad game</td></tr>
+<tr><td>foot_faults</td><td colspan="2"><b>UNAVAILABLE — vision-only.</b> The Slam charting tape carries no foot-fault field in any year's header (checked all); foot faults are only observable on video. Printed here as a gap, on purpose.</td></tr>
+</table>
+<h3>The delta fields (history/point_profiles.json)</h3>
+<p><span class="tag">pressure_srv_delta — serve % under break-point pressure vs own base</span><span class="tag">pressure_ret_delta — return % under pressure</span><span class="tag">tilt_delta — point % after losing a point vs after winning</span><span class="tag">slow_start_delta — early-match point % vs own base</span><span class="tag">decider_delta — decider point % vs own base</span><span class="tag">hold_after_break_pct — holds the game right after being broken</span><span class="tag">early_pct / late_pct — point % early vs late in matches</span></p>
+<h3>Pace without a clock</h3>
+<p>The desk holds no timing feed, so pace is read from the point record itself. <b>Clean, fast rounds</b>: holds to love or 15, aces clustering, returner winning ~0 points — the server's games shrink and the route steepens toward the serve-out cells. <b>Grinding rounds</b>: every service game reaching deuce or break point, second serves multiplying, DFs arriving in pairs. Neither is a verdict alone — pace is the <i>speed</i> at which a match travels between the cells on Sheets 1–3, and it is read per player, off their card, against their own base rates. Any numeric pace or fault threshold the desk applies live is a <span class="tag house">HOUSE RULE</span> reading, labeled as such at the time — never a census fact.</p>
+</div>
+
+<div class="box"><h2>Sheet 8 — Who's actually stronger · the setup detector</h2>
+<p>David's question: who is setting whom up — who "lost" a set they were controlling? <b>Honesty first:</b> the math shows a <i>shape</i>, never an intention. No sheet here can prove a set was thrown on purpose, and this room does not claim it can. What the sheets <i>can</i> do is flag <b>"stronger than the scoreboard"</b> — a trailer whose underlying numbers are winning while the sets say otherwise. Three flags, all sourced:</p>
+<table>
+<tr><th>Flag</th><th>The math</th><th>Source</th></tr>
+<tr><td><b>(a) The quiet winner of the points</b></td><td>The S1 loser whose point-level record is not losing: serve % not decaying across the match thirds, pressure deltas (Sheet 7) at or above their own card base. The sets went one way; the points didn't.</td><td>point_profiles.json fields + Sheet 5 decay frame</td></tr>
+<tr><td><b>(b) The cruise-then-caught cell</b></td><td>The leader won S1 by 6-1 / 6-2 — the two most catchable scores on the census (lose S2 28.0% / 29.5%) — and the caught set, when it comes, is a cheap dump (≤2 games) 21.9–23.6% of the time. A cheap second set after a cruise is a shape with a name, not a mystery.</td><td>COMBO-KEY.md P-010</td></tr>
+<tr><td><b>(c) The crossing thirds</b></td><td>The trailer's point-win % is <i>rising</i> by match thirds while the leader's serve-points-won decays ≥4–5 pts from his own early level. At Slam level the eventual winner rises +4.2 and the loser falls −4.2 (serve: −4.8) — when the crossing runs the other way, the scoreboard is behind the match.</td><td>COMBO-KEY.md P-010, Slam tape n=647</td></tr>
+</table>
+<h3>Then adjust by the player's own shape signature (PROFILES.md — player cards, same archive)</h3>
+<p>Straight-vs-setup is a <i>player signature</i>, not a match state (COMBO-KEY.md P-010). Field averages: V-recovery (wins that are LWW) 18.5% · sawtooth (wins that are WLW) 16.3% · S2 let-go (won S1, lost S2) ~30% · closers (wins in straights) 65.3%. Against those fields: <b>Borges</b> V-recovery 37.3% of wins (PROFILES.md / COMBO-KEY.md) · <b>J.M. Cerundolo</b> sawtooth 48.1% (COMBO-KEY.md) · <b>Dart</b> S2 let-go 60.0% vs <b>Swiatek</b> 13.9% (PROFILES.md). A sawtooth player's dropped second set is their <i>normal route</i>; a closer's dropped second set is an event. The sheet anchor is the census number; the signature says when the anchor is wrong for this player — and a live pattern outranks the file (Case B law, COMBO-KEY.md).</p>
+<p><b>The detector's verdict form:</b> flags (a)+(b), or (a)+(c), on the same match = <i>stronger than the scoreboard</i> — the trailer is priced as a loser and playing as the winner, and the routes on Sheet 6 should be re-dealt with the trailer's point inputs, not the set score's story. One flag alone = a watch, not a call. And the word stays <i>shape</i>: players cruise, tire, tank a return game to save legs, or simply get caught — the sheet cannot separate those, and says so.</p>
+</div>
+
+<footer>
+<b>Sources — every number on this page traces to one of these files in the desk:</b><br>
+· COMBO-KEY.md (P-009 Combo Key + P-010 Reveal) and combo_census.json — tour census: Sackmann ATP+WTA 2015–2026, best-of-3 completed matches, <b>53,529 matches · 125,586 sets</b>. (nodal/tells.py, which codes the Flip Dial and Dead-Stopper constants, cites the desk's 53,676-match archive sheets — the two counts are the two census runs on file, and both are printed here rather than blended.)<br>
+· PATTERNS.md (P-008 trap states: the Grave, the Early-Lead Print) · nodal/tells.py (Flip Dial, Dead-Stopper, serve-out tell, family shares) · PROFILES.md (player shape signatures).<br>
+· Point-tape decay: Slam point-by-point mirror, history/points — <b>n=647 matches parsed clean</b> (COMBO-KEY.md P-010).<br>
+· flaws.json — Slam tape 2011–2024, <b>1,144 players · 1,906,627 points</b> · history/point_profiles.json (pressure / tilt / slow-start / decider deltas).<br>
+· nodal/price_state.py — exact DP repricer (Sheet 6) · worked example: Abbas vs Metwally live deck, 2026-11-06, as filed in the desk's 2026-11-07 / 2026-11-08 run records (symmetric-grid assumption labeled on the sheet).<br>
+<b>Level split, honestly:</b> the census sheets are <b>tour-level best-of-3</b>; the decay sheet is <b>Slam-only</b>; elite players play different shapes than the field (PROFILES.md collapse confound: elites rank high on "collapse" partly because they almost never lose in straights). <b>Not held:</b> Challenger/ITF point-by-point tape — the decay and tells sheets do not extend below tour/Slam level, and foot faults exist in no data the desk holds (video only).<br>
+<b>House rules</b> (Sheet 4, and any live threshold labeled HOUSE RULE) are the desk's entry/exit law — decisions, not measurements. Nothing here is financial advice; it's a scoring system for foresight, and it keeps its own receipts. · <a href="index.html">← NODAL hub</a>
+</footer>
+<script>
+var S1={"6-0":{n:"1,940",m:90.2,s:78.2,w:11.9,l:9.8},"6-1":{n:"5,532",m:86.1,s:72.0,w:14.2,l:13.9},"6-2":{n:"8,201",m:85.4,s:70.5,w:14.9,l:14.6},"6-3":{n:"12,181",m:81.9,s:65.9,w:16.0,l:18.1},"6-4":{n:"12,423",m:79.7,s:61.8,w:18.0,l:20.3},"7-5":{n:"5,135",m:79.5,s:63.4,w:16.2,l:20.5},"7-6":{n:"8,116",m:76.9,s:58.7,w:18.3,l:23.1}};
+function showS1(k){var d=S1[k];if(!d)return;var b=document.querySelectorAll('#s1btns button');for(var i=0;i<b.length;i++){b[i].className=(b[i].getAttribute('data-s')===k)?'on':'';}
+document.getElementById('s1out').innerHTML='<p><span class="big">S1 '+k+' → match '+d.m+'%</span> &nbsp;n='+d.n+' · straights '+d.s+'% · wins in 3: '+d.w+'% · loses in 3: '+d.l+'% <span style="color:#8fa3c4">(COMBO-KEY.md / combo_census.json)</span></p><div class="bar grn"><i style="width:'+d.m+'%"></i></div>';}
+var btns=document.querySelectorAll('#s1btns button');for(var i=0;i<btns.length;i++){btns[i].addEventListener('click',function(){showS1(this.getAttribute('data-s'));});}
+showS1('6-3');
+</script>
+</body></html>

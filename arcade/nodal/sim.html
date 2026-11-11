@@ -1,0 +1,53 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NODAL — The Simulation Book</title><style>
+body{background:#070b14;color:#eef2fa;font-family:-apple-system,'Segoe UI',Roboto,Arial,sans-serif;padding:16px;max-width:1240px;margin:0 auto}
+.logo{font-size:22px;font-weight:800;letter-spacing:3px} .logo span{color:#f5b942}
+h2{font-size:17px;margin:20px 0 4px} h3{font-size:14px;margin:4px 0 8px}
+table{width:100%;border-collapse:collapse;font-size:13px} td,th{padding:6px 8px;border-bottom:1px solid #1e2c47;text-align:left}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:10px 0} @media(max-width:800px){.grid{grid-template-columns:1fr}}
+.card{background:#0b111f;border:1px solid #1e2c47;border-radius:12px;padding:12px}
+.note,.lab{color:#8fa3c4;font-size:12px;line-height:1.6} .lab{margin:10px 0 4px;font-weight:700;letter-spacing:1px}
+.bar{display:flex;align-items:center;gap:8px;font-size:12px;margin:3px 0} .bar>span:first-child{width:44px} .bar>span:last-child{min-width:86px}
+.tr{flex:1;height:10px;background:#16223c;border-radius:5px;overflow:hidden} .fl{height:100%;background:#f5b942}
+.find{background:#101a2e;border:1px solid #f5b942;border-radius:12px;padding:12px;margin:12px 0;line-height:1.65;font-size:14px}
+footer{color:#8fa3c4;font-size:12px;line-height:1.6;margin-top:16px}
+</style></head><body>
+<!-- nodal-badge phase1 --><div class="nodal-badge" style="font-size:12px;color:#8fa3c4;border:1px solid #1e2c47;border-radius:8px;padding:6px 10px;margin-bottom:12px;background:#0b111f"><b style="color:#f5b942;letter-spacing:1px">SNAPSHOT</b> · Nov 5 build · <a href="index.html" style="color:#f5b942">NODAL hub</a></div>
+<div class="logo">NOD<span>A</span>L · THE SIMULATION BOOK</div>
+<div class="note">Before anything posts live, the system loops over history it cannot peek at: every card built only from matches dated before the match it prices. Same engine, same three lanes, tweaks printed. The misses stay on the sheet.</div>
+<h2>Trial 1 — career cards</h2><div class="note">Cards from each player’s full history to date. 568 tour matches + 127 Slam tape matches graded; thin cards skipped, never guessed.</div>
+    <div class="grid">
+    <div class="card"><h3>SIM A — the tour, walk-forward (2025)</h3><table><tr><th>Lane</th><th>Matches</th><th>Picks</th><th>Brier</th></tr><tr><td><b>LEDGER — the middle (pure)</b></td><td>568</td><td>62.0%</td><td>0.2335</td></tr><tr><td><b>CHARGE — the high side</b></td><td>568</td><td>62.0%</td><td>0.2353</td></tr><tr><td><b>FLIP — the low side</b></td><td>568</td><td>47.2%</td><td>0.2594</td></tr></table>
+    <div class="lab">LEDGER calibration — stated bucket vs reality</div><div class="bar"><span>50-60</span><div class="tr"><div class="fl" style="width:58.9%"></div></div><span>58.9% · n=380</span></div><div class="bar"><span>60-70</span><div class="tr"><div class="fl" style="width:65.2%"></div></div><span>65.2% · n=155</span></div><div class="bar"><span>70-80</span><div class="tr"><div class="fl" style="width:78.6%"></div></div><span>78.6% · n=28</span></div><div class="bar"><span>80-90</span><div class="tr"><div class="fl" style="width:100.0%"></div></div><span>100.0% · n=5</span></div></div>
+    <div class="card"><h3>SIM B — the Slam tape (late rounds, per-point truth)</h3><table><tr><th>Lane</th><th>Matches</th><th>Picks</th><th>Brier</th></tr><tr><td><b>LEDGER — the middle (pure)</b></td><td>127</td><td>44.9%</td><td>0.267</td></tr><tr><td><b>CHARGE — the high side</b></td><td>127</td><td>44.9%</td><td>0.3</td></tr><tr><td><b>FLIP — the low side</b></td><td>127</td><td>55.1%</td><td>0.246</td></tr></table>
+    <div class="lab">FLIP calibration — stated bucket vs reality</div><div class="bar"><span>50-60</span><div class="tr"><div class="fl" style="width:54.5%"></div></div><span>54.5% · n=110</span></div><div class="bar"><span>60-70</span><div class="tr"><div class="fl" style="width:58.8%"></div></div><span>58.8% · n=17</span></div></div>
+    </div>
+    <div class="grid">
+    <div class="card"><h3>The nodal race — game winners called BEFORE the game (Sim B)</h3><table><tr><th>Lane</th><th>Called right</th><th>Rate</th></tr><tr><td><b>LEDGER — the middle (pure)</b></td><td>1519 / 2808</td><td>54.1%</td></tr><tr><td><b>CHARGE — the high side</b></td><td>1519 / 2808</td><td>54.1%</td></tr><tr><td><b>FLIP — the low side</b></td><td>1585 / 2808</td><td>56.4%</td></tr></table></div>
+    <div class="card"><h3>Tells fired on the tape (Sim B)</h3><div style="font-size:14px;line-height:1.7">flip ×127 · deadstop ×40 · family ×40 · two ×45</div>
+    <div class="note">Every tell fired off a real state on real tape — counted, never decorated.</div></div>
+    </div>
+<h2>Trial 2 — surface-true cards (the one change)</h2><div class="note">One change, ATLAS rule: with 8+ priors on the match’s own surface, the card is built from those only. Sample shifts where the rule bites (521 + 106 graded) — comparisons are indicative, and the change is logged KEPT in KEPT-REVERTED.md with its caveats.</div>
+    <div class="grid">
+    <div class="card"><h3>SIM A — the tour, walk-forward (2025)</h3><table><tr><th>Lane</th><th>Matches</th><th>Picks</th><th>Brier</th></tr><tr><td><b>LEDGER — the middle (pure)</b></td><td>521</td><td>62.6%</td><td>0.2318</td></tr><tr><td><b>CHARGE — the high side</b></td><td>521</td><td>62.6%</td><td>0.2332</td></tr><tr><td><b>FLIP — the low side</b></td><td>521</td><td>46.1%</td><td>0.2586</td></tr></table>
+    <div class="lab">LEDGER calibration — stated bucket vs reality</div><div class="bar"><span>50-60</span><div class="tr"><div class="fl" style="width:58.0%"></div></div><span>58.0% · n=338</span></div><div class="bar"><span>60-70</span><div class="tr"><div class="fl" style="width:68.9%"></div></div><span>68.9% · n=151</span></div><div class="bar"><span>70-80</span><div class="tr"><div class="fl" style="width:80.0%"></div></div><span>80.0% · n=30</span></div><div class="bar"><span>80-90</span><div class="tr"><div class="fl" style="width:100.0%"></div></div><span>100.0% · n=2</span></div></div>
+    <div class="card"><h3>SIM B — the Slam tape (late rounds, per-point truth)</h3><table><tr><th>Lane</th><th>Matches</th><th>Picks</th><th>Brier</th></tr><tr><td><b>LEDGER — the middle (pure)</b></td><td>106</td><td>45.3%</td><td>0.268</td></tr><tr><td><b>CHARGE — the high side</b></td><td>106</td><td>45.3%</td><td>0.3028</td></tr><tr><td><b>FLIP — the low side</b></td><td>106</td><td>65.1%</td><td>0.2425</td></tr></table>
+    <div class="lab">FLIP calibration — stated bucket vs reality</div><div class="bar"><span>50-60</span><div class="tr"><div class="fl" style="width:69.7%"></div></div><span>69.7% · n=89</span></div><div class="bar"><span>60-70</span><div class="tr"><div class="fl" style="width:41.2%"></div></div><span>41.2% · n=17</span></div></div>
+    </div>
+    <div class="grid">
+    <div class="card"><h3>The nodal race — game winners called BEFORE the game (Sim B)</h3><table><tr><th>Lane</th><th>Called right</th><th>Rate</th></tr><tr><td><b>LEDGER — the middle (pure)</b></td><td>1256 / 2330</td><td>53.9%</td></tr><tr><td><b>CHARGE — the high side</b></td><td>1254 / 2330</td><td>53.8%</td></tr><tr><td><b>FLIP — the low side</b></td><td>1308 / 2330</td><td>56.1%</td></tr></table></div>
+    <div class="card"><h3>Tells fired on the tape (Sim B)</h3><div style="font-size:14px;line-height:1.7">flip ×106 · deadstop ×33 · family ×33 · two ×37</div>
+    <div class="note">Every tell fired off a real state on real tape — counted, never decorated.</div></div>
+    </div>
+<div class="find"><b>What the loop found — the headline:</b> the lanes are not equal everywhere, and the board can prove it. On the week-to-week tour the pure card rules (LEDGER 62.6% picks) and the defense lane loses money it never had (FLIP 46.1% — its dog tweak is too hot against ordinary fields). At the Slams it inverts: late-round cards name the wrong favorite more often than not (LEDGER 45.3%), and FLIP — priced for exactly that failure — takes 65.1% with the best truth score, and wins the game-by-game race too. CHARGE pays for its confidence in both worlds: same picks as LEDGER, worse Brier everywhere. Temperament × arena is a real, measurable thing — which is the entire reason three lanes keep three separate books.</div>
+<h2>The voices — a plugin, never a gate</h2>
+<div class="card"><div style="line-height:1.7;font-size:14px">
+<b>The text is the show.</b> Every call is written first — it is the caption track, the sealed record, and what the board grades. Voices render the same lines; they never change a number.<br>
+<b>LEDGER</b> — voice <b>NODAL Ledger</b> (saved, slot 3 of the house's 10): the calm statistician.<br>
+<b>CHARGE</b> — voice <b>NODAL Charge</b> (saved): the play-by-play that rides the favorite.<br>
+<b>FLIP</b> — voice <b>NODAL Flip</b> (saved): the deadpan warning.<br>
+How a viewer hears them: the Voice Pass (our cast voices, rendered live per call — game-level calls fit voice latency today), or bring-your-own-key (a viewer's own ElevenLabs key renders the same text on their account). The math stays free either way; the voices are the upgrade. Config: nodal/voice-plugin.json · renderer: nodal/speak.py.
+</div></div>
+<footer>Laws held in both trials: walk-forward only · thin cards skipped (131 + 178 in A; 23 + 44 in B) · retirements excluded from Sim A · lanes differ only by the printed 22% tweak · every sim prediction sealed into the same hash chain as the live book, labeled SIM. Sim B's race prices each game from pre-match cards only. The full engine (rank bands + route engine) is what the live registry runs; these trials grade the lanes over walk-forward quick cards — the honest label, on purpose.</footer>
+</body></html>
