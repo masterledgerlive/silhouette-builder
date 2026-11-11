@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sui Guardian — Mainnet Marker #1 (signing page)</title>
+<style>
+  body{font-family:system-ui,-apple-system,sans-serif;margin:0;background:#0b1220;color:#e8eef7;padding:20px;line-height:1.5}
+  .card{max-width:640px;margin:0 auto;background:#111a2e;border:1px solid #263550;border-radius:14px;padding:20px}
+  h1{font-size:20px;margin:0 0 4px}
+  .warn{background:#3a2408;border:1px solid #a86a12;color:#ffd9a0;border-radius:10px;padding:10px 12px;font-size:14px;margin:12px 0}
+  .ok{color:#7ee2a0}.bad{color:#ff8f8f}
+  pre{white-space:pre-wrap;word-break:break-all;background:#0a0f1c;border:1px solid #263550;border-radius:10px;padding:12px;font-size:12.5px}
+  code{font-size:12.5px;word-break:break-all}
+  button{display:block;width:100%;padding:14px;margin:10px 0;border:0;border-radius:10px;font-size:16px;font-weight:600;cursor:pointer}
+  #connect{background:#2f6fed;color:#fff}
+  #sign{background:#c22f2f;color:#fff}
+  button:disabled{opacity:.45}
+  .row{font-size:14px;margin:6px 0}
+  #digest{font-size:15px}
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>🌊 Sui Guardian — Mainnet Marker #1</h1>
+  <div class="row">This page asks your Slush wallet to place <b>one small marker</b> on Sui <b>mainnet</b>: the same Guardian packet already proven on testnet. Nothing else. No tokens leave your wallet except about <b>0.002 SUI</b> of network gas, and 1,000 MIST (0.001 SUI) that goes <b>back to your own address</b>.</div>
+  <div class="warn">⚠️ MAINNET — real chain. Read the packet below. Sign only if the packet hash on this page says <b>MATCH</b> and Slush's own review screen shows a call to <b>string::utf8</b> and a 0.001 SUI self-transfer. Anything different: cancel and tell Kodakai.</div>
+
+  <div class="row"><b>Packet (205 bytes):</b></div>
+  <pre id="payload"></pre>
+  <div class="row">Packet SHA-256 (computed here, in your browser): <code id="hash">computing…</code></div>
+  <div class="row">Expected: <code>d8ba622b5b679cce2d910c208343581bd9c9517a5973251f587cf78371828576</code> — <b id="match">…</b></div>
+  <div class="row"><b>Allowed signing accounts</b> (either one — your pick in Slush):<br>
+    Kodakai — <code>0xc89009b21672e510d19ff6f13c22ed17b07692c88a7312df5903b33ce0894493</code><br>
+    David (treasury) — <code>0x14531a876da70fb20abfe75a128818b13e57aa652a9f27c1978206c9cf8257c6</code></div>
+
+  <button id="connect">1 · Connect Slush wallet</button>
+  <div class="row" id="acct">Not connected.</div>
+  <button id="sign" disabled>2 · Sign &amp; place the marker</button>
+  <div class="row" id="status"></div>
+  <div class="row" id="digest"></div>
+  <div class="row" style="margin-top:14px;font-size:13px;color:#9fb3cc">After it lands, send Kodakai the digest (or just say “done”) — he reads the packet back off the chain and byte-checks it, the Guardian way, before anyone calls it proven.</div>
+</div>
+
+<script type="module">
+const PAYLOAD_TEXT = "§$STORE§ §KEY§ed44f6a15e51d9c4ce185ff1310687995b9aea768156b358c313738b0b39a097§LOC§n=6|h=ed44f6a15e51d9c4ce185ff1310687995b9aea768156b358c313738b0b39a097|b=82maAB7lLpDXrFPz_JHgf05rl5m7GRaYCAQN1iuhRPQ";
+const EXPECTED_SHA = "d8ba622b5b679cce2d910c208343581bd9c9517a5973251f587cf78371828576";
+const ALLOWED = new Set([
+  "0xc89009b21672e510d19ff6f13c22ed17b07692c88a7312df5903b33ce0894493",
+  "0x14531a876da70fb20abfe75a128818b13e57aa652a9f27c1978206c9cf8257c6",
+]);
+document.getElementById('payload').textContent = PAYLOAD_TEXT;
+const bytes = new TextEncoder().encode(PAYLOAD_TEXT);
+const digestBuf = await crypto.subtle.digest('SHA-256', bytes);
+const sha = [...new Uint8Array(digestBuf)].map(b=>b.toString(16).padStart(2,'0')).join('');
+document.getElementById('hash').textContent = sha;
+const matchEl = document.getElementById('match');
+const hashOk = sha === EXPECTED_SHA;
+matchEl.textContent = hashOk ? "MATCH ✓ — safe to sign" : "MISMATCH — DO NOT SIGN";
+matchEl.className = hashOk ? "ok" : "bad";
+
+let wallet = null, account = null;
+const status = (t)=>{ document.getElementById('status').textContent = t; };
+
+document.getElementById('connect').addEventListener('click', async ()=>{
+  status("Looking for a wallet…");
+  try {
+    const { getWallets } = await import('https://esm.sh/@wallet-standard/app@1.1.0');
+    const wallets = getWallets().get();
+    wallet = wallets.find(w => 'sui:signAndExecuteTransaction' in w.features || 'sui:signTransaction' in w.features);
+    if (!wallet) { status("No Sui wallet found in this browser. Open this page inside Slush's browser (Apps → Browser) or in Chrome with Slush installed, then try again."); return; }
+    const connectFeature = wallet.features['standard:connect'];
+    const out = await connectFeature.connect();
+    account = (out.accounts || wallet.accounts)[0];
+    if (!account) { status("Wallet connected but no account shared. Try again and approve the connection in Slush."); return; }
+    const addr = account.address;
+    document.getElementById('acct').innerHTML = "Connected: <code>" + addr + "</code>" +
+      (ALLOWED.has(addr) ? ' <span class="ok">— house account ✓</span>' : ' <span class="bad">— NOT one of the two house accounts. Switch accounts in Slush; this page will refuse to sign from any other address.</span>');
+    document.getElementById('sign').disabled = !(ALLOWED.has(addr) && hashOk);
+    status(ALLOWED.has(addr) ? "Ready. The Sign button rebuilds the exact testnet-proven transaction, fresh, for this account." : "Wrong account — switch in Slush and reconnect.");
+  } catch(e){ status("Connect failed: " + (e && e.message || e)); }
+});
+
+document.getElementById('sign').addEventListener('click', async ()=>{
+  if (!wallet || !account || !hashOk) return;
+  status("Building the transaction…");
+  try {
+    const { Transaction } = await import('https://esm.sh/@mysten/sui@2.39.1/transactions');
+    const tx = new Transaction();
+    tx.setSender(account.address);
+    const pureVec = tx.pure.vector('u8', Array.from(bytes));
+    tx.moveCall({ target: '0x1::string::utf8', arguments: [pureVec] });
+    const [selfCoin] = tx.splitCoins(tx.gas, [1000]);
+    tx.transferObjects([selfCoin], account.address);
+
+    let digest = null;
+    if ('sui:signAndExecuteTransaction' in wallet.features) {
+      status("Slush is asking you to review… check the screen, then approve.");
+      const out = await wallet.features['sui:signAndExecuteTransaction'].signAndExecuteTransaction({
+        transaction: tx, account, chain: 'sui:mainnet',
+      });
+      digest = out.digest;
+    } else if ('sui:signTransaction' in wallet.features) {
+      status("Slush is asking you to sign…");
+      const signed = await wallet.features['sui:signTransaction'].signTransaction({
+        transaction: tx, account, chain: 'sui:mainnet',
+      });
+      const { SuiGrpcClient } = await import('https://esm.sh/@mysten/sui@2.39.1/grpc');
+      const client = new SuiGrpcClient({ network: 'mainnet', baseUrl: 'https://fullnode.mainnet.sui.io:443' });
+      const res = await client.core.executeTransaction({
+        transaction: signed.bytes, signatures: [signed.signature],
+        include: { effects: true },
+      });
+      const T = res.Transaction ?? res;
+      digest = T.digest;
+      if (T.status && T.status.success === false) throw new Error("Chain reported failure: " + JSON.stringify(T.status));
+    }
+    if (!digest) throw new Error("Wallet returned no digest.");
+    status("✅ On chain. Send this digest to Kodakai for the read-back check:");
+    document.getElementById('digest').innerHTML =
+      "<code>" + digest + "</code><br><a style='color:#7db4ff' target='_blank' rel='noopener' href='https://suiscan.xyz/mainnet/tx/" + digest + "'>View it on SuiScan</a>";
+    document.getElementById('sign').disabled = true;
+  } catch(e){ status("Stopped: " + (e && e.message || e) + " — nothing was signed unless Slush showed a success screen. Tell Kodakai what it said."); }
+});
+</script>
+</body>
+</html>
