@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PACKAGE REPLAY — NODAL Arena</title>
+<style>
+ body{background:#0b0e13;color:#dbe4f0;font-family:Georgia,serif;margin:0;padding:18px;max-width:900px;margin:auto}
+ h1{font-size:23px;margin:2px 0} a{color:#7fd4ff}
+ .small{font-size:12.5px;color:#93a5bb} .dim{color:#93a5bb}
+ .card{background:#101722;border:1px solid #223148;border-radius:8px;padding:13px 15px;margin:10px 0}
+ .tag{display:inline-block;font-size:11px;border:1px solid #2c5a7a;color:#7fd4ff;border-radius:4px;padding:1px 6px;margin-right:5px}
+ .tag.x{border-color:#8a6d1f;color:#ffd97f}
+ button{background:#16263e;color:#dbe4f0;border:1px solid #2c5a7a;border-radius:6px;padding:7px 14px;font-size:14px;cursor:pointer;margin-right:6px}
+ button:hover{background:#1d3352}
+ .stepkind{font-weight:bold;color:#ffd97f}
+ table{border-collapse:collapse;width:100%;font-size:13.5px} td,th{border-bottom:1px solid #1c2940;padding:4px 7px;text-align:left}
+ .num{font-variant-numeric:tabular-nums;text-align:right}
+</style></head><body>
+<p class="small"><a href="arena.html">&larr; The Specialist Arena</a> · <a href="index.html">NODAL hub</a></p>
+<h1>&#127916; PACKAGE REPLAY</h1>
+<p class="small">One specialist, one match, one road — the whole play, state by state, exactly as it was
+sealed into the record book. Step through it. This is the "watch it backwards" layer at package scale:
+nothing here is redrawn or rewritten after the fact.</p>
+<div id="head"><p class="dim">loading the package&hellip;</p></div>
+<div class="card" id="stage"></div>
+<div>
+ <button id="prev">&#9664; Prev state</button>
+ <button id="play">&#9654; Play</button>
+ <button id="next">Next state &#9654;</button>
+ <span class="small" id="counter"></span>
+</div>
+<div id="trace"></div>
+<h3 style="color:#ffd97f">Every state in the package</h3>
+<div id="allsteps"></div>
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;');
+let P=null, I=0, timer=null;
+function booksLine(b){
+  if(!b) return 'books not captured this step';
+  const f=x=>x==null?'—':Math.round(x*100)+'¢';
+  return 'Polymarket mid: '+f(b.POLY&&b.POLY[0])+' / '+f(b.POLY&&b.POLY[1])+' · Kalshi mid: '+f(b.KALSHI&&b.KALSHI[0])+' / '+f(b.KALSHI&&b.KALSHI[1]);
+}
+function render(){
+  const s=P.steps[I];
+  $('counter').textContent='state '+(I+1)+' of '+P.steps.length;
+  $('stage').innerHTML='<div><span class="stepkind">'+esc(s.kind)+'</span> <span class="small">'+esc(s.t)+'</span></div>'
+    +'<p style="font-size:17px;line-height:1.55;margin:8px 0">'+esc(s.text||'')+'</p>'
+    +(s.engine?'<p class="small">engine: '+esc(s.engine)+'</p>':'')
+    +'<table><tr><td>Match state</td><td>'+esc(s.state||'not captured')+'</td></tr>'
+    +'<tr><td>Our number (side 1)</td><td>'+(s.dp==null?'— (no cards / no number)':Math.round(s.dp*100)+'%')+'</td></tr>'
+    +'<tr><td>Books</td><td>'+booksLine(s.books)+'</td></tr>'
+    +(s.price!=null?'<tr><td>Fill</td><td>'+esc(s.side||P.side_name||'')+' @ '+Math.round(s.price*100)+'¢ · stake $'+Number(s.stake||0).toFixed(2)+'</td></tr>':'')
+    +(s.pnl!=null?'<tr><td>P&amp;L at this step</td><td>'+(s.pnl>=0?'+':'')+Number(s.pnl).toFixed(2)+'</td></tr>':'')
+    +'</table>';
+  $('allsteps').innerHTML='<table>'+P.steps.map((x,i)=>'<tr'+(i===I?' style="background:#16263e"':'')+'><td class="num">'+(i+1)+'</td><td>'+esc(x.kind)+'</td><td class="small">'+esc(x.t)+'</td><td>'+esc((x.text||'').slice(0,90))+'</td></tr>').join('')+'</table>';
+  if(P.side_idx!=null){
+    const pts=[];
+    P.steps.forEach((x,i)=>{ const b=x.books&&x.books[P.rail]; if(b&&b[P.side_idx]!=null) pts.push([i,b[P.side_idx]]); });
+    if(pts.length>1){
+      const w=820,h=90;
+      const xs=i=>(i/(P.steps.length-1))*w, ys=v=>h-6-v*(h-12);
+      const line=pts.map(p=>xs(p[0]).toFixed(1)+','+ys(p[1]).toFixed(1)).join(' ');
+      $('trace').innerHTML='<div class="card"><div class="small">The traded side\u2019s mid on the '+esc(P.rail)+' road, state by state (0–100¢)</div>'
+        +'<svg width="100%" viewBox="0 0 '+w+' '+h+'" style="background:#0d1420;border:1px solid #223148;border-radius:6px"><polyline fill="none" stroke="#2dd4bf" stroke-width="2" points="'+line+'"/><circle cx="'+xs(I)+'" cy="'+ys((P.steps[I].books&&P.steps[I].books[P.rail]||[])[P.side_idx]||0)+'" r="4" fill="#ffd97f"/></svg></div>';
+    }
+  }
+}
+async function load(){
+  const id=new URLSearchParams(location.search).get('p');
+  if(!id){ $('head').innerHTML='<p>No package named. Open one from <a href="arena.html">the Arena</a>.</p>'; return; }
+  const r=await fetch('packages/'+id+'.json?t='+Date.now());
+  if(!r.ok){ $('head').innerHTML='<p>Package not found on this shelf — it may still be sealing. <a href="arena.html">Back to the Arena</a>.</p>'; return; }
+  P=await r.json();
+  $('head').innerHTML='<div class="card"><b style="font-size:17px">'+esc(P.match)+'</b><br>'
+    +'<span class="tag">'+esc(P.specialist)+'</span><span class="tag">'+esc(P.rail)+' ROAD</span><span class="tag x">'+esc(P.class)+'</span>'
+    +(P.closed?'<span class="tag">CLOSED</span>':'<span class="tag">STILL OPEN</span>')
+    +'<br><span class="small">side: '+esc(P.side_name||'—')+' · opened '+esc(P.opened)+(P.closed?' · closed '+esc(P.closed):'')
+    +(P.result?(' · result P&amp;L '+(P.result.pnl>=0?'+':'')+Number(P.result.pnl).toFixed(2)+' ('+P.result.ret_pct+'%) · '+esc(P.result.exit)):'')
+    +'</span></div>';
+  render();
+}
+$('prev').onclick=()=>{ I=Math.max(0,I-1); render(); };
+$('next').onclick=()=>{ I=Math.min(P.steps.length-1,I+1); render(); };
+$('play').onclick=()=>{ if(timer){ clearInterval(timer); timer=null; $('play').innerHTML='&#9654; Play'; return; }
+  $('play').innerHTML='&#10073;&#10073; Pause';
+  timer=setInterval(()=>{ if(I>=P.steps.length-1){ clearInterval(timer); timer=null; $('play').innerHTML='&#9654; Play'; return; } I++; render(); }, 1600); };
+load();
+</script></body></html>

@@ -45,7 +45,9 @@ head-to-head, their own 1-2-3 splits, and the live state when the match is on th
 the rest open with the player carried over. Docked means not built — labeled, never faked.</p></div>
 <div id="runout"></div>
 
-<h2>&#127942; THE SCOREBOARD — every caller graded, streaks and all</h2>
+<h2>&#127942; SIMULATION HIGHSCORES — every caller graded, streaks and all</h2>
+<p class="small">Everything on this board is simulation and sealed calls — no real money has ever moved here.
+Below it sits the <b>REAL HIGHSCORES</b> board, which starts EMPTY and prints EMPTY.</p>
 <div id="scores"><p class="dim">loading the sealed records&hellip;</p></div>
 
 <h2>What FIND cannot see (printed, not hidden)</h2>
@@ -288,12 +290,13 @@ function renderScores(){
     +'<td class="num streak">'+(c.streak_now?('&#128293; '+c.streak_now):'0')+'</td><td class="num">'+c.streak_best+'</td>'
     +'<td>'+(c.status==='APPROVED'?'<span class="ok"><b>APPROVED</b></span>':esc(c.status))+'</td></tr>'; }
   h+='</table>';
-  if(d.arena&&d.arena.length){ h+='<h3>&#127908; The Specialist Arena — the traders ride this board too</h3><table><tr><th>Specialist</th><th>Equity</th><th>Realized</th><th>Closed trades</th><th>Win rate</th><th>Streak now</th><th>Best flip</th><th>Status</th></tr>';
-    for(const a of d.arena){ h+='<tr><td><b>'+esc(a.name)+'</b><br><span class="small">'+esc(a.grade_note)+'</span></td>'
+  if(d.arena&&d.arena.length){ h+='<h3>&#127908; The Specialist Arena — the traders ride this board too (per rail, class-stamped)</h3><table><tr><th>Specialist · Rail</th><th>Equity</th><th>Realized</th><th>Closed trades</th><th>Win rate</th><th>Streak now</th><th>Best flip</th><th>Status</th></tr>';
+    for(const a of d.arena){ h+='<tr><td><b>'+esc(a.name)+'</b> <span class="small">['+esc(a.class||'')+']</span><br><span class="small">'+esc(a.grade_note)+'</span></td>'
       +'<td class="num">$'+Number(a.equity).toFixed(2)+'</td><td class="num">$'+Number(a.realized).toFixed(2)+'</td><td class="num">'+a.trades+'</td>'
       +'<td class="num">'+(a.win_rate==null?'—':a.win_rate+'%')+'</td><td class="num streak">'+(a.streak_now?('&#128293; '+a.streak_now):'0')+'</td>'
       +'<td class="num">'+(a.best_flip==null?'—':('+'+a.best_flip+'%'))+'</td><td>'+esc(a.status)+'</td></tr>'; }
     h+='</table><p class="small">Their booth, banks and rulebook live in <a href="arena.html">the Arena</a> — Phase 1 simulation against live external prices; every fill sealed.</p>'; }
+  h+='<h3>&#127942; REAL HIGHSCORES</h3><p style="letter-spacing:3px;font-size:17px"><b>— EMPTY —</b></p><p class="small">'+esc(d.real_note||'This board fills only if Phase 2 ever opens.')+'</p>';
   h+='<h3>Engines, honestly listed</h3><table>';
   for(const e of d.engines) h+='<tr><td>'+esc(e.name)+'</td><td>'+e.mode+'</td><td class="small">'+esc(e.note)+'</td></tr>';
   $('scores').innerHTML=h+'</table>';

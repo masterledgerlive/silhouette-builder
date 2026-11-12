@@ -8,6 +8,7 @@
  a{color:#7fd4ff} .small{font-size:12.5px;color:#93a5bb} .dim{color:#93a5bb}
  .card{background:#101722;border:1px solid #223148;border-radius:8px;padding:12px 14px;margin:9px 0}
  .spec{border-width:2px} .wave{border-color:#2dd4bf} .lock{border-color:#f5b942} .scout{border-color:#c792ff}
+ .rail{border:1px solid #223148;border-radius:6px;padding:9px 11px;margin:7px 0;background:#0d1420}
  .tag{display:inline-block;font-size:11px;border:1px solid #2c5a7a;color:#7fd4ff;border-radius:4px;padding:1px 6px;margin-right:5px}
  .tag.x{border-color:#8a6d1f;color:#ffd97f} .tag.dead{border-color:#a33;color:#ff9c9c}
  table{border-collapse:collapse;width:100%;font-size:13.5px}
@@ -16,17 +17,23 @@
  .up{color:#8fe388} .down{color:#ff9c9c} .streak{color:#ffb35c;font-weight:bold}
  .feed div{padding:7px 9px;border-bottom:1px solid #1c2940;font-size:14px;line-height:1.5}
  .feed b{color:#ffd97f}
- pre{background:#0d1420;border:1px solid #223148;border-radius:6px;padding:10px;font-size:12px;white-space:pre-wrap}
 </style></head><body>
-<p class="small"><a href="index.html">&larr; NODAL hub</a> · <a href="find.html">FIND + the scoreboard</a></p>
+<p class="small"><a href="index.html">&larr; NODAL hub</a> · <a href="find.html">FIND + the scoreboards</a></p>
 <h1>&#127908; THE SPECIALIST ARENA</h1>
-<p>Three agentic specialists, <b>$10.00 each</b>, tennis only — trading against live external prices in
-<b>PHASE 1: SIMULATION</b>. The traded tape is the Polymarket Gamma book (<span class="tag x">EXTERNAL</span> prices —
-the tape here, still never feeding the house core call anywhere else), Kalshi public prices as second witness
-where reachable. Fills are simulated against the live bid/ask and the spread is charged honestly. Every fill is
-<b>sealed into the hash-chained ledger</b> the moment it happens, with the engine and the number behind it.
-Survive and earn: no refills — a busted specialist reproves itself in shadow simulation, and any real refill
-is David's word alone.</p>
+<p>Three agentic specialists, tennis only — <b>PHASE 1: DUAL-RAIL SIMULATION</b>. Each specialist's $10.00 runs
+as <b>two $5.00 sub-banks: a KALSHI rail and a POLYMARKET rail</b>. Same strategy, same match, both roads at once —
+so the venue difference is measured clean, skill held constant. Traded tapes are live external prices
+(<span class="tag x">EXTERNAL</span> — the tape here, never feeding the house core call anywhere else): the
+Polymarket Gamma book and Kalshi's public order books. Fills are simulated against the live bid/ask, spread
+charged honestly, and <b>every fill is sealed into the hash-chained ledger</b> with the engine and the number
+behind it. A specialist is busted only when <b>both</b> rails are dead; a dead rail reproves itself in shadow
+simulation. No refills — any real refill is David's word alone.</p>
+<p class="small">Class stamps, never blended: <span class="tag">SIM-OURS-POLYMARKET</span> our engine on live
+Polymarket prices (Polymarket has no paper environment — nothing is kept in their system) ·
+<span class="tag">SIM-OURS-KALSHI</span> our engine on Kalshi public live prices. Kalshi's official DEMO
+environment exists, but demo trading needs a demo account + API key created by David's own hand — until then
+this rail runs our-side. If demo trading ever lands, its fills get cross-checked against live prices and the
+divergence printed. The REAL highscores board (FIND) starts EMPTY and prints EMPTY.</p>
 <div id="meta" class="small">loading the arena&hellip;</div>
 
 <h2>The specialists</h2>
@@ -35,14 +42,17 @@ is David's word alone.</p>
 <h2>&#128251; The booth — live play-by-play (text)</h2>
 <div class="card feed" id="feed"><p class="dim">the booth is warming up&hellip;</p></div>
 
-<h2>Open positions</h2>
-<div id="positions"></div>
+<h2>&#128230; Play packages — every play, sealed, replayable</h2>
+<div id="packages"></div>
 
-<h2>&#127942; Arena scoreboard</h2>
+<h2>&#9878;&#65039; Venue delta — same play, both roads</h2>
+<div id="delta"></div>
+
+<h2>&#127942; Arena scoreboard (combined rails)</h2>
 <div id="board"></div>
-<p class="small">The specialists' graded trades also ride the <a href="find.html">FIND scoreboard</a> beside the house
-models — traders are graded on closed trades and P&amp;L; the models on accuracy and Brier. Two kinds of record,
-one board, nothing blended.</p>
+<p class="small">The specialists also ride the <a href="find.html">FIND scoreboard</a>, per rail with their class
+stamps, beside the house models — traders graded on closed trades and P&amp;L; models on accuracy and Brier.
+Two kinds of record, never blended.</p>
 
 <h2>&#128220; THE RULEBOOK — the show's law (David's words, operationalized)</h2>
 <div class="card" style="line-height:1.65">
@@ -50,14 +60,15 @@ one board, nothing blended.</p>
 <p><b>95–98 cashed is a WIN.</b> Most games flip late — take the points and get out. Only a true lock (bid 99+) may hold to settlement.</p>
 <p><b>The flip hedge rides automatically:</b> on every Lock Hunter main position, 1% of potential winnings goes on the other side at 1–4¢ — a low-bet/high-yield last-second flip ticket. If it flips, it's cashed too — paid twice.</p>
 <p><b>Re-enter with profits. Switch players when the profit on one side is exhausted.</b></p>
-<p><b>Each specialist starts at exactly $10.00. NO REFILLS.</b> A specialist that busts is OUT — it earns its way back only by proving itself in side-by-side shadow simulation, and any real refill is David's word alone.</p>
+<p><b>Dual rail:</b> $5.00 Kalshi + $5.00 Polymarket per specialist — also the declared stake shape for Phase 2. Busted = both rails dead. A dead rail earns its way back only in shadow simulation.</p>
+<p><b>NO REFILLS.</b> Any real refill is David's word alone.</p>
 <p><b>Every order cites the engine and the number behind it.</b> No naked guesses.</p>
-<p class="small">Desk parameters, printed not hidden: stakes — Wave Rider $1.00 · Lock Hunter $2.50 main · Value Scout $0.75.
-The Hunter's entry band is 90–94¢ (95–98 is the exit band — entering there pays the spread to stand still) and it
-takes at most 2 new mains per cycle, keeping powder dry. Bust line: equity under $0.75. Wave Rider turnaround =
-our DP swinging 10+ points with the market lagging 8+; Value Scout undervalue = our number 15+ over the tape,
-second-set relief included. Prices are the live Gamma bid/ask; where a book shows no bid/ask, a labeled 2¢
-synthetic spread is charged instead.</p>
+<p class="small">Desk parameters, printed not hidden: stakes per rail — Wave Rider $0.50 · Lock Hunter $1.25 main · Value Scout $0.38.
+The Hunter's entry band is 90–94¢ (95–98 is the exit band) and it takes at most 2 new mains per rail per cycle.
+The Wave Rider's price-wave mode (no wire state) only enters at 85¢ or under — above that the move is spent.
+Rail bust line: equity under $0.40. Honest caveat: the pre-match house number is built from serve/return
+cards — serve-heavy by construction; the market knows more, and the gap between them is exactly what the
+Scout's record will judge. Where a book shows no bid/ask, a labeled synthetic spread is charged instead.</p>
 </div>
 
 <h2>&#128274; PHASE 2 — real-money route <span class="tag dead">DOCKED — NOT WIRED</span></h2>
@@ -74,37 +85,47 @@ considered here — in public, on the sealed record.</p>
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;');
 const money=v=>'$'+Number(v).toFixed(2);
-function spark(vals){
-  if(!vals||vals.length<2) return '<span class="small">equity curve forming…</span>';
-  const w=260,h=44,mn=Math.min(...vals,9.4),mx=Math.max(...vals,10.6),rg=(mx-mn)||1;
+function spark(vals,label){
+  if(!vals||vals.length<2) return '<span class="small">'+label+': curve forming…</span>';
+  const w=250,h=40,mn=Math.min(...vals,4.4),mx=Math.max(...vals,5.6),rg=(mx-mn)||1;
   const pts=vals.map((v,i)=>((i/(vals.length-1))*w).toFixed(1)+','+(h-3-((v-mn)/rg)*(h-6)).toFixed(1)).join(' ');
   const col=vals[vals.length-1]>=vals[0]?'#8fe388':'#ff9c9c';
-  return '<svg width="'+w+'" height="'+h+'" style="background:#0d1420;border:1px solid #223148;border-radius:6px"><polyline fill="none" stroke="'+col+'" stroke-width="2" points="'+pts+'"/></svg>';
+  return '<div class="small">'+label+'</div><svg width="'+w+'" height="'+h+'" style="background:#0b0e13;border:1px solid #223148;border-radius:6px"><polyline fill="none" stroke="'+col+'" stroke-width="2" points="'+pts+'"/></svg>';
+}
+function railBlock(rn,r){
+  return '<div class="rail"><b>'+rn+' RAIL</b> '
+    +(r.status==='ALIVE'?'<span class="tag">ALIVE</span>':'<span class="tag dead">DEAD — SHADOW REPROVE</span>')
+    +' · cash <b>'+money(r.cash)+'</b> · equity <b>'+money(r.equity)+'</b> · realized <span class="'+(r.realized>=0?'up':'down')+'">'+money(r.realized)+'</span>'
+    +' · '+r.trades+' closed ('+(r.win_rate==null?'—':r.win_rate+'% won')+') · streak '+(r.streak?'&#128293; '+r.streak:'—')+' · best flip '+(r.best_flip==null?'—':'+'+r.best_flip+'%')
+    +'<br>'+spark(r.spark, rn+' equity')
+    +(r.positions.length? '<table><tr><th>Open</th><th>Side</th><th>Entry</th><th>Mark</th><th>Stake</th></tr>'
+      +r.positions.map(p=>'<tr><td>'+esc(p.title)+'</td><td>'+esc(p.side_name)+(p.hedge?' <span class="tag x">FLIP HEDGE</span>':'')+'</td><td class="num">'+Math.round(p.entry*100)+'¢</td><td class="num">'+(p.mark==null?'—':Math.round(p.mark*100)+'¢')+'</td><td class="num">'+money(p.stake)+'</td></tr>').join('')+'</table>' : '<p class="dim" style="margin:4px 0">No open positions on this rail.</p>')
+    +(r.status!=='ALIVE'?('<p class="small">Shadow bank: '+money(r.shadow.cash)+' · shadow trades '+r.shadow.trades+' · shadow P&amp;L '+money(r.shadow.pnl)+'</p>'):'')
+    +'</div>';
 }
 async function load(){
   const r=await fetch('arenadata.json?t='+Date.now()); const d=await r.json();
   $('meta').innerHTML='<span class="tag x">EXTERNAL TAPE</span> '+esc(d.phase)+' · updated '+esc(d.updated)+' · '
-    +d.markets_seen+' tennis markets on the tape · '+esc(d.witness_note);
+    +d.markets_seen+' tennis markets on the tape · '+d.kalshi_books+' carrying a Kalshi book';
   const cls={WAVE:'wave',LOCK:'lock',SCOUT:'scout'};
   const ico={WAVE:'&#127754;',LOCK:'&#128274;',SCOUT:'&#128270;'};
   $('specs').innerHTML=Object.entries(d.specialists).map(([k,s])=>
     '<div class="card spec '+cls[k]+'"><b style="font-size:18px">'+ico[k]+' '+esc(s.name)+'</b> '
-    +(s.status==='ALIVE'?'<span class="tag">ALIVE</span>':'<span class="tag dead">BUSTED — REPROVING IN SHADOW</span>')
+    +(s.status==='ALIVE'?'<span class="tag">ALIVE</span>':'<span class="tag dead">BUSTED — BOTH RAILS DEAD</span>')
+    +' · combined equity <b>'+money(s.combined_equity)+'</b> · combined realized <span class="'+(s.combined_realized>=0?'up':'down')+'">'+money(s.combined_realized)+'</span> · '+s.combined_trades+' closed trades'
     +'<br><span class="small">'+esc(s.strategy)+'</span>'
-    +'<table><tr><td>Bank (cash)</td><td class="num"><b>'+money(s.cash)+'</b></td><td>Equity (marked)</td><td class="num"><b>'+money(s.equity)+'</b></td></tr>'
-    +'<tr><td>Realized P&amp;L</td><td class="num '+(s.realized>=0?'up':'down')+'">'+money(s.realized)+'</td><td>Closed trades</td><td class="num">'+s.trades+' ('+(s.win_rate==null?'—':s.win_rate+'% won')+')</td></tr>'
-    +'<tr><td>Current streak</td><td class="num streak">'+(s.streak?'&#128293; '+s.streak:'—')+'</td><td>Best flip</td><td class="num">'+(s.best_flip==null?'—':'+'+s.best_flip+'%')+'</td></tr></table>'
-    +spark(s.spark)
-    +(s.status!=='ALIVE'?('<p class="small">Shadow bank: '+money(s.shadow.cash)+' · shadow trades '+s.shadow.trades+' · shadow P&amp;L '+money(s.shadow.pnl)+' — proving itself; refill is David\u2019s word alone.</p>'):'')
+    +railBlock('KALSHI', s.rails.KALSHI)+railBlock('POLYMARKET', s.rails.POLY)
     +'</div>').join('');
   $('feed').innerHTML=d.feed.length? d.feed.map(f=>'<div><span class="small">'+esc(f.at)+'</span> <b>'+esc(f.who)+':</b> '+esc(f.text)+'</div>').join('') : '<p class="dim">No calls yet — the specialists are watching the tape.</p>';
-  $('positions').innerHTML=Object.entries(d.specialists).map(([k,s])=>
-    '<h3>'+esc(s.name)+'</h3>'+(s.positions.length? '<table><tr><th>Match</th><th>Side</th><th>Entry</th><th>Mark</th><th>Stake</th></tr>'
-      +s.positions.map(p=>'<tr><td>'+esc(p.title)+'</td><td>'+esc(p.side_name)+(p.hedge?' <span class="tag x">FLIP HEDGE</span>':'')+'</td><td class="num">'+Math.round(p.entry*100)+'¢</td><td class="num">'+(p.mark==null?'—':Math.round(p.mark*100)+'¢')+'</td><td class="num">'+money(p.stake)+'</td></tr>').join('')+'</table>'
-      : '<p class="dim">No open positions.</p>')).join('');
-  const rows=Object.values(d.specialists).sort((a,b)=>b.equity-a.equity);
-  $('board').innerHTML='<table><tr><th>Specialist</th><th>Equity</th><th>Realized</th><th>Trades</th><th>Win rate</th><th>Best flip</th><th>Status</th></tr>'
-    +rows.map(s=>'<tr><td><b>'+esc(s.name)+'</b></td><td class="num">'+money(s.equity)+'</td><td class="num '+(s.realized>=0?'up':'down')+'">'+money(s.realized)+'</td><td class="num">'+s.trades+'</td><td class="num">'+(s.win_rate==null?'—':s.win_rate+'%')+'</td><td class="num">'+(s.best_flip==null?'—':'+'+s.best_flip+'%')+'</td><td>'+esc(s.status)+'</td></tr>').join('')+'</table>';
+  $('packages').innerHTML=d.packages.length? '<table><tr><th>Package</th><th>Specialist</th><th>Road</th><th>Class</th><th>State</th><th>Result</th><th></th></tr>'
+    +d.packages.map(p=>'<tr><td>'+esc(p.match)+'</td><td>'+esc(p.specialist)+'</td><td>'+esc(p.rail)+'</td><td><span class="tag x">'+esc(p.class)+'</span></td><td>'+(p.closed?'closed':'open')+'</td><td>'+(p.result?('P&amp;L '+(p.result.pnl>=0?'+':'')+Number(p.result.pnl).toFixed(2)):'—')+'</td><td><a href="'+esc(p.replay)+'">&#127916; replay</a></td></tr>').join('')+'</table>'
+    : '<p class="dim">No packages yet.</p>';
+  $('delta').innerHTML=d.venue_delta.length? '<table><tr><th>Match</th><th>Specialist</th><th>Polymarket P&amp;L per $1</th><th>Kalshi P&amp;L per $1</th><th>Delta</th><th>Better road</th></tr>'
+    +d.venue_delta.map(v=>'<tr><td>'+esc(v.match)+'</td><td>'+esc(v.specialist)+'</td><td class="num">'+v.poly_pnl_per_dollar+'</td><td class="num">'+v.kalshi_pnl_per_dollar+'</td><td class="num"><b>'+(v.delta>=0?'+':'')+v.delta+'</b></td><td>'+esc(v.better_road)+'</td></tr>').join('')+'</table>'
+    : '<p class="dim">No same-match pair has closed yet — the delta prints the moment both roads finish the same play. That comparison is the point of the dual rail.</p>';
+  const rows=Object.values(d.specialists).sort((a,b)=>b.combined_equity-a.combined_equity);
+  $('board').innerHTML='<table><tr><th>Specialist</th><th>Combined equity</th><th>Kalshi rail</th><th>Polymarket rail</th><th>Realized</th><th>Trades</th><th>Status</th></tr>'
+    +rows.map(s=>'<tr><td><b>'+esc(s.name)+'</b></td><td class="num">'+money(s.combined_equity)+'</td><td class="num">'+money(s.rails.KALSHI.equity)+'</td><td class="num">'+money(s.rails.POLY.equity)+'</td><td class="num '+(s.combined_realized>=0?'up':'down')+'">'+money(s.combined_realized)+'</td><td class="num">'+s.combined_trades+'</td><td>'+esc(s.status)+'</td></tr>').join('')+'</table>';
 }
 load(); setInterval(load, 60000);
 </script></body></html>
