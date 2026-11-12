@@ -160,6 +160,14 @@ async function load(){
   $('packages').innerHTML=d.packages.length? '<table><tr><th>Package</th><th>Specialist</th><th>Road</th><th>Class</th><th>State</th><th>Result</th><th></th></tr>'
     +d.packages.map(p=>'<tr><td>'+esc(p.match)+'</td><td>'+esc(p.specialist)+'</td><td>'+esc(p.rail)+'</td><td><span class="tag x">'+esc(p.class)+'</span></td><td>'+(p.closed?'closed':'open')+'</td><td>'+(p.result?('P&amp;L '+(p.result.pnl>=0?'+':'')+Number(p.result.pnl).toFixed(2)):'—')+'</td><td><a href="'+esc(p.replay)+'">&#127916; replay</a></td></tr>').join('')+'</table>'
     : '<p class="dim">No packages yet.</p>';
+  if(d.profit_score){ $('boards').insertAdjacentHTML('beforeend',
+    '<h2>&#9878;&#65039; LIVE PROFIT SCORE — profit is the score here</h2><div class="card"><p style="margin-top:0">'
+    +'It does not matter who wins the match; what matters is what was profited. Full board on the '
+    +'<a href="games.html">EVERY GAME watch page</a>, where predicted picks and live profit cards sit side by side.</p>'
+    +Object.entries(d.profit_score).map(([s,v])=>'<p style="margin:3px 0"><b>'+esc(s)+'</b> — realized <b class="'+(v.profit>=0?'pos':'neg')+'">$'+v.profit.toFixed(2)+'</b> · open mark $'+v.open_pnl.toFixed(2)+' · '+v.profit_moves+' profit moves / '+v.wrong_moves+' wrong · '+v.won_with_profit+' WON WITH PROFIT · '+v.closed_at_loss+' CLOSED AT A LOSS</p>').join('')
+    +'<p class="small" style="margin-bottom:0">PREDICTION SCORE (frozen picks, graded separately, never blended): '
+    +Object.entries(d.prediction_score||{}).map(([s,v])=>esc(s)+': '+v.sealed+' sealed, '+v.graded+' graded'+(v.acc!=null?', '+Math.round(v.acc*100)+'% right, Brier '+v.mean_brier:'')).join(' · ')+'</p></div>');
+  }
   const openPkgs=d.packages.filter(p=>!p.closed);
   $('forks').innerHTML=openPkgs.length? openPkgs.map(p=>'<div class="card"><b>'+esc(p.specialist)+' · '+esc(p.rail)+' · '+esc(p.match)+'</b> <a href="'+esc(p.replay)+'">replay</a>'+forkHTML(p.fork)+'</div>').join('') : '<p class="dim">No open plays — no live forks.</p>';
   try{

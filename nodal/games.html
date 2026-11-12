@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EVERY GAME — Watch Both Roads · Predicted vs Live · NODAL</title>
+<style>
+  body{background:#0a0f16;color:#dbe7f3;font-family:Georgia,serif;margin:0;padding:22px 16px 60px}
+  .wrap{max-width:1180px;margin:0 auto}
+  h1{font-size:26px;margin:0 0 2px} h2{color:#ffd97f;font-size:19px;margin:28px 0 8px}
+  .dim{color:#8fa8bf}.small{font-size:13px;color:#a9bfd4}
+  a{color:#7fd4ff}
+  .card{background:#101a28;border:1px solid #223148;border-radius:10px;padding:12px 16px;margin:10px 0}
+  .split{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media(max-width:760px){.split{grid-template-columns:1fr}}
+  .pred{border-left:4px solid #7fd4ff;padding-left:10px}
+  .live{border-left:4px solid #f5b942;padding-left:10px}
+  .pos{color:#7fe3a8}.neg{color:#ff9a9a}.gold{color:#ffd97f}
+  input{background:#0d1420;color:#dbe7f3;border:1px solid #223148;border-radius:8px;padding:9px 12px;font-size:15px;width:min(430px,90%)}
+  .railbox{background:#0d1420;border:1px solid #223148;border-radius:8px;padding:10px 12px}
+  table{border-collapse:collapse} td,th{padding:2px 8px 2px 0;text-align:left;font-size:14px}
+</style></head><body><div class="wrap">
+<p class="small"><a href="index.html">&larr; NODAL hub</a> · <a href="arena.html">The Specialist Arena</a> · <a href="find.html">FIND + scoreboards</a></p>
+<h1>&#127934; EVERY GAME — WATCH BOTH ROADS</h1>
+<p class="dim" style="margin:0">Every game on the day's tapes, listed. Where a match trades on both roads, watch them
+<b>side by side</b> — live prices per rail, each specialist's position per rail, and the three-steps-out fork per rail.
+Snapshot updated <span id="upd">—</span> (the sealed chain is the real-time record).</p>
+
+<h2>&#9878;&#65039; THE TWO SCORES — NEVER BLENDED</h2>
+<div class="card">
+<p style="margin-top:0"><b class="gold">PREDICTION SCORE</b> — the frozen pick's own track: right or wrong, and how honest
+its printed probability was (Brier calibration). Picks are sealed <i>before first ball</i> and never edited after.
+The number printed on a pick is its <b>simulated probability of being right</b> — the engines' model probability,
+not a promise; its complement is printed as the <b>RISK</b> a follower takes.</p>
+<p><b class="gold">LIVE PROFIT SCORE</b> — the live play is scored on <b>PROFIT, not on who won the match</b>:
+it does not matter who wins; what matters is what was profited. A specialist can back the match loser and still
+win this board if the moves profited — and backing the winner while losing money scores as a loss. Verdicts:
+<b>WON WITH PROFIT</b> / <b>CLOSED AT A LOSS</b>, with the count of profit-making moves vs wrong moves.</p>
+<div id="boards" class="small"></div>
+</div>
+
+<h2>&#128250; WATCH BOTH SIDE BY SIDE — dual-rail games</h2>
+<div id="dual"></div>
+
+<h2>&#128203; ALL GAMES</h2>
+<input id="q" type="search" placeholder="Filter by player or tournament…">
+<div id="games"></div>
+
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function branchRow(b, modal){
+  const rng=b.range? Object.entries(b.range).map(([k,v])=>v? (k+' '+Math.round(v[0]*100)+'–'+Math.round(v[1]*100)+'¢') : (k+' —')).join(' · ') : '';
+  return '<div style="padding:4px 8px;margin:3px 0;border-left:4px solid '+(modal?'#f5b942':'#223148')+';background:'+(modal?'#16263e':'#0d1420')+';opacity:'+(modal?'1':'0.62')+';font-size:13px">'
+    +'<b>'+esc(b.who)+'</b> — '+Math.round(b.p*100)+'% · our number there: '+Math.round(b.dp_side*100)
+    +(rng? ' · projected '+esc(rng):'')+' · <span style="color:#ffd97f"><b>'+esc(b.action)+'</b></span></div>';
+}
+function forkHTML(fk){
+  if(!fk) return '<p class="small">No fork chart on this rail.</p>';
+  if(!fk.available) return '<p class="small">No fork — '+esc(fk.reason)+'.</p>';
+  let h='<p class="small">State: '+esc(fk.state)+' · <b>most likely pattern: '+Math.round(fk.modal_prob*100)+'% combined</b></p>';
+  const [m1,m2,m3]=fk.modal;
+  h+=fk.steps[0].branches.map((b,i)=>branchRow(b, i===m1)).join('');
+  h+=fk.steps[1].branches.map((g,gi)=>'<div style="margin-left:12px">'+g.map((b,i)=>branchRow(b, gi===m1&&i===m2)).join('')+'</div>').join('');
+  return h;
+}
+function bookLine(g, rail){
+  const b=g.books[rail]; if(!b) return '<span class="dim">no book on this road</span>';
+  return g.names.map((n,i)=>esc(n.split(' ').slice(-1)[0])+' <b>'+Math.round(b.mid[i]*100)+'¢</b> <span class="dim">('+Math.round(b.bid[i]*100)+'/'+Math.round(b.ask[i]*100)+')</span>').join(' · ');
+}
+function predHTML(g){
+  if(!g.picks) return '<p class="small">No frozen pick — picks seal only before first ball, and only when the engines hold both cards.</p>';
+  let h='';
+  for(const [spec,e] of Object.entries(g.picks.picks)){
+    if(e.abstain){ h+='<p style="margin:4px 0"><b>'+esc(spec)+'</b> — ABSTAINS · <span class="small">'+esc(e.basis)+'</span></p>'; continue; }
+    const gr=g.picks.graded&&g.picks.graded.grades? g.picks.graded.grades[spec] : null;
+    h+='<p style="margin:4px 0"><b>'+esc(spec)+'</b> → <b>'+esc(e.pick)+'</b> · <b>'+Math.round(e.prob*100)+'%</b> simulated probability of being right · <span class="neg">RISK '+Math.round(e.risk*100)+'%</span>'
+      +(gr? ' · <b>'+(gr.correct?'✓ RIGHT':'✗ WRONG')+'</b> (Brier '+gr.brier+')':' · not yet graded')
+      +'<br><span class="small">'+esc(e.basis)+' · '+esc(e.engine)+'</span></p>';
+  }
+  const cards=Object.entries(g.picks.cards||{}).map(([n,c])=>esc(n.split(' ').slice(-1)[0])+' srv '+(c.serve!=null? Math.round(c.serve*100):'—')+' · ret '+(c.return!=null? Math.round(c.return*100):'—')).join(' · ');
+  if(cards) h+='<p class="small">Cards behind the pick: '+cards+'</p>';
+  if(g.picks.graded) h+='<p class="small">Final: '+esc(g.picks.graded.winner)+' won.</p>';
+  return h;
+}
+function liveHTML(g){
+  let h='<p style="margin:4px 0" class="small">'+esc(g.state)+(g.dp!=null? ' · our number '+Math.round(g.dp*100)+' on '+esc(g.names[0].split(' ').slice(-1)[0]):' · no number (cards missing)')+'</p>';
+  h+='<p style="margin:4px 0" class="small">POLY '+bookLine(g,'POLY')+'<br>KALSHI '+bookLine(g,'KALSHI')+'</p>';
+  for(const p of g.positions||[])
+    h+='<p style="margin:4px 0" class="small">'+esc(p.specialist)+' · '+esc(p.rail)+': '+esc(p.side)+' @ '+Math.round(p.entry*100)+'¢ × '+p.shares+' sh · mark '+(p.mark_pnl==null?'—':(p.mark_pnl>=0?'<span class="pos">+$':'<span class="neg">−$')+Math.abs(p.mark_pnl).toFixed(2)+'</span>')+'</p>';
+  for(const [spec,d] of Object.entries(g.profit||{})){
+    if(!d) continue;
+    h+='<p style="margin:4px 0"><b>'+esc(spec)+'</b> — profit score <b class="'+(d.total>=0?'pos':'neg')+'">$'+d.total.toFixed(2)+'</b> · moves '+d.pm+' profit / '+d.wm+' wrong'+(d.verdict? ' · <b>'+esc(d.verdict)+'</b>':' · still open')+'</p>';
+  }
+  return h;
+}
+let GAMES=[];
+function render(){
+  const q=$('q').value.toLowerCase();
+  const rows=GAMES.filter(g=>!q||g.title.toLowerCase().includes(q));
+  $('games').innerHTML=rows.map(g=>'<div class="card"><b>'+esc(g.title)+'</b> <span class="small">'+esc(g.start||'')+'</span><div class="split"><div class="pred"><b class="small" style="color:#7fd4ff">PREDICTED — frozen before first ball</b>'+predHTML(g)+'</div><div class="live"><b class="small" style="color:#f5b942">LIVE — the profit score runs</b>'+liveHTML(g)+'</div></div></div>').join('')||'<p class="dim">No games match.</p>';
+}
+async function load(){
+  const r=await fetch('gamesdata.json?t='+Date.now()); const d=await r.json();
+  $('upd').textContent=d.updated; GAMES=d.games;
+  const pb=d.prediction_score, fb=d.profit_score;
+  $('boards').innerHTML='PREDICTION — '+Object.entries(pb).map(([s,v])=>esc(s)+': '+v.sealed+' sealed · '+v.graded+' graded'+(v.acc!=null? ' · '+Math.round(v.acc*100)+'% right · Brier '+v.mean_brier:'')).join(' · ')
+    +'<br>PROFIT — '+Object.entries(fb).map(([s,v])=>esc(s)+': $'+v.profit.toFixed(2)+' realized ('+v.profit_moves+' profit moves / '+v.wrong_moves+' wrong · '+v.won_with_profit+' won-with-profit · '+v.closed_at_loss+' closed-at-loss)').join(' · ')
+    +'<br>'+esc(d.law);
+  const dual=d.games.filter(g=>g.dual);
+  $('dual').innerHTML=dual.length? dual.map(g=>'<div class="card"><b>'+esc(g.title)+'</b> <span class="small">'+esc(g.state)+'</span><div class="split">'
+    +['POLY','KALSHI'].map(rail=>'<div class="railbox"><b>'+(rail==='POLY'?'POLYMARKET':'KALSHI')+'</b> <span class="small">[SIM-OURS-'+(rail==='POLY'?'POLYMARKET':'KALSHI')+']</span><p class="small">'+bookLine(g,rail)+'</p>'
+      +(g.positions||[]).filter(p=>p.rail===rail).map(p=>'<p class="small" style="margin:2px 0">'+esc(p.specialist)+': '+esc(p.side)+' @ '+Math.round(p.entry*100)+'¢ · mark '+(p.mark_pnl==null?'—':'$'+p.mark_pnl.toFixed(2))+'</p>').join('')
+      +forkHTML(g.forks[rail])+'</div>').join('')
+    +'</div></div>').join('') : '<p class="dim">No dual-rail games on the tape right now — the venue difference needs both roads open on the same match.</p>';
+  render();
+}
+$('q').addEventListener('input', render);
+load();
+</script></div></body></html>
