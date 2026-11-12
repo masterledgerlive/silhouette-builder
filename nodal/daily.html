@@ -1,0 +1,161 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NODAL — THE DAILY BOARD · every match today, called and flagged</title><style>
+body{background:#070b14;color:#eef2fa;font-family:-apple-system,'Segoe UI',Roboto,Arial,sans-serif;padding:16px;max-width:1240px;margin:0 auto}
+.logo{font-size:26px;font-weight:800;letter-spacing:3px}.logo span{color:#f5b942}
+.note{color:#8fa3c4;font-size:12.5px;line-height:1.6}
+.box{background:#0b111f;border:1px solid #1e2c47;border-radius:12px;padding:14px;margin-top:12px}
+.box h2{font-size:13px;letter-spacing:2px;color:#f5b942;text-transform:uppercase;margin:0 0 8px}
+.box p,.box li{color:#c9d6ee;font-size:13.5px;line-height:1.65}
+.big{font-size:19px;font-weight:800;color:#eef2fa}
+.tag{display:inline-block;border:1px solid #1e2c47;border-radius:8px;padding:3px 9px;margin:3px 4px 3px 0;font-size:12px;color:#c9d6ee;background:#101a2e}
+.tag.shoe{border-color:#3ddc84;color:#3ddc84;font-weight:800}
+.tag.risk{border-color:#f4506a;color:#f4506a;font-weight:800}
+.tag.blow{border-color:#f5b942;color:#f5b942;font-weight:800}
+.tag.prom{border-color:#2dd4bf;color:#2dd4bf;font-weight:800}
+.tag.thin{border-color:#8fa3c4;color:#8fa3c4}
+.tag.live{border-color:#f4506a;color:#f4506a}
+button{background:#1a2438;color:#eef2fa;border:1px solid #1e2c47;border-radius:9px;padding:8px 14px;font-size:14px;font-weight:700;cursor:pointer}
+.match{border:1px solid #1e2c47;border-radius:12px;padding:12px;margin-top:10px;background:#0b111f}
+.match.shoe{border-color:#3ddc84}.match.risk{border-color:#f4506a}
+footer{color:#8fa3c4;font-size:12px;line-height:1.7;margin-top:16px}
+a{color:#f5b942}
+.mono{font-variant-numeric:tabular-nums}
+</style></head><body>
+<div style="font-size:12px;color:#8fa3c4;border:1px solid #1e2c47;border-radius:8px;padding:6px 10px;margin-bottom:12px;background:#0b111f"><b style="color:#f5b942;letter-spacing:1px">THE DAILY BOARD</b> · every match on today's wire, run through the 1-2-3 engine and annotated · <a href="index.html" style="color:#f5b942">NODAL hub</a> · <a href="matrix.html" style="color:#f5b942">The 1-2-3 Matrix</a> · <a href="cheat.html" style="color:#f5b942">Cheat Sheets</a> · <a href="livepull.html" style="color:#f5b942">Live Pull</a></div>
+<div class="logo">THE DAILY <span>BOARD</span></div>
+<div class="note">The whole day at a glance: every match on the wire gets <b style="color:#eef2fa">our 1-2-3 call</b>, its <b style="color:#eef2fa">flags</b>, and its <b style="color:#eef2fa">watch-out ticker</b> — the same vocabulary as the Cheat Sheets. Every flag traces to a computed number or a named tell; the rules are printed under the board. No vibes flags. One day at a time for now — the week view is the later extension.</div>
+<div class="box"><h2>The flag vocabulary — the exact rules</h2>
+<p><span class="tag shoe">SHOE-IN</span> our number for the called side is <b>≥ 93%</b> — near-100, and only where the math earns it. The number always prints with it.<br>
+<span class="tag blow">BLOWOUT</span> our number ≥ 80% <b>and</b> the futures put a straight-sets finish at ≥ 55%.<br>
+<span class="tag risk">HIGH RISK / GET OUT</span> any of: the live reprice has run <b>≥ 25 points against the frozen pre-match favorite</b> · the <b>Grave</b> is open (Set-1 loser down 0-2 in Set 2 — a counted 7.7% state) · a player carries <b>WALK-OUT WATCH</b> (≥ 3 retirements/walkovers-given on their career file).<br>
+<span class="tag prom">PROMISE</span> the ranking underdog whose sim number is ≥ 45% — the sim disagrees with the ranking story; ranks and number print.<br>
+<span class="tag prom">UNDERVALUED</span> a thin-data player (card under 25 matches, or tape-nodes only) whose sim number is ≥ 40% — always with the <span class="tag thin">THIN</span> tag showing. Thin data is never hidden.<br>
+The ticker strip beside each match carries the live tells as they exist: <b>FLIP DIAL</b> · <b>GRAVE</b> · <b>EARLY-LEAD PRINT</b> · <b>DEAD-STOPPER</b> · <b>REVEAL WATCH</b> (the counted Set-2 drop rate after that Set-1 score) · <b>DECIDER NODE</b>.</p></div>
+<div id="board-note" class="note" style="margin-top:12px">Pulling today's board…</div>
+<div style="margin-top:8px"><button id="refresh">↻ Re-pull the day</button></div>
+<div id="board"></div>
+<div class="box"><h2>Our own records — sealed before outcomes</h2>
+<p>The desk runs this same board on its side and <b>seals every upcoming and live call — sim number, pick, flags, ticker — into the hash-chained ledger before the outcomes exist</b>, the same chain the slate matches finalize into. After matches finish, the grades land as their own records (pick right or wrong, Brier), and the board's totals are read from the ledger alone. Nobody can edit a call after the fact: the chain re-verifies end to end, and a changed record breaks it loudly.</p>
+<p><span class="tag">DESK RUN · 2026-11-11 EVENING</span> 96 matches on the wire · <b>13 upcoming/live sims sealed</b> (the rest had already finished when the run happened) · chain <b>VERIFIED at 2,906 records</b> · grades land as those matches finish. This page re-deals the same math live in your browser; <b>the sealed run is the record</b>.</p>
+<p class="note">Where the records go next, honestly labeled: this is the blobbing-start pack — the sealed daily records stage to Walrus on the free legs (testnet + the agents' console shelves) under the house's standing file-at-will rule; mainnet sealing happens only on David's exact word. Tonight's pass is the local hash chain — the same chain that has carried every NODAL call since Nov 4. "Blockchain records" is the direction, stated exactly as far as each pass actually goes.</p>
+</div>
+<footer>Sources: the day's matches — ESPN scoreboard, pulled in your browser when this page loads (the day = the wire's current board). Our call — the desk DP (price_state) on card / point-tape-node / labeled assumed splits from livedata.json (Sackmann archive 2015–2026 + Slam tape). Blowout futures — 400 game-level simulations per match in your browser, so its percentage may wiggle a point against the desk's sealed 800-run; the sealed run governs the record. Finished matches show the pre-match number for the day's full picture and are labeled — only calls sealed before or during play count in the record book.</footer>
+<script>
+"use strict";
+const $=id=>document.getElementById(id);
+const pct=x=>Math.round(x*1000)/10;
+let LD=null;
+const norm=n=>(n||"").toLowerCase().replace(/[^a-z ]/g,"").trim();
+const keyOf=n=>{const p=norm(n).split(/\s+/);return p.length?p[p.length-1]+"|"+p[0][0]:"";};
+let KEYMAP={};
+function lookup(name){if(!LD)return null;if(LD.players[name])return LD.players[name];
+  const k=keyOf(name);return KEYMAP[k]?LD.players[KEYMAP[k]]:null;}
+function splits(nameA,nameB){
+  const A=lookup(nameA),B=lookup(nameB);
+  if(A&&B&&A.card&&B.card&&A.card.serve!=null&&B.card.serve!=null)
+    return{pa:(A.card.serve+(100-B.card.return))/200,pb:(B.card.serve+(100-A.card.return))/200,src:"cards",A,B};
+  if(A&&B&&A.nodes&&B.nodes&&A.nodes.srv_pct!=null)
+    return{pa:(A.nodes.srv_pct+(1-B.nodes.ret_pct))/2,pb:(B.nodes.srv_pct+(1-A.nodes.ret_pct))/2,src:"nodes",A,B};
+  return{pa:0.60,pb:0.60,src:"assumed",A,B};}
+function gameWin(p){const q=1-p;const direct=p**4+4*p**4*q+10*p**4*q**2;const rd=20*p**3*q**3;const dz=p*p/(p*p+q*q);return direct+rd*dz;}
+function tbWin(pa,pb,first){const pavg=(pa+(1-pb))/2;const dr=pavg*pavg/(pavg*pavg+(1-pavg)*(1-pavg));const memo={};
+  function rec(a,b,srv,left){if(a>=7&&a-b>=2)return 1;if(b>=7&&b-a>=2)return 0;if(a>=6&&b>=6&&a===b)return dr;
+    const k=a+","+b+","+srv+","+left;if(memo[k]!==undefined)return memo[k];
+    const p=srv===0?pa:1-pb;let ns,nl;if(left>1){ns=srv;nl=left-1;}else{ns=1-srv;nl=2;}
+    return memo[k]=p*rec(a+1,b,ns,nl)+(1-p)*rec(a,b+1,ns,nl);}
+  return rec(0,0,first,1);}
+function setWinFrom(pa,pb,ga,gb,first){const gA=gameWin(pa),gB=gameWin(pb);const memo={};
+  function rec(x,y,srv){if((x>=6&&x-y>=2)||x===7)return 1;if((y>=6&&y-x>=2)||y===7)return 0;if(x===6&&y===6)return tbWin(pa,pb,srv);
+    const k=x+","+y+","+srv;if(memo[k]!==undefined)return memo[k];
+    const gw=srv===0?gA:1-gB;return memo[k]=gw*rec(x+1,y,1-srv)+(1-gw)*rec(x,y+1,1-srv);}
+  return rec(ga,gb,first);}
+function priceState(pa,pb,sa,sb,ga,gb,srv){
+  function matchFrom(x,y,ss){if(x===2)return 1;if(y===2)return 0;const sw=setWinFrom(pa,pb,0,0,ss);return sw*matchFrom(x+1,y,1-ss)+(1-sw)*matchFrom(x,y+1,1-ss);}
+  if(ga===0&&gb===0)return matchFrom(sa,sb,srv);
+  const pset=setWinFrom(pa,pb,ga,gb,srv);
+  return pset*matchFrom(sa+1,sb,srv)+(1-pset)*matchFrom(sa,sb+1,srv);}
+function straightShare(pa,pb,N){N=N||400;const gA=gameWin(pa),gB=gameWin(pb);let straight=0;
+  for(let i=0;i<N;i++){let sa=0,sb=0;
+    while(sa<2&&sb<2){let x=0,y=0,s=0;
+      while(true){if((x>=6&&x-y>=2)||x===7){sa++;break;} if((y>=6&&y-x>=2)||y===7){sb++;break;}
+        if(x===6&&y===6){if(Math.random()<tbWin(pa,pb,s))sa++;else sb++;break;}
+        const gw=s===0?gA:1-gB; if(Math.random()<gw)x++;else y++; s=1-s;}}
+    if(sa+sb===2)straight++;}
+  return straight/N;}
+const REVEAL={"6-0":21.8,"6-1":28.0,"6-2":29.5,"6-3":34.1};
+const SLOPE={0:90.2,1:86.1,2:85.4,3:81.9,4:79.7,5:79.5,6:76.9};
+const setDone=(a,b)=>(Math.max(a,b)>=6&&Math.abs(a-b)>=2)||Math.max(a,b)===7;
+function analyze(row){
+  const A=row.sides[0],B=row.sides[1];const sp=splits(A.name,B.name);
+  const lines=[];const n=Math.max(A.sets.length,B.sets.length);
+  for(let i=0;i<n;i++){const x=A.sets[i],y=B.sets[i];if(x===null||x===undefined||y===null||y===undefined)continue;lines.push([x,y]);}
+  let done=lines.slice(),ga=0,gb=0;
+  if(row.state==="in"&&lines.length){const last=lines[lines.length-1];
+    if(!setDone(last[0],last[1])){ga=last[0];gb=last[1];done=lines.slice(0,-1);}}
+  const sa=done.filter(l=>l[0]>l[1]).length,sb=done.filter(l=>l[1]>l[0]).length;
+  const srv=B.serve?1:0;
+  const pre=priceState(sp.pa,sp.pb,0,0,0,0,0);
+  const live=row.state==="pre"?pre:priceState(sp.pa,sp.pb,sa,sb,ga,gb,srv);
+  const our=row.state==="in"?live:pre;
+  const pick=our>=0.5?0:1,ourPick=pick===0?our:1-our;
+  const flags=[],ticker=[];
+  if(ourPick>=0.93)flags.push({c:"shoe",t:"SHOE-IN "+pct(ourPick)+"%"});
+  if(row.state==="pre"&&ourPick>=0.80&&straightShare(sp.pa,sp.pb)>=0.55)flags.push({c:"blow",t:"BLOWOUT — modal shape is a straight-sets route"});
+  if(row.state==="in"){const fav=pre>=0.5?0:1;const favLive=fav===0?live:1-live,favPre=fav===0?pre:1-pre;
+    if(favPre-favLive>=0.25)flags.push({c:"risk",t:"HIGH RISK / GET OUT — reprice −"+pct(favPre-favLive)+" pts vs the frozen favorite ("+row.sides[fav].name+")"});}
+  if(done.length===1&&row.state==="in"){const wi=done[0][0]>done[0][1]?0:1;const loser=1-wi;
+    const lg=loser===0?ga:gb,wg=loser===0?gb:ga;
+    if(lg===0&&wg===2){flags.push({c:"risk",t:"HIGH RISK — GRAVE open on "+row.sides[loser].name});ticker.push("GRAVE 7.7%");}
+    if(lg===2&&wg===0)ticker.push("EARLY-LEAD PRINT ~70%");
+    const s1k=Math.max(done[0][0],done[0][1])+"-"+Math.min(done[0][0],done[0][1]);
+    if(REVEAL[s1k])ticker.push("REVEAL WATCH "+REVEAL[s1k]+"%");
+    const lgm=Math.min(6,wi===0?done[0][1]:done[0][0]);ticker.push("FLIP DIAL "+SLOPE[lgm]);}
+  for(const nm of[A.name,B.name]){const d=lookup(nm);const ex=d&&d.exits;
+    if(ex&&(ex.ret_lost+ex.wo_lost)>=3)flags.push({c:"risk",t:"HIGH RISK — WALK-OUT WATCH on "+nm+" ("+(ex.ret_lost+ex.wo_lost)+" no-finish exits)"});}
+  if(sa===1&&sb===1)ticker.push("DECIDER NODE");
+  const cA=sp.A&&sp.A.card,cB=sp.B&&sp.B.card;
+  if(cA&&cB&&cA.rank&&cB.rank){const dog=cA.rank>cB.rank?0:1;const dogPct=dog===0?our:1-our;
+    if(dogPct>=0.45&&ourPick<0.93)flags.push({c:"prom",t:"PROMISE — "+row.sides[dog].name+" (rank #"+Math.round((dog===0?cA:cB).rank)+") sims at "+pct(dogPct)+"% against the ranking story"});}
+  [A,B].forEach((s,i)=>{const card=i===0?cA:cB;const d=lookup(s.name);
+    const thin=(card&&(card.matches||0)<25)||(!card&&sp.src==="nodes");
+    const pI=i===0?our:1-our;
+    if(thin&&pI>=0.40)flags.push({c:"prom",t:"UNDERVALUED — "+s.name+" sims at "+pct(pI)+"% on a thin file",thin:true});});
+  return{our,pick,ourPick,flags,ticker,src:sp.src,done,ga,gb,sa,sb,pre,live};
+}
+const URLS=["https://site.api.espn.com/apis/site/v2/sports/tennis/atp/scoreboard",
+            "https://site.api.espn.com/apis/site/v2/sports/tennis/wta/scoreboard"];
+async function pull(){
+  $("board-note").textContent="Pulling today's board…";
+  const rows=[];
+  for(const u of URLS){try{const r=await fetch(u);const d=await r.json();
+    for(const e of d.events||[])for(const g of e.groupings||[])for(const c of g.competitions||[]){
+      const sides=(c.competitors||[]).map(cp=>({name:cp.athlete?cp.athlete.displayName:cp.displayName,
+        sets:(cp.linescores||[]).map(ls=>ls.value),serve:cp.possession===true||cp.possession==="true"}));
+      if(sides.length===2&&sides[0].name&&sides[1].name&&sides[0].name!=="None")
+        rows.push({tour:e.name,state:c.status.type.state,detail:c.status.detail||"",sides});}
+  }catch(err){}}
+  const order={in:0,pre:1,post:2};rows.sort((a,b)=>order[a.state]-order[b.state]);
+  const counts={shoe:0,blow:0,risk:0,prom:0};
+  const html=rows.map(r=>{
+    const an=analyze(r);
+    an.flags.forEach(f=>{if(f.c==="shoe")counts.shoe++;if(f.c==="blow")counts.blow++;if(f.c==="risk")counts.risk++;if(f.c==="prom")counts.prom++;});
+    const sc=r.sides.map(s=>s.sets.filter(v=>v!==null&&v!==undefined).join(" ")).join("  ·  ");
+    const stateTag=r.state==="in"?"<span class='tag live'>● LIVE</span>":r.state==="pre"?"<span class='tag'>UP NEXT</span>":"<span class='tag'>DONE — pre-match number, for the record</span>";
+    const cls=an.flags.some(f=>f.c==="risk")?" risk":an.flags.some(f=>f.c==="shoe")?" shoe":"";
+    return "<div class='match"+cls+"'><span class='big'>"+r.sides[0].name+" vs "+r.sides[1].name+"</span> "+stateTag+
+    "<div class='note'>"+r.tour+" · <span class='mono'>"+sc+"</span> "+r.detail+" · splits: "+an.src+"</div>"+
+    "<div style='margin-top:6px'>OUR CALL: <b>"+r.sides[an.pick].name+" "+pct(an.ourPick)+"%</b>"+
+    (r.state==="in"?" <span class='note'>(live reprice — frozen pre-match was "+r.sides[an.pre>=0.5?0:1].name+" "+pct(Math.max(an.pre,1-an.pre))+"%)</span>":"")+"</div>"+
+    (an.flags.length?"<div style='margin-top:6px'>"+an.flags.map(f=>"<span class='tag "+f.c+"'>"+f.t+"</span>"+(f.thin?" <span class='tag thin'>THIN DATA</span>":"")).join(" ")+"</div>":"")+
+    (an.ticker.length?"<div style='margin-top:4px'><span class='note'>WATCH-OUT:</span> "+an.ticker.map(t=>"<span class='tag'>"+t+"</span>").join(" ")+"</div>":"")+
+    "</div>";}).join("");
+  $("board").innerHTML=html||"<p class='note'>The wire returned nothing right now.</p>";
+  $("board-note").innerHTML="Today's board pulled "+new Date().toLocaleTimeString()+": <b style='color:#eef2fa'>"+rows.length+" matches</b> · "+rows.filter(r=>r.state==="in").length+" live · flags up: <b>"+counts.shoe+" SHOE-IN · "+counts.blow+" BLOWOUT · "+counts.risk+" HIGH RISK · "+counts.prom+" PROMISE/UNDERVALUED</b>.";
+}
+$("refresh").onclick=pull;
+(async()=>{try{const r=await fetch("livedata.json");LD=await r.json();
+  for(const nm of Object.keys(LD.players))KEYMAP[keyOf(nm)]=nm;}catch(e){LD={players:{}};}
+  pull();})();
+</script>
+</body></html>
