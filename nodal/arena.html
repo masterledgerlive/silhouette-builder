@@ -171,6 +171,7 @@ async function load(){
   }
   if(d.demo){ const dm=d.demo;
     $('demo').innerHTML='<p style="margin-bottom:4px"><b>Kalshi DEMO rail [SIM-KALSHI-DEMO]</b> — '
+      +'One key serves both Kalshi environments; this rail calls the DEMO endpoint only. '
       +(dm.ready? 'CONNECTED · demo balance $'+((dm.balance||0)/100).toFixed(2)+' · Kalshi-rail fills mirror onto the demo account; divergence vs the live book prints on every mirrored order.'
                : 'account created by David (Key ID '+esc(dm.key_id||'')+') · '+esc(dm.why||'')+' — the Kalshi rail runs SIM-OURS-KALSHI until the key lands; nothing is fabricated meanwhile.')
       +'</p>'
