@@ -24,7 +24,270 @@
    },
    "side": "Karolina Muchova",
    "price": 0.31000000000000005,
-   "stake": 0.38
+   "stake": 0.38,
+   "fork": {
+    "available": true,
+    "src": "COMPUTED \u2014 DP games model on both cards\u2019 serve rates; ranges are projected (branch DP \u00b1 rail spread + 4 pts) and labeled as projections",
+    "state": "pre-match",
+    "steps": [
+     {
+      "label": "STEP 1 \u2014 this set",
+      "branches": [
+       {
+        "who": "Mirra Andreeva",
+        "p": 0.369,
+        "sets_after": [
+         1,
+         0
+        ],
+        "dp_side": 0.398,
+        "range": {
+         "POLY": [
+          0.35,
+          0.44
+         ],
+         "KALSHI": null
+        },
+        "action": "EXIT \u2014 thesis dead",
+        "decided": null
+       },
+       {
+        "who": "Karolina Muchova",
+        "p": 0.631,
+        "sets_after": [
+         0,
+         1
+        ],
+        "dp_side": 0.864,
+        "range": {
+         "POLY": [
+          0.82,
+          0.91
+         ],
+         "KALSHI": null
+        },
+        "action": "HOLD \u2014 the discount is still open",
+        "decided": null
+       }
+      ]
+     },
+     {
+      "label": "STEP 2 \u2014 next set",
+      "branches": [
+       [
+        {
+         "who": "Mirra Andreeva",
+         "p": 0.369,
+         "sets_after": [
+          2,
+          0
+         ],
+         "dp_side": 0.0,
+         "range": {
+          "POLY": [
+           0.01,
+           0.05
+          ],
+          "KALSHI": null
+         },
+         "action": "SETTLES \u2014 no action exists on a dead branch",
+         "decided": "loss"
+        },
+        {
+         "who": "Karolina Muchova",
+         "p": 0.631,
+         "sets_after": [
+          1,
+          1
+         ],
+         "dp_side": 0.631,
+         "range": {
+          "POLY": [
+           0.59,
+           0.68
+          ],
+          "KALSHI": null
+         },
+         "action": "HOLD \u2014 the discount is still open",
+         "decided": null
+        }
+       ],
+       [
+        {
+         "who": "Mirra Andreeva",
+         "p": 0.369,
+         "sets_after": [
+          1,
+          1
+         ],
+         "dp_side": 0.631,
+         "range": {
+          "POLY": [
+           0.59,
+           0.68
+          ],
+          "KALSHI": null
+         },
+         "action": "HOLD \u2014 the discount is still open",
+         "decided": null
+        },
+        {
+         "who": "Karolina Muchova",
+         "p": 0.631,
+         "sets_after": [
+          0,
+          2
+         ],
+         "dp_side": 1.0,
+         "range": {
+          "POLY": [
+           0.95,
+           0.99
+          ],
+          "KALSHI": null
+         },
+         "action": "HOLD \u2014 settles at 100\u00a2",
+         "decided": "win"
+        }
+       ]
+      ]
+     },
+     {
+      "label": "STEP 3 \u2014 the decider / final state",
+      "branches": [
+       [
+        [
+         {
+          "who": "\u2014",
+          "p": 1.0,
+          "sets_after": [
+           2,
+           0
+          ],
+          "dp_side": 0.0,
+          "range": {
+           "POLY": [
+            0.01,
+            0.05
+           ],
+           "KALSHI": null
+          },
+          "action": "SETTLES \u2014 no action exists on a dead branch",
+          "decided": "loss",
+          "terminal": true
+         }
+        ],
+        [
+         {
+          "who": "Mirra Andreeva",
+          "p": 0.369,
+          "sets_after": [
+           2,
+           1
+          ],
+          "dp_side": 0.0,
+          "range": {
+           "POLY": [
+            0.01,
+            0.05
+           ],
+           "KALSHI": null
+          },
+          "action": "SETTLES \u2014 no action exists on a dead branch",
+          "decided": "loss"
+         },
+         {
+          "who": "Karolina Muchova",
+          "p": 0.631,
+          "sets_after": [
+           1,
+           2
+          ],
+          "dp_side": 1.0,
+          "range": {
+           "POLY": [
+            0.95,
+            0.99
+           ],
+           "KALSHI": null
+          },
+          "action": "HOLD \u2014 settles at 100\u00a2",
+          "decided": "win"
+         }
+        ]
+       ],
+       [
+        [
+         {
+          "who": "Mirra Andreeva",
+          "p": 0.369,
+          "sets_after": [
+           2,
+           1
+          ],
+          "dp_side": 0.0,
+          "range": {
+           "POLY": [
+            0.01,
+            0.05
+           ],
+           "KALSHI": null
+          },
+          "action": "SETTLES \u2014 no action exists on a dead branch",
+          "decided": "loss"
+         },
+         {
+          "who": "Karolina Muchova",
+          "p": 0.631,
+          "sets_after": [
+           1,
+           2
+          ],
+          "dp_side": 1.0,
+          "range": {
+           "POLY": [
+            0.95,
+            0.99
+           ],
+           "KALSHI": null
+          },
+          "action": "HOLD \u2014 settles at 100\u00a2",
+          "decided": "win"
+         }
+        ],
+        [
+         {
+          "who": "\u2014",
+          "p": 1.0,
+          "sets_after": [
+           0,
+           2
+          ],
+          "dp_side": 1.0,
+          "range": {
+           "POLY": [
+            0.95,
+            0.99
+           ],
+           "KALSHI": null
+          },
+          "action": "HOLD \u2014 settles at 100\u00a2",
+          "decided": "win",
+          "terminal": true
+         }
+        ]
+       ]
+      ]
+     }
+    ],
+    "modal": [
+     1,
+     1,
+     0
+    ],
+    "modal_prob": 0.398,
+    "census": null
+   }
   },
   {
    "t": "2026-11-12T14:57:53+0000",
@@ -81,6 +344,325 @@
     ],
     "KALSHI": null
    }
+  },
+  {
+   "t": "2026-11-12T10:04:53-0500",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 31, POLY mid 30\u00a2",
+   "state": "pre-match",
+   "dp": 0.308,
+   "books": {
+    "POLY": [
+     0.695,
+     0.305
+    ],
+    "KALSHI": null
+   }
+  },
+  {
+   "t": "2026-11-12T15:09:40+0000",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 31, POLY mid 30\u00a2",
+   "state": "pre-match",
+   "dp": 0.308,
+   "books": {
+    "POLY": [
+     0.695,
+     0.305
+    ],
+    "KALSHI": null
+   }
+  },
+  {
+   "t": "2026-11-12T10:10:32-0500",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 31, POLY mid 30\u00a2",
+   "state": "pre-match",
+   "dp": 0.308,
+   "books": {
+    "POLY": [
+     0.695,
+     0.305
+    ],
+    "KALSHI": null
+   }
+  },
+  {
+   "t": "2026-11-12T15:11:43+0000",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 31, POLY mid 30\u00a2",
+   "state": "pre-match",
+   "dp": 0.308,
+   "books": {
+    "POLY": [
+     0.695,
+     0.305
+    ],
+    "KALSHI": null
+   }
   }
- ]
+ ],
+ "fork_latest": {
+  "available": true,
+  "src": "COMPUTED \u2014 DP games model on both cards\u2019 serve rates; ranges are projected (branch DP \u00b1 rail spread + 4 pts) and labeled as projections",
+  "state": "pre-match",
+  "steps": [
+   {
+    "label": "STEP 1 \u2014 this set",
+    "branches": [
+     {
+      "who": "Mirra Andreeva",
+      "p": 0.369,
+      "sets_after": [
+       1,
+       0
+      ],
+      "dp_side": 0.398,
+      "range": {
+       "POLY": [
+        0.35,
+        0.44
+       ],
+       "KALSHI": null
+      },
+      "action": "EXIT \u2014 thesis dead",
+      "decided": null
+     },
+     {
+      "who": "Karolina Muchova",
+      "p": 0.631,
+      "sets_after": [
+       0,
+       1
+      ],
+      "dp_side": 0.864,
+      "range": {
+       "POLY": [
+        0.82,
+        0.91
+       ],
+       "KALSHI": null
+      },
+      "action": "HOLD \u2014 the discount is still open",
+      "decided": null
+     }
+    ]
+   },
+   {
+    "label": "STEP 2 \u2014 next set",
+    "branches": [
+     [
+      {
+       "who": "Mirra Andreeva",
+       "p": 0.369,
+       "sets_after": [
+        2,
+        0
+       ],
+       "dp_side": 0.0,
+       "range": {
+        "POLY": [
+         0.01,
+         0.05
+        ],
+        "KALSHI": null
+       },
+       "action": "SETTLES \u2014 no action exists on a dead branch",
+       "decided": "loss"
+      },
+      {
+       "who": "Karolina Muchova",
+       "p": 0.631,
+       "sets_after": [
+        1,
+        1
+       ],
+       "dp_side": 0.631,
+       "range": {
+        "POLY": [
+         0.59,
+         0.68
+        ],
+        "KALSHI": null
+       },
+       "action": "HOLD \u2014 the discount is still open",
+       "decided": null
+      }
+     ],
+     [
+      {
+       "who": "Mirra Andreeva",
+       "p": 0.369,
+       "sets_after": [
+        1,
+        1
+       ],
+       "dp_side": 0.631,
+       "range": {
+        "POLY": [
+         0.59,
+         0.68
+        ],
+        "KALSHI": null
+       },
+       "action": "HOLD \u2014 the discount is still open",
+       "decided": null
+      },
+      {
+       "who": "Karolina Muchova",
+       "p": 0.631,
+       "sets_after": [
+        0,
+        2
+       ],
+       "dp_side": 1.0,
+       "range": {
+        "POLY": [
+         0.95,
+         0.99
+        ],
+        "KALSHI": null
+       },
+       "action": "HOLD \u2014 settles at 100\u00a2",
+       "decided": "win"
+      }
+     ]
+    ]
+   },
+   {
+    "label": "STEP 3 \u2014 the decider / final state",
+    "branches": [
+     [
+      [
+       {
+        "who": "\u2014",
+        "p": 1.0,
+        "sets_after": [
+         2,
+         0
+        ],
+        "dp_side": 0.0,
+        "range": {
+         "POLY": [
+          0.01,
+          0.05
+         ],
+         "KALSHI": null
+        },
+        "action": "SETTLES \u2014 no action exists on a dead branch",
+        "decided": "loss",
+        "terminal": true
+       }
+      ],
+      [
+       {
+        "who": "Mirra Andreeva",
+        "p": 0.369,
+        "sets_after": [
+         2,
+         1
+        ],
+        "dp_side": 0.0,
+        "range": {
+         "POLY": [
+          0.01,
+          0.05
+         ],
+         "KALSHI": null
+        },
+        "action": "SETTLES \u2014 no action exists on a dead branch",
+        "decided": "loss"
+       },
+       {
+        "who": "Karolina Muchova",
+        "p": 0.631,
+        "sets_after": [
+         1,
+         2
+        ],
+        "dp_side": 1.0,
+        "range": {
+         "POLY": [
+          0.95,
+          0.99
+         ],
+         "KALSHI": null
+        },
+        "action": "HOLD \u2014 settles at 100\u00a2",
+        "decided": "win"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "who": "Mirra Andreeva",
+        "p": 0.369,
+        "sets_after": [
+         2,
+         1
+        ],
+        "dp_side": 0.0,
+        "range": {
+         "POLY": [
+          0.01,
+          0.05
+         ],
+         "KALSHI": null
+        },
+        "action": "SETTLES \u2014 no action exists on a dead branch",
+        "decided": "loss"
+       },
+       {
+        "who": "Karolina Muchova",
+        "p": 0.631,
+        "sets_after": [
+         1,
+         2
+        ],
+        "dp_side": 1.0,
+        "range": {
+         "POLY": [
+          0.95,
+          0.99
+         ],
+         "KALSHI": null
+        },
+        "action": "HOLD \u2014 settles at 100\u00a2",
+        "decided": "win"
+       }
+      ],
+      [
+       {
+        "who": "\u2014",
+        "p": 1.0,
+        "sets_after": [
+         0,
+         2
+        ],
+        "dp_side": 1.0,
+        "range": {
+         "POLY": [
+          0.95,
+          0.99
+         ],
+         "KALSHI": null
+        },
+        "action": "HOLD \u2014 settles at 100\u00a2",
+        "decided": "win",
+        "terminal": true
+       }
+      ]
+     ]
+    ]
+   }
+  ],
+  "modal": [
+   1,
+   1,
+   0
+  ],
+  "modal_prob": 0.398,
+  "census": null
+ }
 }

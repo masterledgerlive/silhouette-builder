@@ -29,6 +29,8 @@ nothing here is redrawn or rewritten after the fact.</p>
  <span class="small" id="counter"></span>
 </div>
 <div id="trace"></div>
+<div id="stepfork"></div>
+<div id="livefork"></div>
 <h3 style="color:#ffd97f">Every state in the package</h3>
 <div id="allsteps"></div>
 <script>
@@ -39,6 +41,25 @@ function booksLine(b){
   if(!b) return 'books not captured this step';
   const f=x=>x==null?'—':Math.round(x*100)+'¢';
   return 'Polymarket mid: '+f(b.POLY&&b.POLY[0])+' / '+f(b.POLY&&b.POLY[1])+' · Kalshi mid: '+f(b.KALSHI&&b.KALSHI[0])+' / '+f(b.KALSHI&&b.KALSHI[1]);
+}
+function branchRow(b, modal){
+  const rng=b.range? Object.entries(b.range).map(([k,v])=>v? (k+' '+Math.round(v[0]*100)+'–'+Math.round(v[1]*100)+'¢') : (k+' —')).join(' · ') : '';
+  return '<div style="padding:5px 9px;margin:3px 0;border-left:4px solid '+(modal?'#f5b942':'#223148')+';background:'+(modal?'#16263e':'#0d1420')+';opacity:'+(modal?'1':'0.62')+'">'
+    +'<b>'+esc(b.who)+'</b> — '+Math.round(b.p*100)+'% · our number for the position there: '+Math.round(b.dp_side*100)
+    +(rng? ' · projected '+esc(rng):'')
+    +' · <span style="color:#ffd97f"><b>'+esc(b.action)+'</b></span></div>';
+}
+function forkHTML(fk, title){
+  if(!fk) return '';
+  if(!fk.available) return '<div class="card"><b>'+title+'</b><p class="small">No fork chart — '+esc(fk.reason)+'.</p></div>';
+  let h='<div class="card"><b>'+title+'</b><p class="small">'+esc(fk.src)+'<br>State: '+esc(fk.state)+' · <b>most likely pattern: '+Math.round(fk.modal_prob*100)+'% combined</b>'
+    +(fk.census? '<br><span style="color:#7fd4ff">CENSUS overlay — S1 '+esc(fk.census.s1_score)+', n='+fk.census.n+': S1 winner takes set 2 '+Math.round(fk.census.s2_win_pct_s1_winner*100)+'%, the match '+Math.round(fk.census.match_win_pct_s1_winner*100)+'%</span>' : '')
+    +'</p>';
+  const [m1,m2,m3]=fk.modal;
+  h+='<b>'+esc(fk.steps[0].label)+'</b>'+fk.steps[0].branches.map((b,i)=>branchRow(b, i===m1)).join('');
+  h+='<b>'+esc(fk.steps[1].label)+'</b>'+fk.steps[1].branches.map((g,gi)=>'<div style="margin-left:14px"><span class="small">if '+esc(fk.steps[0].branches[gi].who)+' took step 1:</span>'+g.map((b,i)=>branchRow(b, gi===m1&&i===m2)).join('')+'</div>').join('');
+  h+='<b>'+esc(fk.steps[2].label)+'</b>'+fk.steps[2].branches.map((g,gi)=>g.map((g2,gj)=>'<div style="margin-left:28px"><span class="small">via '+esc(fk.steps[0].branches[gi].who)+' › '+esc((fk.steps[1].branches[gi][gj]||{}).who||'')+':</span>'+g2.map((b,i)=>branchRow(b, gi===m1&&gj===m2&&i===m3)).join('')+'</div>').join('')).join('');
+  return h+'</div>';
 }
 function render(){
   const s=P.steps[I];
@@ -52,6 +73,8 @@ function render(){
     +(s.price!=null?'<tr><td>Fill</td><td>'+esc(s.side||P.side_name||'')+' @ '+Math.round(s.price*100)+'¢ · stake $'+Number(s.stake||0).toFixed(2)+'</td></tr>':'')
     +(s.pnl!=null?'<tr><td>P&amp;L at this step</td><td>'+(s.pnl>=0?'+':'')+Number(s.pnl).toFixed(2)+'</td></tr>':'')
     +'</table>';
+  $('stepfork').innerHTML=s.fork? forkHTML(s.fork, '&#127795; THREE STEPS OUT — as it stood at this decision') : '';
+  $('livefork').innerHTML=(!P.closed&&P.fork_latest)? forkHTML(P.fork_latest, '&#127795; THREE STEPS OUT — the live chart (latest cycle)') : '';
   $('allsteps').innerHTML='<table>'+P.steps.map((x,i)=>'<tr'+(i===I?' style="background:#16263e"':'')+'><td class="num">'+(i+1)+'</td><td>'+esc(x.kind)+'</td><td class="small">'+esc(x.t)+'</td><td>'+esc((x.text||'').slice(0,90))+'</td></tr>').join('')+'</table>';
   if(P.side_idx!=null){
     const pts=[];

@@ -45,6 +45,27 @@ divergence printed. The REAL highscores board (FIND) starts EMPTY and prints EMP
 <h2>&#128230; Play packages — every play, sealed, replayable</h2>
 <div id="packages"></div>
 
+<h2>&#127795; THREE STEPS OUT — the fork chart on every play</h2>
+<p class="small">From the current state, three decision steps ahead — every branch carries its probability
+(<b>COMPUTED</b> by the DP games model on the two cards; the Matrix <b>CENSUS</b> cell rides alongside where the
+state is a counted fork), the projected price range on each road, and <b>what the specialist will do on that
+branch</b>, printed on the branch itself. The gold path is the pattern most likely to show itself, with its
+combined probability — no path is ever certain. Where a player has no card, no fork is drawn; invented
+probabilities are not charted.</p>
+<div id="forks"></div>
+
+<h2>&#128225; FOLLOW — ride along with a specialist</h2>
+<div class="card">
+<p style="margin-top:0">The fork chart plus the booth feed <i>are</i> the follow surface: at every branch the
+chart prints the specialist's intended move, so you can make the same moves yourself in real time. For your
+own AI, the same intended moves publish as a machine-readable feed:
+<a href="followdata.json">followdata.json</a> — current state, the full branch table, the intended action per
+branch, and the engine citation, refreshed every cycle.</p>
+<p><b>Following is your own choice and your own account. Sim followers mirror sim plays. Nothing here places
+an order for anyone — the feed advises; it never acts.</b></p>
+<div id="followsum" class="small"></div>
+</div>
+
 <h2>&#9878;&#65039; Venue delta — same play, both roads</h2>
 <div id="delta"></div>
 
@@ -103,6 +124,25 @@ function railBlock(rn,r){
     +(r.status!=='ALIVE'?('<p class="small">Shadow bank: '+money(r.shadow.cash)+' · shadow trades '+r.shadow.trades+' · shadow P&amp;L '+money(r.shadow.pnl)+'</p>'):'')
     +'</div>';
 }
+function branchRow(b, modal){
+  const rng=b.range? Object.entries(b.range).map(([k,v])=>v? (k+' '+Math.round(v[0]*100)+'–'+Math.round(v[1]*100)+'¢') : (k+' —')).join(' · ') : '';
+  return '<div style="padding:5px 9px;margin:3px 0;border-left:4px solid '+(modal?'#f5b942':'#223148')+';background:'+(modal?'#16263e':'#0d1420')+';opacity:'+(modal?'1':'0.62')+'">'
+    +'<b>'+esc(b.who)+'</b> — '+Math.round(b.p*100)+'% · our number for the position there: '+Math.round(b.dp_side*100)
+    +(rng? ' · projected '+esc(rng):'')
+    +' · <span style="color:#ffd97f"><b>'+esc(b.action)+'</b></span></div>';
+}
+function forkHTML(fk){
+  if(!fk) return '';
+  if(!fk.available) return '<p class="small">No fork chart — '+esc(fk.reason)+'.</p>';
+  let h='<p class="small">'+esc(fk.src)+'<br>State: '+esc(fk.state)+' · <b>most likely pattern: '+Math.round(fk.modal_prob*100)+'% combined</b>'
+    +(fk.census? '<br><span style="color:#7fd4ff">CENSUS overlay — S1 '+esc(fk.census.s1_score)+', n='+fk.census.n+': S1 winner takes set 2 '+Math.round(fk.census.s2_win_pct_s1_winner*100)+'% of the time, the match '+Math.round(fk.census.match_win_pct_s1_winner*100)+'% ('+esc(fk.census.src)+')</span>' : '')
+    +'</p>';
+  const [m1,m2,m3]=fk.modal;
+  h+='<b>'+esc(fk.steps[0].label)+'</b>'+fk.steps[0].branches.map((b,i)=>branchRow(b, i===m1)).join('');
+  h+='<b>'+esc(fk.steps[1].label)+'</b>'+fk.steps[1].branches.map((g,gi)=>'<div style="margin-left:14px"><span class="small">if '+esc(fk.steps[0].branches[gi].who)+' took step 1:</span>'+g.map((b,i)=>branchRow(b, gi===m1&&i===m2)).join('')+'</div>').join('');
+  h+='<b>'+esc(fk.steps[2].label)+'</b>'+fk.steps[2].branches.map((g,gi)=>g.map((g2,gj)=>'<div style="margin-left:28px"><span class="small">via '+esc(fk.steps[0].branches[gi].who)+' › '+esc((fk.steps[1].branches[gi][gj]||{}).who||'')+':</span>'+g2.map((b,i)=>branchRow(b, gi===m1&&gj===m2&&i===m3)).join('')+'</div>').join('')).join('');
+  return h;
+}
 async function load(){
   const r=await fetch('arenadata.json?t='+Date.now()); const d=await r.json();
   $('meta').innerHTML='<span class="tag x">EXTERNAL TAPE</span> '+esc(d.phase)+' · updated '+esc(d.updated)+' · '
@@ -120,6 +160,12 @@ async function load(){
   $('packages').innerHTML=d.packages.length? '<table><tr><th>Package</th><th>Specialist</th><th>Road</th><th>Class</th><th>State</th><th>Result</th><th></th></tr>'
     +d.packages.map(p=>'<tr><td>'+esc(p.match)+'</td><td>'+esc(p.specialist)+'</td><td>'+esc(p.rail)+'</td><td><span class="tag x">'+esc(p.class)+'</span></td><td>'+(p.closed?'closed':'open')+'</td><td>'+(p.result?('P&amp;L '+(p.result.pnl>=0?'+':'')+Number(p.result.pnl).toFixed(2)):'—')+'</td><td><a href="'+esc(p.replay)+'">&#127916; replay</a></td></tr>').join('')+'</table>'
     : '<p class="dim">No packages yet.</p>';
+  const openPkgs=d.packages.filter(p=>!p.closed);
+  $('forks').innerHTML=openPkgs.length? openPkgs.map(p=>'<div class="card"><b>'+esc(p.specialist)+' · '+esc(p.rail)+' · '+esc(p.match)+'</b> <a href="'+esc(p.replay)+'">replay</a>'+forkHTML(p.fork)+'</div>').join('') : '<p class="dim">No open plays — no live forks.</p>';
+  try{
+    const fr=await fetch('followdata.json?t='+Date.now()); const fd=await fr.json();
+    $('followsum').innerHTML='Feed updated '+esc(fd.updated)+' · '+fd.specialists.map(s=>esc(s.specialist)+': '+s.plays.length+' live play(s) with published intended moves').join(' · ')+'<br>'+esc(fd.disclaimer);
+  }catch(e){ $('followsum').textContent='Follow feed not reachable in this snapshot.'; }
   $('delta').innerHTML=d.venue_delta.length? '<table><tr><th>Match</th><th>Specialist</th><th>Polymarket P&amp;L per $1</th><th>Kalshi P&amp;L per $1</th><th>Delta</th><th>Better road</th></tr>'
     +d.venue_delta.map(v=>'<tr><td>'+esc(v.match)+'</td><td>'+esc(v.specialist)+'</td><td class="num">'+v.poly_pnl_per_dollar+'</td><td class="num">'+v.kalshi_pnl_per_dollar+'</td><td class="num"><b>'+(v.delta>=0?'+':'')+v.delta+'</b></td><td>'+esc(v.better_road)+'</td></tr>').join('')+'</table>'
     : '<p class="dim">No same-match pair has closed yet — the delta prints the moment both roads finish the same play. That comparison is the point of the dual rail.</p>';
