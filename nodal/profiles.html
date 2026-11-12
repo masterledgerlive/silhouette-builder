@@ -1,0 +1,150 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NODAL — PLAYER PROFILES · every player, their own visual sheet</title><style>
+body{background:#070b14;color:#eef2fa;font-family:-apple-system,'Segoe UI',Roboto,Arial,sans-serif;padding:16px;max-width:1240px;margin:0 auto}
+.logo{font-size:26px;font-weight:800;letter-spacing:3px}.logo span{color:#f5b942}
+.note{color:#8fa3c4;font-size:12.5px;line-height:1.6}
+.box{background:#0b111f;border:1px solid #1e2c47;border-radius:12px;padding:14px;margin-top:12px}
+.box h2{font-size:13px;letter-spacing:2px;color:#f5b942;text-transform:uppercase;margin:0 0 8px}
+.box p,.box li{color:#c9d6ee;font-size:13.5px;line-height:1.65}
+.big{font-size:21px;font-weight:800;color:#eef2fa}
+.tag{display:inline-block;border:1px solid #1e2c47;border-radius:8px;padding:3px 9px;margin:3px 4px 3px 0;font-size:12px;color:#c9d6ee;background:#101a2e}
+.tag.full{border-color:#3ddc84;color:#3ddc84}.tag.texture{border-color:#2dd4bf;color:#2dd4bf}.tag.thin{border-color:#f4506a;color:#f4506a;font-weight:700}
+.tag.house{border-color:#f5b942;color:#f5b942}
+.tell{border:1px solid #f5b942;border-radius:10px;padding:10px;margin-top:8px;background:#141021}
+button{background:#1a2438;color:#eef2fa;border:1px solid #1e2c47;border-radius:9px;padding:8px 14px;font-size:14px;font-weight:700;cursor:pointer}
+button.on{border-color:#f5b942;color:#f5b942}
+input{background:#0b111f;color:#eef2fa;border:1px solid #1e2c47;border-radius:9px;padding:9px 12px;font-size:15px;width:min(420px,90%)}
+table{border-collapse:collapse;width:100%;margin-top:6px}
+td,th{border-bottom:1px solid #1e2c47;padding:6px 8px;font-size:13px;color:#c9d6ee;text-align:left}
+th{color:#8fa3c4;font-size:11px;letter-spacing:1px;text-transform:uppercase}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+.bar{height:14px;background:#1a2438;border-radius:4px;position:relative;min-width:120px}
+.bar i{position:absolute;left:0;top:0;bottom:0;background:#2dd4bf;border-radius:4px}
+.bar b{position:absolute;right:6px;top:0;font-size:11px;color:#eef2fa;line-height:14px}
+.name-link{color:#eef2fa;cursor:pointer;font-weight:700}.name-link:hover{color:#f5b942}
+footer{color:#8fa3c4;font-size:12px;line-height:1.7;margin-top:16px}
+a{color:#f5b942}
+.mono{font-variant-numeric:tabular-nums}
+svg text{fill:#c9d6ee;font-size:11px}
+</style></head><body>
+<div style="font-size:12px;color:#8fa3c4;border:1px solid #1e2c47;border-radius:8px;padding:6px 10px;margin-bottom:12px;background:#0b111f"><b style="color:#f5b942;letter-spacing:1px">PLAYER PROFILES</b> · one sheet per player, graphs first, built from our data only · <a href="index.html" style="color:#f5b942">NODAL hub</a> · <a href="key.html" style="color:#f5b942">THE KEY board</a> · <a href="matrix.html" style="color:#f5b942">The 1-2-3 Matrix</a> · <a href="daily.html" style="color:#f5b942">Daily Board</a></div>
+<div class="logo">PLAYER <span>PROFILES</span></div>
+<div class="note">Every player gets their own sheet: the <b style="color:#eef2fa">tells</b> as the headline, the radar, the texture, <b style="color:#eef2fa">their own 1-2-3 splits</b> from their own archive matches, how they win and lose, who they beat and who beats them, and their recent scorecards. Depth is honestly tiered — <span class="tag full">FULL</span> a full desk card · <span class="tag texture">TEXTURE</span> the Slam-tape board · <span class="tag thin">THIN</span> a short file, labeled, never padded to look full. Click a name.</div>
+<div class="box"><h2>The index</h2>
+<p><input id="q" placeholder="Search a player…"> <span id="counts" class="note"></span></p>
+<div id="tier-btns"><button data-t="ALL" class="on">ALL</button> <button data-t="FULL">FULL CARDS</button> <button data-t="TEXTURE">TEXTURE</button> <button data-t="THIN">THIN</button></div>
+<div id="index" style="margin-top:10px"></div></div>
+<div id="sheet"></div>
+<footer>Built from the desk's own data only: the 74 full cards (library), the 1,144-player Slam-tape flaws board, point-tape profiles, livedata, and the 62,056-match archive (2015–2026) — every split computed per player from their own matches, best-of-3, completed matches only (retirements/walkovers excluded from splits, counted in the record), n printed on every cell, cells under n=10 tagged THIN CELL. Opponent classes: big server = opponent ace rate in the tape board's top quartile; returner = breaks per 100 return games, top quartile; grade splits use the rankings held on the match date. Sealed additions come from the desk's hash-chained ledger — as live matches run through the system, their timing (our arrival clock) and tape append to the sheet under schema v2; the YOLO node slot stays EMPTY until real nodes produce real data — it is never simulated into a profile.</footer>
+<script>
+"use strict";
+const $=id=>document.getElementById(id);
+const pct=x=>x==null?"—":Math.round(x*1000)/10+"%";
+const p1=x=>x==null?"—":Math.round(x*10)/10;
+let PD=null,TIERF="ALL";
+function tells(p){
+  const t=[];
+  const f=p.flaws,c=p.card,pt=p.points;
+  if(f){
+    if(f.zero_ace)t.push(["bad","ZERO-ACE FILE","no ace on the tape sample — the serve does not win free points"]);
+    if(f.hold_pct!=null&&f.hold_pct<0.55)t.push(["bad","FRAGILE SERVE","holds "+pct(f.hold_pct)+" of service games"]);
+    if(f.ace_pct!=null&&f.ace_pct>=0.10)t.push(["good","BIG SERVE","aces on "+pct(f.ace_pct)+" of serve points"]);
+    if(f.double_fault_pct!=null&&f.double_fault_pct>0.06)t.push(["bad","DOUBLE-FAULT PRONE",pct(f.double_fault_pct)+" of serve points"]);
+    if(f.second_serve_won_pct!=null&&f.second_serve_won_pct>=0.58)t.push(["good","SECOND-SERVE BACKBONE","wins "+pct(f.second_serve_won_pct)+" behind the second ball"]);
+    if(f.breaks_per_100_ret_games!=null&&f.breaks_per_100_ret_games>=32)t.push(["good","RETURN PRESSURE","breaks "+p1(f.breaks_per_100_ret_games)+" times per 100 return games"]);
+    if(f.bp_saved_pct!=null&&f.bp_saved_pct>=0.68)t.push(["good","SAVES BREAK POINTS",pct(f.bp_saved_pct)+" saved"]);
+    if(f.bp_saved_pct!=null&&f.bp_saved_pct<0.52)t.push(["bad","CRACKS ON BREAK POINT","saves only "+pct(f.bp_saved_pct)]);
+  }
+  if(pt){
+    const n=p.points_n?(" · n="+p.points_n+" pts"):"";
+    if(pt.pressure!=null&&pt.pressure>=8)t.push(["good","PRESSURE RISER","point-win rate rises "+p1(pt.pressure)+" on pressure points"+n]);
+    if(pt.pressure!=null&&pt.pressure<=-8)t.push(["bad","PRESSURE FALLER","point-win rate falls "+p1(pt.pressure)+" on pressure points"+n]);
+    if(pt.tilt!=null&&pt.tilt<=-10)t.push(["bad","TILT","post-error slide of "+p1(pt.tilt)+n]);
+    if(pt.slow_start!=null&&pt.slow_start<=-8)t.push(["bad","SLOW STARTER","early-match delta "+p1(pt.slow_start)+n]);
+    if(pt.decider!=null&&pt.decider>=8)t.push(["good","DECIDER EDGE","deciding-set point delta +"+p1(pt.decider)+n]);
+    if(pt.decider!=null&&pt.decider<=-8)t.push(["bad","DECIDER FADER","deciding-set point delta "+p1(pt.decider)+n]);
+  }
+  if(p.prof){
+    if(p.prof.let_go!=null&&p.prof.let_go>=30)t.push(["bad","SET-2 LET-GO","drops Set 2 after winning Set 1 at a "+p1(p.prof.let_go)+"% rate"]);
+    if(p.prof.stopper!=null&&p.prof.stopper>=40)t.push(["good","DEAD-STOPPER","when they take Set 1, the door stays shut ("+p1(p.prof.stopper)+"% signature)"]);
+    if(p.prof.hurrah!=null&&p.prof.hurrah>=15)t.push(["good","LAST HURRAH","late-match surge signature "+p1(p.prof.hurrah)+"%"]);
+  }
+  if(p.exits&&(p.exits.ret_lost+p.exits.wo_lost)>=3)t.push(["bad","WALK-OUT FILE",(p.exits.ret_lost+p.exits.wo_lost)+" no-finish exits on the career file — WALK-OUT WATCH when live"]);
+  return t;
+}
+function radar(p){
+  let axes=null;
+  if(p.card){const c=p.card;axes=[["Serve",c.serve],["Return",c.return],["Break-pt",c.bp],["Decider",c.decider],["Comeback",c.comeback],["Closeout",c.closeout]];}
+  else if(p.flaws){const f=p.flaws;axes=[["Serve",f.first_serve_won_pct*100],["Hold",f.hold_pct*100],["2nd won",f.second_serve_won_pct*100],["BP saved",f.bp_saved_pct*100],["Breaks",Math.min(100,f.breaks_per_100_ret_games*2.2)],["1st in",f.first_serve_in_pct*100]];}
+  else if(p.nodes){axes=[["Serve pts",p.nodes.srv_pct*100],["Return pts",p.nodes.ret_pct*100]];}
+  if(!axes||axes.length<3)return "<p class='note'>No radar — the file is too thin to draw one honestly.</p>";
+  const cx=110,cy=100,R=78,n=axes.length;
+  const pt=(i,v)=>{const a=-Math.PI/2+i*2*Math.PI/n,r=R*Math.max(0,Math.min(100,v))/100;return[cx+r*Math.cos(a),cy+r*Math.sin(a)];};
+  const poly=axes.map((a,i)=>pt(i,a[1]).join(",")).join(" ");
+  const grid=[0.5,1].map(g=>"<polygon points='"+axes.map((a,i)=>pt(i,g*100).join(",")).join(" ")+"' fill='none' stroke='#1e2c47'/>").join("");
+  const labs=axes.map((a,i)=>{const[x,y]=pt(i,122);return "<text x='"+x+"' y='"+y+"' text-anchor='middle'>"+a[0]+" "+Math.round(a[1])+"</text>";}).join("");
+  return "<svg viewBox='0 0 220 200' style='width:220px;background:#0b111f;border:1px solid #1e2c47;border-radius:10px'>"+grid+"<polygon points='"+poly+"' fill='rgba(45,212,191,0.25)' stroke='#2dd4bf' stroke-width='2'/>"+labs+"</svg>";
+}
+function splitTable(title,obj,verb){
+  const keys=Object.keys(obj||{});
+  if(!keys.length)return "";
+  const rows=keys.map(k=>{const[n,w]=obj[k];const pc=n?Math.round(w/n*1000)/10:"—";
+    return "<tr><td class='mono'>"+k+"</td><td class='num'>"+pc+"%</td><td class='num'>n="+n+(n<10?" <span class='tag thin'>THIN CELL</span>":"")+"</td></tr>";}).join("");
+  return "<h3 style='color:#2dd4bf;margin:12px 0 2px'>"+title+"</h3><table><tr><th>Set 1</th><th class='num'>"+verb+"</th><th class='num'>Sample</th></tr>"+rows+"</table>";
+}
+function shapesBars(p){
+  const e=Object.entries(p.shapes||{});if(!e.length)return "";
+  const tot=e.reduce((a,[,v])=>a+v,0);const mx=Math.max(...e.map(([,v])=>v));
+  const names={WW:"STRAIGHTS",WLW:"SAWTOOTH",LWW:"V-RECOVERY",WLL:"COLLAPSE",LWL:"SAWTOOTH LOSS",LL:"STRAIGHT LOSS"};
+  return "<h3 style='color:#2dd4bf;margin:12px 0 2px'>How their matches go — the shapes (bo3, "+tot+" matches)</h3>"+
+   e.sort((a,b)=>b[1]-a[1]).map(([k,v])=>"<div style='display:flex;align-items:center;gap:8px;margin:4px 0'><span class='mono' style='min-width:130px'>"+k+" · "+(names[k]||k)+"</span><span class='bar' style='flex:1'><i style='width:"+Math.round(v/mx*100)+"%'></i><b>"+v+" · "+Math.round(v/tot*100)+"%</b></span></div>").join("");
+}
+function sheet(name){
+  const p=PD.players[name];if(!p)return;
+  location.hash=encodeURIComponent(name);
+  const tl=tells(p);
+  const rec=p.rec?("<b>"+p.rec.w+"W – "+p.rec.l+"</b> career archive record"):"no archive record on file";
+  const cardLine=p.card?(" · desk rank #"+Math.round(p.card.rank)+" · card over "+p.card.matches+" matches · serve "+Math.round(p.card.serve)+" / return "+Math.round(p.card.return)):"";
+  const profLine=p.prof?("<p class='note'>Last 10: "+(p.prof.last10||"—")+" · surfaces: "+Object.entries(p.prof.surfaces||{}).map(([k,v])=>k+" "+v+"%").join(" · ")+"</p>"):"";
+  const tex=p.flaws?("<div class='box'><h2>The texture — Slam tape board ("+(p.flaws.n_srv_pts||0).toLocaleString()+" serve points)</h2><table>"+
+    [["Ace rate",pct(p.flaws.ace_pct)],["Double-fault rate",pct(p.flaws.double_fault_pct)],["First serve in",pct(p.flaws.first_serve_in_pct)],["First serve won",pct(p.flaws.first_serve_won_pct)],["Second serve won",pct(p.flaws.second_serve_won_pct)],["Hold",pct(p.flaws.hold_pct)],["Break points saved",pct(p.flaws.bp_saved_pct)],["Breaks / 100 return games",p1(p.flaws.breaks_per_100_ret_games)]].map(r=>"<tr><td>"+r[0]+"</td><td class='num'>"+r[1]+"</td></tr>").join("")+"</table></div>"):"";
+  const vs=p.vs?("<div class='box'><h2>Paired against — who they beat, who beats them</h2><table>"+
+    [["vs HIGHER grade (ranked above them on the day)",p.vs.hi],["vs LOWER grade",p.vs.lo],["vs BIG SERVERS (top-quartile ace rate)",p.vs.srv],["vs RETURNERS (top-quartile break rate)",p.vs.ret]].map(([k,v])=>"<tr><td>"+k+"</td><td class='num'>"+(v[0]?Math.round(v[1]/v[0]*100)+"% · "+v[1]+"W-"+(v[0]-v[1])+"L (n="+v[0]+")":"— no meetings on file")+"</td></tr>").join("")+
+    "</table>"+(p.h2h&&p.h2h.length?"<h3 style='color:#2dd4bf;margin:12px 0 2px'>Head-to-head (2+ meetings)</h3>"+p.h2h.map(h=>"<span class='tag'>"+h[0]+": "+h[1]+"–"+h[2]+"</span>").join(" "):"")+"</div>"):"";
+  const hist=p.hist&&p.hist.length?("<div class='box'><h2>Recent scorecards — their actual sets</h2><table><tr><th>Date</th><th>Event</th><th>Opponent</th><th>Score</th><th></th></tr>"+
+    p.hist.map(h=>"<tr><td class='mono'>"+h.d.slice(0,4)+"-"+h.d.slice(4,6)+"-"+h.d.slice(6,8)+"</td><td>"+h.t+"</td><td>"+h.o+"</td><td class='mono'>"+h.s+"</td><td>"+(h.r==="W"?"<b style='color:#3ddc84'>W</b>":"<span style='color:#f4506a'>L</span>")+"</td></tr>").join("")+"</table></div>"):"";
+  const dec=p.dec&&p.dec[0]?(" · deciders: "+p.dec[1]+"–"+(p.dec[0]-p.dec[1])+" ("+Math.round(p.dec[1]/p.dec[0]*100)+"%, n="+p.dec[0]+")"):"";
+  const sealed=p.sealed&&p.sealed.length?("<div class='box'><h2>Sealed additions — from the desk's record book</h2>"+
+    p.sealed.map(s=>s.kind==="DAILY_SIM"?("<p><span class='tag house'>SEALED "+s.date+"</span> daily-board call: our number for the A-side "+s.our_pct_a+"% · pick "+s.pick+" · flags: "+(s.flags.join(" · ")||"none")+"</p>"):("<p><span class='tag house'>FINALIZED PACKAGE</span> "+s.final_line+" — winner "+s.winner+"</p>")).join("")+
+    "<p class='note'>Profiles grow from the sealed record: as live matches run through the system, their arrival-clock timing and tape append here under schema v2. The YOLO node slot on this profile: <span class='tag thin'>EMPTY</span> — real node data only, never simulated in.</p></div>")
+    :("<div class='box'><h2>Sealed additions</h2><p class='note'>No sealed records name this player yet — the sheet grows as their matches run through the desk. YOLO node slot: <span class='tag thin'>EMPTY</span> until real nodes produce real data.</p></div>");
+  $("sheet").innerHTML="<div class='box' style='border-color:#f5b942'><span class='big'>"+name+"</span> <span class='tag "+p.tier.toLowerCase()+"'>"+p.tier+"</span>"+
+   "<p>"+rec+cardLine+dec+"</p>"+profLine+
+   "<div style='display:flex;gap:14px;flex-wrap:wrap'><div>"+radar(p)+"</div><div style='flex:1;min-width:280px'>"+
+   "<h3 style='color:#f5b942;margin:2px 0 4px'>⚑ THE TELLS — what shows every time</h3>"+
+   (tl.length?tl.map(t=>"<div class='tell' style='border-color:"+(t[0]==="bad"?"#f4506a":"#3ddc84")+"'><b>"+t[1]+"</b> — "+t[2]+"</div>").join(""):"<p class='note'>No tell clears its threshold on the data held — the sheet says so rather than inventing one.</p>")+
+   "</div></div></div>"+
+   "<div class='box'><h2>Their 1-2-3 — splits from their own matches</h2>"+
+   splitTable("After they WIN Set 1 by…",p.s1w,"go on to win the match")+
+   splitTable("After they LOSE Set 1 by… (their games first)",p.s1l,"come back to win")+
+   shapesBars(p)+"</div>"+tex+vs+hist+sealed;
+  $("sheet").scrollIntoView({behavior:"smooth"});
+}
+function renderIndex(){
+  const q=($("q").value||"").toLowerCase();
+  const names=Object.keys(PD.players).filter(n=>(TIERF==="ALL"||PD.players[n].tier===TIERF)&&n.toLowerCase().includes(q));
+  names.sort((a,b)=>a.localeCompare(b));
+  $("counts").textContent=names.length.toLocaleString()+" profiles shown · "+PD.meta.tiers.FULL+" FULL · "+PD.meta.tiers.TEXTURE+" TEXTURE · "+PD.meta.tiers.THIN+" THIN · from "+PD.meta.archive_matches_scanned.toLocaleString()+" archive matches";
+  $("index").innerHTML=names.slice(0,400).map(n=>{const p=PD.players[n];
+    return "<span class='tag' style='margin:4px'><span class='name-link' data-n='"+n.replace(/'/g,"")+"'>"+n+"</span> <span class='tag "+p.tier.toLowerCase()+"' style='margin:0'>"+p.tier+"</span>"+(p.rec?" "+p.rec.w+"-"+p.rec.l:"")+"</span>";}).join("")+
+    (names.length>400?"<p class='note'>Showing the first 400 — search narrows the index.</p>":"");
+  document.querySelectorAll(".name-link").forEach(el=>el.onclick=()=>sheet(el.dataset.n));
+}
+$("q").addEventListener("input",renderIndex);
+document.querySelectorAll("#tier-btns button").forEach(b=>b.onclick=()=>{TIERF=b.dataset.t;
+  document.querySelectorAll("#tier-btns button").forEach(x=>x.classList.toggle("on",x===b));renderIndex();});
+(async()=>{const r=await fetch("profilesdata.json");PD=await r.json();renderIndex();
+  if(location.hash){const n=decodeURIComponent(location.hash.slice(1));if(PD.players[n])sheet(n);}})();
+</script>
+</body></html>
