@@ -43,6 +43,7 @@ divergence printed. The REAL highscores board (FIND) starts EMPTY and prints EMP
 
 <h2>&#128251; The booth — live play-by-play (text)</h2>
 <p class="small" style="margin:2px 0 6px">&#128203; <b>RELAY:</b> every booth line carries a <b>COPY</b> button — tap it and paste straight into the Polymarket / Kalshi groups. Every play also carries <b>COPY PACKAGE</b>: the whole sequence in one paste. That is the bridge until the group doors open here.</p>
+<p class="small" style="margin:2px 0 6px">&#127908; <b>THE BOOTH SPEAKS:</b> the specialists now call their own plays aloud — Wave Rider in Charlie's voice, the Lock Hunter in Daniel's, the Value Scout (and the color notes) in Matilda's — voices approved by David on Nov 12. Every spoken line is printed word for word beside it; audio never carries information alone.</p>
 <div class="card feed" id="feed"><p class="dim">the booth is warming up&hellip;</p></div>
 
 <h2>&#128230; Play packages — every play, sealed, replayable</h2>
@@ -160,7 +161,7 @@ async function load(){
     +'<br><span class="small">'+esc(s.strategy)+'</span>'
     +railBlock('KALSHI', s.rails.KALSHI)+railBlock('POLYMARKET', s.rails.POLY)
     +'</div>').join('');
-  $('feed').innerHTML=d.feed.length? d.feed.map(f=>'<div><span class="small">'+esc(f.at)+'</span> <b>'+esc(f.who)+':</b> '+esc(f.text)+' <button class="copybtn" data-t="'+esc(f.who+': '+f.text)+'">COPY</button></div>').join('') : '<p class="dim">No calls yet — the specialists are watching the tape.</p>';
+  $('feed').innerHTML=d.feed.length? d.feed.map(f=>'<div><span class="small">'+esc(f.at)+'</span> <b>'+esc(f.who)+':</b> '+esc(f.text)+' <button class="copybtn" data-t="'+esc(f.who+': '+f.text)+'">COPY</button>'+(f.audio? '<br><audio controls preload="none" src="'+esc(f.audio)+'" style="height:32px;margin-top:4px"></audio> <span class="small">&#128266; hear the booth — the spoken line is the printed line, word for word</span>':'')+'</div>').join('') : '<p class="dim">No calls yet — the specialists are watching the tape.</p>';
   $('packages').innerHTML=d.packages.length? '<table><tr><th>Package</th><th>Specialist</th><th>Road</th><th>Class</th><th>State</th><th>Result</th><th></th></tr>'
     +d.packages.map(p=>'<tr><td>'+esc(p.match)+'</td><td>'+esc(p.specialist)+'</td><td>'+esc(p.rail)+'</td><td><span class="tag x">'+esc(p.class)+'</span></td><td>'+(p.closed?'closed':'open')+'</td><td>'+(p.result?('P&amp;L '+(p.result.pnl>=0?'+':'')+Number(p.result.pnl).toFixed(2)):'—')+'</td><td><a href="'+esc(p.replay)+'">&#127916; replay</a> <button class="copybtn" data-pkg="'+esc(p.id)+'">COPY PACKAGE</button></td></tr>').join('')+'</table>'
     : '<p class="dim">No packages yet.</p>';
