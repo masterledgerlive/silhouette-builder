@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FIND — NODAL</title>
+<style>
+ body{background:#0b0e13;color:#dbe4f0;font-family:Georgia,serif;margin:0;padding:18px;max-width:1080px;margin:auto}
+ h1{font-size:26px;margin:2px 0} h2{font-size:19px;color:#7fd4ff;margin:22px 0 8px} h3{font-size:15px;color:#ffd97f;margin:12px 0 6px}
+ a{color:#7fd4ff} .small{font-size:12.5px;color:#93a5bb} .dim{color:#93a5bb}
+ input[type=text]{width:100%;box-sizing:border-box;background:#101722;color:#fff;border:1px solid #2c3e55;border-radius:8px;padding:13px;font-size:18px;font-family:Georgia,serif}
+ button{background:#17324a;color:#cfeaff;border:1px solid #2c5a7a;border-radius:6px;padding:7px 13px;cursor:pointer;font-family:Georgia,serif;font-size:14px;margin:2px}
+ button:hover{background:#1f425f} button.run{background:#3a2c10;border-color:#8a6d1f;color:#ffe9a8}
+ .card{background:#101722;border:1px solid #223148;border-radius:8px;padding:12px 14px;margin:9px 0}
+ .live{border-color:#7a2c2c} .ext{border-style:dashed;border-color:#5a4a1f}
+ .tag{display:inline-block;font-size:11px;border:1px solid #2c5a7a;color:#7fd4ff;border-radius:4px;padding:1px 6px;margin-right:5px}
+ .tag.x{border-color:#8a6d1f;color:#ffd97f} .tag.l{border-color:#a33;color:#ff9c9c}
+ table{border-collapse:collapse;width:100%;font-size:13.5px}
+ td,th{border-bottom:1px solid #1c2940;padding:5px 7px;text-align:left;vertical-align:top}
+ .num{font-variant-numeric:tabular-nums;text-align:right}
+ .streak{color:#ffb35c;font-weight:bold} .ok{color:#8fe388} .bad{color:#ff9c9c}
+ pre{background:#0d1420;border:1px solid #223148;border-radius:6px;padding:10px;font-size:11.5px;white-space:pre-wrap;word-break:break-all;max-height:300px;overflow:auto}
+ .row{cursor:pointer} .row:hover{background:#14202f}
+</style></head><body>
+<p class="small"><a href="index.html">&larr; NODAL hub</a></p>
+<h1>&#128269; FIND</h1>
+<p>One search for everything we hold: <b>player name, tournament, or match</b>. It looks through
+<b>all records</b> (1,952 profiles, the archive, the sealed ledger's additions), <b>today's games on our wire</b>,
+and — stamped EXTERNAL, find-sources only — official listings and prediction-market listings.
+Pick a result and FIND pulls the full data pack, then points it at any engine. Every run saves as a
+certified record (schema v2) that appends to the player's profile when the desk seals it.</p>
+
+<input type="text" id="q" placeholder="Try: Sinner &middot; Pegula &middot; Lexington &middot; a tournament name&hellip;">
+<div style="margin-top:8px"><button onclick="search()">&#128269; FIND IT</button>
+<button onclick="loadToday(true)">&#8635; refresh today's wire</button></div>
+<div id="results"></div>
+
+<h2>&#128337; TODAY IN ORDER — every match on the wire, by start time</h2>
+<div id="today" class="small">pulling the wire&hellip;</div>
+
+<h2>&#127918; THE PACK</h2>
+<div id="pack"><p class="dim">Pick any result above and the full data pack assembles here — cards, tape texture,
+head-to-head, their own 1-2-3 splits, and the live state when the match is on the wire.</p></div>
+
+<h2>&#9881;&#65039; POINT IT AT AN ENGINE</h2>
+<div id="engines"><p class="dim">Pick a game first. Runnable engines run <b>here</b> on the carried pack;
+the rest open with the player carried over. Docked means not built — labeled, never faked.</p></div>
+<div id="runout"></div>
+
+<h2>&#127942; THE SCOREBOARD — every caller graded, streaks and all</h2>
+<div id="scores"><p class="dim">loading the sealed records&hellip;</p></div>
+
+<h2>What FIND cannot see (printed, not hidden)</h2>
+<p class="small">Our wire is the ESPN tour feed: ATP/WTA tour events. <b>Challenger and ITF events do not ride it</b> —
+in season or out — so a Challenger match will never appear here live; FIND says so out loud and points at the
+official listing and the players' archive records instead. External listings are find-sources only and never
+feed a call. Records save client-side as certified downloads (SHA-256, source + arrival clock, schema v2);
+they enter the sealed chain when the desk imports them, and append to the player's sealed additions there.</p>
+
+<script>
+const $=id=>document.getElementById(id);
+let PROFILES=null, SCORES=null, WIRE=[], PACK=null;
+const norm=s=>(s||'').toLowerCase().replace(/[^a-z ]/g,' ').replace(/\s+/g,' ').trim();
+const keyOf=s=>{const p=norm(s).split(' ');return p.length?p[p.length-1]+' '+(p[0]?p[0][0]:''):''};
+const esc=s=>String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;');
+
+async function sha256(txt){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(txt));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
+
+async function loadProfiles(){ if(PROFILES) return PROFILES;
+  const r=await fetch('profilesdata.json'); const d=await r.json(); PROFILES=d.players; return PROFILES; }
+async function loadScores(){ if(SCORES) return SCORES;
+  const r=await fetch('scoresdata.json'); SCORES=await r.json(); renderScores(); return SCORES; }
+
+async function pullWire(){
+  WIRE=[];
+  for(const tour of ['atp','wta']){
+    try{
+      const r=await fetch('https://site.api.espn.com/apis/site/v2/sports/tennis/'+tour+'/scoreboard');
+      const d=await r.json();
+      for(const ev of (d.events||[])){
+        for(const c of (ev.competitions||[])){
+          const cs=c.competitors||[]; if(cs.length<2) continue;
+          const nm=i=>(cs[i].athlete&&(cs[i].athlete.displayName||cs[i].athlete.shortDisplayName))||'?';
+          const sets=i=>(cs[i].linescores||[]).map(x=>x.value);
+          WIRE.push({tour:tour.toUpperCase(),event:ev.name||'',date:ev.date||'',a:nm(0),b:nm(1),
+            sa:sets(0),sb:sets(1),state:(c.status&&c.status.type&&c.status.type.state)||'pre',
+            detail:(c.status&&c.status.type&&c.status.type.shortDetail)||'',
+            wa:!!cs[0].winner, wb:!!cs[1].winner});
+        }
+      }
+    }catch(e){ /* tour unreachable — the other still renders */ }
+  }
+  WIRE.sort((x,y)=>(x.date||'').localeCompare(y.date||''));
+  return WIRE;
+}
+const etTime=iso=>{ if(!iso) return '—'; try{ return new Date(iso).toLocaleString('en-US',{timeZone:'America/New_York',hour:'numeric',minute:'2-digit',month:'short',day:'numeric'}); }catch(e){ return iso; } };
+const stateTag=m=> m.state==='in' ? '<span class="tag l">LIVE</span>' : (m.state==='post' ? '<span class="tag">FINAL</span>' : '<span class="tag">UPCOMING</span>');
+const scoreLine=m=>{ const n=Math.max(m.sa.length,m.sb.length); if(!n) return ''; let s=[]; for(let i=0;i<n;i++) s.push((m.sa[i]??'–')+'-'+(m.sb[i]??'–')); return ' · '+s.join(' '); };
+
+async function loadToday(manual){
+  await pullWire();
+  if(!WIRE.length){ $('today').innerHTML='<p class="bad">The wire returned nothing just now — try refresh. Absence here means the feed, not the tennis.</p>'; return; }
+  let h='<table><tr><th>Start (ET)</th><th>Event</th><th>Match</th><th>State</th></tr>';
+  WIRE.forEach((m,i)=>{ h+='<tr class="row" onclick="pickWire('+i+')"><td class="num">'+etTime(m.date)+'</td><td>'+esc(m.event)+' <span class="small">'+m.tour+'</span></td><td>'+esc(m.a)+' vs '+esc(m.b)+scoreLine(m)+'</td><td>'+stateTag(m)+' '+esc(m.detail)+'</td></tr>'; });
+  $('today').innerHTML=h+'</table><p class="small">'+WIRE.length+' matches on the wire · pulled '+new Date().toLocaleTimeString()+' · tap any row to pull its pack.</p>';
+}
+
+function profileEntry(name){ if(!PROFILES) return null;
+  const k=keyOf(name); for(const key in PROFILES){ const p=PROFILES[key]; if(keyOf(p.name)===k||norm(p.name)===norm(name)) return p; } return null; }
+
+function lexingtonCard(){
+  return '<div class="card"><h3 style="margin-top:0">&#128269; LEXINGTON — NOT LIVE, AND NOT ON OUR WIRE</h3>'
+  +'<p>The <b>2026 Lexington Open</b> is over: it ran <b>27 July – 9 August 2026</b> in Lexington, Kentucky — '
+  +'the women\u2019s ITF W75 on 27 Jul – 2 Aug and the men\u2019s <b>ATP Challenger 75</b> on 3–9 Aug. '
+  +'Men\u2019s singles: <b>Edas Butvilas</b> won the title, beating Andre Ilagan in the final.</p>'
+  +'<p>And even in season it would not appear here: <b>Challenger and ITF events don\u2019t ride the ESPN tour wire</b> '
+  +'our live board reads. That is the whole story of the miss — the tournament ended three months ago, and its '
+  +'level never reaches our feed.</p>'
+  +'<p class="small">What exists instead: the players\u2019 archive records — search <b>Butvilas</b> or <b>Ilagan</b> above — '
+  +'and the official draw: <a href="https://www.protennislive.com/posting/2026/586/mds.pdf" target="_blank">Lexington main-draw PDF (protennislive)</a> · '
+  +'<a href="https://en.wikipedia.org/wiki/2026_Lexington_Open" target="_blank">2026 Lexington Open (Wikipedia)</a>.</p></div>';
+}
+
+async function search(){
+  const q=$('q').value.trim(); if(q.length<2) return;
+  const out=[]; const nq=norm(q);
+  if(nq.includes('lexington')) out.push(lexingtonCard());
+  // (a) records
+  await loadProfiles();
+  const hits=Object.values(PROFILES).filter(p=>norm(p.name).includes(nq)||nq.includes(norm(p.name).split(' ').pop()));
+  if(hits.length){ out.push('<h3>IN OUR RECORDS — '+hits.length+' player'+(hits.length>1?'s':'')+'</h3>'+hits.slice(0,8).map(p=>
+    '<div class="card"><b>'+esc(p.name)+'</b> <span class="tag">'+p.tier+'</span> '
+    +(p.rec?('archive '+p.rec.w+'-'+p.rec.l):'')+(p.points_n?(' · '+p.points_n.toLocaleString()+' Slam points of tape'):'')
+    +' <button onclick="pickPlayer(\''+esc(p.name).replace(/'/g,"\\'")+'\')">PULL THE PACK</button> '
+    +'<a href="profiles.html#'+encodeURIComponent(p.name)+'"><button>full profile</button></a></div>').join('')); }
+  // (b) the wire
+  if(!WIRE.length) await pullWire();
+  const wm=WIRE.map((m,i)=>[m,i]).filter(([m])=>norm(m.a).includes(nq)||norm(m.b).includes(nq)||norm(m.event).includes(nq));
+  if(wm.length){ out.push('<h3>ON THE WIRE TODAY — '+wm.length+'</h3>'+wm.map(([m,i])=>
+    '<div class="card'+(m.state==='in'?' live':'')+'">'+stateTag(m)+' <b>'+esc(m.a)+' vs '+esc(m.b)+'</b>'+scoreLine(m)
+    +' <span class="small">'+esc(m.event)+' · '+m.tour+' · starts '+etTime(m.date)+' ET · '+esc(m.detail)+'</span> '
+    +'<button onclick="pickWire('+i+')">PULL THE PACK</button></div>').join('')); }
+  // (c) external — Polymarket public search (find-source only)
+  out.push('<div id="extbox"><p class="small">checking external listings&hellip;</p></div>');
+  if(!hits.length && !wm.length && !nq.includes('lexington'))
+    out.push('<div class="card"><b>No match in our records or on today\u2019s wire.</b><p class="small">If it is a Challenger or ITF match it will never appear on our wire — see the note at the bottom. Try a player\u2019s last name, or check the official listings below.</p></div>');
+  out.push('<div class="card ext"><span class="tag x">EXTERNAL</span> <b>Official listings (find-sources only):</b> '
+    +'<a href="https://www.atptour.com" target="_blank">ATP Tour</a> · <a href="https://www.wtatennis.com" target="_blank">WTA Tennis</a> · '
+    +'<a href="https://www.itftennis.com" target="_blank">ITF</a> — these never feed a NODAL call.</div>');
+  $('results').innerHTML=out.join('');
+  try{
+    const r=await fetch('https://gamma-api.polymarket.com/public-search?q='+encodeURIComponent(q)+'&limit_per_type=6');
+    const d=await r.json(); const evs=(d.events||[]).slice(0,4);
+    if(evs.length){ $('extbox').innerHTML='<h3>EXTERNAL — PREDICTION-MARKET LISTINGS (find-source only, never feeds a call)</h3>'+evs.map(ev=>{
+      const mk=(ev.markets||[])[0]; let price='';
+      try{ const pr=JSON.parse(mk.outcomePrices||'[]'); if(pr.length) price=' · market Yes '+Math.round(parseFloat(pr[0])*100)+'\u00a2'; }catch(e){}
+      return '<div class="card ext"><span class="tag x">EXTERNAL</span> '+esc(ev.title||(mk&&mk.question)||'')+price+'</div>'; }).join(''); }
+    else $('extbox').innerHTML='<p class="small">No prediction-market listing matched that search.</p>';
+  }catch(e){ const b=$('extbox'); if(b) b.innerHTML='<p class="small">External market search unreachable from here — printed, not hidden.</p>'; }
+}
+
+/* ---------- THE PACK ---------- */
+function playerPanel(p){
+  if(!p) return '<div class="card"><b>Not in our records</b><p class="small">No profile card — the wire name stands on its own; engines run on tour-average inputs, labeled as such.</p></div>';
+  let h='<div class="card"><b style="font-size:17px">'+esc(p.name)+'</b> <span class="tag">'+p.tier+'</span>';
+  if(p.rec) h+=' <span class="small">archive '+p.rec.w+'-'+p.rec.l+'</span>';
+  if(p.card){ const c=p.card; h+='<br><span class="small">card: serve '+c.serve+' · return '+c.return+' · BP won '+c.bp_won+'% · BP saved '+c.bp_saved+'%'
+    +(c.decider!=null?(' · decider '+c.decider+'% (n='+c.decider_n+')'):'')+' · comeback '+c.comeback+'%</span>'; }
+  if(p.flaws){ const f=p.flaws; h+='<br><span class="small">tape texture: hold '+f.hold+'% · ace '+f.ace+'% · DF '+f.df+'% · BP saved '+f.bp_saved+'%</span>'; }
+  if(p.nodes){ const n=p.nodes; h+='<br><span class="small">point nodes: serve pts won '+n.srv_pct+'% · return '+n.ret_pct+'% · pressure '+(n.pressure_srv_delta>=0?'+':'')+n.pressure_srv_delta+' srv / '+(n.pressure_ret_delta>=0?'+':'')+n.pressure_ret_delta+' ret · decider sets '+n.dec_pct+'%</span>'; }
+  if(p.prof){ if(p.prof.let_go!=null) h+='<br><span class="small">S2 let-go after winning S1: '+p.prof.let_go+'% of the time</span>'; if(p.prof.last10) h+=' <span class="small">· last-10 form '+p.prof.last10+'</span>'; }
+  if(p.exits&&(p.exits.ret_lost+p.exits.wo_lost)>0) h+='<br><span class="small">walk-out file: '+(p.exits.ret_lost+p.exits.wo_lost)+' no-finish exits ('+p.exits.early_rate+'% early-exit rate)</span>';
+  if(p.sealed&&p.sealed.length) h+='<br><span class="small">sealed additions: '+p.sealed.length+' (latest: '+esc(p.sealed[p.sealed.length-1].kind)+')</span>';
+  h+='</div>'; return h;
+}
+function splitsPanel(p){
+  if(!p||!p.s1w) return '';
+  const rows=Object.keys(p.s1w).sort().map(k=>{ const [n,w]=p.s1w[k]; return '<tr><td>won S1 '+k+'</td><td class="num">'+n+'</td><td class="num">'+(n?Math.round(100*w/n):'—')+'%</td></tr>'; }).join('');
+  const rowsL=Object.keys(p.s1l||{}).sort().map(k=>{ const [n,w]=p.s1l[k]; return '<tr><td>lost S1 '+k+'</td><td class="num">'+n+'</td><td class="num">'+(n?Math.round(100*w/n):'—')+'% came back</td></tr>'; }).join('');
+  if(!rows&&!rowsL) return '';
+  return '<div class="card"><h3 style="margin-top:0">'+esc(p.name)+' — their own 1-2-3</h3><table>'+rows+rowsL+'</table>'
+    +'<p class="small">Census anchor for any S1 winner: 76.9–90.2% by slope (the Combo Key). Their decider line: '+(p.dec?((p.dec[0]+'/'+p.dec[1])):'—')+'.</p></div>';
+}
+function showPack(){
+  if(!PACK) return;
+  let h='';
+  if(PACK.match){ const m=PACK.match; h+='<div class="card'+(m.state==='in'?' live':'')+'">'+stateTag(m)+' <b>'+esc(m.a)+' vs '+esc(m.b)+'</b>'+scoreLine(m)
+    +'<br><span class="small">'+esc(m.event)+' · '+m.tour+' · starts '+etTime(m.date)+' ET · '+esc(m.detail)+' · source: ESPN wire, pulled '+new Date().toLocaleTimeString()+'</span></div>'; }
+  h+=playerPanel(PACK.pa)+playerPanel(PACK.pb);
+  if(PACK.pa&&PACK.pb){ const hh=(PACK.pa.h2h||[]).find(x=>keyOf(x[0])===keyOf(PACK.pb.name));
+    if(hh) h+='<div class="card"><b>Head-to-head:</b> '+esc(PACK.pa.name)+' leads/trails '+hh[1]+'-'+hh[2]+' vs '+esc(PACK.pb.name)+' in the archive.</div>'; }
+  h+=splitsPanel(PACK.pa)+splitsPanel(PACK.pb);
+  $('pack').innerHTML=h; renderEngines();
+}
+async function pickPlayer(name){ await loadProfiles(); PACK={pa:profileEntry(name),pb:null,match:null}; showPack(); window.scrollTo({top:$('pack').offsetTop-10,behavior:'smooth'}); }
+async function pickWire(i){ await loadProfiles(); const m=WIRE[i]; PACK={pa:profileEntry(m.a),pb:profileEntry(m.b),match:m}; showPack(); window.scrollTo({top:$('pack').offsetTop-10,behavior:'smooth'}); }
+
+/* ---------- ENGINES ---------- */
+function serveProb(p, tourAvg){ if(!p) return tourAvg;
+  if(p.card&&p.card.serve) return p.card.serve/100;
+  if(p.nodes&&p.nodes.srv_pct) return p.nodes.srv_pct/100;
+  if(p.flaws&&p.flaws.hold) return Math.min(0.75,Math.max(0.45, p.flaws.hold/100*0.92));
+  return tourAvg; }
+/* exact DP over game states (points 0-0 in the current game — the wire is game-grain) */
+function gameWin(p,pa,pb){ if(pa>=4&&pa>pb+1) return 1; if(pb>=4&&pb>pa+1) return 0;
+  if(pa>=3&&pb>=3){ const d=p*p/(p*p+(1-p)*(1-p)); return pa===pb?d:(pa>pb?p+(1-p)*d:p*d); }
+  return p*gameWin(p,pa+1,pb)+(1-p)*gameWin(p,pa,pb+1); }
+/* tiebreak — the desk's proven price_state.py algorithm, ported:
+   serve stints 1-then-2s; ties at 6-6+ closed with the deuce-race formula */
+function tbWin(pA,pB,first){
+  const pAvg=(pA+(1-pB))/2, deuceRace=pAvg*pAvg/(pAvg*pAvg+(1-pAvg)*(1-pAvg));
+  function rec(a,b,server,stint){ if(a>=7&&a-b>=2) return 1; if(b>=7&&b-a>=2) return 0;
+    if(a>=6&&b>=6&&a===b) return deuceRace;
+    const p = server==='A' ? pA : 1-pB;
+    const ns = stint>1 ? server : (server==='A'?'B':'A'), nsl = stint>1 ? stint-1 : 2;
+    return p*rec(a+1,b,ns,nsl)+(1-p)*rec(a,b+1,ns,nsl); }
+  return rec(0,0,first,1); }
+function setFrom(pA,pB,ga,gb,srv){ if((ga>=6&&ga-gb>=2)||ga===7) return 1; if((gb>=6&&gb-ga>=2)||gb===7) return 0;
+  if(ga===6&&gb===6) return tbWin(pA,pB,srv);
+  const gw = srv==='A' ? gameWin(pA,0,0) : 1-gameWin(pB,0,0);
+  const nxt = srv==='A'?'B':'A';
+  return gw*setFrom(pA,pB,ga+1,gb,nxt)+(1-gw)*setFrom(pA,pB,ga,gb+1,nxt); }
+function setWin(pA,pB,srv){ return setFrom(pA,pB,0,0,srv); }
+function matchFrom(pA,pB,sa,sb,setSrv){ if(sa===2) return 1; if(sb===2) return 0;
+  const sw=setWin(pA,pB,setSrv), alt=setSrv==='A'?'B':'A';
+  return sw*matchFrom(pA,pB,sa+1,sb,alt)+(1-sw)*matchFrom(pA,pB,sa,sb+1,alt); }
+function matchWin(pA,pB,sa,sb,ga,gb,srv){ if(ga===0&&gb===0) return matchFrom(pA,pB,sa,sb,srv);
+  const pSet=setFrom(pA,pB,ga,gb,srv);
+  return pSet*matchFrom(pA,pB,sa+1,sb,srv)+(1-pSet)*matchFrom(pA,pB,sa,sb+1,srv); }
+
+function renderEngines(){
+  if(!PACK) return;
+  if(!SCORES) { loadScores().then(()=>renderEngines()); }
+  const A=PACK.pa?PACK.pa.name:(PACK.match?PACK.match.a:'—'), B=PACK.pb?PACK.pb.name:(PACK.match?PACK.match.b:'—');
+  let h='<p>The pack: <b>'+esc(A)+'</b>'+(PACK.pb||PACK.match?(' vs <b>'+esc(B)+'</b>'):'')+'</p>';
+  h+='<button class="run" onclick="runForks()">&#9654; RUN THE 1-2-3 FORKS — here</button> ';
+  if(PACK.match&&(PACK.match.state==='in'||PACK.match.state==='post')) h+='<button class="run" onclick="runDP()">&#9654; RUN THE LIVE DP — here</button> ';
+  else if(PACK.match) h+='<span class="small">Live DP arms when the match is live on the wire.</span> ';
+  if(SCORES){ for(const e of SCORES.engines){ if(e.mode==='OPENS') h+='<a href="'+e.page+(e.page==='profiles.html'&&PACK.pa?('#'+encodeURIComponent(PACK.pa.name)):'')+'"><button>'+esc(e.name)+'</button></a> ';
+    else if(e.mode==='DOCKED') h+='<button disabled title="not built">'+esc(e.name)+' — DOCKED</button> '; } }
+  $('engines').innerHTML=h;
+}
+function runForks(){
+  if(!PACK) return; const p=PACK.pa;
+  let s='1-2-3 FORK SHEET — '+(p?p.name:'no card');
+  let body='<div class="card"><h3 style="margin-top:0">'+s+'</h3>';
+  if(p&&p.s1w){ body+=splitsPanel(p); const tot=Object.values(p.s1w).reduce((a,[n,w])=>[a[0]+n,a[1]+w],[0,0]);
+    if(tot[0]) body+='<p>Their S1-winner conversion overall: <b>'+Math.round(100*tot[1]/tot[0])+'%</b> over '+tot[0]+' archive matches (census band 76.9–90.2% by slope).</p>'; }
+  else body+='<p class="small">No archive splits for this name — the fork sheet needs their card. Census anchor stands alone: S1 winner takes the match 76.9–90.2% by slope; the Grave (S1 loser down 0-2 in S2) is 7.7%.</p>';
+  body+='</div>'; $('runout').innerHTML=body;
+  saveRecord('1-2-3 Matrix (fork sheet)', (p?p.name:'?')+' fork sheet run from FIND', {forks_from_card: !!(p&&p.s1w)});
+}
+function runDP(){
+  const m=PACK.match; if(!m) return;
+  const pA=serveProb(PACK.pa,0.60), pB=serveProb(PACK.pb,0.54);
+  const n=Math.max(m.sa.length,m.sb.length); let sa=0,sb=0,ga=0,gb=0;
+  for(let i=0;i<n;i++){ const x=m.sa[i]??0,y=m.sb[i]??0; if(i<n-1){ if(x>y)sa++; else if(y>x)sb++; } else { ga=x; gb=y; } }
+  const wA=matchWin(pA,pB,sa,sb,ga,gb,'A'), wB=matchWin(pA,pB,sa,sb,ga,gb,'B');
+  const mid=(wA+wB)/2;
+  $('runout').innerHTML='<div class="card"><h3 style="margin-top:0">LIVE DP — '+esc(m.a)+' vs '+esc(m.b)+'</h3>'
+    +'<p>Exact state price for '+esc(m.a)+': <b>'+Math.round(mid*1000)/10+'%</b> <span class="small">(server unknown from the wire — A-serving '+Math.round(wA*1000)/10+'% / B-serving '+Math.round(wB*1000)/10+'%; points inside the current game price from 0-0, the wire is game-grain)</span></p>'
+    +'<p class="small">Serve inputs: '+esc(m.a)+' '+(Math.round(pA*1000)/10)+'% pts on serve, '+esc(m.b)+' '+(Math.round(pB*1000)/10)+'% — from their cards/tape where held, else the labeled tour average.</p></div>';
+  saveRecord('Live DP repricer', m.a+' '+Math.round(mid*1000)/10+'% at '+m.sa.join('-')+'/'+m.sb.join('-'),
+    {state:{sets:[sa,sb],games:[ga,gb]}, serve_inputs:[pA,pB], server:'NOT_CAPTURED — both cases priced'});
+}
+async function saveRecord(engine, summary, extra){
+  const rec={schema:'nodal-record/2', kind:'FIND_RUN', at:new Date().toISOString(),
+    source:{page:'find.html', wire: PACK&&PACK.match?'ESPN scoreboard':'records', external_inputs:'NONE — externals never feed a run'},
+    players:[PACK.pa?PACK.pa.name:(PACK.match?PACK.match.a:null), PACK.pb?PACK.pb.name:(PACK.match?PACK.match.b:null)],
+    engine, summary,
+    capture:{score_state: PACK&&PACK.match?{a:PACK.match.sa,b:PACK.match.sb,state:PACK.match.state}:'NOT_CAPTURED',
+      point_tape:'NOT_CAPTURED — game-grain wire', timing:{grain:'arrival clock at run', per_point:'NOT_CAPTURED'},
+      node_layer:'EMPTY — no verified YOLO node on this match', extra},
+    profile_note:'appends to each named player\u2019s sealed additions when the desk imports + seals this record (build_profiles reads FIND_RUN)'};
+  const h=await sha256(JSON.stringify(rec)); rec.sha256=h;
+  const blob=new Blob([JSON.stringify(rec,null,1)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  $('runout').innerHTML+='<div class="card"><b>&#9989; RUN SAVED AS A CERTIFIED RECORD</b> <span class="small">sha256 '+h.slice(0,16)+'… · kind FIND_RUN · schema v2</span>'
+    +'<br><a href="'+url+'" download="find-run-'+h.slice(0,8)+'.json"><button>download the record</button></a>'
+    +'<span class="small">It enters the sealed chain when the desk imports it — the page cannot write the chain, and says so.</span><pre>'+esc(JSON.stringify(rec,null,1))+'</pre></div>';
+}
+
+/* ---------- SCOREBOARD ---------- */
+function renderScores(){
+  const d=SCORES; if(!d) return;
+  let h='<p class="small">'+esc(d.rule.text)+'</p><table><tr><th>Caller</th><th>Calls</th><th>Graded</th><th>Correct</th><th>Accuracy</th><th>Brier</th><th>Streak now</th><th>Best</th><th>Status</th></tr>';
+  for(const c of d.callers){ h+='<tr><td><b>'+esc(c.name)+'</b><br><span class="small">'+esc(c.kind)+'</span>'+(c.note?('<br><span class="small">'+esc(c.note)+'</span>'):'')+'</td>'
+    +'<td class="num">'+c.calls+'</td><td class="num">'+c.graded+'</td><td class="num">'+c.correct+'</td>'
+    +'<td class="num">'+(c.accuracy==null?'—':c.accuracy+'%')+'</td><td class="num">'+(c.brier==null?'—':c.brier)+'</td>'
+    +'<td class="num streak">'+(c.streak_now?('&#128293; '+c.streak_now):'0')+'</td><td class="num">'+c.streak_best+'</td>'
+    +'<td>'+(c.status==='APPROVED'?'<span class="ok"><b>APPROVED</b></span>':esc(c.status))+'</td></tr>'; }
+  h+='</table><h3>Engines, honestly listed</h3><table>';
+  for(const e of d.engines) h+='<tr><td>'+esc(e.name)+'</td><td>'+e.mode+'</td><td class="small">'+esc(e.note)+'</td></tr>';
+  $('scores').innerHTML=h+'</table>';
+}
+
+const q0=new URLSearchParams(location.search).get('q');
+loadProfiles(); loadScores(); loadToday(false);
+if(q0){ $('q').value=q0; setTimeout(search,600); }
+$('q').addEventListener('keydown',e=>{ if(e.key==='Enter') search(); });
+</script></body></html>

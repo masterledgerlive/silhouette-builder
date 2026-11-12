@@ -1,0 +1,158 @@
+{
+ "built_from": "sealed ledger + grading file, computed by build_scores.py",
+ "rule": {
+  "graded_min": 20,
+  "accuracy_min": 62,
+  "brier_max": 0.21,
+  "text": "APPROVED = at least 20 graded calls AND accuracy at least 62% AND mean Brier at most 0.21. Statuses are computed from the sealed records by the desk builder \u2014 nothing self-approves."
+ },
+ "callers": [
+  {
+   "id": "LEDGER",
+   "name": "LEDGER lane",
+   "kind": "house lane (frozen slate calls)",
+   "calls": 30,
+   "graded": 18,
+   "correct": 13,
+   "accuracy": 72.2,
+   "brier": 0.2037,
+   "streak_now": 5,
+   "streak_best": 5,
+   "status": "ON THE CUSP"
+  },
+  {
+   "id": "CHARGE",
+   "name": "CHARGE lane",
+   "kind": "house lane (frozen slate calls)",
+   "calls": 30,
+   "graded": 18,
+   "correct": 13,
+   "accuracy": 72.2,
+   "brier": 0.1917,
+   "streak_now": 5,
+   "streak_best": 5,
+   "status": "ON THE CUSP"
+  },
+  {
+   "id": "FLIP",
+   "name": "FLIP lane",
+   "kind": "house lane (frozen slate calls)",
+   "calls": 30,
+   "graded": 18,
+   "correct": 8,
+   "accuracy": 44.4,
+   "brier": 0.2532,
+   "streak_now": 0,
+   "streak_best": 4,
+   "status": "BUILDING RECORD"
+  },
+  {
+   "id": "REGISTRY",
+   "name": "The frozen registry (CORE blend)",
+   "kind": "frozen pre-match calls, sealed 2026-11-04",
+   "calls": 30,
+   "graded": 18,
+   "correct": 13,
+   "accuracy": 72.2,
+   "brier": 0.2037,
+   "streak_now": 5,
+   "streak_best": 5,
+   "status": "ON THE CUSP"
+  },
+  {
+   "id": "LIVE_CALLER",
+   "name": "Live caller (in-match DP tests A + B)",
+   "kind": "live point-by-point calls, graded",
+   "calls": 2,
+   "graded": 2,
+   "correct": 2,
+   "accuracy": 100.0,
+   "brier": 0.1693,
+   "streak_now": 2,
+   "streak_best": 2,
+   "status": "UNPROVEN"
+  },
+  {
+   "id": "DAILY_SIM",
+   "name": "Daily Board caller",
+   "kind": "daily pre-match sims, sealed on the board",
+   "calls": 13,
+   "graded": 0,
+   "correct": 0,
+   "accuracy": null,
+   "brier": null,
+   "streak_now": 0,
+   "streak_best": 0,
+   "status": "UNPROVEN",
+   "note": "grades land as its matches finish"
+  }
+ ],
+ "engines": [
+  {
+   "name": "1-2-3 Matrix",
+   "page": "matrix.html",
+   "mode": "RUNS HERE",
+   "note": "the found player\u2019s own fork numbers, in the pack below"
+  },
+  {
+   "name": "Live DP repricer",
+   "page": "livepull.html",
+   "mode": "RUNS HERE",
+   "note": "runs on a live wire state from the pack (Live Pull machinery)"
+  },
+  {
+   "name": "Player Profiles",
+   "page": "profiles.html",
+   "mode": "OPENS",
+   "note": "the full visual sheet for the found player"
+  },
+  {
+   "name": "The Golden Sim",
+   "page": "goldensim.html",
+   "mode": "OPENS",
+   "note": "the full-machine exhibition sim"
+  },
+  {
+   "name": "Point Brain",
+   "page": "pointbrain.html",
+   "mode": "OPENS",
+   "note": "pressure / tilt / decider deltas"
+  },
+  {
+   "name": "The Flaw Board",
+   "page": "key.html",
+   "mode": "OPENS",
+   "note": "the 1,144-player texture table"
+  },
+  {
+   "name": "Shape Key",
+   "page": "shapekey.html",
+   "mode": "OPENS",
+   "note": "the six-string first-set key"
+  },
+  {
+   "name": "Forcing Meter",
+   "page": "forcing.html",
+   "mode": "OPENS",
+   "note": "modal-route forcing scores"
+  },
+  {
+   "name": "Daily Board",
+   "page": "daily.html",
+   "mode": "OPENS",
+   "note": "today\u2019s flags + the sealed daily calls"
+  },
+  {
+   "name": "Simulation League / 3D reverse player",
+   "page": null,
+   "mode": "DOCKED",
+   "note": "not built \u2014 the sealed records are its raw material"
+  },
+  {
+   "name": "Booth voices",
+   "page": null,
+   "mode": "DOCKED",
+   "note": "cast, on David\u2019s hold \u2014 text only"
+  }
+ ]
+}
