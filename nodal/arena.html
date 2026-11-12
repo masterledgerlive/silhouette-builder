@@ -100,6 +100,7 @@ permits bots (wallet-signed) — but the international CLOB geoblocks US traders
 open. Real placement stays behind David's exact word, his overlay-mode rule (he places his own orders), and
 signed mandate caps, until he lifts them. Phase 1 is the proof gate: the specialists earn the right to be
 considered here — in public, on the sealed record.</p>
+<div id="demo"></div>
 </div>
 
 <script>
@@ -167,6 +168,13 @@ async function load(){
     +Object.entries(d.profit_score).map(([s,v])=>'<p style="margin:3px 0"><b>'+esc(s)+'</b> — realized <b class="'+(v.profit>=0?'pos':'neg')+'">$'+v.profit.toFixed(2)+'</b> · open mark $'+v.open_pnl.toFixed(2)+' · '+v.profit_moves+' profit moves / '+v.wrong_moves+' wrong · '+v.won_with_profit+' WON WITH PROFIT · '+v.closed_at_loss+' CLOSED AT A LOSS</p>').join('')
     +'<p class="small" style="margin-bottom:0">PREDICTION SCORE (frozen picks, graded separately, never blended): '
     +Object.entries(d.prediction_score||{}).map(([s,v])=>esc(s)+': '+v.sealed+' sealed, '+v.graded+' graded'+(v.acc!=null?', '+Math.round(v.acc*100)+'% right, Brier '+v.mean_brier:'')).join(' · ')+'</p></div>');
+  }
+  if(d.demo){ const dm=d.demo;
+    $('demo').innerHTML='<p style="margin-bottom:4px"><b>Kalshi DEMO rail [SIM-KALSHI-DEMO]</b> — '
+      +(dm.ready? 'CONNECTED · demo balance $'+((dm.balance||0)/100).toFixed(2)+' · Kalshi-rail fills mirror onto the demo account; divergence vs the live book prints on every mirrored order.'
+               : 'account created by David (Key ID '+esc(dm.key_id||'')+') · '+esc(dm.why||'')+' — the Kalshi rail runs SIM-OURS-KALSHI until the key lands; nothing is fabricated meanwhile.')
+      +'</p>'
+      +(dm.orders&&dm.orders.length? '<table>'+dm.orders.map(o=>'<tr><td class="small">'+esc(o.at||'')+'</td><td>'+esc(o.specialist||'')+'</td><td>'+esc(o.action||'')+' '+esc(o.side||'')+' ×'+esc(o.count)+' @ '+esc(o.yes_price)+'¢</td><td class="small">'+esc(o.ticker||'')+' · '+esc(o.status||o.error||'')+' · divergence '+(o.divergence_c!=null? (o.divergence_c>=0?'+':'')+o.divergence_c+'¢ vs live mid':'—')+'</td></tr>').join('')+'</table>' : '<p class="small" style="margin:2px 0">No mirrored demo orders yet.</p>');
   }
   const openPkgs=d.packages.filter(p=>!p.closed);
   $('forks').innerHTML=openPkgs.length? openPkgs.map(p=>'<div class="card"><b>'+esc(p.specialist)+' · '+esc(p.rail)+' · '+esc(p.match)+'</b> <a href="'+esc(p.replay)+'">replay</a>'+forkHTML(p.fork)+'</div>').join('') : '<p class="dim">No open plays — no live forks.</p>';
