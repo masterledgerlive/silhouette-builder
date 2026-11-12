@@ -29,6 +29,7 @@ nothing here is redrawn or rewritten after the fact.</p>
  <span class="small" id="counter"></span>
 </div>
 <div id="trace"></div>
+<div id="color"></div>
 <div id="stepfork"></div>
 <div id="livefork"></div>
 <h3 style="color:#ffd97f">Every state in the package</h3>
@@ -73,6 +74,7 @@ function render(){
     +(s.price!=null?'<tr><td>Fill</td><td>'+esc(s.side||P.side_name||'')+' @ '+Math.round(s.price*100)+'¢ · stake $'+Number(s.stake||0).toFixed(2)+'</td></tr>':'')
     +(s.pnl!=null?'<tr><td>P&amp;L at this step</td><td>'+(s.pnl>=0?'+':'')+Number(s.pnl).toFixed(2)+'</td></tr>':'')
     +'</table>';
+  $('color').innerHTML=P.color? '<div class="card"><b>&#127908; BOOTH COLOR — the coach notes on this match</b>'+Object.values(P.color).map(n=>'<p style="margin:6px 0">'+esc(n.text)+'<br><span class="small">sources: '+esc(n.cites.join(', '))+' · tier '+esc(n.tier)+'</span></p>').join('')+'</div>' : '';
   $('stepfork').innerHTML=s.fork? forkHTML(s.fork, '&#127795; THREE STEPS OUT — as it stood at this decision') : '';
   $('livefork').innerHTML=(!P.closed&&P.fork_latest)? forkHTML(P.fork_latest, '&#127795; THREE STEPS OUT — the live chart (latest cycle)') : '';
   $('allsteps').innerHTML='<table>'+P.steps.map((x,i)=>'<tr'+(i===I?' style="background:#16263e"':'')+'><td class="num">'+(i+1)+'</td><td>'+esc(x.kind)+'</td><td class="small">'+esc(x.t)+'</td><td>'+esc((x.text||'').slice(0,90))+'</td></tr>').join('')+'</table>';

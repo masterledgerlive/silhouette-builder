@@ -10,6 +10,8 @@
  .spec{border-width:2px} .wave{border-color:#2dd4bf} .lock{border-color:#f5b942} .scout{border-color:#c792ff}
  .rail{border:1px solid #223148;border-radius:6px;padding:9px 11px;margin:7px 0;background:#0d1420}
  .tag{display:inline-block;font-size:11px;border:1px solid #2c5a7a;color:#7fd4ff;border-radius:4px;padding:1px 6px;margin-right:5px}
+ .copybtn{background:#16263e;color:#ffd97f;border:2px solid #ffd97f;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:800;cursor:pointer;min-height:38px;margin-left:8px}
+ .copybtn:active{background:#ffd97f;color:#0a0f16}
  .tag.x{border-color:#8a6d1f;color:#ffd97f} .tag.dead{border-color:#a33;color:#ff9c9c}
  table{border-collapse:collapse;width:100%;font-size:13.5px}
  td,th{border-bottom:1px solid #1c2940;padding:5px 7px;text-align:left;vertical-align:top}
@@ -40,6 +42,7 @@ divergence printed. The REAL highscores board (FIND) starts EMPTY and prints EMP
 <div id="specs"></div>
 
 <h2>&#128251; The booth — live play-by-play (text)</h2>
+<p class="small" style="margin:2px 0 6px">&#128203; <b>RELAY:</b> every booth line carries a <b>COPY</b> button — tap it and paste straight into the Polymarket / Kalshi groups. Every play also carries <b>COPY PACKAGE</b>: the whole sequence in one paste. That is the bridge until the group doors open here.</p>
 <div class="card feed" id="feed"><p class="dim">the booth is warming up&hellip;</p></div>
 
 <h2>&#128230; Play packages — every play, sealed, replayable</h2>
@@ -157,9 +160,9 @@ async function load(){
     +'<br><span class="small">'+esc(s.strategy)+'</span>'
     +railBlock('KALSHI', s.rails.KALSHI)+railBlock('POLYMARKET', s.rails.POLY)
     +'</div>').join('');
-  $('feed').innerHTML=d.feed.length? d.feed.map(f=>'<div><span class="small">'+esc(f.at)+'</span> <b>'+esc(f.who)+':</b> '+esc(f.text)+'</div>').join('') : '<p class="dim">No calls yet — the specialists are watching the tape.</p>';
+  $('feed').innerHTML=d.feed.length? d.feed.map(f=>'<div><span class="small">'+esc(f.at)+'</span> <b>'+esc(f.who)+':</b> '+esc(f.text)+' <button class="copybtn" data-t="'+esc(f.who+': '+f.text)+'">COPY</button></div>').join('') : '<p class="dim">No calls yet — the specialists are watching the tape.</p>';
   $('packages').innerHTML=d.packages.length? '<table><tr><th>Package</th><th>Specialist</th><th>Road</th><th>Class</th><th>State</th><th>Result</th><th></th></tr>'
-    +d.packages.map(p=>'<tr><td>'+esc(p.match)+'</td><td>'+esc(p.specialist)+'</td><td>'+esc(p.rail)+'</td><td><span class="tag x">'+esc(p.class)+'</span></td><td>'+(p.closed?'closed':'open')+'</td><td>'+(p.result?('P&amp;L '+(p.result.pnl>=0?'+':'')+Number(p.result.pnl).toFixed(2)):'—')+'</td><td><a href="'+esc(p.replay)+'">&#127916; replay</a></td></tr>').join('')+'</table>'
+    +d.packages.map(p=>'<tr><td>'+esc(p.match)+'</td><td>'+esc(p.specialist)+'</td><td>'+esc(p.rail)+'</td><td><span class="tag x">'+esc(p.class)+'</span></td><td>'+(p.closed?'closed':'open')+'</td><td>'+(p.result?('P&amp;L '+(p.result.pnl>=0?'+':'')+Number(p.result.pnl).toFixed(2)):'—')+'</td><td><a href="'+esc(p.replay)+'">&#127916; replay</a> <button class="copybtn" data-pkg="'+esc(p.id)+'">COPY PACKAGE</button></td></tr>').join('')+'</table>'
     : '<p class="dim">No packages yet.</p>';
   if(d.profit_score){ $('boards').insertAdjacentHTML('beforeend',
     '<h2>&#9878;&#65039; LIVE PROFIT SCORE — profit is the score here</h2><div class="card"><p style="margin-top:0">'
@@ -171,6 +174,7 @@ async function load(){
   }
   if(d.demo){ const dm=d.demo;
     $('demo').innerHTML='<p style="margin-bottom:4px"><b>Kalshi DEMO rail [SIM-KALSHI-DEMO]</b> — '
+      +'One key serves both Kalshi environments; this rail calls the DEMO endpoint only. '
       +(dm.ready? 'CONNECTED · demo balance $'+((dm.balance||0)/100).toFixed(2)+' · Kalshi-rail fills mirror onto the demo account; divergence vs the live book prints on every mirrored order.'
                : 'account created by David (Key ID '+esc(dm.key_id||'')+') · '+esc(dm.why||'')+' — the Kalshi rail runs SIM-OURS-KALSHI until the key lands; nothing is fabricated meanwhile.')
       +'</p>'
@@ -189,5 +193,25 @@ async function load(){
   $('board').innerHTML='<table><tr><th>Specialist</th><th>Combined equity</th><th>Kalshi rail</th><th>Polymarket rail</th><th>Realized</th><th>Trades</th><th>Status</th></tr>'
     +rows.map(s=>'<tr><td><b>'+esc(s.name)+'</b></td><td class="num">'+money(s.combined_equity)+'</td><td class="num">'+money(s.rails.KALSHI.equity)+'</td><td class="num">'+money(s.rails.POLY.equity)+'</td><td class="num '+(s.combined_realized>=0?'up':'down')+'">'+money(s.combined_realized)+'</td><td class="num">'+s.combined_trades+'</td><td>'+esc(s.status)+'</td></tr>').join('')+'</table>';
 }
+document.addEventListener('click', async e=>{
+  const b=e.target.closest('.copybtn'); if(!b) return;
+  let txt=b.dataset.t;
+  if(b.dataset.pkg){
+    try{
+      const r=await fetch('packages/'+b.dataset.pkg+'.json?t='+Date.now()); const P=await r.json();
+      const lines=['\u{1F399}\uFE0F '+P.specialist+' · '+P.rail+' ['+P.class+'] — '+P.match,
+        'Opened '+P.opened+(P.closed? ' · closed '+P.closed:' · still open')];
+      if(P.color) for(const [nm,n] of Object.entries(P.color)) lines.push('\u{1F399}\uFE0F COLOR — '+n.text);
+      for(const s of P.steps) lines.push('• '+s.kind+' — '+s.text+(s.price!=null? ' @ '+Math.round(s.price*100)+'¢':'')+(s.pnl!=null? ' · P&L '+(s.pnl>=0?'+':'')+Number(s.pnl).toFixed(2):''));
+      if(P.result) lines.push('Result: P&L '+(P.result.pnl>=0?'+':'')+Number(P.result.pnl).toFixed(2)+' ('+P.result.ret_pct+'%) — '+P.result.exit);
+      lines.push('Full replay: https://arcade.highscores.live/nodal/replay.html?p='+P.id);
+      txt=lines.join('\n');
+    }catch(err){ txt='Package file not reachable in this snapshot.'; }
+  }
+  if(txt==null) return;
+  try{ await navigator.clipboard.writeText(txt); b.textContent='COPIED \u2713'; }
+  catch(err){ const ta=document.createElement('textarea'); ta.value=txt; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); b.textContent='COPIED \u2713'; }
+  setTimeout(()=>{ b.textContent=b.dataset.pkg? 'COPY PACKAGE':'COPY'; }, 1600);
+});
 load(); setInterval(load, 60000);
 </script></body></html>
