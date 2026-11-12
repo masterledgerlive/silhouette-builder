@@ -1,0 +1,386 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NODAL — LIVE PULL · one pull, the whole math</title><style>
+body{background:#070b14;color:#eef2fa;font-family:-apple-system,'Segoe UI',Roboto,Arial,sans-serif;padding:16px;max-width:1240px;margin:0 auto}
+.logo{font-size:26px;font-weight:800;letter-spacing:3px}.logo span{color:#f5b942}
+.note{color:#8fa3c4;font-size:12.5px;line-height:1.6}
+.box{background:#0b111f;border:1px solid #1e2c47;border-radius:12px;padding:14px;margin-top:12px}
+.box h2{font-size:13px;letter-spacing:2px;color:#f5b942;text-transform:uppercase;margin:0 0 8px}
+.box h3{font-size:13px;letter-spacing:1px;color:#2dd4bf;margin:12px 0 6px}
+.box p,.box li{color:#c9d6ee;font-size:13.5px;line-height:1.65}
+table{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:6px}
+td,th{padding:6px 8px;border-bottom:1px solid #1e2c47;text-align:left;color:#c9d6ee}
+th{color:#8fa3c4;font-size:12px;letter-spacing:1px}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+.bar{background:#1e2c47;border-radius:6px;height:14px;min-width:110px;position:relative}
+.bar i{display:block;height:14px;border-radius:6px;background:#f5b942}
+.bar.teal i{background:#2dd4bf}.bar.red i{background:#f4506a}.bar.grn i{background:#3ddc84}
+.big{font-size:22px;font-weight:800;color:#eef2fa}
+.tag{display:inline-block;border:1px solid #1e2c47;border-radius:8px;padding:3px 9px;margin:3px 4px 3px 0;font-size:12px;color:#c9d6ee;background:#101a2e}
+.tag.house{border-color:#f5b942;color:#f5b942}
+.tag.live{border-color:#f4506a;color:#f4506a}
+.tag.grn{border-color:#3ddc84;color:#3ddc84}
+button{background:#1a2438;color:#eef2fa;border:1px solid #1e2c47;border-radius:9px;padding:8px 14px;font-size:14px;font-weight:700;cursor:pointer}
+button.on{border-color:#f5b942;color:#f5b942}
+button.pick{display:block;width:100%;text-align:left;margin:5px 0;font-weight:600}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}@media(max-width:900px){.grid{grid-template-columns:1fr}}
+.rule{border:1px solid #f5b942;border-radius:10px;padding:12px;background:#0d1526}
+.rule b{color:#f5b942}
+input{background:#0d1526;border:1px solid #1e2c47;border-radius:8px;color:#eef2fa;padding:7px 10px;font-size:14px;width:90px}
+footer{color:#8fa3c4;font-size:12px;line-height:1.7;margin-top:16px}
+a{color:#f5b942}
+.mono{font-variant-numeric:tabular-nums}
+</style></head><body>
+<div style="font-size:12px;color:#8fa3c4;border:1px solid #1e2c47;border-radius:8px;padding:6px 10px;margin-bottom:12px;background:#0b111f"><b style="color:#f5b942;letter-spacing:1px">LIVE</b> · the pull room — live wire: ESPN scoreboard · engine data: the desk archive (livedata.json) · <a href="index.html" style="color:#f5b942">NODAL hub</a></div>
+<div class="logo">LIVE <span>PULL</span></div>
+<div class="note">One tap pulls any match on today's board — <b style="color:#eef2fa">live ones first</b> — freezes it at the point it has reached, and deals the whole deck from that exact state: the exact math, the point-by-point simulation, the patterns and cheats for both players, and the pretend-money table that proves what the engine's rules would have done. Everything below runs on math from the state — no other data is pulled mid-match. Wire granularity today is game level (ESPN); the per-point texture is the engine's own model from career rates, labeled as such.</div>
+
+<div class="box"><h2>1 · Pull a match</h2>
+<div id="wire-note" class="note">Wiring up…</div>
+<div id="match-list" style="margin-top:8px"></div>
+<div style="margin-top:10px"><button id="refresh">↻ Refresh the board</button>
+<label style="margin-left:12px;font-size:13px;color:#8fa3c4"><input type="checkbox" id="auto" style="width:auto"> auto re-pull every 30s (the live show — projection rewrites beside the frozen pull, never instead of it)</label></div>
+</div>
+
+<div id="deck" style="display:none">
+<div class="box"><h2>2 · The state — frozen at the pull</h2><div id="state"></div></div>
+<div class="box"><h2>3 · The math — exact from this state</h2><div id="math"></div></div>
+<div class="box"><h2>4 · Point by point — the simulation</h2><div id="sim"></div>
+<div style="margin-top:10px"><button id="sim-rest">▶ Simulate the rest of this match (pretend games, point by point)</button></div></div>
+<div class="box"><h2>5 · The paper table — pretend $10, real rules, real records</h2><div id="paper"></div></div>
+<div class="box"><h2>6 · Tells — named patterns firing on this state</h2><div id="tells"></div></div>
+<div class="grid"><div class="box"><h2>7 · Patterns &amp; cheats — <span id="pa-name"></span></h2><div id="pat-a"></div></div>
+<div class="box"><h2>7 · Patterns &amp; cheats — <span id="pb-name"></span></h2><div id="pat-b"></div></div></div>
+<div class="box"><h2>8 · The record — sealed like the games</h2><div id="record"></div></div>
+</div>
+
+<div class="box"><h2>The orders door — future</h2>
+<p><span class="tag house">DOCKED · NOT BUILT</span> One day a plug-in here executes orders. Today the house runs <b>Overlay Mode</b>: this page does the math and keeps the records — <b>David places every real order himself.</b> The door opens only on his exact word, with limits set first.</p></div>
+
+<footer>Sources: live state — ESPN scoreboard JSON, fetched in your browser at the time printed on the state card (two sources agreeing = VERIFIED; the desk cross-checks on the loop). Player math — the desk archive: Sackmann main-tour 2015–2026 (62,056 matches) + Slam point tape (1.9M points); Challenger/ITF are not in the archive, so a player with no card pulls on the <b>labeled assumed grid</b> with a sensitivity row — never a silent invention. Paper table — pretend money only; prices are the odds you give, or the labeled simulated market (the engine's own fair price, lagged two game-states — the slow market the rules trade against). Every pull writes a record (states, math, trades, result) that the desk seals into the same hash chain as the match packages and the High Scores board. Final sets use a standard 7-point tiebreak in the engine (labeled simplification).</footer>
+<script>
+"use strict";
+const $=id=>document.getElementById(id);
+let DATA=null, BOARD=[], CUR=null, FROZEN=null, timer=null;
+
+/* ---------- name matching ---------- */
+const norm=n=>(n||"").toLowerCase().replace(/[^a-z ]/g,"").trim();
+const keyOf=n=>{const p=norm(n).split(/\s+/);return p.length?p[p.length-1]+"|"+p[0][0]:"";};
+let KEYMAP={};
+function lookup(name){
+  if(!DATA) return null;
+  if(DATA.players[name]) return DATA.players[name];
+  const k=keyOf(name); return KEYMAP[k]?DATA.players[KEYMAP[k]]:null;
+}
+
+/* ---------- the exact DP (port of the desk's price_state.py) ---------- */
+function gameWin(p){const q=1-p;const direct=p**4+4*p**4*q+10*p**4*q**2;const rd=20*p**3*q**3;const dz=p*p/(p*p+q*q);return direct+rd*dz;}
+function tbWin(pa,pb,first){const pavg=(pa+(1-pb))/2;const dr=pavg*pavg/(pavg*pavg+(1-pavg)*(1-pavg));const memo={};
+  function rec(a,b,srv,left){if(a>=7&&a-b>=2)return 1;if(b>=7&&b-a>=2)return 0;if(a>=6&&b>=6&&a===b)return dr;
+    const k=a+","+b+","+srv+","+left;if(memo[k]!==undefined)return memo[k];
+    const p=srv===0?pa:1-pb;let ns,nl;if(left>1){ns=srv;nl=left-1;}else{ns=1-srv;nl=2;}
+    return memo[k]=p*rec(a+1,b,ns,nl)+(1-p)*rec(a,b+1,ns,nl);}
+  return rec(0,0,first,1);}
+function setWinFrom(pa,pb,ga,gb,first){const gA=gameWin(pa),gB=gameWin(pb);const memo={};
+  function rec(x,y,srv){if((x>=6&&x-y>=2)||x===7)return 1;if((y>=6&&y-x>=2)||y===7)return 0;if(x===6&&y===6)return tbWin(pa,pb,srv);
+    const k=x+","+y+","+srv;if(memo[k]!==undefined)return memo[k];
+    const gw=srv===0?gA:1-gB;return memo[k]=gw*rec(x+1,y,1-srv)+(1-gw)*rec(x,y+1,1-srv);}
+  return rec(ga,gb,first);}
+function priceState(pa,pb,sa,sb,ga,gb,srv){
+  function matchFrom(x,y,ss){if(x===2)return 1;if(y===2)return 0;const sw=setWinFrom(pa,pb,0,0,ss);return sw*matchFrom(x+1,y,1-ss)+(1-sw)*matchFrom(x,y+1,1-ss);}
+  if(ga===0&&gb===0)return matchFrom(sa,sb,srv);
+  const pset=setWinFrom(pa,pb,ga,gb,srv);
+  return pset*matchFrom(sa+1,sb,srv)+(1-pset)*matchFrom(sa,sb+1,srv);}
+const pct=x=>Math.round(x*1000)/10;
+
+/* ---------- point texture + Monte Carlo ---------- */
+function simGame(pa,pb,srv){let a=0,b=0;while(true){
+  if(a>=4&&a-b>=2)return 0; if(b>=4&&b-a>=2)return 1;
+  const p=srv===0?pa:pb; if(Math.random()<p){if(srv===0)a++;else b++;}else{if(srv===0)b++;else a++;}}}
+function simSet(pa,pb,ga,gb,srv){let x=ga,y=gb,s=srv;
+  while(true){if((x>=6&&x-y>=2)||x===7)return[1,s];if((y>=6&&y-x>=2)||y===7)return[0,s];
+    if(x===6&&y===6){return[tbWin(pa,pb,s)>Math.random()?1:0,s];}
+    const w=simGame(pa,pb,s); if(w===0)x++;else y++; s=1-s;}}
+function simMatch(st){let sa=st.setsA,sb=st.setsB;const lines=st.doneLines.map(l=>l.slice());
+  let ga=st.ga,gb=st.gb,srv=st.srv;const path=[];
+  while(sa<2&&sb<2){const[w,ns]=simSet(st.pa,st.pb,ga,gb,srv);
+    // reconstruct the set's final games from the sim is lossy; track via games loop instead
+    sa+=w?1:0; sb+=w?0:1; ga=0;gb=0;srv=ns; if(sa<2&&sb<2){/* next set */}
+    lines.push(null); break;}
+  return sa>sb?0:1;}
+function monteCarlo(st,N){N=N||6000;let winsA=0;const routes={};let modalPath=null,modalKey=null;
+  for(let i=0;i<N;i++){let sa=st.setsA,sb=st.setsB,ga=st.ga,gb=st.gb,srv=st.srv;
+    const lines=st.doneLines.map(l=>l[0]+"-"+l[1]);const path=[];
+    while(sa<2&&sb<2){let x=ga,y=gb,s=srv;
+      while(true){if((x>=6&&x-y>=2)||x===7){sa++;lines.push(x+"-"+y);path.push("set to "+st.names[0]+" "+x+"-"+y);break;}
+        if((y>=6&&y-x>=2)||y===7){sb++;lines.push(x+"-"+y);path.push("set to "+st.names[1]+" "+x+"-"+y);break;}
+        if(x===6&&y===6){if(Math.random()<tbWin(st.pa,st.pb,s)){sa++;lines.push("7-6");path.push("set to "+st.names[0]+" 7-6 (tiebreak)");}else{sb++;lines.push("6-7");path.push("set to "+st.names[1]+" 6-7 (tiebreak)");}break;}
+        const w=simGame(st.pa,st.pb,s); if(w===0)x++;else y++;
+        path.push("game "+st.names[w]+" — set stands "+x+"-"+y); s=1-s;}
+      ga=0;gb=0;srv=s;}
+    const winner=sa>sb?0:1; if(winner===0)winsA++;
+    const route=lines.join("  "); routes[route]=(routes[route]||0)+1;
+    if(!modalKey||routes[route]>routes[modalKey]){modalKey=route;if(winner===0||true)modalPath=path;}}
+  const ladder=Object.entries(routes).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  return{winsA:winsA/N,ladder,modalKey,modalPath};}
+
+/* ---------- the wire ---------- */
+const URLS=["https://site.api.espn.com/apis/site/v2/sports/tennis/atp/scoreboard",
+            "https://site.api.espn.com/apis/site/v2/sports/tennis/wta/scoreboard"];
+async function fetchBoard(){
+  $("wire-note").textContent="Pulling the ESPN board…";
+  const rows=[];
+  for(const u of URLS){try{const r=await fetch(u);const d=await r.json();
+    for(const e of d.events||[])for(const g of e.groupings||[])for(const c of g.competitions||[]){
+      const sides=(c.competitors||[]).map(cp=>({name:cp.athlete?cp.athlete.displayName:cp.displayName,
+        sets:(cp.linescores||[]).map(ls=>ls.value),serve:cp.possession===true||cp.possession==="true"}));
+      if(sides.length===2)rows.push({tour:e.name,state:c.status.type.state,detail:c.status.detail||"",sides,fetched:new Date()});}
+  }catch(err){}}
+  const order={in:0,pre:1,post:2};
+  rows.sort((a,b)=>order[a.state]-order[b.state]);
+  BOARD=rows;
+  $("wire-note").innerHTML=rows.length?("Board pulled "+new Date().toLocaleTimeString()+" — <b style='color:#eef2fa'>"+rows.filter(r=>r.state==="in").length+" live</b> of "+rows.length+" matches. Tap one and the deck deals itself."):"The wire returned nothing right now — try refresh in a moment.";
+  $("match-list").innerHTML=rows.map((r,i)=>{
+    const sc=r.sides.map(s=>s.sets.filter(v=>v!==null&&v!==undefined).join(" ")).join("  ·  ");
+    const tag=r.state==="in"?"<span class='tag live'>● LIVE</span>":r.state==="pre"?"<span class='tag'>UP NEXT</span>":"<span class='tag'>DONE</span>";
+    return "<button class='pick' data-i='"+i+"'>"+tag+" <b>"+r.sides[0].name+"</b> vs <b>"+r.sides[1].name+"</b> <span class='note'>"+r.tour+" · "+sc+" "+r.detail+"</span></button>";}).join("");
+  document.querySelectorAll("#match-list button").forEach(b=>b.onclick=()=>pullMatch(BOARD[+b.dataset.i]));
+}
+$("refresh").onclick=fetchBoard;
+
+/* ---------- serve splits for a pair ---------- */
+function splits(nameA,nameB){
+  const A=lookup(nameA),B=lookup(nameB);let src=[],pa=null,pb=null;
+  if(A&&B&&A.card&&B.card){pa=(A.card.serve+(100-B.card.return))/200;pb=(B.card.serve+(100-A.card.return))/200;src.push("full cards (serve/return, archive)");}
+  else if(A&&B&&A.nodes&&B.nodes&&A.nodes.srv_pct!=null){pa=(A.nodes.srv_pct+(1-B.nodes.ret_pct))/2;pb=(B.nodes.srv_pct+(1-A.nodes.ret_pct))/2;src.push("point-tape nodes (Slam tape serve/return point %)");}
+  else{pa=0.60;pb=0.60;src.push("ASSUMED GRID — a player is outside the archive; symmetric 60/60 with the sensitivity row below");}
+  return{pa,pb,src:src.join(" · "),A,B};
+}
+</script>
+<script>
+"use strict";
+/* ---------- state building ---------- */
+const setDone=(a,b)=>(Math.max(a,b)>=6&&Math.abs(a-b)>=2)||Math.max(a,b)===7;
+function buildState(row){
+  const A=row.sides[0],B=row.sides[1];
+  const n=Math.max(A.sets.length,B.sets.length);const lines=[];
+  for(let i=0;i<n;i++){const a=A.sets[i],b=B.sets[i];if(a===null||a===undefined||b===null||b===undefined)continue;lines.push([a,b]);}
+  let done=lines.slice(),ga=0,gb=0;
+  if(row.state==="in"&&lines.length){const last=lines[lines.length-1];
+    if(!setDone(last[0],last[1])){ga=last[0];gb=last[1];done=lines.slice(0,-1);}}
+  const setsA=done.filter(l=>l[0]>l[1]).length,setsB=done.filter(l=>l[1]>l[0]).length;
+  const srv=B.serve?1:0;
+  const sp=splits(A.name,B.name);
+  return{names:[A.name,B.name],tour:row.tour,state:row.state,detail:row.detail,
+    doneLines:done,setsA,setsB,ga,gb,srv,pa:sp.pa,pb:sp.pb,src:sp.src,
+    fetched:row.fetched||new Date()};
+}
+const scoreStr=st=>{const parts=st.doneLines.map(l=>l[0]+"-"+l[1]);if(st.state==="in")parts.push(st.ga+"-"+st.gb+"*");return parts.join("  ")||"not started";};
+
+/* ---------- the paper table ---------- */
+function makeTable(){return{cash:10,pos:null,log:[],states:[],fairHist:[],settled:false,pnl:null};}
+function evaluate(tbl,st,mode){
+  const fairA=priceState(st.pa,st.pb,st.setsA,st.setsB,st.ga,st.gb,st.srv);
+  const oA=parseFloat(($("odds-a")||{}).value),oB=parseFloat(($("odds-b")||{}).value);
+  let priceA,priceSrc;
+  if(!isNaN(oA)){priceA=oA/100;priceSrc="odds given";}
+  else{const h=tbl.fairHist;priceA=h.length>=2?h[h.length-2]:fairA;priceSrc="simulated market (fair, lagged 2 states)";}
+  const priceB=!isNaN(oB)?oB/100:(!isNaN(oA)?1-priceA:1-priceA);
+  const fair=[fairA,1-fairA],price=[priceA,priceB];
+  let action="hold — no rule fired";
+  if(!tbl.pos&&!tbl.settled){
+    for(const s of[0,1]){if(fair[s]-price[s]>=0.15&&price[s]>0.02){const stake=tbl.cash;
+      tbl.pos={side:s,entry:price[s],shares:stake/price[s],stake};
+      tbl.cash=0;action="BUY "+st.names[s]+" — edge "+pct(fair[s]-price[s])+" pts at "+pct(price[s])+"¢ (pretend $"+stake.toFixed(2)+")";
+      tbl.log.push({mode,state:scoreStr(st),action,fair:pct(fair[s]),price:pct(price[s])});break;}}
+  }else if(tbl.pos){
+    const s=tbl.pos.side;
+    if(fair[s]>=0.90){tbl.cash=tbl.pos.shares*fair[s];action="SELL "+st.names[s]+" @ "+pct(fair[s])+" — SERVE-OUT CASH RULE zone (priced 90+, the peak is the exit)";tbl.log.push({mode,state:scoreStr(st),action,fair:pct(fair[s]),price:pct(fair[s])});tbl.pos=null;}
+    else if(fair[s]-price[s]<=0){tbl.cash=tbl.pos.shares*fair[s];action="SELL "+st.names[s]+" @ "+pct(fair[s])+" — EDGE GONE (fail fast)";tbl.log.push({mode,state:scoreStr(st),action,fair:pct(fair[s]),price:pct(fair[s])});tbl.pos=null;}
+  }
+  tbl.states.push({mode,state:scoreStr(st),fairA:pct(fairA),priceA:pct(priceA),priceSrc,action,t:new Date().toISOString()});
+  tbl.fairHist.push(fairA);
+  return{fairA,action};
+}
+function settle(tbl,winnerIdx,st){
+  if(tbl.settled)return;tbl.settled=true;
+  if(tbl.pos){tbl.cash=tbl.pos.side===winnerIdx?tbl.pos.shares:0;
+    tbl.log.push({mode:"SETTLE",state:scoreStr(st),action:(tbl.pos.side===winnerIdx?"WON — paid $1/share":"LOST — shares to 0")+" · "+st.names[tbl.pos.side],fair:"—",price:"—"});tbl.pos=null;}
+  tbl.pnl=Math.round((tbl.cash-10)*100)/100;
+}
+function renderPaper(tbl){
+  const pos=tbl.pos?("holding <b>"+CUR.names[tbl.pos.side]+"</b> — "+tbl.pos.shares.toFixed(2)+" shares @ "+pct(tbl.pos.entry)+"¢ (pretend $"+tbl.pos.stake.toFixed(2)+")"):"no position";
+  const bank=tbl.settled?("settled — pretend bank <b>$"+tbl.cash.toFixed(2)+"</b> · P&amp;L <b style='color:"+(tbl.pnl>=0?"#3ddc84":"#f4506a")+"'>"+(tbl.pnl>=0?"+":"")+"$"+(tbl.pnl||0).toFixed(2)+"</b>"):"pretend bank $"+tbl.cash.toFixed(2)+" · "+pos;
+  $("paper-status").innerHTML=bank;
+  $("paper-log").innerHTML=tbl.log.length?("<table><tr><th>Mode</th><th>State</th><th>Action</th><th class='num'>Fair</th><th class='num'>Price</th></tr>"+
+    tbl.log.map(l=>"<tr><td>"+l.mode+"</td><td class='mono'>"+l.state+"</td><td>"+l.action+"</td><td class='num'>"+l.fair+"</td><td class='num'>"+l.price+"</td></tr>").join("")+"</table>"):
+    "<p class='note'>No trades yet — the rules only fire on a real trigger: a ≥15¢ edge to buy, 90+ to cash out, edge gone to fail fast. Every game state is still written into the record below, trades or not — the proof is the run, not just the result.</p>";
+}
+
+/* ---------- tells ---------- */
+const SLOPE={0:90.2,1:86.1,2:85.4,3:81.9,4:79.7,5:79.5,6:76.9};
+const STOPPER={0:39.7,1:43.2,2:44.4,3:47.1,4:48.7,5:46.3,6:50.5};
+function renderTells(st){
+  const out=[];
+  if(st.doneLines.length>=1){const[a,b]=st.doneLines[0];const wi=a>b?0:1;const lg=Math.min(6,wi===0?b:a);
+    out.push("<p><span class='tag house'>FLIP DIAL</span> Set 1 went to <b>"+st.names[wi]+"</b> "+a+"-"+b+" — the census slope gives the set-1 winner the match <b>"+SLOPE[lg]+"%</b> of the time (set-1 loser took "+lg+" games). Source: COMBO-KEY census, 53,529 matches.</p>");
+    if(st.doneLines.length===1&&st.state==="in"){const loser=1-wi;const lgNow=loser===0?st.ga:st.gb;const wgNow=wi===0?st.ga:st.gb;
+      if(lgNow===0&&wgNow===2)out.push("<p><span class='tag live'>THE GRAVE</span> The set-1 loser is down 0-2 in set 2 — historically a <b>7.7%</b> set-win state. The deepest hole on the sheet.</p>");
+      if(lgNow===2&&wgNow===0)out.push("<p><span class='tag grn'>EARLY-LEAD PRINT</span> The set-1 loser leads set 2 by 2-0 — the player the market buries takes this set about <b>70%</b> of the time (counted).</p>");
+      if(STOPPER[lgNow]!==undefined)out.push("<p><span class='tag'>DEAD-STOPPER LADDER</span> With the set-1 loser on "+lgNow+" games in set 2, the set-1 winner's counted match rate on this rung is <b>"+STOPPER[lgNow]+"%</b> — a slope, not a cliff.</p>");}}
+  if(st.setsA===1&&st.setsB===1){const A=lookup(st.names[0]),B=lookup(st.names[1]);
+    const da=A&&A.card?A.card.decider:(A&&A.nodes?A.nodes.dec_pct*100:null);
+    const db=B&&B.card?B.card.decider:(B&&B.nodes?B.nodes.dec_pct*100:null);
+    if(da!==null||db!==null)out.push("<p><span class='tag house'>DECIDER NODE</span> One set all — career decider rates: <b>"+st.names[0]+"</b> "+(da===null?"—":Math.round(da*10)/10+"%")+" · <b>"+st.names[1]+"</b> "+(db===null?"—":Math.round(db*10)/10+"%")+".</p>");}
+  $("tells").innerHTML=out.length?out.join(""):"<p>No named tell is firing on this state. <b>NO CLEAR SIGN</b> from the pattern book — the exact math above is the call.</p>";
+}
+
+/* ---------- patterns & cheats per player ---------- */
+function renderPatterns(el,name){
+  const d=lookup(name);
+  if(!d){$(el).innerHTML="<p><b>"+name+"</b> is outside the desk archive (Challenger/ITF or new) — this pull runs on the <b>labeled assumed grid</b>. Nothing invented to fill the gap.</p>";return;}
+  let h="<p class='note'>Archive window 2015–2026, main tour + Slam tape.</p>";
+  if(d.card){const c=d.card;
+    h+="<p><span class='tag'>RANK "+(c.rank||"—")+"</span><span class='tag'>SERVE "+c.serve+"</span><span class='tag'>RETURN "+c.return+"</span><span class='tag'>BP WON "+c.bp_won+"</span><span class='tag'>BP SAVED "+c.bp_saved+"</span></p>";
+    if(c.shapes){const sh=Object.entries(c.shapes).sort((x,y)=>y[1]-x[1]).slice(0,4);
+      h+="<h3>Most-played match shapes</h3><p>"+sh.map(s=>"<span class='tag'>"+s[0]+" "+s[1]+"%</span>").join("")+"</p>";}
+    h+="<p>Decider: <b>"+(c.decider===null||c.decider===undefined?"—":c.decider+"%")+"</b>"+(c.decider_n?" (n="+c.decider_n+")":"")+" · Comeback (down a set, wins): <b>"+(c.comeback===null||c.comeback===undefined?"—":c.comeback+"%")+"</b> · Closeout (up a set, finishes): <b>"+(c.closeout===null||c.closeout===undefined?"—":c.closeout+"%")+"</b></p>";
+    if(c.top_win_lines&&c.top_win_lines.length)h+="<h3>Signature win lines</h3><p>"+c.top_win_lines.slice(0,3).map(l=>"<span class='tag'>"+l[0]+" ×"+l[1]+"</span>").join("")+"</p>";
+    if(c.top_loss_lines&&c.top_loss_lines.length)h+="<h3>Recurring loss lines</h3><p>"+c.top_loss_lines.slice(0,3).map(l=>"<span class='tag'>"+l[0]+" ×"+l[1]+"</span>").join("")+"</p>";}
+  if(d.prof){const p=d.prof;
+    if(p.last10)h+="<p>Last 10: <b>"+p.last10+"</b>"+(p.let_go!==null&&p.let_go!==undefined?" · S2 let-go after winning S1: <b>"+p.let_go+"%</b>":"")+(p.stopper!==null&&p.stopper!==undefined?" · stops the S1 loser: <b>"+p.stopper+"%</b>":"")+(p.hurrah!==null&&p.hurrah!==undefined?" · last-hurrah comeback rate: <b>"+p.hurrah+"%</b>":"")+"</p>";
+    if(p.surfaces&&Object.keys(p.surfaces).length)h+="<p>"+Object.entries(p.surfaces).map(s=>"<span class='tag'>"+s[0]+" "+s[1]+"%</span>").join("")+"</p>";}
+  if(d.flaws){const f=d.flaws;
+    h+="<h3>Point texture (Slam tape, career)</h3><table><tr><th>Ace</th><th>DF</th><th>1st in</th><th>1st won</th><th>2nd won</th><th>Hold</th><th>BP saved</th><th>Breaks/100</th></tr><tr>"+
+    [f.ace_pct,f.double_fault_pct,f.first_serve_in_pct,f.first_serve_won_pct,f.second_serve_won_pct,f.hold_pct,f.bp_saved_pct].map(v=>"<td class='num'>"+(v===null||v===undefined?"—":pct(v)+"%")+"</td>").join("")+
+    "<td class='num'>"+(f.breaks_per_100_ret_games===null||f.breaks_per_100_ret_games===undefined?"—":f.breaks_per_100_ret_games)+"</td></tr></table>"+(f.zero_ace?"<p><span class='tag live'>ZERO-ACE FLAG</span> on this player's tape sample.</p>":"");}
+  if(d.nodes){const n=d.nodes;
+    h+="<h3>Pressure nodes (point tape)</h3><p>On break point, serve moves <b>"+(n.pressure_srv_delta===null||n.pressure_srv_delta===undefined?"—":(n.pressure_srv_delta>0?"+":"")+(n.pressure_srv_delta*100).toFixed(1)+" pts")+"</b> · return moves <b>"+(n.pressure_ret_delta===null||n.pressure_ret_delta===undefined?"—":(n.pressure_ret_delta>0?"+":"")+(n.pressure_ret_delta*100).toFixed(1)+" pts")+"</b> · point after a loss (tilt watch): <b>"+(n.next_after_loss===null||n.next_after_loss===undefined?"—":pct(n.next_after_loss)+"% won")+"</b></p>";}
+  if(d.tiers){h+="<h3>By tier — same tier, higher tier, all counted</h3><table><tr><th>Tier</th><th class='num'>Matches</th><th class='num'>Win %</th><th class='num'>Early exits</th></tr>"+
+    Object.entries(d.tiers).map(t=>"<tr><td>"+t[0]+"</td><td class='num'>"+t[1].m+"</td><td class='num'>"+t[1].win+"%</td><td class='num'>"+t[1].early_exit+"</td></tr>").join("")+"</table>";}
+  if(d.exits){const e=d.exits;const flags=e.ret_lost+e.wo_lost;
+    h+="<h3>Exits — the walk-out file</h3><p>Events entered: <b>"+e.events+"</b> · out in the first two rounds: <b>"+e.early_exit+" ("+e.early_rate+"%)</b> · retired mid-match: <b>"+e.ret_lost+"</b> · opponents retired against them: "+e.ret_won+" · walkovers given (never took the court): <b>"+e.wo_lost+"</b> · walkovers received: "+e.wo_won+"</p>"+
+    (flags>=3?"<p><span class='tag live'>WALK-OUT WATCH</span> "+flags+" no-finish exits on the career file — check the body before trusting any price on this player.</p>":"<p class='note'>No-finish exits on file: "+flags+" — nothing unusual.</p>");}
+  $(el).innerHTML=h;
+}
+</script>
+<script>
+"use strict";
+let T_LIVE=null,T_SIM=null,REC=null;
+function renderState(st){
+  const srvName=st.state==="in"?st.names[st.srv]:"—";
+  let h="<p class='big'>"+st.names[0]+" vs "+st.names[1]+"</p>"+
+  "<p><span class='tag'>"+st.tour+"</span> <span class='tag mono'>"+scoreStr(st)+"</span> "+
+  (st.state==="in"?"<span class='tag live'>● LIVE</span> · serving: <b>"+srvName+"</b>":st.state==="pre"?"<span class='tag'>UP NEXT</span>":"<span class='tag'>FULL TIME</span>")+
+  " <span class='note'>detail: "+st.detail+"</span></p>"+
+  "<p class='note'>Source: ESPN scoreboard · fetched "+st.fetched.toLocaleTimeString()+" · serve splits: "+st.src+"</p>";
+  if(FROZEN&&(FROZEN.names[0]!==st.names[0]||scoreStr(FROZEN)!==scoreStr(st)))
+    h+="<p class='note'>Frozen pull: <span class='mono'>"+scoreStr(FROZEN)+"</span> — the live state above rewrites the projection <b>beside</b> it, never instead of it.</p>";
+  $("state").innerHTML=h;
+}
+function renderMath(st){
+  const fair=priceState(st.pa,st.pb,st.setsA,st.setsB,st.ga,st.gb,st.srv);
+  const setW=setWinFrom(st.pa,st.pb,st.ga,st.gb,st.srv);
+  const nextG=st.srv===0?gameWin(st.pa):1-gameWin(st.pb);
+  let h="<table><tr><th></th><th class='num'>Match from here</th><th class='num'>This set</th><th class='num'>Next game</th></tr>"+
+  "<tr><td><b>"+st.names[0]+"</b></td><td class='num big'>"+pct(fair)+"%</td><td class='num'>"+pct(setW)+"%</td><td class='num'>"+pct(nextG)+"%</td></tr>"+
+  "<tr><td><b>"+st.names[1]+"</b></td><td class='num big'>"+pct(1-fair)+"%</td><td class='num'>"+pct(1-setW)+"%</td><td class='num'>"+pct(1-nextG)+"%</td></tr></table>"+
+  "<p class='note'>Exact dynamic programming on the state — sets "+st.setsA+"-"+st.setsB+", current set "+st.ga+"-"+st.gb+", point-win on serve: "+st.names[0]+" "+pct(st.pa)+"% · "+st.names[1]+" "+pct(st.pb)+"%. No market input touches this number.</p>";
+  if(st.src.indexOf("ASSUMED")===0){const hi=priceState(st.pa+0.02,st.pb-0.02,st.setsA,st.setsB,st.ga,st.gb,st.srv);
+    const lo=priceState(st.pa-0.02,st.pb+0.02,st.setsA,st.setsB,st.ga,st.gb,st.srv);
+    h+="<p><span class='tag house'>SENSITIVITY</span> serve splits ±2 pts move the fair price to <b>"+pct(lo)+"% – "+pct(hi)+"%</b> for "+st.names[0]+". The state does most of the talking; the grid is labeled, not hidden.</p>";}
+  $("math").innerHTML=h;
+}
+function renderSim(st){
+  const mc=monteCarlo(st,6000);
+  $("sim").innerHTML="<p>6,000 point-by-point futures from this exact state: <b>"+st.names[0]+"</b> wins <b>"+pct(mc.winsA)+"%</b> · <b>"+st.names[1]+"</b> "+pct(1-mc.winsA)+"% (the exact DP above is the authority; the futures show the routes).</p>"+
+  "<h3>Route ladder — most-traveled final lines</h3><table>"+mc.ladder.map(r=>"<tr><td class='mono'>"+r[0]+"</td><td class='num'>"+pct(r[1]/6000)+"%</td></tr>").join("")+"</table>"+
+  "<h3>One modal path, game by game</h3><p class='note'>"+mc.modalPath.slice(0,16).join(" → ")+(mc.modalPath.length>16?" → …":"")+"</p>"+
+  textureTable(st);
+}
+function textureTable(st){
+  const row=(nm,d)=>{if(!d||!d.flaws)return "<tr><td>"+nm+"</td><td colspan='6' class='note'>no Slam-tape texture on file</td></tr>";
+    const f=d.flaws;return "<tr><td>"+nm+" serving</td><td class='num'>"+pct(f.ace_pct)+"%</td><td class='num'>"+pct(f.double_fault_pct)+"%</td><td class='num'>"+pct(f.first_serve_in_pct)+"%</td><td class='num'>"+pct(f.first_serve_won_pct)+"%</td><td class='num'>"+pct(f.second_serve_won_pct)+"%</td><td class='num'>"+pct(f.hold_pct)+"%</td></tr>";};
+  $("sim").innerHTML+="<h3>Next-point texture — what a point looks like (career tape rates)</h3><table><tr><th></th><th class='num'>Ace</th><th class='num'>DF</th><th class='num'>1st in</th><th class='num'>1st won</th><th class='num'>2nd won</th><th class='num'>Hold</th></tr>"+
+  row(st.names[0],lookup(st.names[0]))+row(st.names[1],lookup(st.names[1]))+"</table>";
+}
+function renderPaperShell(){
+  $("paper").innerHTML="<p>Prediction odds given (optional, cents): "+CUR.names[0]+" <input id='odds-a' type='number' min='1' max='99' placeholder='—'> · "+CUR.names[1]+" <input id='odds-b' type='number' min='1' max='99' placeholder='—'> <span class='note'>blank = the labeled simulated market. Starting pretend bank: <b>$10.00</b>, every pull, every match.</span></p>"+
+  "<div class='rule'><b>THE RULES THE TABLE PLAYS:</b> buy only on a ≥15¢ edge (fair vs price) · sell at 90+ (serve-out cash — the peak is the exit) · sell when the edge is gone (fail fast) · settle at $1 a share on a win. Real math points trigger every step; the record below keeps them all.</div>"+
+  "<p id='paper-status' style='margin-top:10px'></p><div id='paper-log'></div>";
+}
+function renderRecord(){
+  if(!CUR)return;
+  const rates=nm=>{const d=lookup(nm);if(!d||!d.flaws)return "NOT_CAPTURED";
+    return{ace_pct:d.flaws.ace_pct,df_pct:d.flaws.double_fault_pct,first_in_pct:d.flaws.first_serve_in_pct,src:"Slam tape board (career)"};};
+  let tellsNow=[];try{tellsNow=$("tells").innerText.split("\n").map(s=>s.trim()).filter(Boolean);}catch(e){}
+  const rec={match:CUR.names.join(" vs "),tour:CUR.tour,pulled_at:new Date().toISOString(),
+    capture:{schema:"nodal-record-v2",
+      point_tape:{status:"NOT_CAPTURED",why:"game-level wire (ESPN); no point feed connected — simulated futures in this record are simulations, never the tape"},
+      timing:{clock:"arrival clock — this browser at pull time (LAG-MAP discipline: our stamps, poll-grain precision, never source timestamps dressed as ours)",
+        state_arrivals:(T_LIVE?T_LIVE.states:[]).map(s=>({state:s.state,arrived_at:s.t||null})),
+        per_point:"NOT_CAPTURED"},
+      serve_detail:{career_rates:{[CUR.names[0]]:rates(CUR.names[0]),[CUR.names[1]]:rates(CUR.names[1])},live_match:"NOT_CAPTURED"},
+      rally_detail:"NOT_CAPTURED",
+      tells_fired:{at_download:tellsNow,note:"the tells as rendered on the final state — the desk seals log them per state"},
+      node_layer:{status:"EMPTY",note:"no real nodes produced data for this match; Courts Everywhere YOLO readings are SIMULATED in-app today and are never recorded as real"}},
+    frozen_pull:{score:scoreStr(FROZEN||CUR),serve_splits:[CUR.pa,CUR.pb],splits_source:CUR.src},
+    live_states:T_LIVE?T_LIVE.states:[],live_trades:T_LIVE?T_LIVE.log:[],
+    live_pnl:T_LIVE?T_LIVE.pnl:null,
+    sim_states:T_SIM?T_SIM.states:[],sim_trades:T_SIM?T_SIM.log:[],sim_pnl:T_SIM?T_SIM.pnl:null};
+  REC=rec;
+  const n=rec.live_states.length+rec.sim_states.length,t=rec.live_trades.length+rec.sim_trades.length;
+  $("record").innerHTML="<p>This pull has written <b>"+n+" game states</b> and <b>"+t+" paper trades</b> into its record — the run itself is the proof, wins or fails. The record carries the frozen pull, every state the math saw, and every rule that fired.</p>"+
+  "<p><button id='rec-hash'>Hash this record</button> <button id='rec-dl'>⬇ Save the record file</button> <span id='rec-hash-out' class='mono' style='margin-left:10px'></span></p>"+
+  "<p class='note'>Hand the saved file to the desk and it seals into the same hash chain as the match packages — the High Scores board is built from that chain alone. (This page cannot write the chain itself; it will not pretend to.)</p>";
+  $("rec-hash").onclick=async()=>{const buf=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(JSON.stringify(REC)));
+    $("rec-hash-out").textContent="sha256: "+[...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,"0")).join("").slice(0,32)+"…";};
+  $("rec-dl").onclick=()=>{const a=document.createElement("a");
+    a.href=URL.createObjectURL(new Blob([JSON.stringify(REC,null,1)],{type:"application/json"}));
+    a.download="livepull-record-"+CUR.names.map(n=>n.split(" ").pop()).join("-vs-")+".json";a.click();};
+}
+function pullMatch(row){
+  CUR=buildState(row);FROZEN=CUR;T_SIM=null;
+  T_LIVE=makeTable();
+  $("deck").style.display="block";
+  $("pa-name").textContent=CUR.names[0];$("pb-name").textContent=CUR.names[1];
+  renderState(CUR);renderMath(CUR);renderSim(CUR);renderTells(CUR);
+  renderPatterns("pat-a",CUR.names[0]);renderPatterns("pat-b",CUR.names[1]);
+  renderPaperShell();
+  evaluate(T_LIVE,CUR,"LIVE");
+  if(CUR.state==="post")settle(T_LIVE,CUR.setsA>CUR.setsB?0:1,CUR);
+  renderPaper(T_LIVE);renderRecord();
+  window.scrollTo({top:$("deck").offsetTop,behavior:"smooth"});
+}
+$("sim-rest").onclick=()=>{
+  if(!CUR)return;
+  const st=JSON.parse(JSON.stringify(CUR));st.doneLines=CUR.doneLines.map(l=>l.slice());
+  T_SIM=makeTable();const path=[];let srv=CUR.srv;
+  while(st.setsA<2&&st.setsB<2){let x=st.ga,y=st.gb;
+    while(true){if(setDone(x,y)){st.doneLines.push([x,y]);if(x>y)st.setsA++;else st.setsB++;
+        path.push("set "+st.doneLines.length+" to "+(x>y?st.names[0]:st.names[1])+" "+x+"-"+y);st.ga=0;st.gb=0;break;}
+      if(x===6&&y===6){const tw=Math.random()<tbWin(st.pa,st.pb,srv)?0:1;if(tw===0)x=7;else y=7;continue;}
+      const w=simGame(st.pa,st.pb,srv);if(w===0)x++;else y++;srv=1-srv;st.ga=x;st.gb=y;
+      path.push("game "+st.names[w]+" — set stands "+x+"-"+y);
+      evaluate(T_SIM,st,"SIM");}
+    if(st.setsA<2&&st.setsB<2)evaluate(T_SIM,st,"SIM");}
+  settle(T_SIM,st.setsA>st.setsB?0:1,st);renderPaper(T_SIM);
+  $("paper-status").innerHTML="<b>SIMULATED PATH</b> (the live table's record is kept separately in the record below) — "+$("paper-status").innerHTML;
+  $("sim").innerHTML+="<h3>The simulated rest, game by game</h3><p class='note'>"+path.join(" → ")+"</p><p>Sim paper result: pretend bank <b>$"+T_SIM.cash.toFixed(2)+"</b> · P&amp;L <b>"+(T_SIM.pnl>=0?"+":"")+"$"+T_SIM.pnl.toFixed(2)+"</b> on the pretend $10. Its states and trades are in the record.</p>";
+  renderRecord();
+};
+$("auto")&&$("auto").addEventListener("change",e=>{
+  if(timer){clearInterval(timer);timer=null;}
+  if(e.target.checked&&CUR){timer=setInterval(async()=>{await fetchBoard();
+    const row=BOARD.find(r=>r.sides[0].name===CUR.names[0]&&r.sides[1].name===CUR.names[1])||BOARD.find(r=>keyOf(r.sides[0].name)===keyOf(CUR.names[0])&&keyOf(r.sides[1].name)===keyOf(CUR.names[1]));
+    if(!row)return;const ns=buildState(row);
+    if(scoreStr(ns)!==scoreStr(CUR)){CUR=ns;renderState(CUR);renderMath(CUR);renderSim(CUR);renderTells(CUR);
+      evaluate(T_LIVE,CUR,"LIVE");
+      if(CUR.state==="post")settle(T_LIVE,CUR.setsA>CUR.setsB?0:1,CUR);
+      renderPaper(T_LIVE);renderRecord();}
+  },30000);}});
+(async()=>{try{const r=await fetch("livedata.json");DATA=await r.json();
+  for(const nm of Object.keys(DATA.players))KEYMAP[keyOf(nm)]=nm;
+  fetchBoard();}catch(e){$("wire-note").textContent="The engine data pack (livedata.json) did not load — the pull cannot deal without it.";}})();
+</script>
+</body></html>
