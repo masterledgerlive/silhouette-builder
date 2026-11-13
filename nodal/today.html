@@ -37,14 +37,18 @@
 </style></head><body><div class="wrap">
 <div class="logo">NOD A L</div>
 <h1>🗓️ TODAY IN ORDER — every match on the wire, by start time</h1>
-<p class="sub">The whole day, one list, in the order it happens. The wire for this room is the <b>Kalshi + Polymarket match books</b> — they carry far more tennis than the tour wire — and every price off them is stamped <span class="tag ext">EXTERNAL</span>: it feeds the room, it never touches the core call. Our own percentage, where the archive covers the players, is the desk's DP on their cards. <b>Simulation only — this page is the proving ground.</b></p>
+<p class="sub"><b>THE GRAND ENGINE — the watch room over all the engines:</b> every engine below runs on the live data and the data we can pull, while we search real submitted data as we create our own. The whole day, one list, in the order it happens. The wire for this room is the <b>Kalshi + Polymarket match books</b> — they carry far more tennis than the tour wire — and every price off them is stamped <span class="tag ext">EXTERNAL</span>: it feeds the room, it never touches the core call. Our own percentage, where the archive covers the players, is the desk's DP on their cards. <b>Simulation only — this page is the proving ground.</b></p>
+<div class="box"><b>🔭 THE OBSERVATORY — every engine, one pulse line each</b><div id="observatory" class="note">warming up…</div></div>
 <div class="cols">
 <div id="maincol">
 <div id="view-list">
 <div class="box"><b>Find your game.</b> Filter by kind or by what we hold on it — and know the house rule: <b>no-data is a door, not a wall.</b> A match with no profile still lists; its players get a starter profile built from the game's own data (stamped GAME-BUILT) and join the player list on the desk's next import.
 <p style="margin:9px 0 0"><input id="q" type="search" placeholder="player or event…"> <span class="note" id="wire-note">Pulling the books…</span></p>
 <p style="margin:7px 0 0" id="chips1"></p>
-<p style="margin:3px 0 0" id="chips2"></p></div>
+<p style="margin:3px 0 0" id="chips2"></p>
+<p style="margin:3px 0 0" id="chips3"></p>
+<div id="coverage" class="note" style="margin-top:8px"></div></div>
+<div id="records"></div>
 <div id="list"></div>
 </div>
 <div id="view-arena" style="display:none">
@@ -82,7 +86,7 @@
 "use strict";
 const $=id=>document.getElementById(id);
 let DATA=null, KEYMAP={}, MATCHES=[], GD={}, TP={}, SCORES=null, ARENA=null, FOLLOW=null, MATRIX=null;
-let F1="ALL", F2="ALL", OPENKEY=null, CHAIN=[], TICKET=JSON.parse(localStorage.getItem("nodal-ticket")||"[]");
+let F1="ALL", F2="ALL", F3="ALL", OPENKEY=null, CHAIN=[], PROFILES=null, TICKET=JSON.parse(localStorage.getItem("nodal-ticket")||"[]");
 const norm=n=>(n||"").toLowerCase().replace(/[^a-z ]/g,"").trim();
 const keyOf=n=>{const p=norm(n).split(/\s+/);return p.length?p[p.length-1]+"|"+p[0][0]:"";};
 const pairKey=ns=>keyOf(ns[0])+"||"+keyOf(ns[1]);
@@ -161,7 +165,28 @@ function assemble(gamma, today){
       tour:g.series===10365?"ATP":g.series===10366?"WTA":"ITF",
       gender:g.series===10366?"W":g.series===10365?"M":( /women|wta/i.test(g.title)?"W":"M"),
       doubles:/double/i.test(g.title), pm:g.pm, k:(kmap[k]||null), our, assumed:sp.assumed, sp,
-      prof, graded, gcls, live:g.live, gd});
+      prof, graded, gcls, live:g.live, gd,
+      league:(/challenger/i.test(g.title)?"CHALLENGER":(g.series===10365?"ATP":g.series===10366?"WTA":"ITF")), src:"BOOK"});
+  }
+  /* our own data widens the leagues the books don't reach: gamesdata + tomorrow seals */
+  const ours=[];
+  Object.values(GD).forEach(g=>{ if(!g.names||seen[pairKey(g.names)])return; seen[pairKey(g.names)]=1;
+    ours.push({names:g.names, title:g.title||"", start:g.start, dp:g.dp, picks:g.picks, profit:g.profit}); });
+  try{ (window.__tomorrow||[]).forEach(rw=>{ const ns=[rw.a,rw.b]; if(seen[pairKey(ns)])return; seen[pairKey(ns)]=1;
+    ours.push({names:ns, title:"Tomorrow seal — pre-sealed fixture", start:rw.start_utc, dp:rw.our!=null?rw.our/100:null, picks:null, profit:null}); }); }catch(e){}
+  for(const o of ours){
+    const sp=splits(o.names[0],o.names[1]);
+    const our=o.dp!=null?pct(o.dp):(sp.assumed?null:pct(priceState(sp.pa,sp.pb,0,0,0,0,0)));
+    const t0=tier(o.names[0]),t1=tier(o.names[1]);
+    const prof=(t0==="NO DATA"||t1==="NO DATA")?"NO DATA":(t0==="GAME-BUILT"||t1==="GAME-BUILT")?"GAME-BUILT":(t0==="THIN"||t1==="THIN")?"THIN":(t0==="TEXTURE"||t1==="TEXTURE")?"TEXTURE":"FULL";
+    let graded="NO SIM YET", gcls="";
+    if(o.profit&&Object.values(o.profit).some(v=>v)){graded="SIM RUN · SETTLED";gcls="teal";}
+    else if(o.picks){graded="PICK SEALED";gcls="house";}
+    rows.push({key:pairKey(o.names),slug:null,title:o.title,names:o.names,start:o.start||null,
+      startMs:o.start?new Date(o.start).getTime():Infinity,
+      tour:"OURS", gender:/women|wta/i.test(o.title)?"W":"M", doubles:/double/i.test(o.title),
+      pm:null, k:null, our, assumed:sp.assumed, sp, prof, graded, gcls, live:false, gd:null,
+      league:(/challenger/i.test(o.title)?"CHALLENGER":(/\bITF\b|M25|W35|M15|W15/i.test(o.title)?"ITF":"OURS")), src:"OUR DATA"});
   }
   const nowMs=Date.now();
   const band=m=>m.live?0:(m.startMs>=nowMs-36*3600*1000?1:2);
@@ -176,7 +201,14 @@ function chips(el, items, cur, fn){
   $(el).querySelectorAll(".chip").forEach(c=>c.onclick=()=>fn(c.dataset.v));}
 function renderChips(){
   chips("chips1",["ALL","MEN","WOMEN","SINGLES","DOUBLES"],F1,v=>{F1=v;renderChips();renderList();});
-  chips("chips2",["ALL","GRADED","UNGRADED","DATA","NO-DATA"],F2,v=>{F2=v;renderChips();renderList();});}
+  chips("chips2",["ALL","GRADED","UNGRADED","DATA","NO-DATA"],F2,v=>{F2=v;renderChips();renderList();});
+  chips("chips3",["ALL","ATP","WTA","ITF","CHALLENGER","OURS"],F3,v=>{F3=v;renderChips();renderList();});
+  const byL={}; MATCHES.forEach(m=>{byL[m.league]=byL[m.league]||{book:0,ours:0}; if(m.src==="BOOK")byL[m.league].book++; else byL[m.league].ours++;});
+  const cov={ATP:"LIVE BOOK",WTA:"LIVE BOOK",ITF:"LIVE BOOK (Polymarket only, thin) + OUR DATA",CHALLENGER:"OUR DATA ONLY",OURS:"OUR DATA ONLY"};
+  $("coverage").innerHTML="<b>LEAGUE COVERAGE — stated plainly, from tonight's actual pulls:</b> "+["ATP","WTA","ITF","CHALLENGER"].map(L=>{const c=byL[L]||{book:0,ours:0};
+    return L+": <b>"+cov[L]+"</b> ("+c.book+" book rows · "+c.ours+" our-data rows)";}).join(" · ")
+    +"<br>The honest label: the Kalshi/Polymarket books cover tour-level matches; ITF is thin there and Challenger is not listed — those rows enter from <b>our own data</b> wherever our lists populate them, never rendered empty-by-nature. The ITF live-score leg that would widen ITF coverage is the open press item (a signup tap is David's); this page does not fake it meanwhile.";
+ }
 function passF(m){
   if(F1==="MEN"&&m.gender!=="M")return false;
   if(F1==="WOMEN"&&m.gender!=="W")return false;
@@ -186,6 +218,7 @@ function passF(m){
   if(F2==="UNGRADED"&&m.graded!=="NO SIM YET")return false;
   if(F2==="DATA"&&m.prof==="NO DATA")return false;
   if(F2==="NO-DATA"&&m.prof!=="NO DATA")return false;
+  if(F3!=="ALL"&&m.league!==F3)return false;
   const q=norm($("q").value||"");
   if(q&&!norm(m.names.join(" ")+" "+m.title).includes(q))return false;
   return true;}
@@ -195,7 +228,7 @@ function rowHTML(m){
   const our=m.our!==null?("<span class='pct'>"+m.our+"% <small>ours · "+m.names[0].split(" ").slice(-1)[0]+"</small></span>")
     :("<span class='pct'>— <small>assumed grid</small></span>");
   const profTag=m.prof==="NO DATA"?"<span class='tag red'>NO DATA</span>":m.prof==="GAME-BUILT"?"<span class='tag teal'>GAME-BUILT PROFILE</span>":"<span class='tag'>"+m.prof+"</span>";
-  const liveTag=m.live?"<span class='tag red'>● LIVE</span>":(m.stale?"<span class='tag'>STALE BOOK</span>":"");
+  const liveTag=m.live?"<span class='tag red'>● LIVE</span>":(m.stale?"<span class='tag'>STALE BOOK</span>":"")+(m.src==="OUR DATA"?" <span class='tag teal'>OUR DATA</span>":"")+" <span class='tag'>"+m.league+"</span>";
   return "<button class='pick' data-k='"+m.key+"'><span class='rowflex'><span>"+liveTag+" <span class='note'>"+etTime(m.start)+"</span> · <b>"+m.names[0]+"</b> vs <b>"+m.names[1]+"</b><br><span class='note'>"+m.title+" · "+m.tour+(m.doubles?" doubles":" singles")+"</span> "+pm+kk+"<br>"+profTag+" <span class='tag "+m.gcls+"'>"+m.graded+"</span></span>"+our+"</span></button>"
     +"<div style='text-align:right;margin:-4px 2px 6px'><button class='addbtn' data-add='"+m.key+"'>＋ TICKET</button></div>"
     +(OPENKEY===m.key?panelHTML(m):"");
@@ -308,6 +341,15 @@ function renderRail(){
       return "<p style='margin:4px 0'>"+r.name+": "+(d20?d20+" more graded to the count":"count met")+(r.acc!=null?(" · win rate "+Math.round(r.acc*1000)/10+"% vs "+SCORES.rule.accuracy_min+"%"):"")+(r.brier!=null?(" · Brier "+r.brier+" vs ≤"+SCORES.rule.brier_max):"")+" → <b>"+(r.status||"")+"</b></p>";}).join("");
   }
   $("scorestable").innerHTML=$("railscores").innerHTML;
+  { const sp=ARENA&&ARENA.specialists?Object.values(ARENA.specialists):[];
+    const lead=rows.filter(r=>r.acc!=null).sort((a,b)=>(b.acc||0)-(a.acc||0))[0];
+    $("observatory").innerHTML=
+     "🎙️ <b>ARENA</b> — "+sp.map(x=>x.name.split(" ")[0]+" $"+x.combined_equity.toFixed(2)).join(" · ")+" · "
+     +"🏆 <b>SCORES</b> — "+(lead?("leader "+lead.name+" "+Math.round(lead.acc*1000)/10+"%"):"no graded leader yet")+" · "
+     +"🔴 <b>LIVE BOARD</b> — the ESPN wire room · 🗓️ <b>DAILY</b> — today's seals + tomorrow pre-sealed · "
+     +"🌳 <b>1-2-3 MATRIX</b> — 53,530 counted forks · 🔎 <b>FIND</b> — 1,952 profiles + the sealed book · "
+     +"🎟️ <b>THIS ROOM</b> — "+MATCHES.length+" matches on the books + our data, by start time.";
+  }
   if(FOLLOW&&FOLLOW.specialists){
     $("arenafeed").innerHTML=FOLLOW.specialists.map(s=>"<div class='box'><b>"+s.specialist+"</b> — "+s.status+"<br>"+(s.plays||[]).map(p=>"<p style='margin:5px 0'><span class='tag'>"+p.state+"</span> "+p.match+" · "+p.rail+" · "+p.side+" — most likely: "+(p.most_likely_pattern||"—")+" ("+Math.round((p.pattern_probability||0)*1000)/10+"%)</p>").join("")+"</div>").join("");
   }
@@ -324,6 +366,7 @@ async function boot(){
   DATA=await get("livedata.json");
   if(DATA&&DATA.players)Object.keys(DATA.players).forEach(k=>KEYMAP[keyOf(k)]=k);
   const today=(await get("todaydata.json"))||{kalshi:[]};
+  try{const tr=await get("tomorrowdata.json"); window.__tomorrow=(tr&&tr.rows)||[];}catch(e){window.__tomorrow=[];}
   TP=(await get("todayprofiles.json"))||{players:{}};
   const gd=await get("gamesdata.json");
   if(gd&&(gd.games||[]).length)gd.games.forEach(g=>{GD[pairKey(g.names)]=g;});
@@ -338,7 +381,16 @@ async function boot(){
   setInterval(async()=>{const g2=await pullGamma(); const t2=(await get("todaydata.json"))||today;
     MATCHES=assemble(g2,t2); renderList(); renderRecs(); renderTicket();},60000);
 }
-$("q").addEventListener("input",renderList);
+async function renderRecords(){
+  const q=norm($("q").value||"");
+  if(q.length<3){$("records").innerHTML="";return;}
+  if(!PROFILES){ try{const r=await fetch("profilesdata.json");PROFILES=await r.json();}catch(e){PROFILES={players:{}};} }
+  const hits=Object.values((PROFILES&&PROFILES.players)||{}).filter(p=>p&&p.name&&norm(p.name).includes(q)).slice(0,6);
+  if(!hits.length){$("records").innerHTML="";return;}
+  $("records").innerHTML="<div class='box'><b>FROM OUR OWN RECORDS</b> <span class='note'>(the archive + the sealed book — searched beside the books, not under them)</span>"
+   +hits.map(p=>"<p style='margin:6px 0'><b>"+p.name+"</b> — "+(p.tier||"")+" · "+((p.rec&&p.rec.w!=null)?(p.rec.w+"W–"+p.rec.l+"L in the archive"):"")+" <a href='profiles.html#"+encodeURIComponent(p.name)+"'>their card ↗</a></p>").join("")+"</div>";
+ }
+$("q").addEventListener("input",()=>{renderList();renderRecords();});
 boot();
 </script>
 </body></html>
