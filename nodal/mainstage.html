@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NODAL — THE MAIN STAGE · one match, every engine, always live</title>
+<style>
+ body{margin:0;background:#0b0e14;color:#dbe4f5;font:15px/1.5 -apple-system,'Segoe UI',Roboto,sans-serif}
+ .wrap{max-width:1060px;margin:0 auto;padding:18px 14px 60px}
+ a{color:#ffd166} .logo{font-weight:800;letter-spacing:.35em;color:#eef2fa}
+ h1{font-size:24px;margin:8px 0 2px} h2{font-size:17px;margin:22px 0 8px;color:#eef2fa}
+ .sub{color:#93a4c4} .note{color:#93a4c4;font-size:13px}
+ .box{background:#12172a;border:1px solid #26304d;border-radius:12px;padding:13px 15px;margin:12px 0}
+ .tag{display:inline-block;font-size:11px;padding:1px 8px;border-radius:99px;border:1px solid #3a4a75;color:#b9c7e6;vertical-align:2px}
+ .tag.live{border-color:#ff5d5d;color:#ffb3b3} .tag.house{border-color:#ffd166;color:#ffd166}
+ .tag.teal{border-color:#2ec4b6;color:#9fe8df} .tag.out{border-color:#ff9c9c;color:#ff9c9c}
+ button.pick{display:inline-block;text-align:left;background:#12172a;border:1px solid #26304d;border-radius:10px;
+   padding:8px 11px;margin:3px 2px;color:#dbe4f5;font:inherit;font-size:13.5px;cursor:pointer}
+ button.pick.sel{border-color:#ffd166;background:#1a2036}
+ button.pick:active{border-color:#ffd166}
+ .rowflex{display:flex;justify-content:space-between;gap:10px;align-items:baseline;flex-wrap:wrap}
+ .pct{font-size:22px;font-weight:800;color:#eef2fa;white-space:nowrap}
+ .pct small{font-size:12px;color:#93a4c4;font-weight:400}
+ .gold{color:#f5b942}.teal{color:#2dd4bf}
+ table{border-collapse:collapse;width:100%;font-size:13.5px}
+ td,th{padding:4px 7px;border-bottom:1px solid #1d2745;text-align:left;vertical-align:top}
+ th{color:#93a4c4;font-weight:600}
+ .call{font-weight:800} .enter{color:#7be495}.exit{color:#ff9c9c}.hold{color:#ffd166}.noplay{color:#93a4c4}
+ .tape{font-size:13.5px} .tape div{padding:5px 0;border-bottom:1px solid #1d2745}
+ .specbtn{background:#0e1322;border:1px solid #26304d;border-radius:10px;color:#dbe4f5;padding:9px 12px;font:inherit;cursor:pointer;margin:3px 2px}
+ .specbtn.sel{border-color:#2ec4b6}
+ #stamp{font-size:13px;color:#9fe8df}
+ .pulse{display:inline-block;width:9px;height:9px;border-radius:99px;background:#ff5d5d;margin-right:5px;animation:pl 1.6s infinite}
+ @keyframes pl{0%,100%{opacity:1}50%{opacity:.25}}
+ footer{color:#5f7099;font-size:12.5px;margin-top:26px}
+</style></head><body><div class="wrap">
+<div class="logo">NOD A L</div>
+<h1>🎪 THE MAIN STAGE — one match, every engine, always live</h1>
+<p class="sub"><span class="tag house">NEW — NOTHING ELSE TOUCHED</span> Tap any match and it goes on the stage: the live state, the math window, the win-probability graph, the routes, every caller lane and all four specialists — and the booth calling it — <b>all recomputed on every pull</b>. This page refreshes itself; the numbers never sit frozen at the pull.</p>
+<div class="box"><span class="pulse"></span><span id="stamp">Pulling the wire…</span><br>
+<span class="note">Auto-refresh: ESPN wire + arena books re-pulled every <b>20 seconds</b>, everything below recomputed from the fresh state. <button id="refresh" style="background:#ffd166;color:#131313;border:0;border-radius:8px;padding:6px 12px;font-weight:700;cursor:pointer">PULL NOW</button></span>
+<div id="picker" style="margin-top:10px"></div></div>
+<div id="stage"></div>
+<footer>Live state: ESPN scoreboard JSON, fetched in your browser at the stamp above (game-level wire — the wire carries games, not points, and every panel says so at its grain). Market prices: Polymarket Gamma + Kalshi via the arena's books, stamped EXTERNAL — they feed the room, never the core call. Percentages: the desk DP repricer on archive serve/return cards (Sackmann main-tour 2015–2026 + Slam point tape); a player outside the archive prices on the labeled ASSUMED GRID. Stage calls are the specialists' printed v2 rulebooks run on the live state by this page — the arena's sealed fills remain the record. Simulation only; Phase 2 is DOCKED; nothing here places an order — Overlay Mode: David places every real order himself.</footer>
+</div>
+<script>
+"use strict";
+/* ============ desk machinery — verbatim ports (parity-proven on FIND / LIVE BOARD) ============ */
+const norm=n=>(n||"").toLowerCase().replace(/[^a-z ]/g,"").trim();
+const keyOf=n=>{const p=norm(n).split(/\s+/);return p.length?p[p.length-1]+"|"+p[0][0]:"";};
+const pairKey=names=>keyOf(names[0])+"||"+keyOf(names[1]);
+function gameWin(p){const q=1-p;const direct=p**4+4*p**4*q+10*p**4*q**2;const rd=20*p**3*q**3;const dz=p*p/(p*p+q*q);return direct+rd*dz;}
+function tbWin(pa,pb,first){const pavg=(pa+(1-pb))/2;const dr=pavg*pavg/(pavg*pavg+(1-pavg)*(1-pavg));const memo={};
+  function rec(a,b,srv,left){if(a>=7&&a-b>=2)return 1;if(b>=7&&b-a>=2)return 0;if(a>=6&&b>=6&&a===b)return dr;
+    const k=a+","+b+","+srv+","+left;if(memo[k]!==undefined)return memo[k];
+    const p=srv===0?pa:1-pb;let ns,nl;if(left>1){ns=srv;nl=left-1;}else{ns=1-srv;nl=2;}
+    return memo[k]=p*rec(a+1,b,ns,nl)+(1-p)*rec(a,b+1,ns,nl);}
+  return rec(0,0,first,1);}
+function setWinFrom(pa,pb,ga,gb,first){const gA=gameWin(pa),gB=gameWin(pb);const memo={};
+  function rec(x,y,srv){if((x>=6&&x-y>=2)||x===7)return 1;if((y>=6&&y-x>=2)||y===7)return 0;if(x===6&&y===6)return tbWin(pa,pb,srv);
+    const k=x+","+y+","+srv;if(memo[k]!==undefined)return memo[k];
+    const gw=srv===0?gA:1-gB;return memo[k]=gw*rec(x+1,y,1-srv)+(1-gw)*rec(x,y+1,1-srv);}
+  return rec(ga,gb,first);}
+function priceState(pa,pb,sa,sb,ga,gb,srv){
+  function matchFrom(x,y,ss){if(x===2)return 1;if(y===2)return 0;const sw=setWinFrom(pa,pb,0,0,ss);return sw*matchFrom(x+1,y,1-ss)+(1-sw)*matchFrom(x,y+1,1-ss);}
+  if(ga===0&&gb===0)return matchFrom(sa,sb,srv);
+  const pset=setWinFrom(pa,pb,ga,gb,srv);
+  return pset*matchFrom(sa+1,sb,srv)+(1-pset)*matchFrom(sa,sb+1,srv);}
+const pct=x=>Math.round(x*1000)/10;
+const setDone=(a,b)=>(Math.max(a,b)>=6&&Math.abs(a-b)>=2)||Math.max(a,b)===7;
+/* lane transforms — the house formulas, verbatim from play_build.py (the lane booth):
+   charge = fav + (100 - fav) * 0.22 · dog = (100 - fav) + fav * 0.22 (percent scale there, fractions here) */
+const laneNum=(lane,dpA)=>{ const favA=dpA>=.5; const fav=favA?dpA:1-dpA;
+  if(lane==="CHARGE"){const c=fav+(1-fav)*0.22;return favA?c:1-c;}
+  if(lane==="FLIP"){const d=(1-fav)+fav*0.22;return favA?1-d:d;}
+  return dpA; };
+/* ============ stage state ============ */
+let DATA=null, KEYMAP={}, BOARD=[], SEL=null, GAMES={}, ARENA=null, SCORES=null, TOM=null;
+let HIST={}, PREV={}, TAPE=[], LASTDP={}, SELSPEC=null, LASTPULL=0, NEXTIN=20;
+function lookup(name){ if(!DATA||!DATA.players) return null; if(DATA.players[name]) return DATA.players[name];
+  const k=keyOf(name); return KEYMAP[k]?DATA.players[KEYMAP[k]]:null; }
+function splits(nameA,nameB){
+  const A=lookup(nameA),B=lookup(nameB);let src=[],pa=null,pb=null,assumed=false;
+  if(A&&B&&A.card&&B.card){pa=(A.card.serve+(100-B.card.return))/200;pb=(B.card.serve+(100-A.card.return))/200;src.push("full cards");}
+  else if(A&&B&&A.nodes&&B.nodes&&A.nodes.srv_pct!=null){pa=(A.nodes.srv_pct+(1-B.nodes.ret_pct))/2;pb=(B.nodes.srv_pct+(1-A.nodes.ret_pct))/2;src.push("point-tape nodes");}
+  else{pa=0.60;pb=0.60;assumed=true;src.push("ASSUMED GRID — a player is outside the archive");}
+  return{pa,pb,src:src.join(" · "),assumed};}
+function buildState(row){
+  const A=row.sides[0],B=row.sides[1];
+  const n=Math.max(A.sets.length,B.sets.length);const lines=[];
+  for(let i=0;i<n;i++){const a=A.sets[i],b=B.sets[i];if(a===null||a===undefined||b===null||b===undefined)continue;lines.push([a,b]);}
+  let done=lines.slice(),ga=0,gb=0;
+  if(row.state==="in"&&lines.length){const last=lines[lines.length-1];
+    if(!setDone(last[0],last[1])){ga=last[0];gb=last[1];done=lines.slice(0,-1);}}
+  const setsA=done.filter(l=>l[0]>l[1]).length,setsB=done.filter(l=>l[1]>l[0]).length;
+  const srv=B.serve?1:0;
+  const sp=splits(A.name,B.name);
+  return{names:[A.name,B.name],tour:row.tour,state:row.state,detail:row.detail,
+    doneLines:done,setsA,setsB,ga,gb,srv,pa:sp.pa,pb:sp.pb,src:sp.src,assumed:sp.assumed,linescores:lines};}
+function gameRowFor(names){
+  const k=pairKey(names); if(GAMES[k])return GAMES[k];
+  const k2=pairKey([names[1],names[0]]); if(GAMES[k2]){const g=GAMES[k2];return{...g,_flip:true};}
+  return null;}
+function idxIn(g,names,name){ /* index of player name inside the gamesdata row's own name order */
+  if(!g)return -1; const gi=g.names.findIndex(n=>keyOf(n)===keyOf(name)); return gi; }
+/* route ladder — game-level Monte Carlo from the live state (the wire's grain), 2000 futures */
+function simRoutes(st,N){
+  const gA=gameWin(st.pa),gB=gameWin(st.pb);const tally={};
+  function oneSet(ga,gb,srv,sa,sb){
+    let x=ga,y=gb,s=srv;
+    while(true){
+      if((x>=6&&x-y>=2)||x===7)return[x,y];
+      if((y>=6&&y-x>=2)||y===7)return[x,y];
+      if(x===6&&y===6){const t=Math.random()<tbWin(st.pa,st.pb,s)?1:0;return t?[7,6]:[6,7];}
+      const gw=s===0?gA:1-gB;
+      if(Math.random()<gw)x++;else y++; s=1-s;}}
+  for(let i=0;i<N;i++){
+    let sa=st.setsA,sb=st.setsB,srv=st.srv;const lines=st.doneLines.map(l=>l[0]+"-"+l[1]);
+    let ga=st.ga,gb=st.gb;
+    while(sa<2&&sb<2){const r=oneSet(ga,gb,srv,sa,sb);lines.push(r[0]+"-"+r[1]);
+      if(r[0]>r[1])sa++;else sb++; ga=0;gb=0;srv=1-srv;}
+    const key=lines.join(" · "); tally[key]=(tally[key]||0)+1;}
+  return Object.entries(tally).map(([k,v])=>({route:k,p:v/N})).sort((a,b)=>b.p-a.p).slice(0,6);}
+/* ============ specialist stage reads — printed v2 rulebooks on page-available data ============ */
+function stageCall(spec,st,g,dpA){
+  const reads=[];
+  const rails=["POLY","KALSHI"];
+  const myIdx=name=>st.names.findIndex(n=>keyOf(n)===keyOf(name));
+  const dpFor=nm=>{const i=myIdx(nm);return i===0?dpA:1-dpA;};
+  const pickDp=(()=>{ if(!g||!g.picks||!g.picks.picks) return null;
+    const pk=g.picks.picks[{WAVE:"WAVE",LOCK:"LOCK",SCOUT:"SCOUT",STUDY:"STUDY"}[spec]];
+    return pk&&pk.pick?{dp:pk.dp,pick:pk.pick}:null; })();
+  for(const rail of rails){
+    const book=g&&g.books?g.books[rail]:null;
+    const pos=g?(g.positions||[]).find(p=>p.specialist===({WAVE:"WAVE RIDER",LOCK:"LOCK HUNTER",SCOUT:"VALUE SCOUT",STUDY:"THE UNDERSTUDY"}[spec])&&p.rail===rail):null;
+    if(pos){
+      const gi=idxIn(g,st.names,pos.side); if(gi<0)continue;
+      const our=dpFor(pos.side);
+      const bid=book?(gi===0?book.bid[0]:book.bid[1]):null, mid=book?(gi===0?book.mid[0]:book.mid[1]):null;
+      let call=null,why="";
+      if(spec==="LOCK"){
+        if(bid!=null&&bid>=.95){call="EXIT";why="bid "+Math.round(bid*100)+"¢ — cash the 95–98 win";}
+        else if(our<=.80){call="EXIT";why="DP stop — our number for the held side is "+pct(our)+"% (≤80)";}
+        else if(bid!=null&&bid<=pos.entry-.12){call="EXIT";why="invalidation stop — bid broke 12¢ under entry "+Math.round(pos.entry*100)+"¢";}
+        else{call="HOLD";why="riding toward the 95–98 band (our "+pct(our)+"%)";}
+      }else if(spec==="SCOUT"||spec==="STUDY"){
+        const edp=pickDp&&pickDp.pick===pos.side?pickDp.dp:(g&&g.dp!=null?(idxIn(g,st.names,pos.side)===0?g.dp:1-g.dp):null);
+        if(our<=.25){call="EXIT";why="salvage — our number "+pct(our)+"% (≤25), never settle a dead discount";}
+        else if(edp!=null&&our<=edp-.10){call="EXIT";why="thesis dead — our number fell 10+ pts under the entry read";}
+        else if(bid!=null&&bid>=our-.03){call="EXIT";why="gap closed — the market bid reached our number";}
+        else{call="HOLD";why="the discount is still open (our "+pct(our)+"% vs market "+(mid!=null?Math.round(mid*100)+"¢":"—")+")";}
+      }else if(spec==="WAVE"){
+        if(mid!=null&&mid>=.98){call="EXIT";why="profit exhausted — market at "+Math.round(mid*100)+"¢";}
+        else{const prev=LASTDP[pairKey(st.names)];const mv=prev!=null?(dpA-prev):0;const heldMove=pos.side===st.names[0]?mv:-mv;
+          if(heldMove<=-.08){call="SWITCH";why="the wave flipped — our number moved "+Math.round(heldMove*100)+" pts against the held side on this page's pulls";}
+          else{call="HOLD";why="ride the wave (our "+pct(our)+"% · entry "+Math.round(pos.entry*100)+"¢ · mark "+(pos.mark_pnl>=0?"+":"")+pos.mark_pnl.toFixed(2)+")";}}
+      }
+      if(call)reads.push({rail,call,why,pos});
+    } else if(book){
+      /* entry reads — need a two-sided book with a real spread */
+      for(let side=0;side<2;side++){
+        const nm=st.names[side];const our=side===0?dpA:1-dpA;
+        const ask=book.ask[side],bid=book.bid[side],mid=book.mid[side];
+        if(ask==null||bid==null)continue; const spread=ask-bid;
+        let call=null,why="";
+        if(spec==="LOCK"){
+          if(ask>=.90&&ask<=.94&&our>=ask){call="ENTER";why="lock band — "+nm+" ask "+Math.round(ask*100)+"¢ and our number "+pct(our)+"% covers it";}
+        }else if(spec==="SCOUT"){
+          if(our-mid>=.15&&spread<=.06){call="ENTER";why=nm+" undervalued by "+Math.round((our-mid)*100)+" pts (our "+pct(our)+"% vs "+Math.round(mid*100)+"¢, spread "+Math.round(spread*100)+"¢)";}
+        }else if(spec==="WAVE"){
+          const prev=LASTDP[pairKey(st.names)];const mv=prev!=null?(dpA-prev):0;const sideMove=side===0?mv:-mv;
+          if(sideMove>=.05){call="ENTER";why="wave toward "+nm+" confirmed on this page's pulls ("+(sideMove>=0?"+":"")+Math.round(sideMove*100)+" pts)";}
+        }else if(spec==="STUDY"){
+          const prev=LASTDP[pairKey(st.names)];const mv=prev!=null?(dpA-prev):0;const sideMove=side===0?mv:-mv;
+          if(((our-mid>=.15&&sideMove>=.05&&spread<=.06))||(ask>=.90&&ask<=.94&&our>=ask)){call="ENTER";why="consensus on "+nm+" — value + confirmation agree (the Understudy's only door)";}
+        }
+        if(call){reads.push({rail,call,why,side:nm});break;}
+      }
+    }
+  }
+  if(!reads.length)return{call:"NO PLAY",why:spec==="STUDY"?"no consensus on the board — the Understudy does not pick":"no rule fires on the live state — no number, no play",reads};
+  const rank={EXIT:0,SWITCH:1,ENTER:2,HOLD:3};
+  reads.sort((a,b)=>rank[a.call]-rank[b.call]);
+  return{call:reads[0].call,why:reads[0].why,reads};
+}
+/* ============ rendering ============ */
+const $=id=>document.getElementById(id);
+const SPECS=[["WAVE","🌊 WAVE RIDER","Charlie — Deep, Confident, Energetic"],["LOCK","🔒 LOCK HUNTER","Daniel — Steady Broadcaster"],["SCOUT","🔭 VALUE SCOUT","Matilda — Knowledgable, Professional"],["STUDY","🎓 THE UNDERSTUDY","text only — its voice is David's to cast"]];
+const esc=s=>String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;");
+function tapePush(txt){ TAPE.unshift({at:new Date().toLocaleTimeString(),txt}); if(TAPE.length>40)TAPE.pop(); }
+function seedHist(st,g){
+  const k=pairKey(st.names); if(HIST[k])return;
+  HIST[k]=[];
+  if(g&&g.wave_series){ for(const [t,mid,dp] of g.wave_series){ if(dp!=null)HIST[k].push({t,dp:dp,seed:true}); } }
+}
+function graphHTML(st,dpA){
+  const k=pairKey(st.names);const h=HIST[k]||[];
+  if(h.length<2)return "<p class='note'>The graph starts drawing as pulls land — the arena's 5-minute marks seed it when this match is on the arena's books; this page then adds a point every 20 seconds.</p>";
+  const W=960,H=210,P=26;const n=h.length;
+  const X=i=>P+(W-2*P)*(n===1?.5:i/(n-1)), Y=v=>H-P-(H-2*P)*v;
+  const lineA=h.map((p,i)=>(i?"L":"M")+X(i).toFixed(1)+","+Y(p.dp).toFixed(1)).join(" ");
+  const lineB=h.map((p,i)=>(i?"L":"M")+X(i).toFixed(1)+","+Y(1-p.dp).toFixed(1)).join(" ");
+  const last=h[h.length-1];
+  return "<svg viewBox='0 0 "+W+" "+H+"' style='width:100%;background:#0e1322;border:1px solid #26304d;border-radius:10px'>"
+    +"<line x1='"+P+"' y1='"+Y(.5)+"' x2='"+(W-P)+"' y2='"+Y(.5)+"' stroke='#26304d' stroke-dasharray='4 4'/>"
+    +"<text x='"+(P+2)+"' y='"+(Y(.5)-5)+"' fill='#5f7099' font-size='11'>50%</text>"
+    +"<path d='"+lineA+"' fill='none' stroke='#f5b942' stroke-width='2.5'/>"
+    +"<path d='"+lineB+"' fill='none' stroke='#2dd4bf' stroke-width='2.5'/>"
+    +"<circle cx='"+X(n-1)+"' cy='"+Y(last.dp)+"' r='4' fill='#f5b942'/><circle cx='"+X(n-1)+"' cy='"+Y(1-last.dp)+"' r='4' fill='#2dd4bf'/>"
+    +"</svg><p class='note'><span class='gold'>— "+esc(st.names[0])+" "+pct(last.dp)+"%</span> · <span class='teal'>— "+esc(st.names[1])+" "+pct(1-last.dp)+"%</span> · seeded from the arena's 5-minute marks where the match is on its books, then this page's own pulls every 20s. Grain: the wire carries games, not points — the line moves at game grain.</p>";
+}
+function renderPicker(){
+  const grp=(title,list)=>list.length?("<div class='note' style='margin-top:6px'>"+title+"</div>"+list.map(r=>{
+    const k=pairKey([r.sides[0].name,r.sides[1].name]);
+    return "<button class='pick"+(SEL===k?" sel":"")+"' data-k='"+k+"'>"+(r.state==="in"?"🔴 ":"")+esc(r.sides[0].name)+" vs "+esc(r.sides[1].name)+"</button>";}).join("")):"";
+  const el=$("picker");
+  el.innerHTML=grp("🔴 LIVE NOW",BOARD.filter(r=>r.state==="in"))+grp("UP NEXT",BOARD.filter(r=>r.state==="pre"))+grp("FINISHED",BOARD.filter(r=>r.state==="post"));
+  el.querySelectorAll("button.pick").forEach(b=>b.onclick=()=>{SEL=b.dataset.k;renderStage(true);});
+}
+function renderStage(resetTape){
+  const row=BOARD.find(r=>pairKey([r.sides[0].name,r.sides[1].name])===SEL);
+  if(!row){$("stage").innerHTML="";return;}
+  const st=buildState(row); const g=gameRowFor(st.names);
+  seedHist(st,g);
+  const dpA=st.state==="post"?(st.setsA>st.setsB?1:0):priceState(st.pa,st.pb,st.setsA,st.setsB,st.ga,st.gb,st.srv);
+  const k=pairKey(st.names);
+  /* booth event detection vs previous pull */
+  const pv=PREV[k];
+  if(pv&&st.state==="in"){
+    if(st.doneLines.length>pv.done){const l=st.doneLines[st.doneLines.length-1];tapePush("SET — "+(l[0]>l[1]?st.names[0]:st.names[1])+" takes set "+st.doneLines.length+" "+l[0]+"-"+l[1]+" · our number now "+pct(dpA)+"% "+esc(st.names[0].split(" ").slice(-1)[0]));}
+    else if(st.ga!==pv.ga||st.gb!==pv.gb){tapePush("GAMES — set stands "+st.ga+"-"+st.gb+" · our number "+pct(dpA)+"% "+esc(st.names[0].split(" ").slice(-1)[0]));}
+    if(Math.abs(dpA-pv.dp)>=.05)tapePush("SWING — our number moved "+(dpA-pv.dp>=0?"+":"")+Math.round((dpA-pv.dp)*100)+" pts to "+pct(dpA)+"% "+esc(st.names[0].split(" ").slice(-1)[0]));
+  }
+  PREV[k]={done:st.doneLines.length,ga:st.ga,gb:st.gb,dp:dpA};
+  if(st.state==="in"||st.state==="pre"){const h=HIST[k];const lastH=h[h.length-1];
+    if(!lastH||Math.abs(lastH.dp-dpA)>.0001||!lastH.live){h.push({t:new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}),dp:dpA,live:true});}}
+  LASTDP[k]=dpA;
+  /* --- THE STATE --- */
+  const stateTag=st.state==="in"?"<span class='tag live'>● LIVE</span>":st.state==="pre"?"<span class='tag'>UP NEXT</span>":"<span class='tag'>FINISHED</span>";
+  const scoreLine=st.linescores.map(l=>l[0]+"-"+l[1]).join(" · ")||"—";
+  const srvName=st.state==="in"?(st.srv===0?st.names[0]:st.names[1]):null;
+  let html="<div class='box'><div class='rowflex'><span>"+stateTag+(st.assumed?" <span class='tag'>ASSUMED GRID</span>":"")+" <b style='font-size:19px'>"+esc(st.names[0])+" vs "+esc(st.names[1])+"</b><br><span class='note'>"+esc(st.tour)+" · "+esc(st.detail||"")+"</span></span>"
+    +"<span class='pct'>"+pct(dpA)+"% <small>"+esc(st.names[0].split(" ").slice(-1)[0])+"</small></span></div>"
+    +"<p style='margin:8px 0 0;font-size:17px'>Sets: <b>"+scoreLine+"</b>"+(st.state==="in"?" · now serving: <b>"+esc(srvName)+"</b>":"")+"</p></div>";
+  /* --- THE MATH --- */
+  if(st.state!=="post"){
+    const pSet=setWinFrom(st.pa,st.pb,st.ga,st.gb,st.srv);
+    const ngA=st.srv===0?gameWin(st.pa):1-gameWin(st.pb);
+    const sens=(d)=>pct(priceState(Math.min(.85,Math.max(.35,st.pa+d)),st.pb,st.setsA,st.setsB,st.ga,st.gb,st.srv));
+    html+="<h2>📐 THE MATH — recomputed this pull</h2><div class='box'><table><tr><th></th><th>"+esc(st.names[0])+"</th><th>"+esc(st.names[1])+"</th></tr>"
+      +"<tr><td>Match from here</td><td><b>"+pct(dpA)+"%</b></td><td><b>"+pct(1-dpA)+"%</b></td></tr>"
+      +"<tr><td>This set</td><td>"+pct(pSet)+"%</td><td>"+pct(1-pSet)+"%</td></tr>"
+      +"<tr><td>Next game</td><td>"+pct(ngA)+"%</td><td>"+pct(1-ngA)+"%</td></tr></table>"
+      +"<p class='note'>Sensitivity — "+esc(st.names[0].split(" ").slice(-1)[0])+" serve +5 pts → match "+sens(.05)+"% · serve −5 pts → "+sens(-.05)+"% · Serve inputs: "+esc(st.src)+" ("+Math.round(st.pa*100)+"% / "+Math.round(st.pb*100)+"% point-on-serve). The exact DP — the same engine as the sealed calls.</p></div>";
+  }
+  /* --- THE GRAPH --- */
+  html+="<h2>📈 THE GRAPH — win probability, live</h2><div class='box'>"+graphHTML(st,dpA)+"</div>";
+  /* --- POINT BY POINT / ROUTES --- */
+  if(st.state!=="post"){
+    const routes=simRoutes(st,2000);
+    html+="<h2>🎲 POINT BY POINT — the routes from here</h2><div class='box'><table><tr><th>route (set lines)</th><th>share of 2,000 futures</th></tr>"
+      +routes.map(r=>"<tr><td>"+esc(r.route)+"</td><td>"+pct(r.p)+"%</td></tr>").join("")+"</table>"
+      +"<p class='note'>The simulation re-runs from the live state on every pull — game-level futures (the wire's grain: games, not points). Modal route: <b>"+esc(routes[0].route)+"</b> at "+pct(routes[0].p)+"% — a mode, never a promise.</p></div>";
+  }
+  /* --- ALL ENGINES --- */
+  const lanes=[["LEDGER","the pure DP, unamplified"],["CHARGE","the high side — favorite pushed 22% of the way to 100"],["FLIP","the low side — the underdog gets its share plus 22% of the favorite's"],["REGISTRY","the frozen pre-match desk number (same blend, first ball)"],["LIVE_CALLER","the live DP itself, calling in-match"],["DAILY_SIM","the Daily Board's sealed call on this match, if one exists"]];
+  const pre=priceState(st.pa,st.pb,0,0,0,0,0);
+  const dailyRow=TOM?(TOM.rows||[]).find(r=>{const ms=r.match||"";return ms.includes(st.names[0].split(" ").slice(-1)[0])&&ms.includes(st.names[1].split(" ").slice(-1)[0]);}):null;
+  const bookMid=g&&g.books&&g.books.POLY?g.books.POLY.mid:null;
+  const midA=bookMid?(g._flip?bookMid[1]:bookMid[0]):null;
+  const laneStand=id=>{const c=SCORES?(SCORES.callers||[]).find(x=>x.id===id):null;
+    return c?(" · standing: "+c.graded+" graded · "+(c.accuracy==null?"—":c.accuracy+"%")+" · Brier "+(c.brier==null?"—":c.brier)+" · "+c.status):"";};
+  html+="<h2>⚙️ ALL ENGINES ON THIS MATCH</h2><div class='box'><table><tr><th>lane</th><th>number — "+esc(st.names[0])+"</th><th>its side</th><th>vs market</th></tr>"
+    +lanes.map(([id,desc])=>{
+      let num=null,side="—",vs="—";
+      if(id==="REGISTRY")num=pre; else if(id==="DAILY_SIM"){ if(dailyRow){num=dailyRow.our_pct_a/100; if(dailyRow.match.indexOf(st.names[0].split(" ").slice(-1)[0])>dailyRow.match.indexOf(st.names[1].split(" ").slice(-1)[0]))num=1-num;} }
+      else num=laneNum(id,dpA);
+      if(num!=null){side=num>=.5?st.names[0]:st.names[1];
+        if(midA!=null)vs="market "+Math.round(midA*100)+"¢ <span class='tag'>EXTERNAL</span> · gap "+(Math.round((num-midA)*100)>=0?"+":"")+Math.round((num-midA)*100)+" pts";}
+      const body=num==null?"<td colspan='3' class='note'>no sealed daily call on this match — the Daily Board did not seal it</td>"
+        :"<td><b>"+pct(num)+"%</b></td><td>"+esc(side)+"</td><td>"+vs+"</td>";
+      return "<tr><td><b>"+id+"</b><br><span class='note'>"+desc+laneStand(id)+"</span></td>"+body+"</tr>";}).join("")
+    +"</table><p class='note'>High threshold, printed wherever approval is implied: <b>APPROVED = ≥20 graded AND accuracy ≥62% AND mean Brier ≤0.21</b> — nobody on this stage is approved until the sealed record says so.</p></div>";
+  /* --- SPECIALISTS --- */
+  html+="<h2>🎙️ THE SPECIALISTS — live reads on this match</h2>";
+  for(const [sid,label,voice] of SPECS){
+    const sc=stageCall(sid,st,g,dpA);
+    const pk=g&&g.picks&&g.picks.picks?g.picks.picks[sid]:null;
+    const posFilt=(g?(g.positions||[]).filter(p=>({WAVE:"WAVE RIDER",LOCK:"LOCK HUNTER",SCOUT:"VALUE SCOUT",STUDY:"THE UNDERSTUDY"})[sid]===p.specialist):[]);
+    const prof=g&&g.profit?g.profit[({WAVE:"WAVE RIDER",LOCK:"LOCK HUNTER",SCOUT:"VALUE SCOUT",STUDY:"THE UNDERSTUDY"})[sid]]:null;
+    const cc=sc.call==="EXIT"?"exit":sc.call==="ENTER"?"enter":sc.call==="HOLD"?"hold":"noplay";
+    html+="<div class='box'><div class='rowflex'><span><b>"+label+"</b> <span class='note'>booth voice: "+voice+"</span></span><span class='call "+cc+"'>"+sc.call+"</span></div>"
+      +"<p style='margin:6px 0 0'>"+esc(sc.why)+"</p>"
+      +(pk?(pk.pick?"<p class='note' style='margin:4px 0 0'>Sealed pick (frozen, seq "+(pk.seq?pk.seq.seq:"—")+"): <b>"+esc(pk.pick)+"</b> at "+pct(pk.prob)+"% · risk "+pct(pk.risk)+"% — "+esc(pk.basis)+"</p>":"<p class='note' style='margin:4px 0 0'>Sealed pick: ABSTAIN — "+esc(pk.basis)+"</p>"):"<p class='note' style='margin:4px 0 0'>No sealed pick on this match.</p>")
+      +(posFilt.length?posFilt.map(p=>"<p class='note' style='margin:2px 0 0'>Open · "+p.rail+": "+esc(p.side)+" @ "+Math.round(p.entry*100)+"¢ · "+p.shares.toFixed(2)+" sh · mark "+(p.mark_pnl>=0?"+":"")+p.mark_pnl.toFixed(2)+"</p>").join(""):"<p class='note' style='margin:2px 0 0'>No open position on this match.</p>")
+      +(prof?"<p class='note' style='margin:2px 0 0'>Profit on this match so far: "+(prof.total>=0?"+":"")+prof.total.toFixed(2)+" (realized "+(prof.profit>=0?"+":"")+prof.profit.toFixed(2)+", open "+(prof.open_pnl>=0?"+":"")+prof.open_pnl.toFixed(2)+") — profit is the score here, not the match winner.</p>":"")
+      +"<p style='margin:6px 0 0'><button class='specbtn"+(SELSPEC===sid?" sel":"")+"' data-spec='"+sid+"'>🔊 HEAR "+label.split(" ").slice(1).join(" ")+"'S CALL</button></p>"
+      +(SELSPEC===sid?boothVoiceHTML(sid,sc,st):"")
+      +"</div>";
+  }
+  /* --- BOOTH TAPE --- */
+  const arenaLines=(ARENA&&ARENA.tape?ARENA.tape:[]).filter(e=>{const t=e.text||"";return st.names.some(n=>t.includes(n.split(" ").slice(-1)[0]));}).slice(0,8);
+  html+="<h2>📻 THE BOOTH — play-by-play tape for this match</h2><div class='box tape'>"
+    +(TAPE.length?TAPE.map(e=>"<div><span class='note'>"+e.at+"</span> "+esc(e.txt)+"</div>").join(""):"<div class='note'>Stage tape builds as the state moves — set results, game changes, DP swings ≥5 pts, and specialist call changes land here, stamped at arrival.</div>")
+    +(arenaLines.length?"<div class='note' style='margin-top:8px'>FROM THE ARENA TAPE — the sealed record (5-minute cycle):</div>"+arenaLines.map(e=>"<div><span class='note'>"+esc(e.at)+" · "+esc(e.who)+"</span> "+esc(e.text)+"</div>").join(""):"")
+    +"</div>";
+  $("stage").innerHTML=html;
+  document.querySelectorAll(".specbtn").forEach(b=>b.onclick=()=>{SELSPEC=SELSPEC===b.dataset.spec?null:b.dataset.spec;renderStage(false);});
+}
+function boothVoiceHTML(sid,sc,st){
+  const name=SPECS.find(s=>s[0]===sid)[1];
+  if(sid==="STUDY")return "<div class='panel' style='background:#0e1322;border:1px solid #2ec4b6;border-radius:10px;padding:10px 12px;margin-top:8px'><b>"+name+"</b> calls in text only — its voice is David's to cast.<br><span class='call'>"+sc.call+"</span> — "+esc(sc.why)+"</div>";
+  const voiced=(ARENA&&ARENA.feed?ARENA.feed:[]).find(e=>e.who&&e.who.toUpperCase().includes(name.split(" ").slice(1).join(" ").toUpperCase().split(" ")[0])&&e.audio);
+  return "<div style='background:#0e1322;border:1px solid #2ec4b6;border-radius:10px;padding:10px 12px;margin-top:8px'><b>"+name+"'s call on this moment:</b> <span class='call'>"+sc.call+"</span> — "+esc(sc.why)
+    +(voiced?"<p class='note' style='margin:6px 0 0'>Latest voiced booth line from the arena (the spoken line is the printed line, word for word):</p><audio controls preload='none' src='"+esc(voiced.audio)+"'></audio>"
+      :"<p class='note' style='margin:6px 0 0'>Voice lines render on the arena's 5-minute cycle (server-side); this live call is text until the cycle voices it — the Arena page carries the voiced lines.</p>")
+    +"</div>";
+}
+/* ============ pulls ============ */
+const URLS=["https://site.api.espn.com/apis/site/v2/sports/tennis/atp/scoreboard",
+            "https://site.api.espn.com/apis/site/v2/sports/tennis/wta/scoreboard"];
+async function fetchBoard(){
+  const rows=[];
+  for(const u of URLS){try{const r=await fetch(u);const d=await r.json();
+    for(const e of d.events||[])for(const gr of e.groupings||[])for(const c of gr.competitions||[]){
+      const sides=(c.competitors||[]).map(cp=>({name:cp.athlete?cp.athlete.displayName:cp.displayName,
+        sets:(cp.linescores||[]).map(ls=>ls.value),serve:cp.possession===true||cp.possession==="true"}));
+      if(sides.length===2&&sides.every(s=>typeof s.name==="string"&&s.name.length>2&&!/tbd|qualifier|seeded player/i.test(s.name)))rows.push({tour:e.name,state:c.status.type.state,detail:c.status.detail||"",sides});}
+  }catch(err){}}
+  const order={in:0,pre:1,post:2}; rows.sort((a,b)=>order[a.state]-order[b.state]);
+  return rows;
+}
+async function pullAll(){
+  try{ BOARD=await fetchBoard(); }catch(e){}
+  const grab=async f=>{try{const r=await fetch(f+"?t="+Date.now());return await r.json();}catch(e){return null;}};
+  const gd=await grab("gamesdata.json"); if(gd){GAMES={};(gd.games||[]).forEach(gm=>{GAMES[pairKey(gm.names)]=gm;});}
+  const ad=await grab("arenadata.json"); if(ad)ARENA=ad;
+  const sd=await grab("scoresdata.json"); if(sd)SCORES=sd;
+  const td=await grab("tomorrowdata.json"); if(td)TOM=td;
+  if(!SEL){const live=BOARD.find(r=>r.state==="in")||BOARD[0]; if(live)SEL=pairKey([live.sides[0].name,live.sides[1].name]);}
+  LASTPULL=Date.now(); NEXTIN=20;
+  const stamp=$("stamp");
+  if(stamp)stamp.innerHTML="LAST PULL "+new Date().toLocaleTimeString()+" — <b>"+BOARD.filter(r=>r.state==="in").length+" live</b> of "+BOARD.length+" matches on the wire · next pull in <span id='cd'>20</span>s · the stage below was recomputed from this pull";
+  renderPicker(); renderStage(false);
+}
+async function boot(){
+  try{const r=await fetch("livedata.json");DATA=await r.json();
+    Object.keys(DATA.players).forEach(k=>KEYMAP[keyOf(k)]=k);}catch(e){}
+  pullAll();
+  setInterval(pullAll,20000);
+  setInterval(()=>{const cd=$("cd");if(cd){NEXTIN=Math.max(0,NEXTIN-1);cd.textContent=NEXTIN;}},1000);
+}
+if(typeof window!=="undefined"){
+  window.addEventListener("DOMContentLoaded",()=>{
+    $("refresh").onclick=()=>pullAll();
+    boot();
+  });
+}
+</script>
+</body></html>
