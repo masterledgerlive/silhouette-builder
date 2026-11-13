@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NODAL — LIVE BOARD · every game, percentages running live</title>
+<style>
+ body{margin:0;background:#0b0e14;color:#dbe4f5;font:15px/1.5 -apple-system,'Segoe UI',Roboto,sans-serif}
+ .wrap{max-width:1060px;margin:0 auto;padding:18px 14px 60px}
+ a{color:#ffd166} .logo{font-weight:800;letter-spacing:.35em;color:#eef2fa}
+ h1{font-size:24px;margin:8px 0 2px} h2{font-size:17px;margin:22px 0 8px;color:#eef2fa}
+ .sub{color:#93a4c4} .note{color:#93a4c4;font-size:13px}
+ .box{background:#12172a;border:1px solid #26304d;border-radius:12px;padding:13px 15px;margin:12px 0}
+ .tag{display:inline-block;font-size:11px;padding:1px 8px;border-radius:99px;border:1px solid #3a4a75;color:#b9c7e6;vertical-align:2px}
+ .tag.live{border-color:#ff5d5d;color:#ffb3b3} .tag.house{border-color:#ffd166;color:#ffd166}
+ .tag.teal{border-color:#2ec4b6;color:#9fe8df}
+ button.pick{display:block;width:100%;text-align:left;background:#12172a;border:1px solid #26304d;border-radius:12px;
+   padding:11px 13px;margin:7px 0;color:#dbe4f5;font:inherit;cursor:pointer}
+ button.pick:active{border-color:#ffd166}
+ .rowflex{display:flex;justify-content:space-between;gap:10px;align-items:baseline;flex-wrap:wrap}
+ .pct{font-size:21px;font-weight:800;color:#eef2fa;white-space:nowrap}
+ .pct small{font-size:12px;color:#93a4c4;font-weight:400}
+ .frozen{font-size:12px;color:#ffd166}
+ .delta{font-size:12px}
+ .up{color:#7be495}.down{color:#ff9c9c}
+ .panel{background:#0e1322;border:1px solid #2ec4b6;border-radius:12px;padding:12px 14px;margin:-2px 0 10px}
+ table{border-collapse:collapse;width:100%;font-size:13.5px}
+ td,th{padding:4px 7px;border-bottom:1px solid #1d2745;text-align:left}
+ th{color:#93a4c4;font-weight:600}
+ input{background:#0e1322;border:1px solid #26304d;border-radius:8px;color:#dbe4f5;padding:8px 10px;font:inherit;width:230px}
+ footer{color:#5f7099;font-size:12.5px;margin-top:26px}
+</style></head><body><div class="wrap">
+<div class="logo">NOD A L</div>
+<h1>🔴 LIVE BOARD — every game, percentages running live</h1>
+<p class="sub"><span class="tag house">RESTORED FORMAT</span> The games list the way it ran in the watcher era: every match on today's wire, our percentage running live beside it, the frozen call printed next to the live number wherever one was sealed — and one tap opens the play-by-play: the percentage after every set, recomputed by the same desk math.</p>
+<div class="box"><b>How to read it.</b> The big number is the desk's exact DP repricer (the same engine as the sealed calls) run on the live state from the ESPN wire, refreshed every 30 seconds. <b>FROZEN</b> = a call sealed before the match (arena pick or tomorrow seal) — it never moves; the live number rewrites beside it, never instead of it. The wire carries <b>games, not points</b> — the play-by-play below is set-by-set, the finest grain the data honestly carries, and says so. A player outside the desk archive prices on the <span class="tag">ASSUMED GRID</span>, labeled on the row — never a silent invention.
+<p style="margin:8px 0 0"><input id="q" type="search" placeholder="filter by player or event…"> <button id="refresh" style="background:#ffd166;color:#131313;border:0;border-radius:8px;padding:8px 14px;font-weight:700;cursor:pointer">REFRESH NOW</button> <span class="note" id="wire-note">Pulling the board…</span></p></div>
+<div id="board"></div>
+<div class="box"><b>The other doors</b> — this board is the front list; the depth lives one tap deeper:
+<p>· <a href="livepull.html">LIVE PULL</a> — the full deck on one match: exact math, 6,000 point futures, tells, the paper table.<br>
+· <a href="games.html">EVERY GAME — WATCH BOTH ROADS</a> — frozen picks vs live profit, both venues, the arena's scoring of every game.<br>
+· <a href="daily.html">THE DAILY BOARD</a> — today's sealed calls with flags, and tomorrow's slate pre-sealed tonight.<br>
+· <a href="live.html">THE LIVE SHOW</a> — the Nov 5 show page: play-by-play stream + the race, run on live-test days.<br>
+· <a href="index.html">NODAL HUB</a></p></div>
+<footer>Live state: ESPN scoreboard JSON, fetched in your browser at the time printed above (game-level wire; two sources agreeing = VERIFIED, the desk cross-checks on its loop). Percentages: the desk DP repricer on archive serve/return cards (Sackmann main-tour 2015–2026 + Slam point tape) — Challenger/ITF players may price on the labeled assumed grid. Nothing here places an order: Overlay Mode — David places every real order himself.</footer>
+</div>
+<script>
+"use strict";
+const $=id=>document.getElementById(id);
+let DATA=null, KEYMAP={}, BOARD=[], FROZEN={}, OPENKEY=null;
+/* name matching (desk standard) */
+const norm=n=>(n||"").toLowerCase().replace(/[^a-z ]/g,"").trim();
+const keyOf=n=>{const p=norm(n).split(/\s+/);return p.length?p[p.length-1]+"|"+p[0][0]:"";};
+function lookup(name){ if(!DATA) return null; if(DATA.players[name]) return DATA.players[name];
+  const k=keyOf(name); return KEYMAP[k]?DATA.players[KEYMAP[k]]:null; }
+/* the exact DP — verbatim port of the desk's price_state.py (proven parity on FIND) */
+function gameWin(p){const q=1-p;const direct=p**4+4*p**4*q+10*p**4*q**2;const rd=20*p**3*q**3;const dz=p*p/(p*p+q*q);return direct+rd*dz;}
+function tbWin(pa,pb,first){const pavg=(pa+(1-pb))/2;const dr=pavg*pavg/(pavg*pavg+(1-pavg)*(1-pavg));const memo={};
+  function rec(a,b,srv,left){if(a>=7&&a-b>=2)return 1;if(b>=7&&b-a>=2)return 0;if(a>=6&&b>=6&&a===b)return dr;
+    const k=a+","+b+","+srv+","+left;if(memo[k]!==undefined)return memo[k];
+    const p=srv===0?pa:1-pb;let ns,nl;if(left>1){ns=srv;nl=left-1;}else{ns=1-srv;nl=2;}
+    return memo[k]=p*rec(a+1,b,ns,nl)+(1-p)*rec(a,b+1,ns,nl);}
+  return rec(0,0,first,1);}
+function setWinFrom(pa,pb,ga,gb,first){const gA=gameWin(pa),gB=gameWin(pb);const memo={};
+  function rec(x,y,srv){if((x>=6&&x-y>=2)||x===7)return 1;if((y>=6&&y-x>=2)||y===7)return 0;if(x===6&&y===6)return tbWin(pa,pb,srv);
+    const k=x+","+y+","+srv;if(memo[k]!==undefined)return memo[k];
+    const gw=srv===0?gA:1-gB;return memo[k]=gw*rec(x+1,y,1-srv)+(1-gw)*rec(x,y+1,1-srv);}
+  return rec(ga,gb,first);}
+function priceState(pa,pb,sa,sb,ga,gb,srv){
+  function matchFrom(x,y,ss){if(x===2)return 1;if(y===2)return 0;const sw=setWinFrom(pa,pb,0,0,ss);return sw*matchFrom(x+1,y,1-ss)+(1-sw)*matchFrom(x,y+1,1-ss);}
+  if(ga===0&&gb===0)return matchFrom(sa,sb,srv);
+  const pset=setWinFrom(pa,pb,ga,gb,srv);
+  return pset*matchFrom(sa+1,sb,srv)+(1-pset)*matchFrom(sa,sb+1,srv);}
+const pct=x=>Math.round(x*1000)/10;
+function splits(nameA,nameB){
+  const A=lookup(nameA),B=lookup(nameB);let src=[],pa=null,pb=null,assumed=false;
+  if(A&&B&&A.card&&B.card){pa=(A.card.serve+(100-B.card.return))/200;pb=(B.card.serve+(100-A.card.return))/200;src.push("full cards");}
+  else if(A&&B&&A.nodes&&B.nodes&&A.nodes.srv_pct!=null){pa=(A.nodes.srv_pct+(1-B.nodes.ret_pct))/2;pb=(B.nodes.srv_pct+(1-A.nodes.ret_pct))/2;src.push("point-tape nodes");}
+  else{pa=0.60;pb=0.60;assumed=true;src.push("ASSUMED GRID — a player is outside the archive");}
+  return{pa,pb,src:src.join(" · "),assumed};}
+const setDone=(a,b)=>(Math.max(a,b)>=6&&Math.abs(a-b)>=2)||Math.max(a,b)===7;
+function buildState(row){
+  const A=row.sides[0],B=row.sides[1];
+  const n=Math.max(A.sets.length,B.sets.length);const lines=[];
+  for(let i=0;i<n;i++){const a=A.sets[i],b=B.sets[i];if(a===null||a===undefined||b===null||b===undefined)continue;lines.push([a,b]);}
+  let done=lines.slice(),ga=0,gb=0;
+  if(row.state==="in"&&lines.length){const last=lines[lines.length-1];
+    if(!setDone(last[0],last[1])){ga=last[0];gb=last[1];done=lines.slice(0,-1);}}
+  const setsA=done.filter(l=>l[0]>l[1]).length,setsB=done.filter(l=>l[1]>l[0]).length;
+  const srv=B.serve?1:0;
+  const sp=splits(A.name,B.name);
+  return{names:[A.name,B.name],tour:row.tour,state:row.state,detail:row.detail,
+    doneLines:done,setsA,setsB,ga,gb,srv,pa:sp.pa,pb:sp.pb,src:sp.src,assumed:sp.assumed,
+    linescores:lines};}
+function frozenFor(names){
+  const k1=keyOf(names[0])+"||"+keyOf(names[1]), k2=keyOf(names[1])+"||"+keyOf(names[0]);
+  if(FROZEN[k1])return FROZEN[k1];
+  if(FROZEN[k2]){const f=FROZEN[k2];return{pa:100-f.pa,pick:f.pick===0?1:0,src:f.src};}
+  return null;}
+function rowHTML(r,i){
+  const st=buildState(r);
+  let big, sub;
+  if(r.state==="post"){
+    const w=st.setsA>st.setsB?0:1;
+    big="<span class='pct'>"+st.names[w].split(" ").slice(-1)[0]+" won</span>";
+    sub="<span class='note'>final "+st.doneLines.map(l=>l[0]+"-"+l[1]).join(" · ")+"</span>";
+  } else {
+    const p=pct(priceState(st.pa,st.pb,st.setsA,st.setsB,st.ga,st.gb,st.srv));
+    big="<span class='pct'>"+p+"% <small>"+st.names[0].split(" ").slice(-1)[0]+"</small> · "+(Math.round((100-p)*10)/10)+"% <small>"+st.names[1].split(" ").slice(-1)[0]+"</small></span>";
+    sub="<span class='note'>"+st.doneLines.map(l=>l[0]+"-"+l[1]).join(" · ")+((st.ga||st.gb)?" · now "+st.ga+"-"+st.gb:"")+" "+(r.detail||"")+"</span>";
+  }
+  const fz=frozenFor(st.names);
+  let fzline="";
+  if(fz){ let d="";
+    if(r.state!=="post"){const live=pct(priceState(st.pa,st.pb,st.setsA,st.setsB,st.ga,st.gb,st.srv));const dl=Math.round((live-fz.pa)*10)/10;
+      d=" <span class='delta "+(dl>=0?"up":"down")+"'>("+(dl>=0?"+":"")+dl+" vs frozen)</span>";}
+    fzline="<div class='frozen'>FROZEN "+fz.pa+"% "+st.names[0].split(" ").slice(-1)[0]+" — "+fz.src+d+"</div>";}
+  const tag=r.state==="in"?"<span class='tag live'>● LIVE</span>":r.state==="pre"?"<span class='tag'>UP NEXT</span>":"<span class='tag'>DONE</span>";
+  const atag=st.assumed?" <span class='tag'>ASSUMED GRID</span>":"";
+  return "<button class='pick' data-i='"+i+"'><span class='rowflex'><span>"+tag+atag+" <b>"+st.names[0]+"</b> vs <b>"+st.names[1]+"</b><br><span class='note'>"+st.tour+"</span> "+sub+"</span>"+big+"</span>"+fzline+"</button>"
+       + (OPENKEY===pairKey(st.names)?panelHTML(st):"");
+}
+function pairKey(names){return keyOf(names[0])+"||"+keyOf(names[1]);}
+function panelHTML(st){
+  /* play-by-play: the percentage after every set, recomputed on the same DP */
+  let sa=0,sb=0,srv=st.srv, rows="";
+  const p0=pct(priceState(st.pa,st.pb,0,0,0,0,0));
+  rows+="<tr><td>first ball (pre-match number)</td><td>"+st.names[0]+" "+p0+"%</td><td>"+st.names[1]+" "+(Math.round((100-p0)*10)/10)+"%</td></tr>";
+  st.doneLines.forEach((l,idx)=>{
+    if(l[0]>l[1])sa++;else sb++;
+    const p=pct(priceState(st.pa,st.pb,sa,sb,0,0,srv)); srv=1-srv;
+    rows+="<tr><td>after set "+(idx+1)+" — "+l[0]+"-"+l[1]+"</td><td>"+st.names[0]+" "+p+"%</td><td>"+st.names[1]+" "+(Math.round((100-p)*10)/10)+"%</td></tr>";});
+  let now="";
+  if(st.state==="in"){
+    const p=pct(priceState(st.pa,st.pb,st.setsA,st.setsB,st.ga,st.gb,st.srv));
+    const ps=pct(setWinFrom(st.pa,st.pb,st.ga,st.gb,st.srv));
+    now="<tr><td><b>right now — set stands "+st.ga+"-"+st.gb+"</b></td><td><b>"+st.names[0]+" "+p+"%</b></td><td><b>"+st.names[1]+" "+(Math.round((100-p)*10)/10)+"%</b></td></tr>"
+       +"<tr><td>this set from here</td><td>"+st.names[0]+" "+ps+"%</td><td>"+st.names[1]+" "+(Math.round((100-ps)*10)/10)+"%</td></tr>";
+  }
+  if(st.state==="post"){const w=st.setsA>st.setsB?0:1;
+    now="<tr><td><b>final</b></td><td colspan='2'><b>"+st.names[w]+" wins "+st.doneLines.map(l=>l[0]+"-"+l[1]).join(" · ")+"</b></td></tr>";}
+  return "<div class='panel'><b>PLAY-BY-PLAY — the percentage after every set</b> <span class='note'>(set grain — the wire carries games, not points; boundary numbers recomputed by the same DP, first-serve alternation assumed)</span>"
+    +"<table><tr><th>point of the story</th><th>"+st.names[0]+"</th><th>"+st.names[1]+"</th></tr>"+rows+now+"</table>"
+    +"<p class='note'>Serve inputs: "+st.src+". Deeper: <a href='livepull.html'>the full deck in LIVE PULL</a> · <a href='profiles.html'>their cards</a> · <a href='matrix.html'>their 1-2-3 forks</a></p></div>";
+}
+function render(){
+  const q=norm($("q").value||"");
+  const rows=BOARD.map((r,i)=>({r,i})).filter(x=>!q||norm(x.r.sides[0].name+" "+x.r.sides[1].name+" "+x.r.tour).includes(q));
+  const sec=(title,list)=>list.length?("<h2>"+title+" ("+list.length+")</h2>"+list.map(x=>rowHTML(x.r,x.i)).join("")):"";
+  $("board").innerHTML=
+    sec("🔴 LIVE NOW",rows.filter(x=>x.r.state==="in"))+
+    sec("UP NEXT",rows.filter(x=>x.r.state==="pre"))+
+    sec("FINISHED",rows.filter(x=>x.r.state==="post"))||
+    "<p class='note'>No matches match the filter.</p>";
+  if(!rows.length)$("board").innerHTML="<p class='note'>The wire returned nothing right now — try refresh in a moment.</p>";
+  document.querySelectorAll("#board button.pick").forEach(b=>b.onclick=()=>{
+    const r=BOARD[+b.dataset.i];const k=pairKey([r.sides[0].name,r.sides[1].name]);
+    OPENKEY=(OPENKEY===k?null:k); render();});
+}
+const URLS=["https://site.api.espn.com/apis/site/v2/sports/tennis/atp/scoreboard",
+            "https://site.api.espn.com/apis/site/v2/sports/tennis/wta/scoreboard"];
+async function fetchBoard(){
+  const rows=[];
+  for(const u of URLS){try{const r=await fetch(u);const d=await r.json();
+    for(const e of d.events||[])for(const g of e.groupings||[])for(const c of g.competitions||[]){
+      const sides=(c.competitors||[]).map(cp=>({name:cp.athlete?cp.athlete.displayName:cp.displayName,
+        sets:(cp.linescores||[]).map(ls=>ls.value),serve:cp.possession===true||cp.possession==="true"}));
+      if(sides.length===2&&sides.every(s=>typeof s.name==="string"&&s.name.length>2&&!/tbd|qualifier|seeded player/i.test(s.name)))rows.push({tour:e.name,state:c.status.type.state,detail:c.status.detail||"",sides});}
+  }catch(err){}}
+  const order={in:0,pre:1,post:2};
+  rows.sort((a,b)=>order[a.state]-order[b.state]);
+  BOARD=rows;
+  $("wire-note").innerHTML=rows.length?("Board pulled "+new Date().toLocaleTimeString()+" — <b style='color:#eef2fa'>"+rows.filter(r=>r.state==="in").length+" live</b> of "+rows.length+" matches · auto-refresh 30s"):"The wire returned nothing right now.";
+  render();
+}
+async function boot(){
+  try{const r=await fetch("livedata.json");DATA=await r.json();
+    Object.keys(DATA.players).forEach(k=>KEYMAP[keyOf(k)]=k);}catch(e){}
+  try{const r=await fetch("gamesdata.json");const g=await r.json();
+    (g.games||[]).forEach(gm=>{if(!gm.picks)return;
+      const spec=["WAVE","LOCK","SCOUT","STUDY"].map(s=>gm.picks[s]).find(p=>p&&p.pick);
+      if(spec)FROZEN[pairKey(gm.names)]={pa:spec.pick_idx===0?spec.prob*100:(100-spec.prob*100),pick:spec.pick_idx,src:"sealed arena pick ("+spec.basis+")"};});}catch(e){}
+  try{const r=await fetch("tomorrowdata.json");const t=await r.json();
+    (t.rows||[]).forEach(rw=>{if(rw.our!=null)FROZEN[keyOf(rw.a)+"||"+keyOf(rw.b)]={pa:rw.our,pick:rw.our>=50?0:1,src:"tomorrow seal — pre-sealed the night before"};});}catch(e){}
+  fetchBoard();
+  setInterval(fetchBoard,30000);
+}
+$("refresh").onclick=fetchBoard;
+$("q").addEventListener("input",render);
+boot();
+</script>
+</body></html>
