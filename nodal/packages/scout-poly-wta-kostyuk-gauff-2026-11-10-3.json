@@ -1,0 +1,1092 @@
+{
+ "id": "scout-poly-wta-kostyuk-gauff-2026-11-10-3",
+ "specialist": "SCOUT",
+ "rail": "POLY",
+ "class": "SIM-OURS-POLYMARKET",
+ "match": "WTA Finals, Group A: Marta Kostyuk vs Coco Gauff",
+ "slug": "wta-kostyuk-gauff-2026-11-10",
+ "opened": "2026-11-12T16:50:35-0500",
+ "closed": "2026-11-12T19:44:57-0500",
+ "color": {
+  "Marta Kostyuk": {
+   "text": "Marta Kostyuk \u2014 a texture read, from the Slam points we hold: serve 57%, return 44%. under break-point pressure the serve moves +5.0 pts \u2014 it rises when it matters. after losing a point, the next one lands 55% \u2014 the tilt tell, on tape.",
+   "cites": [
+    "point-tape texture (Slam pbp)",
+    "pressure delta",
+    "next-point splits"
+   ],
+   "tier": "TEXTURE"
+  },
+  "Coco Gauff": {
+   "text": "Coco Gauff \u2014 a texture read, from the Slam points we hold: serve 60%, return 44%. under break-point pressure the serve moves -4.9 pts \u2014 it leaks when it matters. after losing a point, the next one lands 61% \u2014 the tilt tell, on tape.",
+   "cites": [
+    "point-tape texture (Slam pbp)",
+    "pressure delta",
+    "next-point splits"
+   ],
+   "tier": "TEXTURE"
+  }
+ },
+ "side_idx": 0,
+ "side_name": "Marta Kostyuk",
+ "steps": [
+  {
+   "t": "2026-11-12T16:50:35-0500",
+   "kind": "OPEN",
+   "text": "undervalued by 23 pts on the POLY road \u2014 our number 36 vs 13\u00a2 (pre-match DP from both cards)",
+   "engine": "Value Scout tape + DP repricer",
+   "state": "pre-match",
+   "dp": 0.359,
+   "books": {
+    "POLY": [
+     0.125,
+     0.875
+    ],
+    "KALSHI": [
+     0.105,
+     0.895
+    ]
+   },
+   "side": "Marta Kostyuk",
+   "price": 0.129,
+   "stake": 0.38,
+   "fork": {
+    "available": true,
+    "src": "COMPUTED \u2014 DP games model on both cards\u2019 serve rates; ranges are projected (branch DP \u00b1 rail spread + 4 pts) and labeled as projections",
+    "state": "pre-match",
+    "steps": [
+     {
+      "label": "STEP 1 \u2014 this set",
+      "branches": [
+       {
+        "who": "Marta Kostyuk",
+        "p": 0.405,
+        "sets_after": [
+         1,
+         0
+        ],
+        "dp_side": 0.646,
+        "range": {
+         "POLY": [
+          0.61,
+          0.69
+         ],
+         "KALSHI": null
+        },
+        "action": "HOLD \u2014 the discount is still open",
+        "decided": null
+       },
+       {
+        "who": "Coco Gauff",
+        "p": 0.595,
+        "sets_after": [
+         0,
+         1
+        ],
+        "dp_side": 0.164,
+        "range": {
+         "POLY": [
+          0.12,
+          0.2
+         ],
+         "KALSHI": null
+        },
+        "action": "EXIT \u2014 thesis dead",
+        "decided": null
+       }
+      ]
+     },
+     {
+      "label": "STEP 2 \u2014 next set",
+      "branches": [
+       [
+        {
+         "who": "Marta Kostyuk",
+         "p": 0.405,
+         "sets_after": [
+          2,
+          0
+         ],
+         "dp_side": 1.0,
+         "range": {
+          "POLY": [
+           0.96,
+           0.99
+          ],
+          "KALSHI": null
+         },
+         "action": "HOLD \u2014 settles at 100\u00a2",
+         "decided": "win"
+        },
+        {
+         "who": "Coco Gauff",
+         "p": 0.595,
+         "sets_after": [
+          1,
+          1
+         ],
+         "dp_side": 0.405,
+         "range": {
+          "POLY": [
+           0.37,
+           0.45
+          ],
+          "KALSHI": null
+         },
+         "action": "HOLD \u2014 the discount is still open",
+         "decided": null
+        }
+       ],
+       [
+        {
+         "who": "Marta Kostyuk",
+         "p": 0.405,
+         "sets_after": [
+          1,
+          1
+         ],
+         "dp_side": 0.405,
+         "range": {
+          "POLY": [
+           0.37,
+           0.45
+          ],
+          "KALSHI": null
+         },
+         "action": "HOLD \u2014 the discount is still open",
+         "decided": null
+        },
+        {
+         "who": "Coco Gauff",
+         "p": 0.595,
+         "sets_after": [
+          0,
+          2
+         ],
+         "dp_side": 0.0,
+         "range": {
+          "POLY": [
+           0.01,
+           0.04
+          ],
+          "KALSHI": null
+         },
+         "action": "SETTLES \u2014 no action exists on a dead branch",
+         "decided": "loss"
+        }
+       ]
+      ]
+     },
+     {
+      "label": "STEP 3 \u2014 the decider / final state",
+      "branches": [
+       [
+        [
+         {
+          "who": "\u2014",
+          "p": 1.0,
+          "sets_after": [
+           2,
+           0
+          ],
+          "dp_side": 1.0,
+          "range": {
+           "POLY": [
+            0.96,
+            0.99
+           ],
+           "KALSHI": null
+          },
+          "action": "HOLD \u2014 settles at 100\u00a2",
+          "decided": "win",
+          "terminal": true
+         }
+        ],
+        [
+         {
+          "who": "Marta Kostyuk",
+          "p": 0.405,
+          "sets_after": [
+           2,
+           1
+          ],
+          "dp_side": 1.0,
+          "range": {
+           "POLY": [
+            0.96,
+            0.99
+           ],
+           "KALSHI": null
+          },
+          "action": "HOLD \u2014 settles at 100\u00a2",
+          "decided": "win"
+         },
+         {
+          "who": "Coco Gauff",
+          "p": 0.595,
+          "sets_after": [
+           1,
+           2
+          ],
+          "dp_side": 0.0,
+          "range": {
+           "POLY": [
+            0.01,
+            0.04
+           ],
+           "KALSHI": null
+          },
+          "action": "SETTLES \u2014 no action exists on a dead branch",
+          "decided": "loss"
+         }
+        ]
+       ],
+       [
+        [
+         {
+          "who": "Marta Kostyuk",
+          "p": 0.405,
+          "sets_after": [
+           2,
+           1
+          ],
+          "dp_side": 1.0,
+          "range": {
+           "POLY": [
+            0.96,
+            0.99
+           ],
+           "KALSHI": null
+          },
+          "action": "HOLD \u2014 settles at 100\u00a2",
+          "decided": "win"
+         },
+         {
+          "who": "Coco Gauff",
+          "p": 0.595,
+          "sets_after": [
+           1,
+           2
+          ],
+          "dp_side": 0.0,
+          "range": {
+           "POLY": [
+            0.01,
+            0.04
+           ],
+           "KALSHI": null
+          },
+          "action": "SETTLES \u2014 no action exists on a dead branch",
+          "decided": "loss"
+         }
+        ],
+        [
+         {
+          "who": "\u2014",
+          "p": 1.0,
+          "sets_after": [
+           0,
+           2
+          ],
+          "dp_side": 0.0,
+          "range": {
+           "POLY": [
+            0.01,
+            0.04
+           ],
+           "KALSHI": null
+          },
+          "action": "SETTLES \u2014 no action exists on a dead branch",
+          "decided": "loss",
+          "terminal": true
+         }
+        ]
+       ]
+      ]
+     }
+    ],
+    "modal": [
+     1,
+     1,
+     0
+    ],
+    "modal_prob": 0.354,
+    "census": null
+   }
+  },
+  {
+   "t": "2026-11-12T16:50:39-0500",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 36, POLY mid 12\u00a2",
+   "state": "pre-match",
+   "dp": 0.359,
+   "books": {
+    "POLY": [
+     0.125,
+     0.875
+    ],
+    "KALSHI": [
+     0.105,
+     0.895
+    ]
+   }
+  },
+  {
+   "t": "2026-11-12T16:55:06-0500",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 36, POLY mid 9\u00a2",
+   "state": "pre-match",
+   "dp": 0.359,
+   "books": {
+    "POLY": [
+     0.0855,
+     0.9145
+    ],
+    "KALSHI": [
+     0.010000000000000005,
+     0.99
+    ]
+   }
+  },
+  {
+   "t": "2026-11-12T16:59:54-0500",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 36, POLY mid 0\u00a2",
+   "state": "pre-match",
+   "dp": 0.359,
+   "books": {
+    "POLY": [
+     0.0005,
+     0.9995
+    ],
+    "KALSHI": null
+   }
+  },
+  {
+   "t": "2026-11-12T17:05:00-0500",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 36, POLY mid 0\u00a2",
+   "state": "pre-match",
+   "dp": 0.359,
+   "books": {
+    "POLY": [
+     0.0005,
+     0.9995
+    ],
+    "KALSHI": null
+   }
+  },
+  {
+   "t": "2026-11-12T17:10:07-0500",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 36, POLY mid 0\u00a2",
+   "state": "pre-match",
+   "dp": 0.359,
+   "books": {
+    "POLY": [
+     0.0005,
+     0.9995
+    ],
+    "KALSHI": null
+   }
+  },
+  {
+   "t": "2026-11-12T17:14:54-0500",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 36, POLY mid 0\u00a2",
+   "state": "pre-match",
+   "dp": 0.359,
+   "books": {
+    "POLY": [
+     0.0005,
+     0.9995
+    ],
+    "KALSHI": null
+   }
+  },
+  {
+   "t": "2026-11-12T17:20:15-0500",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 36, POLY mid 0\u00a2",
+   "state": "pre-match",
+   "dp": 0.359,
+   "books": {
+    "POLY": [
+     0.0005,
+     0.9995
+    ],
+    "KALSHI": null
+   }
+  },
+  {
+   "t": "2026-11-12T17:24:53-0500",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 36, POLY mid 0\u00a2",
+   "state": "pre-match",
+   "dp": 0.359,
+   "books": {
+    "POLY": [
+     0.0005,
+     0.9995
+    ],
+    "KALSHI": null
+   }
+  },
+  {
+   "t": "2026-11-12T17:29:52-0500",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 36, POLY mid 0\u00a2",
+   "state": "pre-match",
+   "dp": 0.359,
+   "books": {
+    "POLY": [
+     0.0,
+     1.0
+    ],
+    "KALSHI": null
+   }
+  },
+  {
+   "t": "2026-11-12T17:34:57-0500",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 36, POLY mid 0\u00a2",
+   "state": "pre-match",
+   "dp": 0.359,
+   "books": {
+    "POLY": [
+     0.0,
+     1.0
+    ],
+    "KALSHI": null
+   }
+  },
+  {
+   "t": "2026-11-12T17:40:00-0500",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 36, POLY mid 0\u00a2",
+   "state": "pre-match",
+   "dp": 0.359,
+   "books": {
+    "POLY": [
+     0.0,
+     1.0
+    ],
+    "KALSHI": null
+   }
+  },
+  {
+   "t": "2026-11-12T14:45:12-0800",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 36, POLY mid 0\u00a2",
+   "state": "pre-match",
+   "dp": 0.359,
+   "books": {
+    "POLY": [
+     0.0,
+     1.0
+    ],
+    "KALSHI": null
+   }
+  },
+  {
+   "t": "2026-11-12T14:50:05-0800",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 36, POLY mid 0\u00a2",
+   "state": "pre-match",
+   "dp": 0.359,
+   "books": {
+    "POLY": [
+     0.0,
+     1.0
+    ],
+    "KALSHI": null
+   }
+  },
+  {
+   "t": "2026-11-12T14:54:57-0800",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 36, POLY mid 0\u00a2",
+   "state": "pre-match",
+   "dp": 0.359,
+   "books": {
+    "POLY": [
+     0.0,
+     1.0
+    ],
+    "KALSHI": null
+   }
+  },
+  {
+   "t": "2026-11-12T15:00:16-0800",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 36, POLY mid 0\u00a2",
+   "state": "pre-match",
+   "dp": 0.359,
+   "books": {
+    "POLY": [
+     0.0,
+     1.0
+    ],
+    "KALSHI": null
+   }
+  },
+  {
+   "t": "2026-11-12T15:04:56-0800",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 36, POLY mid 0\u00a2",
+   "state": "pre-match",
+   "dp": 0.359,
+   "books": {
+    "POLY": [
+     0.0,
+     1.0
+    ],
+    "KALSHI": null
+   }
+  },
+  {
+   "t": "2026-11-12T15:09:56-0800",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 36, POLY mid 0\u00a2",
+   "state": "pre-match",
+   "dp": 0.359,
+   "books": {
+    "POLY": [
+     0.0,
+     1.0
+    ],
+    "KALSHI": null
+   }
+  },
+  {
+   "t": "2026-11-12T15:14:52-0800",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 36, POLY mid 0\u00a2",
+   "state": "pre-match",
+   "dp": 0.359,
+   "books": {
+    "POLY": [
+     0.0,
+     1.0
+    ],
+    "KALSHI": null
+   }
+  },
+  {
+   "t": "2026-11-12T15:20:34-0800",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 36, POLY mid 0\u00a2",
+   "state": "pre-match",
+   "dp": 0.359,
+   "books": {
+    "POLY": [
+     0.0,
+     1.0
+    ],
+    "KALSHI": null
+   }
+  },
+  {
+   "t": "2026-11-12T15:25:09-0800",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 36, POLY mid 0\u00a2",
+   "state": "pre-match",
+   "dp": 0.359,
+   "books": {
+    "POLY": [
+     0.0,
+     1.0
+    ],
+    "KALSHI": null
+   }
+  },
+  {
+   "t": "2026-11-12T15:30:06-0800",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 36, POLY mid 0\u00a2",
+   "state": "pre-match",
+   "dp": 0.359,
+   "books": {
+    "POLY": [
+     0.0,
+     1.0
+    ],
+    "KALSHI": null
+   }
+  },
+  {
+   "t": "2026-11-12T15:34:56-0800",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 36, POLY mid 0\u00a2",
+   "state": "pre-match",
+   "dp": 0.359,
+   "books": {
+    "POLY": [
+     0.0,
+     1.0
+    ],
+    "KALSHI": null
+   }
+  },
+  {
+   "t": "2026-11-12T15:39:59-0800",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 36, POLY mid 0\u00a2",
+   "state": "pre-match",
+   "dp": 0.359,
+   "books": {
+    "POLY": [
+     0.0,
+     1.0
+    ],
+    "KALSHI": null
+   }
+  },
+  {
+   "t": "2026-11-12T15:44:54-0800",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 36, POLY mid 0\u00a2",
+   "state": "pre-match",
+   "dp": 0.359,
+   "books": {
+    "POLY": [
+     0.0,
+     1.0
+    ],
+    "KALSHI": null
+   }
+  },
+  {
+   "t": "2026-11-12T15:50:28-0800",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 36, POLY mid 0\u00a2",
+   "state": "pre-match",
+   "dp": 0.359,
+   "books": {
+    "POLY": [
+     0.0,
+     1.0
+    ],
+    "KALSHI": null
+   }
+  },
+  {
+   "t": "2026-11-12T15:54:53-0800",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 36, POLY mid 0\u00a2",
+   "state": "pre-match",
+   "dp": 0.359,
+   "books": {
+    "POLY": [
+     0.0,
+     1.0
+    ],
+    "KALSHI": null
+   }
+  },
+  {
+   "t": "2026-11-12T15:59:58-0800",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 36, POLY mid 0\u00a2",
+   "state": "pre-match",
+   "dp": 0.359,
+   "books": {
+    "POLY": [
+     0.0,
+     1.0
+    ],
+    "KALSHI": null
+   }
+  },
+  {
+   "t": "2026-11-12T16:04:52-0800",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 36, POLY mid 0\u00a2",
+   "state": "pre-match",
+   "dp": 0.359,
+   "books": {
+    "POLY": [
+     0.0,
+     1.0
+    ],
+    "KALSHI": null
+   }
+  },
+  {
+   "t": "2026-11-12T16:10:57-0800",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 36, POLY mid 0\u00a2",
+   "state": "pre-match",
+   "dp": 0.359,
+   "books": {
+    "POLY": [
+     0.0,
+     1.0
+    ],
+    "KALSHI": null
+   }
+  },
+  {
+   "t": "2026-11-12T16:15:16-0800",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 36, POLY mid 0\u00a2",
+   "state": "pre-match",
+   "dp": 0.359,
+   "books": {
+    "POLY": [
+     0.0,
+     1.0
+    ],
+    "KALSHI": null
+   }
+  },
+  {
+   "t": "2026-11-12T19:20:28-0500",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 36, POLY mid 0\u00a2",
+   "state": "pre-match",
+   "dp": 0.359,
+   "books": {
+    "POLY": [
+     0.0,
+     1.0
+    ],
+    "KALSHI": null
+   }
+  },
+  {
+   "t": "2026-11-12T19:25:35-0500",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 36, POLY mid 0\u00a2",
+   "state": "pre-match",
+   "dp": 0.359,
+   "books": {
+    "POLY": [
+     0.0,
+     1.0
+    ],
+    "KALSHI": null
+   }
+  },
+  {
+   "t": "2026-11-12T19:30:10-0500",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 36, POLY mid 0\u00a2",
+   "state": "pre-match",
+   "dp": 0.359,
+   "books": {
+    "POLY": [
+     0.0,
+     1.0
+    ],
+    "KALSHI": null
+   }
+  },
+  {
+   "t": "2026-11-12T19:35:19-0500",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 36, POLY mid 0\u00a2",
+   "state": "pre-match",
+   "dp": 0.359,
+   "books": {
+    "POLY": [
+     0.0,
+     1.0
+    ],
+    "KALSHI": null
+   }
+  },
+  {
+   "t": "2026-11-12T19:40:18-0500",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 36, POLY mid 0\u00a2",
+   "state": "pre-match",
+   "dp": 0.359,
+   "books": {
+    "POLY": [
+     0.0,
+     1.0
+    ],
+    "KALSHI": null
+   }
+  },
+  {
+   "t": "2026-11-12T19:44:57-0500",
+   "kind": "EXIT",
+   "text": "settled \u2014 lost at resolution",
+   "state": "final",
+   "dp": null,
+   "books": null,
+   "pnl": -0.38,
+   "price": 0.0
+  }
+ ],
+ "fork_latest": {
+  "available": true,
+  "src": "COMPUTED \u2014 DP games model on both cards\u2019 serve rates; ranges are projected (branch DP \u00b1 rail spread + 4 pts) and labeled as projections",
+  "state": "pre-match",
+  "steps": [
+   {
+    "label": "STEP 1 \u2014 this set",
+    "branches": [
+     {
+      "who": "Marta Kostyuk",
+      "p": 0.405,
+      "sets_after": [
+       1,
+       0
+      ],
+      "dp_side": 0.646,
+      "range": {
+       "POLY": [
+        0.61,
+        0.69
+       ],
+       "KALSHI": null
+      },
+      "action": "HOLD \u2014 the discount is still open",
+      "decided": null
+     },
+     {
+      "who": "Coco Gauff",
+      "p": 0.595,
+      "sets_after": [
+       0,
+       1
+      ],
+      "dp_side": 0.164,
+      "range": {
+       "POLY": [
+        0.12,
+        0.2
+       ],
+       "KALSHI": null
+      },
+      "action": "EXIT \u2014 thesis dead",
+      "decided": null
+     }
+    ]
+   },
+   {
+    "label": "STEP 2 \u2014 next set",
+    "branches": [
+     [
+      {
+       "who": "Marta Kostyuk",
+       "p": 0.405,
+       "sets_after": [
+        2,
+        0
+       ],
+       "dp_side": 1.0,
+       "range": {
+        "POLY": [
+         0.96,
+         0.99
+        ],
+        "KALSHI": null
+       },
+       "action": "HOLD \u2014 settles at 100\u00a2",
+       "decided": "win"
+      },
+      {
+       "who": "Coco Gauff",
+       "p": 0.595,
+       "sets_after": [
+        1,
+        1
+       ],
+       "dp_side": 0.405,
+       "range": {
+        "POLY": [
+         0.37,
+         0.45
+        ],
+        "KALSHI": null
+       },
+       "action": "HOLD \u2014 the discount is still open",
+       "decided": null
+      }
+     ],
+     [
+      {
+       "who": "Marta Kostyuk",
+       "p": 0.405,
+       "sets_after": [
+        1,
+        1
+       ],
+       "dp_side": 0.405,
+       "range": {
+        "POLY": [
+         0.37,
+         0.45
+        ],
+        "KALSHI": null
+       },
+       "action": "HOLD \u2014 the discount is still open",
+       "decided": null
+      },
+      {
+       "who": "Coco Gauff",
+       "p": 0.595,
+       "sets_after": [
+        0,
+        2
+       ],
+       "dp_side": 0.0,
+       "range": {
+        "POLY": [
+         0.01,
+         0.04
+        ],
+        "KALSHI": null
+       },
+       "action": "SETTLES \u2014 no action exists on a dead branch",
+       "decided": "loss"
+      }
+     ]
+    ]
+   },
+   {
+    "label": "STEP 3 \u2014 the decider / final state",
+    "branches": [
+     [
+      [
+       {
+        "who": "\u2014",
+        "p": 1.0,
+        "sets_after": [
+         2,
+         0
+        ],
+        "dp_side": 1.0,
+        "range": {
+         "POLY": [
+          0.96,
+          0.99
+         ],
+         "KALSHI": null
+        },
+        "action": "HOLD \u2014 settles at 100\u00a2",
+        "decided": "win",
+        "terminal": true
+       }
+      ],
+      [
+       {
+        "who": "Marta Kostyuk",
+        "p": 0.405,
+        "sets_after": [
+         2,
+         1
+        ],
+        "dp_side": 1.0,
+        "range": {
+         "POLY": [
+          0.96,
+          0.99
+         ],
+         "KALSHI": null
+        },
+        "action": "HOLD \u2014 settles at 100\u00a2",
+        "decided": "win"
+       },
+       {
+        "who": "Coco Gauff",
+        "p": 0.595,
+        "sets_after": [
+         1,
+         2
+        ],
+        "dp_side": 0.0,
+        "range": {
+         "POLY": [
+          0.01,
+          0.04
+         ],
+         "KALSHI": null
+        },
+        "action": "SETTLES \u2014 no action exists on a dead branch",
+        "decided": "loss"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "who": "Marta Kostyuk",
+        "p": 0.405,
+        "sets_after": [
+         2,
+         1
+        ],
+        "dp_side": 1.0,
+        "range": {
+         "POLY": [
+          0.96,
+          0.99
+         ],
+         "KALSHI": null
+        },
+        "action": "HOLD \u2014 settles at 100\u00a2",
+        "decided": "win"
+       },
+       {
+        "who": "Coco Gauff",
+        "p": 0.595,
+        "sets_after": [
+         1,
+         2
+        ],
+        "dp_side": 0.0,
+        "range": {
+         "POLY": [
+          0.01,
+          0.04
+         ],
+         "KALSHI": null
+        },
+        "action": "SETTLES \u2014 no action exists on a dead branch",
+        "decided": "loss"
+       }
+      ],
+      [
+       {
+        "who": "\u2014",
+        "p": 1.0,
+        "sets_after": [
+         0,
+         2
+        ],
+        "dp_side": 0.0,
+        "range": {
+         "POLY": [
+          0.01,
+          0.04
+         ],
+         "KALSHI": null
+        },
+        "action": "SETTLES \u2014 no action exists on a dead branch",
+        "decided": "loss",
+        "terminal": true
+       }
+      ]
+     ]
+    ]
+   }
+  ],
+  "modal": [
+   1,
+   1,
+   0
+  ],
+  "modal_prob": 0.354,
+  "census": null
+ },
+ "result": {
+  "pnl": -0.38,
+  "ret_pct": -100.0,
+  "exit": "settled \u2014 lost at resolution"
+ }
+}

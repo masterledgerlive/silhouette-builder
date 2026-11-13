@@ -1,0 +1,861 @@
+{
+ "id": "scout-poly-wta-pegula-noskova-2026-11-10-2",
+ "specialist": "SCOUT",
+ "rail": "POLY",
+ "class": "SIM-OURS-POLYMARKET",
+ "match": "WTA Finals, Group A: Jessica Pegula vs Linda Noskova",
+ "slug": "wta-pegula-noskova-2026-11-10",
+ "opened": "2026-11-12T19:35:13-0500",
+ "closed": null,
+ "color": {
+  "Jessica Pegula": {
+   "text": "Jessica Pegula \u2014 a texture read, from the Slam points we hold: serve 57%, return 46%. under break-point pressure the serve moves +0.4 pts \u2014 it rises when it matters. after losing a point, the next one lands 54% \u2014 the tilt tell, on tape.",
+   "cites": [
+    "point-tape texture (Slam pbp)",
+    "pressure delta",
+    "next-point splits"
+   ],
+   "tier": "TEXTURE"
+  },
+  "Linda Noskova": {
+   "text": "Linda Noskova \u2014 61% won on serve, 41% on return across 186 charted matches. recent form reads 7-3 over the last ten. and when it goes the distance, the decider is home turf: 55% won (65 played). watch the second-set door \u2014 after taking the first, the set slips away 33.9% of the time; that is where this match can turn. from a set down, the comeback print is 31.8% \u2014 a slow starter's tax, priced in or it isn't. the walk-out file is not empty either: 29 early exits on the record \u2014 watch the shoulders late. last time out: fell to Sorana Cirstea 6-2 3-6 6-4 (Miami).",
+   "cites": [
+    "card serve/return/matches",
+    "profile last10",
+    "card decider",
+    "profile S2 let-go (P-010 REVEAL family)",
+    "profile stopper",
+    "exits file",
+    "last-14 scorecards"
+   ],
+   "tier": "FULL"
+  }
+ },
+ "side_idx": 1,
+ "side_name": "Linda Noskova",
+ "steps": [
+  {
+   "t": "2026-11-12T19:35:13-0500",
+   "kind": "OPEN",
+   "text": "undervalued by 16 pts on the POLY road \u2014 our number 69 vs 53\u00a2 (pre-match DP from both cards)",
+   "engine": "Value Scout tape + DP repricer",
+   "state": "pre-match",
+   "dp": 0.314,
+   "books": {
+    "POLY": [
+     0.475,
+     0.525
+    ],
+    "KALSHI": [
+     0.475,
+     0.525
+    ]
+   },
+   "side": "Linda Noskova",
+   "price": 0.53,
+   "stake": 0.38,
+   "fork": {
+    "available": true,
+    "src": "COMPUTED \u2014 DP games model on both cards\u2019 serve rates; ranges are projected (branch DP \u00b1 rail spread + 4 pts) and labeled as projections",
+    "state": "pre-match",
+    "steps": [
+     {
+      "label": "STEP 1 \u2014 this set",
+      "branches": [
+       {
+        "who": "Jessica Pegula",
+        "p": 0.373,
+        "sets_after": [
+         1,
+         0
+        ],
+        "dp_side": 0.393,
+        "range": {
+         "POLY": [
+          0.35,
+          0.43
+         ],
+         "KALSHI": null
+        },
+        "action": "EXIT \u2014 thesis dead",
+        "decided": null
+       },
+       {
+        "who": "Linda Noskova",
+        "p": 0.627,
+        "sets_after": [
+         0,
+         1
+        ],
+        "dp_side": 0.861,
+        "range": {
+         "POLY": [
+          0.82,
+          0.9
+         ],
+         "KALSHI": null
+        },
+        "action": "HOLD \u2014 the discount is still open",
+        "decided": null
+       }
+      ]
+     },
+     {
+      "label": "STEP 2 \u2014 next set",
+      "branches": [
+       [
+        {
+         "who": "Jessica Pegula",
+         "p": 0.373,
+         "sets_after": [
+          2,
+          0
+         ],
+         "dp_side": 0.0,
+         "range": {
+          "POLY": [
+           0.01,
+           0.04
+          ],
+          "KALSHI": null
+         },
+         "action": "SETTLES \u2014 no action exists on a dead branch",
+         "decided": "loss"
+        },
+        {
+         "who": "Linda Noskova",
+         "p": 0.627,
+         "sets_after": [
+          1,
+          1
+         ],
+         "dp_side": 0.627,
+         "range": {
+          "POLY": [
+           0.59,
+           0.67
+          ],
+          "KALSHI": null
+         },
+         "action": "HOLD \u2014 the discount is still open",
+         "decided": null
+        }
+       ],
+       [
+        {
+         "who": "Jessica Pegula",
+         "p": 0.373,
+         "sets_after": [
+          1,
+          1
+         ],
+         "dp_side": 0.627,
+         "range": {
+          "POLY": [
+           0.59,
+           0.67
+          ],
+          "KALSHI": null
+         },
+         "action": "HOLD \u2014 the discount is still open",
+         "decided": null
+        },
+        {
+         "who": "Linda Noskova",
+         "p": 0.627,
+         "sets_after": [
+          0,
+          2
+         ],
+         "dp_side": 1.0,
+         "range": {
+          "POLY": [
+           0.96,
+           0.99
+          ],
+          "KALSHI": null
+         },
+         "action": "HOLD \u2014 settles at 100\u00a2",
+         "decided": "win"
+        }
+       ]
+      ]
+     },
+     {
+      "label": "STEP 3 \u2014 the decider / final state",
+      "branches": [
+       [
+        [
+         {
+          "who": "\u2014",
+          "p": 1.0,
+          "sets_after": [
+           2,
+           0
+          ],
+          "dp_side": 0.0,
+          "range": {
+           "POLY": [
+            0.01,
+            0.04
+           ],
+           "KALSHI": null
+          },
+          "action": "SETTLES \u2014 no action exists on a dead branch",
+          "decided": "loss",
+          "terminal": true
+         }
+        ],
+        [
+         {
+          "who": "Jessica Pegula",
+          "p": 0.373,
+          "sets_after": [
+           2,
+           1
+          ],
+          "dp_side": 0.0,
+          "range": {
+           "POLY": [
+            0.01,
+            0.04
+           ],
+           "KALSHI": null
+          },
+          "action": "SETTLES \u2014 no action exists on a dead branch",
+          "decided": "loss"
+         },
+         {
+          "who": "Linda Noskova",
+          "p": 0.627,
+          "sets_after": [
+           1,
+           2
+          ],
+          "dp_side": 1.0,
+          "range": {
+           "POLY": [
+            0.96,
+            0.99
+           ],
+           "KALSHI": null
+          },
+          "action": "HOLD \u2014 settles at 100\u00a2",
+          "decided": "win"
+         }
+        ]
+       ],
+       [
+        [
+         {
+          "who": "Jessica Pegula",
+          "p": 0.373,
+          "sets_after": [
+           2,
+           1
+          ],
+          "dp_side": 0.0,
+          "range": {
+           "POLY": [
+            0.01,
+            0.04
+           ],
+           "KALSHI": null
+          },
+          "action": "SETTLES \u2014 no action exists on a dead branch",
+          "decided": "loss"
+         },
+         {
+          "who": "Linda Noskova",
+          "p": 0.627,
+          "sets_after": [
+           1,
+           2
+          ],
+          "dp_side": 1.0,
+          "range": {
+           "POLY": [
+            0.96,
+            0.99
+           ],
+           "KALSHI": null
+          },
+          "action": "HOLD \u2014 settles at 100\u00a2",
+          "decided": "win"
+         }
+        ],
+        [
+         {
+          "who": "\u2014",
+          "p": 1.0,
+          "sets_after": [
+           0,
+           2
+          ],
+          "dp_side": 1.0,
+          "range": {
+           "POLY": [
+            0.96,
+            0.99
+           ],
+           "KALSHI": null
+          },
+          "action": "HOLD \u2014 settles at 100\u00a2",
+          "decided": "win",
+          "terminal": true
+         }
+        ]
+       ]
+      ]
+     }
+    ],
+    "modal": [
+     1,
+     1,
+     0
+    ],
+    "modal_prob": 0.393,
+    "census": null
+   }
+  },
+  {
+   "t": "2026-11-12T19:35:16-0500",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 31, POLY mid 52\u00a2",
+   "state": "pre-match",
+   "dp": 0.314,
+   "books": {
+    "POLY": [
+     0.475,
+     0.525
+    ],
+    "KALSHI": [
+     0.475,
+     0.525
+    ]
+   }
+  },
+  {
+   "t": "2026-11-12T19:40:18-0500",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 31, POLY mid 52\u00a2",
+   "state": "pre-match",
+   "dp": 0.314,
+   "books": {
+    "POLY": [
+     0.475,
+     0.525
+    ],
+    "KALSHI": [
+     0.44499999999999995,
+     0.555
+    ]
+   }
+  },
+  {
+   "t": "2026-11-12T19:45:27-0500",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 31, POLY mid 56\u00a2",
+   "state": "pre-match",
+   "dp": 0.314,
+   "books": {
+    "POLY": [
+     0.435,
+     0.565
+    ],
+    "KALSHI": [
+     0.495,
+     0.505
+    ]
+   }
+  },
+  {
+   "t": "2026-11-12T19:50:46-0500",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 31, POLY mid 60\u00a2",
+   "state": "pre-match",
+   "dp": 0.314,
+   "books": {
+    "POLY": [
+     0.395,
+     0.605
+    ],
+    "KALSHI": [
+     0.44499999999999995,
+     0.555
+    ]
+   }
+  },
+  {
+   "t": "2026-11-12T19:55:15-0500",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 31, POLY mid 60\u00a2",
+   "state": "pre-match",
+   "dp": 0.314,
+   "books": {
+    "POLY": [
+     0.395,
+     0.605
+    ],
+    "KALSHI": [
+     0.405,
+     0.595
+    ]
+   }
+  },
+  {
+   "t": "2026-11-12T20:00:16-0500",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 31, POLY mid 64\u00a2",
+   "state": "pre-match",
+   "dp": 0.314,
+   "books": {
+    "POLY": [
+     0.365,
+     0.635
+    ],
+    "KALSHI": [
+     0.32499999999999996,
+     0.675
+    ]
+   }
+  },
+  {
+   "t": "2026-11-12T20:05:17-0500",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 31, POLY mid 26\u00a2",
+   "state": "pre-match",
+   "dp": 0.314,
+   "books": {
+    "POLY": [
+     0.735,
+     0.265
+    ],
+    "KALSHI": [
+     0.665,
+     0.33499999999999996
+    ]
+   }
+  },
+  {
+   "t": "2026-11-12T20:10:19-0500",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 31, POLY mid 16\u00a2",
+   "state": "pre-match",
+   "dp": 0.314,
+   "books": {
+    "POLY": [
+     0.835,
+     0.165
+    ],
+    "KALSHI": [
+     0.99,
+     0.010000000000000005
+    ]
+   }
+  },
+  {
+   "t": "2026-11-12T20:15:30-0500",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 31, POLY mid 0\u00a2",
+   "state": "pre-match",
+   "dp": 0.314,
+   "books": {
+    "POLY": [
+     0.9995,
+     0.0005
+    ],
+    "KALSHI": null
+   }
+  },
+  {
+   "t": "2026-11-12T20:21:06-0500",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 31, POLY mid 0\u00a2",
+   "state": "pre-match",
+   "dp": 0.314,
+   "books": {
+    "POLY": [
+     0.9995,
+     0.0005
+    ],
+    "KALSHI": null
+   }
+  },
+  {
+   "t": "2026-11-13T01:27:28+0000",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 31, POLY mid 0\u00a2",
+   "state": "pre-match",
+   "dp": 0.314,
+   "books": {
+    "POLY": [
+     0.9995,
+     0.0005
+    ],
+    "KALSHI": null
+   }
+  },
+  {
+   "t": "2026-11-12T20:33:43-0500",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 31, POLY mid 0\u00a2",
+   "state": "pre-match",
+   "dp": 0.314,
+   "books": {
+    "POLY": [
+     0.9995,
+     0.0005
+    ],
+    "KALSHI": null
+   }
+  },
+  {
+   "t": "2026-11-12T20:35:26-0500",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 31, POLY mid 0\u00a2",
+   "state": "pre-match",
+   "dp": 0.314,
+   "books": {
+    "POLY": [
+     0.9995,
+     0.0005
+    ],
+    "KALSHI": null
+   }
+  },
+  {
+   "t": "2026-11-12T20:41:04-0500",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 31, POLY mid 0\u00a2",
+   "state": "pre-match",
+   "dp": 0.314,
+   "books": {
+    "POLY": [
+     0.9995,
+     0.0005
+    ],
+    "KALSHI": null
+   }
+  },
+  {
+   "t": "2026-11-12T17:45:56-0800",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 31, POLY mid 0\u00a2",
+   "state": "pre-match",
+   "dp": 0.314,
+   "books": {
+    "POLY": [
+     1.0,
+     0.0
+    ],
+    "KALSHI": null
+   }
+  },
+  {
+   "t": "2026-11-12T17:51:05-0800",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 31, POLY mid 0\u00a2",
+   "state": "pre-match",
+   "dp": 0.314,
+   "books": {
+    "POLY": [
+     1.0,
+     0.0
+    ],
+    "KALSHI": null
+   }
+  },
+  {
+   "t": "2026-11-12T17:56:09-0800",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 31, POLY mid 0\u00a2",
+   "state": "pre-match",
+   "dp": 0.314,
+   "books": {
+    "POLY": [
+     1.0,
+     0.0
+    ],
+    "KALSHI": null
+   }
+  },
+  {
+   "t": "2026-11-12T18:01:06-0800",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 31, POLY mid 0\u00a2",
+   "state": "pre-match",
+   "dp": 0.314,
+   "books": {
+    "POLY": [
+     1.0,
+     0.0
+    ],
+    "KALSHI": null
+   }
+  }
+ ],
+ "fork_latest": {
+  "available": true,
+  "src": "COMPUTED \u2014 DP games model on both cards\u2019 serve rates; ranges are projected (branch DP \u00b1 rail spread + 4 pts) and labeled as projections",
+  "state": "pre-match",
+  "steps": [
+   {
+    "label": "STEP 1 \u2014 this set",
+    "branches": [
+     {
+      "who": "Jessica Pegula",
+      "p": 0.373,
+      "sets_after": [
+       1,
+       0
+      ],
+      "dp_side": 0.393,
+      "range": {
+       "POLY": [
+        0.35,
+        0.43
+       ],
+       "KALSHI": null
+      },
+      "action": "EXIT \u2014 thesis dead",
+      "decided": null
+     },
+     {
+      "who": "Linda Noskova",
+      "p": 0.627,
+      "sets_after": [
+       0,
+       1
+      ],
+      "dp_side": 0.861,
+      "range": {
+       "POLY": [
+        0.82,
+        0.9
+       ],
+       "KALSHI": null
+      },
+      "action": "HOLD \u2014 the discount is still open",
+      "decided": null
+     }
+    ]
+   },
+   {
+    "label": "STEP 2 \u2014 next set",
+    "branches": [
+     [
+      {
+       "who": "Jessica Pegula",
+       "p": 0.373,
+       "sets_after": [
+        2,
+        0
+       ],
+       "dp_side": 0.0,
+       "range": {
+        "POLY": [
+         0.01,
+         0.04
+        ],
+        "KALSHI": null
+       },
+       "action": "SETTLES \u2014 no action exists on a dead branch",
+       "decided": "loss"
+      },
+      {
+       "who": "Linda Noskova",
+       "p": 0.627,
+       "sets_after": [
+        1,
+        1
+       ],
+       "dp_side": 0.627,
+       "range": {
+        "POLY": [
+         0.59,
+         0.67
+        ],
+        "KALSHI": null
+       },
+       "action": "HOLD \u2014 the discount is still open",
+       "decided": null
+      }
+     ],
+     [
+      {
+       "who": "Jessica Pegula",
+       "p": 0.373,
+       "sets_after": [
+        1,
+        1
+       ],
+       "dp_side": 0.627,
+       "range": {
+        "POLY": [
+         0.59,
+         0.67
+        ],
+        "KALSHI": null
+       },
+       "action": "HOLD \u2014 the discount is still open",
+       "decided": null
+      },
+      {
+       "who": "Linda Noskova",
+       "p": 0.627,
+       "sets_after": [
+        0,
+        2
+       ],
+       "dp_side": 1.0,
+       "range": {
+        "POLY": [
+         0.96,
+         0.99
+        ],
+        "KALSHI": null
+       },
+       "action": "HOLD \u2014 settles at 100\u00a2",
+       "decided": "win"
+      }
+     ]
+    ]
+   },
+   {
+    "label": "STEP 3 \u2014 the decider / final state",
+    "branches": [
+     [
+      [
+       {
+        "who": "\u2014",
+        "p": 1.0,
+        "sets_after": [
+         2,
+         0
+        ],
+        "dp_side": 0.0,
+        "range": {
+         "POLY": [
+          0.01,
+          0.04
+         ],
+         "KALSHI": null
+        },
+        "action": "SETTLES \u2014 no action exists on a dead branch",
+        "decided": "loss",
+        "terminal": true
+       }
+      ],
+      [
+       {
+        "who": "Jessica Pegula",
+        "p": 0.373,
+        "sets_after": [
+         2,
+         1
+        ],
+        "dp_side": 0.0,
+        "range": {
+         "POLY": [
+          0.01,
+          0.04
+         ],
+         "KALSHI": null
+        },
+        "action": "SETTLES \u2014 no action exists on a dead branch",
+        "decided": "loss"
+       },
+       {
+        "who": "Linda Noskova",
+        "p": 0.627,
+        "sets_after": [
+         1,
+         2
+        ],
+        "dp_side": 1.0,
+        "range": {
+         "POLY": [
+          0.96,
+          0.99
+         ],
+         "KALSHI": null
+        },
+        "action": "HOLD \u2014 settles at 100\u00a2",
+        "decided": "win"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "who": "Jessica Pegula",
+        "p": 0.373,
+        "sets_after": [
+         2,
+         1
+        ],
+        "dp_side": 0.0,
+        "range": {
+         "POLY": [
+          0.01,
+          0.04
+         ],
+         "KALSHI": null
+        },
+        "action": "SETTLES \u2014 no action exists on a dead branch",
+        "decided": "loss"
+       },
+       {
+        "who": "Linda Noskova",
+        "p": 0.627,
+        "sets_after": [
+         1,
+         2
+        ],
+        "dp_side": 1.0,
+        "range": {
+         "POLY": [
+          0.96,
+          0.99
+         ],
+         "KALSHI": null
+        },
+        "action": "HOLD \u2014 settles at 100\u00a2",
+        "decided": "win"
+       }
+      ],
+      [
+       {
+        "who": "\u2014",
+        "p": 1.0,
+        "sets_after": [
+         0,
+         2
+        ],
+        "dp_side": 1.0,
+        "range": {
+         "POLY": [
+          0.96,
+          0.99
+         ],
+         "KALSHI": null
+        },
+        "action": "HOLD \u2014 settles at 100\u00a2",
+        "decided": "win",
+        "terminal": true
+       }
+      ]
+     ]
+    ]
+   }
+  ],
+  "modal": [
+   1,
+   1,
+   0
+  ],
+  "modal_prob": 0.393,
+  "census": null
+ }
+}

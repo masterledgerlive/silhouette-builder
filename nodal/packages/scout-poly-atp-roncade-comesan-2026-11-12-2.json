@@ -1,0 +1,820 @@
+{
+ "id": "scout-poly-atp-roncade-comesan-2026-11-12-2",
+ "specialist": "SCOUT",
+ "rail": "POLY",
+ "class": "SIM-OURS-POLYMARKET",
+ "match": "Lima: Franco Roncadelli vs Francisco Comesana",
+ "slug": "atp-roncade-comesan-2026-11-12",
+ "opened": "2026-11-12T15:45:02-0500",
+ "closed": "2026-11-12T17:04:46-0500",
+ "color": {
+  "Franco Roncadelli": {
+   "text": "Franco Roncadelli \u2014 54% won on serve, 43% on return across 12 charted matches. recent form reads 6-4 over the last ten. and when it goes the distance, the decider is home turf: 75% won (4 played). watch the second-set door \u2014 after taking the first, the set slips away 25.0% of the time; that is where this match can turn. from a set down, the comeback print is 46.2% \u2014 a slow starter's tax, priced in or it isn't. last time out: fell to Aleksandre Metreveli 6-2 6-1 (Atp Cup).",
+   "cites": [
+    "card serve/return/matches",
+    "profile last10",
+    "card decider",
+    "profile S2 let-go (P-010 REVEAL family)",
+    "profile stopper",
+    "last-14 scorecards"
+   ],
+   "tier": "FULL"
+  },
+  "Francisco Comesana": {
+   "text": "Francisco Comesana \u2014 a texture read, from the Slam points we hold: serve 65%, return 34%. under break-point pressure the serve moves +2.2 pts \u2014 it rises when it matters. after losing a point, the next one lands 70% \u2014 the tilt tell, on tape.",
+   "cites": [
+    "point-tape texture (Slam pbp)",
+    "pressure delta",
+    "next-point splits"
+   ],
+   "tier": "TEXTURE"
+  }
+ },
+ "side_idx": 1,
+ "side_name": "Francisco Comesana",
+ "steps": [
+  {
+   "t": "2026-11-12T15:45:02-0500",
+   "kind": "OPEN",
+   "text": "undervalued by 16 pts on the POLY road \u2014 our number 93 vs 77\u00a2 (pre-match DP from both cards)",
+   "engine": "Value Scout tape + DP repricer",
+   "state": "pre-match",
+   "dp": 0.067,
+   "books": {
+    "POLY": [
+     0.235,
+     0.765
+    ],
+    "KALSHI": null
+   },
+   "side": "Francisco Comesana",
+   "price": 0.77,
+   "stake": 0.38,
+   "fork": {
+    "available": true,
+    "src": "COMPUTED \u2014 DP games model on both cards\u2019 serve rates; ranges are projected (branch DP \u00b1 rail spread + 4 pts) and labeled as projections",
+    "state": "pre-match",
+    "steps": [
+     {
+      "label": "STEP 1 \u2014 this set",
+      "branches": [
+       {
+        "who": "Franco Roncadelli",
+        "p": 0.158,
+        "sets_after": [
+         1,
+         0
+        ],
+        "dp_side": 0.708,
+        "range": {
+         "POLY": [
+          0.67,
+          0.75
+         ],
+         "KALSHI": null
+        },
+        "action": "EXIT \u2014 thesis dead",
+        "decided": null
+       },
+       {
+        "who": "Francisco Comesana",
+        "p": 0.842,
+        "sets_after": [
+         0,
+         1
+        ],
+        "dp_side": 0.975,
+        "range": {
+         "POLY": [
+          0.93,
+          0.99
+         ],
+         "KALSHI": null
+        },
+        "action": "EXIT \u2014 gap closed (price at our number)",
+        "decided": null
+       }
+      ]
+     },
+     {
+      "label": "STEP 2 \u2014 next set",
+      "branches": [
+       [
+        {
+         "who": "Franco Roncadelli",
+         "p": 0.158,
+         "sets_after": [
+          2,
+          0
+         ],
+         "dp_side": 0.0,
+         "range": {
+          "POLY": [
+           0.01,
+           0.04
+          ],
+          "KALSHI": null
+         },
+         "action": "SETTLES \u2014 no action exists on a dead branch",
+         "decided": "loss"
+        },
+        {
+         "who": "Francisco Comesana",
+         "p": 0.842,
+         "sets_after": [
+          1,
+          1
+         ],
+         "dp_side": 0.842,
+         "range": {
+          "POLY": [
+           0.8,
+           0.88
+          ],
+          "KALSHI": null
+         },
+         "action": "HOLD \u2014 the discount is still open",
+         "decided": null
+        }
+       ],
+       [
+        {
+         "who": "Franco Roncadelli",
+         "p": 0.158,
+         "sets_after": [
+          1,
+          1
+         ],
+         "dp_side": 0.842,
+         "range": {
+          "POLY": [
+           0.8,
+           0.88
+          ],
+          "KALSHI": null
+         },
+         "action": "HOLD \u2014 the discount is still open",
+         "decided": null
+        },
+        {
+         "who": "Francisco Comesana",
+         "p": 0.842,
+         "sets_after": [
+          0,
+          2
+         ],
+         "dp_side": 1.0,
+         "range": {
+          "POLY": [
+           0.96,
+           0.99
+          ],
+          "KALSHI": null
+         },
+         "action": "HOLD \u2014 settles at 100\u00a2",
+         "decided": "win"
+        }
+       ]
+      ]
+     },
+     {
+      "label": "STEP 3 \u2014 the decider / final state",
+      "branches": [
+       [
+        [
+         {
+          "who": "\u2014",
+          "p": 1.0,
+          "sets_after": [
+           2,
+           0
+          ],
+          "dp_side": 0.0,
+          "range": {
+           "POLY": [
+            0.01,
+            0.04
+           ],
+           "KALSHI": null
+          },
+          "action": "SETTLES \u2014 no action exists on a dead branch",
+          "decided": "loss",
+          "terminal": true
+         }
+        ],
+        [
+         {
+          "who": "Franco Roncadelli",
+          "p": 0.158,
+          "sets_after": [
+           2,
+           1
+          ],
+          "dp_side": 0.0,
+          "range": {
+           "POLY": [
+            0.01,
+            0.04
+           ],
+           "KALSHI": null
+          },
+          "action": "SETTLES \u2014 no action exists on a dead branch",
+          "decided": "loss"
+         },
+         {
+          "who": "Francisco Comesana",
+          "p": 0.842,
+          "sets_after": [
+           1,
+           2
+          ],
+          "dp_side": 1.0,
+          "range": {
+           "POLY": [
+            0.96,
+            0.99
+           ],
+           "KALSHI": null
+          },
+          "action": "HOLD \u2014 settles at 100\u00a2",
+          "decided": "win"
+         }
+        ]
+       ],
+       [
+        [
+         {
+          "who": "Franco Roncadelli",
+          "p": 0.158,
+          "sets_after": [
+           2,
+           1
+          ],
+          "dp_side": 0.0,
+          "range": {
+           "POLY": [
+            0.01,
+            0.04
+           ],
+           "KALSHI": null
+          },
+          "action": "SETTLES \u2014 no action exists on a dead branch",
+          "decided": "loss"
+         },
+         {
+          "who": "Francisco Comesana",
+          "p": 0.842,
+          "sets_after": [
+           1,
+           2
+          ],
+          "dp_side": 1.0,
+          "range": {
+           "POLY": [
+            0.96,
+            0.99
+           ],
+           "KALSHI": null
+          },
+          "action": "HOLD \u2014 settles at 100\u00a2",
+          "decided": "win"
+         }
+        ],
+        [
+         {
+          "who": "\u2014",
+          "p": 1.0,
+          "sets_after": [
+           0,
+           2
+          ],
+          "dp_side": 1.0,
+          "range": {
+           "POLY": [
+            0.96,
+            0.99
+           ],
+           "KALSHI": null
+          },
+          "action": "HOLD \u2014 settles at 100\u00a2",
+          "decided": "win",
+          "terminal": true
+         }
+        ]
+       ]
+      ]
+     }
+    ],
+    "modal": [
+     1,
+     1,
+     0
+    ],
+    "modal_prob": 0.709,
+    "census": null
+   }
+  },
+  {
+   "t": "2026-11-12T15:45:05-0500",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 7, POLY mid 76\u00a2",
+   "state": "pre-match",
+   "dp": 0.067,
+   "books": {
+    "POLY": [
+     0.235,
+     0.765
+    ],
+    "KALSHI": null
+   }
+  },
+  {
+   "t": "2026-11-12T15:50:17-0500",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 7, POLY mid 84\u00a2",
+   "state": "pre-match",
+   "dp": 0.067,
+   "books": {
+    "POLY": [
+     0.155,
+     0.845
+    ],
+    "KALSHI": null
+   }
+  },
+  {
+   "t": "2026-11-12T15:55:02-0500",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 7, POLY mid 88\u00a2",
+   "state": "pre-match",
+   "dp": 0.067,
+   "books": {
+    "POLY": [
+     0.12,
+     0.88
+    ],
+    "KALSHI": null
+   }
+  },
+  {
+   "t": "2026-11-12T16:00:05-0500",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 7, POLY mid 82\u00a2",
+   "state": "pre-match",
+   "dp": 0.067,
+   "books": {
+    "POLY": [
+     0.185,
+     0.815
+    ],
+    "KALSHI": null
+   }
+  },
+  {
+   "t": "2026-11-12T16:04:59-0500",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 7, POLY mid 82\u00a2",
+   "state": "pre-match",
+   "dp": 0.067,
+   "books": {
+    "POLY": [
+     0.185,
+     0.815
+    ],
+    "KALSHI": null
+   }
+  },
+  {
+   "t": "2026-11-12T16:10:03-0500",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 7, POLY mid 52\u00a2",
+   "state": "pre-match",
+   "dp": 0.067,
+   "books": {
+    "POLY": [
+     0.475,
+     0.525
+    ],
+    "KALSHI": null
+   }
+  },
+  {
+   "t": "2026-11-12T16:15:02-0500",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 7, POLY mid 52\u00a2",
+   "state": "pre-match",
+   "dp": 0.067,
+   "books": {
+    "POLY": [
+     0.475,
+     0.525
+    ],
+    "KALSHI": null
+   }
+  },
+  {
+   "t": "2026-11-12T16:20:14-0500",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 7, POLY mid 40\u00a2",
+   "state": "pre-match",
+   "dp": 0.067,
+   "books": {
+    "POLY": [
+     0.595,
+     0.405
+    ],
+    "KALSHI": null
+   }
+  },
+  {
+   "t": "2026-11-12T16:25:02-0500",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 7, POLY mid 22\u00a2",
+   "state": "pre-match",
+   "dp": 0.067,
+   "books": {
+    "POLY": [
+     0.785,
+     0.215
+    ],
+    "KALSHI": null
+   }
+  },
+  {
+   "t": "2026-11-12T16:30:02-0500",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 7, POLY mid 0\u00a2",
+   "state": "pre-match",
+   "dp": 0.067,
+   "books": {
+    "POLY": [
+     0.995,
+     0.005
+    ],
+    "KALSHI": null
+   }
+  },
+  {
+   "t": "2026-11-12T16:34:57-0500",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 7, POLY mid 0\u00a2",
+   "state": "pre-match",
+   "dp": 0.067,
+   "books": {
+    "POLY": [
+     0.9995,
+     0.0005
+    ],
+    "KALSHI": null
+   }
+  },
+  {
+   "t": "2026-11-12T16:40:00-0500",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 7, POLY mid 0\u00a2",
+   "state": "pre-match",
+   "dp": 0.067,
+   "books": {
+    "POLY": [
+     0.9995,
+     0.0005
+    ],
+    "KALSHI": null
+   }
+  },
+  {
+   "t": "2026-11-12T16:44:53-0500",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 7, POLY mid 0\u00a2",
+   "state": "pre-match",
+   "dp": 0.067,
+   "books": {
+    "POLY": [
+     0.9995,
+     0.0005
+    ],
+    "KALSHI": null
+   }
+  },
+  {
+   "t": "2026-11-12T16:50:34-0500",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 7, POLY mid 0\u00a2",
+   "state": "pre-match",
+   "dp": 0.067,
+   "books": {
+    "POLY": [
+     0.9995,
+     0.0005
+    ],
+    "KALSHI": null
+   }
+  },
+  {
+   "t": "2026-11-12T16:55:05-0500",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 7, POLY mid 0\u00a2",
+   "state": "pre-match",
+   "dp": 0.067,
+   "books": {
+    "POLY": [
+     0.9995,
+     0.0005
+    ],
+    "KALSHI": null
+   }
+  },
+  {
+   "t": "2026-11-12T16:59:53-0500",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 7, POLY mid 0\u00a2",
+   "state": "pre-match",
+   "dp": 0.067,
+   "books": {
+    "POLY": [
+     0.9995,
+     0.0005
+    ],
+    "KALSHI": null
+   }
+  },
+  {
+   "t": "2026-11-12T17:04:46-0500",
+   "kind": "EXIT",
+   "text": "settled \u2014 lost at resolution",
+   "state": "final",
+   "dp": null,
+   "books": null,
+   "pnl": -0.38,
+   "price": 0.0
+  }
+ ],
+ "fork_latest": {
+  "available": true,
+  "src": "COMPUTED \u2014 DP games model on both cards\u2019 serve rates; ranges are projected (branch DP \u00b1 rail spread + 4 pts) and labeled as projections",
+  "state": "pre-match",
+  "steps": [
+   {
+    "label": "STEP 1 \u2014 this set",
+    "branches": [
+     {
+      "who": "Franco Roncadelli",
+      "p": 0.158,
+      "sets_after": [
+       1,
+       0
+      ],
+      "dp_side": 0.708,
+      "range": {
+       "POLY": [
+        0.67,
+        0.75
+       ],
+       "KALSHI": null
+      },
+      "action": "EXIT \u2014 thesis dead",
+      "decided": null
+     },
+     {
+      "who": "Francisco Comesana",
+      "p": 0.842,
+      "sets_after": [
+       0,
+       1
+      ],
+      "dp_side": 0.975,
+      "range": {
+       "POLY": [
+        0.93,
+        0.99
+       ],
+       "KALSHI": null
+      },
+      "action": "EXIT \u2014 gap closed (price at our number)",
+      "decided": null
+     }
+    ]
+   },
+   {
+    "label": "STEP 2 \u2014 next set",
+    "branches": [
+     [
+      {
+       "who": "Franco Roncadelli",
+       "p": 0.158,
+       "sets_after": [
+        2,
+        0
+       ],
+       "dp_side": 0.0,
+       "range": {
+        "POLY": [
+         0.01,
+         0.04
+        ],
+        "KALSHI": null
+       },
+       "action": "SETTLES \u2014 no action exists on a dead branch",
+       "decided": "loss"
+      },
+      {
+       "who": "Francisco Comesana",
+       "p": 0.842,
+       "sets_after": [
+        1,
+        1
+       ],
+       "dp_side": 0.842,
+       "range": {
+        "POLY": [
+         0.8,
+         0.88
+        ],
+        "KALSHI": null
+       },
+       "action": "HOLD \u2014 the discount is still open",
+       "decided": null
+      }
+     ],
+     [
+      {
+       "who": "Franco Roncadelli",
+       "p": 0.158,
+       "sets_after": [
+        1,
+        1
+       ],
+       "dp_side": 0.842,
+       "range": {
+        "POLY": [
+         0.8,
+         0.88
+        ],
+        "KALSHI": null
+       },
+       "action": "HOLD \u2014 the discount is still open",
+       "decided": null
+      },
+      {
+       "who": "Francisco Comesana",
+       "p": 0.842,
+       "sets_after": [
+        0,
+        2
+       ],
+       "dp_side": 1.0,
+       "range": {
+        "POLY": [
+         0.96,
+         0.99
+        ],
+        "KALSHI": null
+       },
+       "action": "HOLD \u2014 settles at 100\u00a2",
+       "decided": "win"
+      }
+     ]
+    ]
+   },
+   {
+    "label": "STEP 3 \u2014 the decider / final state",
+    "branches": [
+     [
+      [
+       {
+        "who": "\u2014",
+        "p": 1.0,
+        "sets_after": [
+         2,
+         0
+        ],
+        "dp_side": 0.0,
+        "range": {
+         "POLY": [
+          0.01,
+          0.04
+         ],
+         "KALSHI": null
+        },
+        "action": "SETTLES \u2014 no action exists on a dead branch",
+        "decided": "loss",
+        "terminal": true
+       }
+      ],
+      [
+       {
+        "who": "Franco Roncadelli",
+        "p": 0.158,
+        "sets_after": [
+         2,
+         1
+        ],
+        "dp_side": 0.0,
+        "range": {
+         "POLY": [
+          0.01,
+          0.04
+         ],
+         "KALSHI": null
+        },
+        "action": "SETTLES \u2014 no action exists on a dead branch",
+        "decided": "loss"
+       },
+       {
+        "who": "Francisco Comesana",
+        "p": 0.842,
+        "sets_after": [
+         1,
+         2
+        ],
+        "dp_side": 1.0,
+        "range": {
+         "POLY": [
+          0.96,
+          0.99
+         ],
+         "KALSHI": null
+        },
+        "action": "HOLD \u2014 settles at 100\u00a2",
+        "decided": "win"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "who": "Franco Roncadelli",
+        "p": 0.158,
+        "sets_after": [
+         2,
+         1
+        ],
+        "dp_side": 0.0,
+        "range": {
+         "POLY": [
+          0.01,
+          0.04
+         ],
+         "KALSHI": null
+        },
+        "action": "SETTLES \u2014 no action exists on a dead branch",
+        "decided": "loss"
+       },
+       {
+        "who": "Francisco Comesana",
+        "p": 0.842,
+        "sets_after": [
+         1,
+         2
+        ],
+        "dp_side": 1.0,
+        "range": {
+         "POLY": [
+          0.96,
+          0.99
+         ],
+         "KALSHI": null
+        },
+        "action": "HOLD \u2014 settles at 100\u00a2",
+        "decided": "win"
+       }
+      ],
+      [
+       {
+        "who": "\u2014",
+        "p": 1.0,
+        "sets_after": [
+         0,
+         2
+        ],
+        "dp_side": 1.0,
+        "range": {
+         "POLY": [
+          0.96,
+          0.99
+         ],
+         "KALSHI": null
+        },
+        "action": "HOLD \u2014 settles at 100\u00a2",
+        "decided": "win",
+        "terminal": true
+       }
+      ]
+     ]
+    ]
+   }
+  ],
+  "modal": [
+   1,
+   1,
+   0
+  ],
+  "modal_prob": 0.709,
+  "census": null
+ },
+ "result": {
+  "pnl": -0.38,
+  "ret_pct": -100.0,
+  "exit": "settled \u2014 lost at resolution"
+ }
+}

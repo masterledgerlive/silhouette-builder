@@ -22,7 +22,7 @@
 </style></head><body>
 <p class="small"><a href="index.html">&larr; NODAL hub</a> · <a href="find.html">FIND + the scoreboards</a></p>
 <h1>&#127908; THE SPECIALIST ARENA</h1>
-<p>Three agentic specialists, tennis only — <b>PHASE 1: DUAL-RAIL SIMULATION</b>. Each specialist's $10.00 runs
+<p>Four agentic specialists, tennis only — <b>PHASE 1: DUAL-RAIL SIMULATION</b>. Each specialist's $10.00 runs
 as <b>two $5.00 sub-banks: a KALSHI rail and a POLYMARKET rail</b>. Same strategy, same match, both roads at once —
 so the venue difference is measured clean, skill held constant. Traded tapes are live external prices
 (<span class="tag x">EXTERNAL</span> — the tape here, never feeding the house core call anywhere else): the
@@ -30,6 +30,13 @@ Polymarket Gamma book and Kalshi's public order books. Fills are simulated again
 charged honestly, and <b>every fill is sealed into the hash-chained ledger</b> with the engine and the number
 behind it. A specialist is busted only when <b>both</b> rails are dead; a dead rail reproves itself in shadow
 simulation. No refills — any real refill is David's word alone.</p>
+<p class="small">&#128200; <b>TONIGHT'S UPGRADES (Nov 12, sealed as ARENA_UPGRADE records):</b> each of the three
+originals re-read its own sealed book and re-ruled itself — the Wave Rider now needs a <i>confirmed</i> wave and
+exits only in profit or on a dead wave (its v1 retrace rule cost &minus;$5.14); the Lock Hunter carries an
+invalidation stop (its only loser was a &minus;$1.25 ride with no stop); the Value Scout salvages dead discounts
+instead of settling them and never doubles a thesis across both roads (its gap-close exits went 9-for-9). And a
+fourth seat opened: <b>THE UNDERSTUDY</b>, built from all three books — it plays only where the masters agree,
+rule exits only, settlement forbidden unless a true lock.</p>
 <p class="small">Class stamps, never blended: <span class="tag">SIM-OURS-POLYMARKET</span> our engine on live
 Polymarket prices (Polymarket has no paper environment — nothing is kept in their system) ·
 <span class="tag">SIM-OURS-KALSHI</span> our engine on Kalshi public live prices. Kalshi's official DEMO
@@ -43,8 +50,13 @@ divergence printed. The REAL highscores board (FIND) starts EMPTY and prints EMP
 
 <h2>&#128251; The booth — live play-by-play (text)</h2>
 <p class="small" style="margin:2px 0 6px">&#128203; <b>RELAY:</b> every booth line carries a <b>COPY</b> button — tap it and paste straight into the Polymarket / Kalshi groups. Every play also carries <b>COPY PACKAGE</b>: the whole sequence in one paste. That is the bridge until the group doors open here.</p>
-<p class="small" style="margin:2px 0 6px">&#127908; <b>THE BOOTH SPEAKS:</b> the specialists now call their own plays aloud — Wave Rider in Charlie's voice, the Lock Hunter in Daniel's, the Value Scout (and the color notes) in Matilda's — voices approved by David on Nov 12. Every spoken line is printed word for word beside it; audio never carries information alone.</p>
+<p class="small" style="margin:2px 0 6px">&#127908; <b>THE BOOTH SPEAKS:</b> the specialists now call their own plays aloud — Wave Rider in Charlie's voice, the Lock Hunter in Daniel's, the Value Scout (and the color notes) in Matilda's — voices approved by David on Nov 12. Every spoken line is printed word for word beside it; audio never carries information alone. <b>The Understudy calls in text only</b> — its voice is David's to cast, and until he does, it does not speak.</p>
 <div class="card feed" id="feed"><p class="dim">the booth is warming up&hellip;</p></div>
+
+<h2>&#9201;&#65039; Play-by-play tape — entries &amp; exits as they happen</h2>
+<p class="small">The same calls, stripped to the moves: <span class="tag">ENTRY</span> <span class="tag">EXIT</span>
+<span class="tag">SETTLE</span> <span class="tag">PICK</span> — newest first, refreshed with every arena cycle (about every 5 minutes).</p>
+<div class="card feed" id="tape"><p class="dim">the tape is warming up&hellip;</p></div>
 
 <h2>&#128230; Play packages — every play, sealed, replayable</h2>
 <div id="packages"></div>
@@ -68,6 +80,7 @@ branch, and the engine citation, refreshed every cycle.</p>
 <p><b>Following is your own choice and your own account. Sim followers mirror sim plays. Nothing here places
 an order for anyone — the feed advises; it never acts.</b></p>
 <div id="followsum" class="small"></div>
+<div id="followplays"></div>
 </div>
 
 <h2>&#9878;&#65039; Venue delta — same play, both roads</h2>
@@ -152,8 +165,8 @@ async function load(){
   const r=await fetch('arenadata.json?t='+Date.now()); const d=await r.json();
   $('meta').innerHTML='<span class="tag x">EXTERNAL TAPE</span> '+esc(d.phase)+' · updated '+esc(d.updated)+' · '
     +d.markets_seen+' tennis markets on the tape · '+d.kalshi_books+' carrying a Kalshi book';
-  const cls={WAVE:'wave',LOCK:'lock',SCOUT:'scout'};
-  const ico={WAVE:'&#127754;',LOCK:'&#128274;',SCOUT:'&#128270;'};
+  const cls={WAVE:'wave',LOCK:'lock',SCOUT:'scout',STUDY:'scout'};
+  const ico={WAVE:'&#127754;',LOCK:'&#128274;',SCOUT:'&#128270;',STUDY:'&#127891;'};
   $('specs').innerHTML=Object.entries(d.specialists).map(([k,s])=>
     '<div class="card spec '+cls[k]+'"><b style="font-size:18px">'+ico[k]+' '+esc(s.name)+'</b> '
     +(s.status==='ALIVE'?'<span class="tag">ALIVE</span>':'<span class="tag dead">BUSTED — BOTH RAILS DEAD</span>')
@@ -162,6 +175,8 @@ async function load(){
     +railBlock('KALSHI', s.rails.KALSHI)+railBlock('POLYMARKET', s.rails.POLY)
     +'</div>').join('');
   $('feed').innerHTML=d.feed.length? d.feed.map(f=>'<div><span class="small">'+esc(f.at)+'</span> <b>'+esc(f.who)+':</b> '+esc(f.text)+' <button class="copybtn" data-t="'+esc(f.who+': '+f.text)+'">COPY</button>'+(f.audio? '<br><audio controls preload="none" src="'+esc(f.audio)+'" style="height:32px;margin-top:4px"></audio> <span class="small">&#128266; hear the booth — the spoken line is the printed line, word for word</span>':'')+'</div>').join('') : '<p class="dim">No calls yet — the specialists are watching the tape.</p>';
+  const kc={ENTRY:'#d8b45a',EXIT:'#57c7a3',SETTLE:'#b48ce0',PICK:'#7fa8d8',GRADE:'#7fa8d8',HOLD:'#93a3b8',NOTE:'#93a3b8'};
+  $('tape').innerHTML=(d.tape&&d.tape.length)? d.tape.map(t=>'<div><span class="small">'+esc(t.at)+'</span> <span class="tag" style="border-color:'+(kc[t.kind]||'#93a3b8')+';color:'+(kc[t.kind]||'#93a3b8')+'">'+esc(t.kind)+'</span> <b>'+esc(t.who)+':</b> '+esc(t.text)+'</div>').join('') : '<p class="dim">No moves yet tonight.</p>';
   $('packages').innerHTML=d.packages.length? '<table><tr><th>Package</th><th>Specialist</th><th>Road</th><th>Class</th><th>State</th><th>Result</th><th></th></tr>'
     +d.packages.map(p=>'<tr><td>'+esc(p.match)+'</td><td>'+esc(p.specialist)+'</td><td>'+esc(p.rail)+'</td><td><span class="tag x">'+esc(p.class)+'</span></td><td>'+(p.closed?'closed':'open')+'</td><td>'+(p.result?('P&amp;L '+(p.result.pnl>=0?'+':'')+Number(p.result.pnl).toFixed(2)):'—')+'</td><td><a href="'+esc(p.replay)+'">&#127916; replay</a> <button class="copybtn" data-pkg="'+esc(p.id)+'">COPY PACKAGE</button></td></tr>').join('')+'</table>'
     : '<p class="dim">No packages yet.</p>';
@@ -186,6 +201,14 @@ async function load(){
   try{
     const fr=await fetch('followdata.json?t='+Date.now()); const fd=await fr.json();
     $('followsum').innerHTML='Feed updated '+esc(fd.updated)+' · '+fd.specialists.map(s=>esc(s.specialist)+': '+s.plays.length+' live play(s) with published intended moves').join(' · ')+'<br>'+esc(fd.disclaimer);
+    const spark=(series)=>{ if(!series||series.length<2) return '';
+      const vs=series.map(p=>p[1]); let mn=Math.min(...vs), mx=Math.max(...vs); if(mx-mn<0.02){mn-=0.01;mx+=0.01;}
+      const X=i=>Math.round(6+i*(208/Math.max(1,series.length-1))), Y=v=>Math.round(38-((v-mn)/(mx-mn))*32);
+      const line=series.map((p,i)=>X(i)+','+Y(p[1])).join(' ');
+      const dl=series.filter(p=>p[2]!=null); const dline=dl.map((p)=>{const i=series.indexOf(p); return X(i)+','+Y(p[2]);}).join(' ');
+      const d=Math.round((vs[vs.length-1]-vs[0])*100);
+      return '<svg width="220" height="44" style="background:#0d1524;border:1px solid #1c2940;border-radius:6px;vertical-align:middle"><polyline points="'+line+'" fill="none" stroke="#d8b45a" stroke-width="2"/>'+(dl.length>1?'<polyline points="'+dline+'" fill="none" stroke="#57c7a3" stroke-width="1.5" stroke-dasharray="4 3"/>':'')+'</svg> <span class="small">the wave — gold: market mid · teal dash: our number · '+(d>=0?'+':'')+d+'&cent; across the window</span>'; };
+    $('followplays').innerHTML=fd.specialists.map(sp2=> sp2.plays.length? '<div class="card"><b>'+esc(sp2.specialist)+'</b>'+sp2.plays.map(pl=>'<p style="margin:6px 0"><b>'+esc(pl.match)+'</b> · '+esc(pl.rail)+' · on '+esc(pl.side||'')+'<br>'+spark(pl.wave_series)+'<br><span class="small">most likely pattern: '+esc((pl.most_likely_pattern||[]).join(' \u203a '))+' ('+Math.round((pl.pattern_probability||0)*100)+'%)</span></p>').join('')+'</div>' : '').join('');
   }catch(e){ $('followsum').textContent='Follow feed not reachable in this snapshot.'; }
   $('delta').innerHTML=d.venue_delta.length? '<table><tr><th>Match</th><th>Specialist</th><th>Polymarket P&amp;L per $1</th><th>Kalshi P&amp;L per $1</th><th>Delta</th><th>Better road</th></tr>'
     +d.venue_delta.map(v=>'<tr><td>'+esc(v.match)+'</td><td>'+esc(v.specialist)+'</td><td class="num">'+v.poly_pnl_per_dollar+'</td><td class="num">'+v.kalshi_pnl_per_dollar+'</td><td class="num"><b>'+(v.delta>=0?'+':'')+v.delta+'</b></td><td>'+esc(v.better_road)+'</td></tr>').join('')+'</table>'

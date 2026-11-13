@@ -1,0 +1,799 @@
+{
+ "id": "scout-poly-atp-musetti-humbert-2026-11-12-2",
+ "specialist": "SCOUT",
+ "rail": "POLY",
+ "class": "SIM-OURS-POLYMARKET",
+ "match": "BNP Paribas Nordic Open: Lorenzo Musetti vs Ugo Humbert",
+ "slug": "atp-musetti-humbert-2026-11-12",
+ "opened": "2026-11-12T16:30:02-0500",
+ "closed": "2026-11-12T17:39:42-0500",
+ "color": {
+  "Lorenzo Musetti": {
+   "text": "Lorenzo Musetti \u2014 a texture read, from the Slam points we hold: serve 61%, return 40%. under break-point pressure the serve moves -4.1 pts \u2014 it leaks when it matters. after losing a point, the next one lands 63% \u2014 the tilt tell, on tape.",
+   "cites": [
+    "point-tape texture (Slam pbp)",
+    "pressure delta",
+    "next-point splits"
+   ],
+   "tier": "TEXTURE"
+  },
+  "Ugo Humbert": {
+   "text": "Ugo Humbert \u2014 a texture read, from the Slam points we hold: serve 65%, return 34%. under break-point pressure the serve moves +3.6 pts \u2014 it rises when it matters. after losing a point, the next one lands 73% \u2014 the tilt tell, on tape.",
+   "cites": [
+    "point-tape texture (Slam pbp)",
+    "pressure delta",
+    "next-point splits"
+   ],
+   "tier": "TEXTURE"
+  }
+ },
+ "side_idx": 1,
+ "side_name": "Ugo Humbert",
+ "steps": [
+  {
+   "t": "2026-11-12T16:30:02-0500",
+   "kind": "OPEN",
+   "text": "undervalued by 32 pts on the POLY road \u2014 our number 73 vs 41\u00a2 (pre-match DP from both cards)",
+   "engine": "Value Scout tape + DP repricer",
+   "state": "pre-match",
+   "dp": 0.26899999999999996,
+   "books": {
+    "POLY": [
+     0.595,
+     0.405
+    ],
+    "KALSHI": [
+     0.625,
+     0.375
+    ]
+   },
+   "side": "Ugo Humbert",
+   "price": 0.41000000000000003,
+   "stake": 0.38,
+   "fork": {
+    "available": true,
+    "src": "COMPUTED \u2014 DP games model on both cards\u2019 serve rates; ranges are projected (branch DP \u00b1 rail spread + 4 pts) and labeled as projections",
+    "state": "pre-match",
+    "steps": [
+     {
+      "label": "STEP 1 \u2014 this set",
+      "branches": [
+       {
+        "who": "Lorenzo Musetti",
+        "p": 0.341,
+        "sets_after": [
+         1,
+         0
+        ],
+        "dp_side": 0.435,
+        "range": {
+         "POLY": [
+          0.39,
+          0.48
+         ],
+         "KALSHI": null
+        },
+        "action": "EXIT \u2014 thesis dead",
+        "decided": null
+       },
+       {
+        "who": "Ugo Humbert",
+        "p": 0.659,
+        "sets_after": [
+         0,
+         1
+        ],
+        "dp_side": 0.884,
+        "range": {
+         "POLY": [
+          0.84,
+          0.92
+         ],
+         "KALSHI": null
+        },
+        "action": "HOLD \u2014 the discount is still open",
+        "decided": null
+       }
+      ]
+     },
+     {
+      "label": "STEP 2 \u2014 next set",
+      "branches": [
+       [
+        {
+         "who": "Lorenzo Musetti",
+         "p": 0.341,
+         "sets_after": [
+          2,
+          0
+         ],
+         "dp_side": 0.0,
+         "range": {
+          "POLY": [
+           0.01,
+           0.04
+          ],
+          "KALSHI": null
+         },
+         "action": "SETTLES \u2014 no action exists on a dead branch",
+         "decided": "loss"
+        },
+        {
+         "who": "Ugo Humbert",
+         "p": 0.659,
+         "sets_after": [
+          1,
+          1
+         ],
+         "dp_side": 0.659,
+         "range": {
+          "POLY": [
+           0.62,
+           0.7
+          ],
+          "KALSHI": null
+         },
+         "action": "HOLD \u2014 the discount is still open",
+         "decided": null
+        }
+       ],
+       [
+        {
+         "who": "Lorenzo Musetti",
+         "p": 0.341,
+         "sets_after": [
+          1,
+          1
+         ],
+         "dp_side": 0.659,
+         "range": {
+          "POLY": [
+           0.62,
+           0.7
+          ],
+          "KALSHI": null
+         },
+         "action": "HOLD \u2014 the discount is still open",
+         "decided": null
+        },
+        {
+         "who": "Ugo Humbert",
+         "p": 0.659,
+         "sets_after": [
+          0,
+          2
+         ],
+         "dp_side": 1.0,
+         "range": {
+          "POLY": [
+           0.96,
+           0.99
+          ],
+          "KALSHI": null
+         },
+         "action": "HOLD \u2014 settles at 100\u00a2",
+         "decided": "win"
+        }
+       ]
+      ]
+     },
+     {
+      "label": "STEP 3 \u2014 the decider / final state",
+      "branches": [
+       [
+        [
+         {
+          "who": "\u2014",
+          "p": 1.0,
+          "sets_after": [
+           2,
+           0
+          ],
+          "dp_side": 0.0,
+          "range": {
+           "POLY": [
+            0.01,
+            0.04
+           ],
+           "KALSHI": null
+          },
+          "action": "SETTLES \u2014 no action exists on a dead branch",
+          "decided": "loss",
+          "terminal": true
+         }
+        ],
+        [
+         {
+          "who": "Lorenzo Musetti",
+          "p": 0.341,
+          "sets_after": [
+           2,
+           1
+          ],
+          "dp_side": 0.0,
+          "range": {
+           "POLY": [
+            0.01,
+            0.04
+           ],
+           "KALSHI": null
+          },
+          "action": "SETTLES \u2014 no action exists on a dead branch",
+          "decided": "loss"
+         },
+         {
+          "who": "Ugo Humbert",
+          "p": 0.659,
+          "sets_after": [
+           1,
+           2
+          ],
+          "dp_side": 1.0,
+          "range": {
+           "POLY": [
+            0.96,
+            0.99
+           ],
+           "KALSHI": null
+          },
+          "action": "HOLD \u2014 settles at 100\u00a2",
+          "decided": "win"
+         }
+        ]
+       ],
+       [
+        [
+         {
+          "who": "Lorenzo Musetti",
+          "p": 0.341,
+          "sets_after": [
+           2,
+           1
+          ],
+          "dp_side": 0.0,
+          "range": {
+           "POLY": [
+            0.01,
+            0.04
+           ],
+           "KALSHI": null
+          },
+          "action": "SETTLES \u2014 no action exists on a dead branch",
+          "decided": "loss"
+         },
+         {
+          "who": "Ugo Humbert",
+          "p": 0.659,
+          "sets_after": [
+           1,
+           2
+          ],
+          "dp_side": 1.0,
+          "range": {
+           "POLY": [
+            0.96,
+            0.99
+           ],
+           "KALSHI": null
+          },
+          "action": "HOLD \u2014 settles at 100\u00a2",
+          "decided": "win"
+         }
+        ],
+        [
+         {
+          "who": "\u2014",
+          "p": 1.0,
+          "sets_after": [
+           0,
+           2
+          ],
+          "dp_side": 1.0,
+          "range": {
+           "POLY": [
+            0.96,
+            0.99
+           ],
+           "KALSHI": null
+          },
+          "action": "HOLD \u2014 settles at 100\u00a2",
+          "decided": "win",
+          "terminal": true
+         }
+        ]
+       ]
+      ]
+     }
+    ],
+    "modal": [
+     1,
+     1,
+     0
+    ],
+    "modal_prob": 0.434,
+    "census": null
+   }
+  },
+  {
+   "t": "2026-11-12T16:30:05-0500",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 27, POLY mid 40\u00a2",
+   "state": "pre-match",
+   "dp": 0.26899999999999996,
+   "books": {
+    "POLY": [
+     0.595,
+     0.405
+    ],
+    "KALSHI": [
+     0.625,
+     0.375
+    ]
+   }
+  },
+  {
+   "t": "2026-11-12T16:34:57-0500",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 27, POLY mid 26\u00a2",
+   "state": "pre-match",
+   "dp": 0.26899999999999996,
+   "books": {
+    "POLY": [
+     0.745,
+     0.255
+    ],
+    "KALSHI": [
+     0.655,
+     0.345
+    ]
+   }
+  },
+  {
+   "t": "2026-11-12T16:40:00-0500",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 27, POLY mid 54\u00a2",
+   "state": "pre-match",
+   "dp": 0.26899999999999996,
+   "books": {
+    "POLY": [
+     0.465,
+     0.535
+    ],
+    "KALSHI": [
+     0.585,
+     0.41500000000000004
+    ]
+   }
+  },
+  {
+   "t": "2026-11-12T16:44:53-0500",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 27, POLY mid 42\u00a2",
+   "state": "pre-match",
+   "dp": 0.26899999999999996,
+   "books": {
+    "POLY": [
+     0.575,
+     0.425
+    ],
+    "KALSHI": [
+     0.555,
+     0.44499999999999995
+    ]
+   }
+  },
+  {
+   "t": "2026-11-12T16:50:34-0500",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 27, POLY mid 50\u00a2",
+   "state": "pre-match",
+   "dp": 0.26899999999999996,
+   "books": {
+    "POLY": [
+     0.505,
+     0.495
+    ],
+    "KALSHI": [
+     0.5700000000000001,
+     0.43499999999999994
+    ]
+   }
+  },
+  {
+   "t": "2026-11-12T16:55:05-0500",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 27, POLY mid 48\u00a2",
+   "state": "pre-match",
+   "dp": 0.26899999999999996,
+   "books": {
+    "POLY": [
+     0.515,
+     0.485
+    ],
+    "KALSHI": [
+     0.585,
+     0.41500000000000004
+    ]
+   }
+  },
+  {
+   "t": "2026-11-12T16:59:53-0500",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 27, POLY mid 30\u00a2",
+   "state": "pre-match",
+   "dp": 0.26899999999999996,
+   "books": {
+    "POLY": [
+     0.705,
+     0.295
+    ],
+    "KALSHI": [
+     0.945,
+     0.05500000000000003
+    ]
+   }
+  },
+  {
+   "t": "2026-11-12T17:04:59-0500",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 27, POLY mid 0\u00a2",
+   "state": "pre-match",
+   "dp": 0.26899999999999996,
+   "books": {
+    "POLY": [
+     0.9995,
+     0.0005
+    ],
+    "KALSHI": null
+   }
+  },
+  {
+   "t": "2026-11-12T17:10:07-0500",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 27, POLY mid 0\u00a2",
+   "state": "pre-match",
+   "dp": 0.26899999999999996,
+   "books": {
+    "POLY": [
+     0.9995,
+     0.0005
+    ],
+    "KALSHI": null
+   }
+  },
+  {
+   "t": "2026-11-12T17:14:54-0500",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 27, POLY mid 0\u00a2",
+   "state": "pre-match",
+   "dp": 0.26899999999999996,
+   "books": {
+    "POLY": [
+     0.9995,
+     0.0005
+    ],
+    "KALSHI": null
+   }
+  },
+  {
+   "t": "2026-11-12T17:20:15-0500",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 27, POLY mid 0\u00a2",
+   "state": "pre-match",
+   "dp": 0.26899999999999996,
+   "books": {
+    "POLY": [
+     0.9995,
+     0.0005
+    ],
+    "KALSHI": null
+   }
+  },
+  {
+   "t": "2026-11-12T17:24:52-0500",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 27, POLY mid 0\u00a2",
+   "state": "pre-match",
+   "dp": 0.26899999999999996,
+   "books": {
+    "POLY": [
+     0.9995,
+     0.0005
+    ],
+    "KALSHI": null
+   }
+  },
+  {
+   "t": "2026-11-12T17:29:52-0500",
+   "kind": "MARK",
+   "text": "marked \u2014 our number 27, POLY mid 0\u00a2",
+   "state": "pre-match",
+   "dp": 0.26899999999999996,
+   "books": {
+    "POLY": [
+     0.9995,
+     0.0005
+    ],
+    "KALSHI": null
+   }
+  },
+  {
+   "t": "2026-11-12T17:39:42-0500",
+   "kind": "EXIT",
+   "text": "settled \u2014 lost at resolution",
+   "state": "final",
+   "dp": null,
+   "books": null,
+   "pnl": -0.38,
+   "price": 0.0
+  }
+ ],
+ "fork_latest": {
+  "available": true,
+  "src": "COMPUTED \u2014 DP games model on both cards\u2019 serve rates; ranges are projected (branch DP \u00b1 rail spread + 4 pts) and labeled as projections",
+  "state": "pre-match",
+  "steps": [
+   {
+    "label": "STEP 1 \u2014 this set",
+    "branches": [
+     {
+      "who": "Lorenzo Musetti",
+      "p": 0.341,
+      "sets_after": [
+       1,
+       0
+      ],
+      "dp_side": 0.435,
+      "range": {
+       "POLY": [
+        0.39,
+        0.48
+       ],
+       "KALSHI": null
+      },
+      "action": "EXIT \u2014 thesis dead",
+      "decided": null
+     },
+     {
+      "who": "Ugo Humbert",
+      "p": 0.659,
+      "sets_after": [
+       0,
+       1
+      ],
+      "dp_side": 0.884,
+      "range": {
+       "POLY": [
+        0.84,
+        0.92
+       ],
+       "KALSHI": null
+      },
+      "action": "HOLD \u2014 the discount is still open",
+      "decided": null
+     }
+    ]
+   },
+   {
+    "label": "STEP 2 \u2014 next set",
+    "branches": [
+     [
+      {
+       "who": "Lorenzo Musetti",
+       "p": 0.341,
+       "sets_after": [
+        2,
+        0
+       ],
+       "dp_side": 0.0,
+       "range": {
+        "POLY": [
+         0.01,
+         0.04
+        ],
+        "KALSHI": null
+       },
+       "action": "SETTLES \u2014 no action exists on a dead branch",
+       "decided": "loss"
+      },
+      {
+       "who": "Ugo Humbert",
+       "p": 0.659,
+       "sets_after": [
+        1,
+        1
+       ],
+       "dp_side": 0.659,
+       "range": {
+        "POLY": [
+         0.62,
+         0.7
+        ],
+        "KALSHI": null
+       },
+       "action": "HOLD \u2014 the discount is still open",
+       "decided": null
+      }
+     ],
+     [
+      {
+       "who": "Lorenzo Musetti",
+       "p": 0.341,
+       "sets_after": [
+        1,
+        1
+       ],
+       "dp_side": 0.659,
+       "range": {
+        "POLY": [
+         0.62,
+         0.7
+        ],
+        "KALSHI": null
+       },
+       "action": "HOLD \u2014 the discount is still open",
+       "decided": null
+      },
+      {
+       "who": "Ugo Humbert",
+       "p": 0.659,
+       "sets_after": [
+        0,
+        2
+       ],
+       "dp_side": 1.0,
+       "range": {
+        "POLY": [
+         0.96,
+         0.99
+        ],
+        "KALSHI": null
+       },
+       "action": "HOLD \u2014 settles at 100\u00a2",
+       "decided": "win"
+      }
+     ]
+    ]
+   },
+   {
+    "label": "STEP 3 \u2014 the decider / final state",
+    "branches": [
+     [
+      [
+       {
+        "who": "\u2014",
+        "p": 1.0,
+        "sets_after": [
+         2,
+         0
+        ],
+        "dp_side": 0.0,
+        "range": {
+         "POLY": [
+          0.01,
+          0.04
+         ],
+         "KALSHI": null
+        },
+        "action": "SETTLES \u2014 no action exists on a dead branch",
+        "decided": "loss",
+        "terminal": true
+       }
+      ],
+      [
+       {
+        "who": "Lorenzo Musetti",
+        "p": 0.341,
+        "sets_after": [
+         2,
+         1
+        ],
+        "dp_side": 0.0,
+        "range": {
+         "POLY": [
+          0.01,
+          0.04
+         ],
+         "KALSHI": null
+        },
+        "action": "SETTLES \u2014 no action exists on a dead branch",
+        "decided": "loss"
+       },
+       {
+        "who": "Ugo Humbert",
+        "p": 0.659,
+        "sets_after": [
+         1,
+         2
+        ],
+        "dp_side": 1.0,
+        "range": {
+         "POLY": [
+          0.96,
+          0.99
+         ],
+         "KALSHI": null
+        },
+        "action": "HOLD \u2014 settles at 100\u00a2",
+        "decided": "win"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "who": "Lorenzo Musetti",
+        "p": 0.341,
+        "sets_after": [
+         2,
+         1
+        ],
+        "dp_side": 0.0,
+        "range": {
+         "POLY": [
+          0.01,
+          0.04
+         ],
+         "KALSHI": null
+        },
+        "action": "SETTLES \u2014 no action exists on a dead branch",
+        "decided": "loss"
+       },
+       {
+        "who": "Ugo Humbert",
+        "p": 0.659,
+        "sets_after": [
+         1,
+         2
+        ],
+        "dp_side": 1.0,
+        "range": {
+         "POLY": [
+          0.96,
+          0.99
+         ],
+         "KALSHI": null
+        },
+        "action": "HOLD \u2014 settles at 100\u00a2",
+        "decided": "win"
+       }
+      ],
+      [
+       {
+        "who": "\u2014",
+        "p": 1.0,
+        "sets_after": [
+         0,
+         2
+        ],
+        "dp_side": 1.0,
+        "range": {
+         "POLY": [
+          0.96,
+          0.99
+         ],
+         "KALSHI": null
+        },
+        "action": "HOLD \u2014 settles at 100\u00a2",
+        "decided": "win",
+        "terminal": true
+       }
+      ]
+     ]
+    ]
+   }
+  ],
+  "modal": [
+   1,
+   1,
+   0
+  ],
+  "modal_prob": 0.434,
+  "census": null
+ },
+ "result": {
+  "pnl": -0.38,
+  "ret_pct": -100.0,
+  "exit": "settled \u2014 lost at resolution"
+ }
+}

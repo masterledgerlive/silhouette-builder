@@ -35,6 +35,14 @@ The ticker strip beside each match carries the live tells as they exist: <b>FLIP
 <div id="board-note" class="note" style="margin-top:12px">Pulling today's board…</div>
 <div style="margin-top:8px"><button id="refresh">↻ Re-pull the day</button></div>
 <div id="board"></div>
+<div class="box" style="margin-top:14px"><h2>&#127769; TOMORROW — pre-sealed tonight</h2>
+<p>Tomorrow's fixtures, sealed the night before — the same sim, the same flags, frozen before a ball is struck.
+A fixture only makes this board when its own start time on the wire falls inside tomorrow's day; the wire's
+bracket projections and TBD placeholders are rejected by rule (the first run of this board caught itself doing
+exactly that — seven seals voided on the record, six reinstated with their start times as evidence; the void
+and the reinstatement are both in the chain, seq 3307–3308).</p>
+<div id="tomorrow"><p class="note">Pulling tomorrow's pre-sealed slate…</p></div>
+</div>
 <div class="box"><h2>Our own records — sealed before outcomes</h2>
 <p>The desk runs this same board on its side and <b>seals every upcoming and live call — sim number, pick, flags, ticker — into the hash-chained ledger before the outcomes exist</b>, the same chain the slate matches finalize into. After matches finish, the grades land as their own records (pick right or wrong, Brier), and the board's totals are read from the ledger alone. Nobody can edit a call after the fact: the chain re-verifies end to end, and a changed record breaks it loudly.</p>
 <p><span class="tag">DESK RUN · 2026-11-11 EVENING</span> 96 matches on the wire · <b>13 upcoming/live sims sealed</b> (the rest had already finished when the run happened) · chain <b>VERIFIED at 2,906 records</b> · grades land as those matches finish. This page re-deals the same math live in your browser; <b>the sealed run is the record</b>.</p>
@@ -158,5 +166,16 @@ $("refresh").onclick=pull;
 (async()=>{try{const r=await fetch("livedata.json");LD=await r.json();
   for(const nm of Object.keys(LD.players))KEYMAP[keyOf(nm)]=nm;}catch(e){LD={players:{}};}
   pull();})();
+</script>
+<script>
+(async()=>{ try{
+  const r=await fetch("tomorrowdata.json?t="+Date.now()); const d=await r.json();
+  const fmt=t=>{ try{ return new Date(t).toLocaleString("en-US",{timeZone:"America/New_York",weekday:"short",hour:"numeric",minute:"2-digit"})+" ET"; }catch(e){ return t; } };
+  document.getElementById("tomorrow").innerHTML =
+    "<p class='note'>"+d.n+" fixtures for <b>"+d.date+"</b> · pre-sealed "+d.sealed_at+"</p>"+
+    d.rows.map(x=>"<p style='margin:5px 0'><b>"+x.match+"</b> · "+x.tour+" · "+fmt(x.start_utc)+
+      "<br>our number "+x.our_pct_a+"% on the first name · pick <b>"+x.pick+"</b>"+
+      (x.flags&&x.flags.length? " · "+x.flags.join(" · ") : "")+"</p>").join("");
+}catch(e){ document.getElementById("tomorrow").innerHTML="<p class='note'>Tomorrow's slate is not posted yet tonight.</p>"; } })();
 </script>
 </body></html>
