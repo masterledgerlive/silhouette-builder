@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NODAL — TODAY IN ORDER · every match on the wire, by start time</title>
+<style>
+ body{margin:0;background:#0b0e14;color:#dbe4f5;font:15px/1.5 -apple-system,'Segoe UI',Roboto,sans-serif}
+ .wrap{max-width:1240px;margin:0 auto;padding:18px 14px 60px}
+ a{color:#ffd166} .logo{font-weight:800;letter-spacing:.35em;color:#eef2fa}
+ h1{font-size:24px;margin:8px 0 2px} h2{font-size:17px;margin:20px 0 8px;color:#eef2fa}
+ .sub{color:#93a4c4} .note{color:#93a4c4;font-size:13px}
+ .box{background:#12172a;border:1px solid #26304d;border-radius:12px;padding:13px 15px;margin:12px 0}
+ .tag{display:inline-block;font-size:11px;padding:1px 8px;border-radius:99px;border:1px solid #3a4a75;color:#b9c7e6;vertical-align:2px}
+ .tag.ext{border-color:#c98a2d;color:#ffcf87} .tag.house{border-color:#ffd166;color:#ffd166}
+ .tag.teal{border-color:#2ec4b6;color:#9fe8df} .tag.red{border-color:#ff5d5d;color:#ffb3b3}
+ .cols{display:grid;grid-template-columns:1fr 330px;gap:14px;align-items:start}
+ @media(max-width:900px){.cols{grid-template-columns:1fr}}
+ button.pick{display:block;width:100%;text-align:left;background:#12172a;border:1px solid #26304d;border-radius:12px;padding:10px 12px;margin:6px 0;color:#dbe4f5;font:inherit;cursor:pointer}
+ button.pick:active{border-color:#ffd166}
+ .rowflex{display:flex;justify-content:space-between;gap:10px;align-items:baseline;flex-wrap:wrap}
+ .pct{font-size:19px;font-weight:800;color:#eef2fa;white-space:nowrap}
+ .pct small{font-size:12px;color:#93a4c4;font-weight:400}
+ .chip{display:inline-block;background:#0e1322;border:1px solid #26304d;border-radius:99px;color:#b9c7e6;padding:5px 12px;margin:2px;cursor:pointer;font-size:13px}
+ .chip.on{border-color:#ffd166;color:#ffd166}
+ .eng{display:inline-block;background:#0e1322;border:1px solid #2ec4b6;border-radius:9px;color:#9fe8df;padding:6px 11px;margin:3px;cursor:pointer;font-size:13.5px}
+ .eng.door{border-color:#3a4a75;color:#b9c7e6}
+ .panel{background:#0e1322;border:1px solid #2ec4b6;border-radius:12px;padding:12px 14px;margin:-2px 0 10px}
+ input{background:#0e1322;border:1px solid #26304d;border-radius:8px;color:#dbe4f5;padding:8px 10px;font:inherit;width:230px}
+ table{border-collapse:collapse;width:100%;font-size:13.5px}
+ td,th{padding:4px 7px;border-bottom:1px solid #1d2745;text-align:left;vertical-align:top}
+ th{color:#93a4c4;font-weight:600}
+ .recnum{display:inline-block;width:26px;height:26px;line-height:26px;text-align:center;border-radius:50%;font-weight:800;color:#131313}
+ .gold{background:#ffd166}.teal{background:#2ec4b6}.plain{background:#93a4c4}.watch{background:#ff9c9c}
+ .up{color:#7be495}.down{color:#ff9c9c}
+ .exitbanner{background:#3a1420;border:1px solid #ff5d5d;border-radius:12px;padding:12px 14px;margin:10px 0}
+ footer{color:#5f7099;font-size:12.5px;margin-top:26px}
+ .addbtn{background:#ffd166;color:#131313;border:0;border-radius:8px;padding:4px 10px;font-weight:700;cursor:pointer;font-size:13px}
+</style></head><body><div class="wrap">
+<div class="logo">NOD A L</div>
+<h1>🗓️ TODAY IN ORDER — every match on the wire, by start time</h1>
+<p class="sub">The whole day, one list, in the order it happens. The wire for this room is the <b>Kalshi + Polymarket match books</b> — they carry far more tennis than the tour wire — and every price off them is stamped <span class="tag ext">EXTERNAL</span>: it feeds the room, it never touches the core call. Our own percentage, where the archive covers the players, is the desk's DP on their cards. <b>Simulation only — this page is the proving ground.</b></p>
+<div class="cols">
+<div id="maincol">
+<div id="view-list">
+<div class="box"><b>Find your game.</b> Filter by kind or by what we hold on it — and know the house rule: <b>no-data is a door, not a wall.</b> A match with no profile still lists; its players get a starter profile built from the game's own data (stamped GAME-BUILT) and join the player list on the desk's next import.
+<p style="margin:9px 0 0"><input id="q" type="search" placeholder="player or event…"> <span class="note" id="wire-note">Pulling the books…</span></p>
+<p style="margin:7px 0 0" id="chips1"></p>
+<p style="margin:3px 0 0" id="chips2"></p></div>
+<div id="list"></div>
+</div>
+<div id="view-arena" style="display:none">
+<h2>🎙️ THE ARENA — main view</h2>
+<p class="note">The four specialists' live follow feed (from the arena's sealed cycle). <a href="#" id="backlist1">← back to the list</a> · <a href="arena.html">the full arena room</a></p>
+<div id="arenafeed"></div>
+</div>
+<div id="view-scores" style="display:none">
+<h2>🏆 ENGINE SCORES — main view</h2>
+<p class="note">Every lane's sealed record, computed by the desk from the ledger. <a href="#" id="backlist2">← back to the list</a></p>
+<div id="scorestable"></div>
+</div>
+</div>
+<div id="rail">
+<div class="box"><h2 style="margin-top:0">🏆 ENGINE SCORES</h2>
+<div id="railscores" class="note">loading…</div>
+<p style="margin:8px 0 0"><button class="eng" id="mm-scores">SCORES → MAIN</button> <button class="eng" id="mm-arena">ARENA → MAIN</button></p></div>
+<div class="box"><h2 style="margin-top:0">🎙️ THE SPECIALISTS</h2>
+<div id="railspecs" class="note">loading…</div></div>
+<div class="box"><h2 style="margin-top:0">🚦 THE HIGH THRESHOLD</h2>
+<p class="note" id="thresh">loading the rule…</p>
+<div id="threshstand" class="note"></div>
+<p class="note">Play-by-play simulations are scored as real plays <b>before</b> any real money: a lane must prove the count, the win rate and the Brier above — and even then, real money waits for David's exact word and the existing Kalshi mandate caps. The Phase 2 door is unchanged: DOCKED.</p></div>
+<div class="box"><h2 style="margin-top:0">🎟️ RECOMMENDATIONS + TICKET</h2>
+<div id="recs" class="note">loading…</div>
+<h2>YOUR TICKET</h2>
+<div id="ticket" class="note">No legs yet — add from any row's ＋ TICKET button, or click a recommendation.</div>
+<div id="ticketwatch"></div>
+</div>
+</div>
+</div>
+<footer>Data stamps: match list + prices — Polymarket Gamma + Kalshi public books (EXTERNAL, arrival-stamped at your browser's pull; the desk's Kalshi poll rides in todaydata.json). Our % — the desk DP repricer on archive cards (Sackmann 2015–2026, 62,056 matches + Slam point tape); players outside the archive price on the labeled ASSUMED GRID or carry a GAME-BUILT starter profile. Combined ticket % — the product of the legs' own percentages (naive independence, labeled as such; tennis legs on the same day are close to independent, never exactly). Graded state — from the sealed ledger via the arena cycle (gamesdata.json / scoresdata.json). Nothing here places an order: Overlay Mode — David places every real order himself.</footer>
+</div>
+<script>
+"use strict";
+const $=id=>document.getElementById(id);
+let DATA=null, KEYMAP={}, MATCHES=[], GD={}, TP={}, SCORES=null, ARENA=null, FOLLOW=null, MATRIX=null;
+let F1="ALL", F2="ALL", OPENKEY=null, CHAIN=[], TICKET=JSON.parse(localStorage.getItem("nodal-ticket")||"[]");
+const norm=n=>(n||"").toLowerCase().replace(/[^a-z ]/g,"").trim();
+const keyOf=n=>{const p=norm(n).split(/\s+/);return p.length?p[p.length-1]+"|"+p[0][0]:"";};
+const pairKey=ns=>keyOf(ns[0])+"||"+keyOf(ns[1]);
+function lookup(name){ if(!DATA) return null; if(DATA.players&&DATA.players[name]) return DATA.players[name];
+  const k=keyOf(name); return KEYMAP[k]?DATA.players[KEYMAP[k]]:null; }
+/* the exact DP — verbatim port of the desk's price_state.py (proven parity) */
+function gameWin(p){const q=1-p;const direct=p**4+4*p**4*q+10*p**4*q**2;const rd=20*p**3*q**3;const dz=p*p/(p*p+q*q);return direct+rd*dz;}
+function tbWin(pa,pb,first){const pavg=(pa+(1-pb))/2;const dr=pavg*pavg/(pavg*pavg+(1-pavg)*(1-pavg));const memo={};
+  function rec(a,b,srv,left){if(a>=7&&a-b>=2)return 1;if(b>=7&&b-a>=2)return 0;if(a>=6&&b>=6&&a===b)return dr;
+    const k=a+","+b+","+srv+","+left;if(memo[k]!==undefined)return memo[k];
+    const p=srv===0?pa:1-pb;let ns,nl;if(left>1){ns=srv;nl=left-1;}else{ns=1-srv;nl=2;}
+    return memo[k]=p*rec(a+1,b,ns,nl)+(1-p)*rec(a,b+1,ns,nl);}
+  return rec(0,0,first,1);}
+function setWinFrom(pa,pb,ga,gb,first){const gA=gameWin(pa),gB=gameWin(pb);const memo={};
+  function rec(x,y,srv){if((x>=6&&x-y>=2)||x===7)return 1;if((y>=6&&y-x>=2)||y===7)return 0;if(x===6&&y===6)return tbWin(pa,pb,srv);
+    const k=x+","+y+","+srv;if(memo[k]!==undefined)return memo[k];
+    const gw=srv===0?gA:1-gB;return memo[k]=gw*rec(x+1,y,1-srv)+(1-gw)*rec(x,y+1,1-srv);}
+  return rec(ga,gb,first);}
+function priceState(pa,pb,sa,sb,ga,gb,srv){
+  function matchFrom(x,y,ss){if(x===2)return 1;if(y===2)return 0;const sw=setWinFrom(pa,pb,0,0,ss);return sw*matchFrom(x+1,y,1-ss)+(1-sw)*matchFrom(x,y+1,1-ss);}
+  if(ga===0&&gb===0)return matchFrom(sa,sb,srv);
+  const pset=setWinFrom(pa,pb,ga,gb,srv);
+  return pset*matchFrom(sa+1,sb,srv)+(1-pset)*matchFrom(sa,sb+1,srv);}
+const pct=x=>Math.round(x*1000)/10;
+function splits(nameA,nameB){
+  const A=lookup(nameA),B=lookup(nameB);let pa=null,pb=null,assumed=false,src="";
+  if(A&&B&&A.card&&B.card){pa=(A.card.serve+(100-B.card.return))/200;pb=(B.card.serve+(100-A.card.return))/200;src="full cards";}
+  else if(A&&B&&A.nodes&&B.nodes&&A.nodes.srv_pct!=null){pa=(A.nodes.srv_pct+(1-B.nodes.ret_pct))/2;pb=(B.nodes.srv_pct+(1-A.nodes.ret_pct))/2;src="point-tape nodes";}
+  else{pa=0.60;pb=0.60;assumed=true;src="ASSUMED GRID";}
+  return{pa,pb,src,assumed};}
+function tier(name){
+  const e=lookup(name);
+  if(e&&e.card)return"FULL"; if(e&&e.nodes)return"TEXTURE"; if(e)return"THIN";
+  if(TP.players&&TP.players[name])return"GAME-BUILT";
+  const k=keyOf(name); for(const n in (TP.players||{}))if(keyOf(n)===k)return"GAME-BUILT";
+  return"NO DATA";}
+function etTime(iso){ if(!iso)return"—";
+  try{return new Date(iso).toLocaleString("en-US",{timeZone:"America/New_York",weekday:"short",hour:"numeric",minute:"2-digit"})+" ET";}
+  catch(e){return iso;} }
+/* ---------- build the match list ---------- */
+async function pullGamma(){
+  const out=[];
+  for(const s of [10365,10366,11634]){
+    for(let off=0;off<200;off+=50){
+      let page=[]; try{const r=await fetch("https://gamma-api.polymarket.com/events?series_id="+s+"&active=true&closed=false&limit=50&offset="+off);page=await r.json();}catch(e){}
+      if(!page.length)break;
+      for(const e of page){
+        const mk=(e.markets||[])[0]; if(!mk)continue;
+        let names=[]; try{names=JSON.parse(mk.outcomes||"[]");}catch(err){}
+        if(names.length!==2||names.some(n=>/tbd/i.test(n)))continue;
+        let prices=[]; try{prices=JSON.parse(mk.outcomePrices||"[]").map(Number);}catch(err){}
+        out.push({slug:e.slug,title:e.title||"",names,start:mk.gameStartTime||e.startDate||null,
+                  series:s,pm:prices.length===2?prices:null,
+                  live:!!(e.live||mk.active&&mk.acceptingOrders&&e.enableOrderBook&&mk.gameStartTime&&new Date(mk.gameStartTime)<new Date()&&!mk.closed)});
+      }
+      if(page.length<50)break;
+    }
+  }
+  return out;
+}
+function assemble(gamma, today){
+  const kmap={};
+  (today.kalshi||[]).forEach(kr=>{kmap[pairKey(kr.names)]=kr; kmap[keyOf(kr.names[1])+"||"+keyOf(kr.names[0])]={names:[kr.names[1],kr.names[0]],mid:[kr.mid[1],kr.mid[0]],context:kr.context,event:kr.event};});
+  const seen={}, rows=[];
+  for(const g of gamma){
+    const k=pairKey(g.names); if(seen[k])continue; seen[k]=1;
+    const gd=GD[k]||GD[keyOf(g.names[1])+"||"+keyOf(g.names[0])];
+    const sp=splits(g.names[0],g.names[1]);
+    const our=sp.assumed?null:pct(priceState(sp.pa,sp.pb,0,0,0,0,0));
+    const t0=tier(g.names[0]),t1=tier(g.names[1]);
+    const prof=(t0==="NO DATA"||t1==="NO DATA")?"NO DATA":(t0==="GAME-BUILT"||t1==="GAME-BUILT")?"GAME-BUILT":(t0==="THIN"||t1==="THIN")?"THIN":(t0==="TEXTURE"||t1==="TEXTURE")?"TEXTURE":"FULL";
+    let graded="NO SIM YET", gcls="";
+    if(gd){ if(gd.profit&&Object.values(gd.profit).some(v=>v)) {graded="SIM RUN · SETTLED";gcls="teal";}
+      else if(gd.picks){graded="PICK SEALED";gcls="house";} }
+    rows.push({key:k,slug:g.slug,title:g.title,names:g.names,start:g.start,startMs:g.start?new Date(g.start).getTime():Infinity,
+      tour:g.series===10365?"ATP":g.series===10366?"WTA":"ITF",
+      gender:g.series===10366?"W":g.series===10365?"M":( /women|wta/i.test(g.title)?"W":"M"),
+      doubles:/double/i.test(g.title), pm:g.pm, k:(kmap[k]||null), our, assumed:sp.assumed, sp,
+      prof, graded, gcls, live:g.live, gd});
+  }
+  const nowMs=Date.now();
+  const band=m=>m.live?0:(m.startMs>=nowMs-36*3600*1000?1:2);
+  rows.sort((a,b)=>{const d=band(a)-band(b); if(d)return d;
+    return band(a)===2?b.startMs-a.startMs:a.startMs-b.startMs;});
+  rows.forEach(m=>{ if(band(m)===2)m.stale=true; });
+  return rows;
+}
+/* ---------- rendering ---------- */
+function chips(el, items, cur, fn){
+  $(el).innerHTML=items.map(i=>"<span class='chip"+(i===cur?" on":"")+"' data-v='"+i+"'>"+i+"</span>").join("");
+  $(el).querySelectorAll(".chip").forEach(c=>c.onclick=()=>fn(c.dataset.v));}
+function renderChips(){
+  chips("chips1",["ALL","MEN","WOMEN","SINGLES","DOUBLES"],F1,v=>{F1=v;renderChips();renderList();});
+  chips("chips2",["ALL","GRADED","UNGRADED","DATA","NO-DATA"],F2,v=>{F2=v;renderChips();renderList();});}
+function passF(m){
+  if(F1==="MEN"&&m.gender!=="M")return false;
+  if(F1==="WOMEN"&&m.gender!=="W")return false;
+  if(F1==="SINGLES"&&m.doubles)return false;
+  if(F1==="DOUBLES"&&!m.doubles)return false;
+  if(F2==="GRADED"&&m.graded==="NO SIM YET")return false;
+  if(F2==="UNGRADED"&&m.graded!=="NO SIM YET")return false;
+  if(F2==="DATA"&&m.prof==="NO DATA")return false;
+  if(F2==="NO-DATA"&&m.prof!=="NO DATA")return false;
+  const q=norm($("q").value||"");
+  if(q&&!norm(m.names.join(" ")+" "+m.title).includes(q))return false;
+  return true;}
+function rowHTML(m){
+  const pm=m.pm?("<span class='note'>PM <span class='tag ext'>EXT</span> "+Math.round(m.pm[0]*100)+"¢ / "+Math.round(m.pm[1]*100)+"¢</span>"):"";
+  const kk=m.k?("<span class='note'> · KALSHI <span class='tag ext'>EXT</span> "+Math.round((m.k.mid[0]||0)*100)+"¢ / "+Math.round((m.k.mid[1]||0)*100)+"¢</span>"):"";
+  const our=m.our!==null?("<span class='pct'>"+m.our+"% <small>ours · "+m.names[0].split(" ").slice(-1)[0]+"</small></span>")
+    :("<span class='pct'>— <small>assumed grid</small></span>");
+  const profTag=m.prof==="NO DATA"?"<span class='tag red'>NO DATA</span>":m.prof==="GAME-BUILT"?"<span class='tag teal'>GAME-BUILT PROFILE</span>":"<span class='tag'>"+m.prof+"</span>";
+  const liveTag=m.live?"<span class='tag red'>● LIVE</span>":(m.stale?"<span class='tag'>STALE BOOK</span>":"");
+  return "<button class='pick' data-k='"+m.key+"'><span class='rowflex'><span>"+liveTag+" <span class='note'>"+etTime(m.start)+"</span> · <b>"+m.names[0]+"</b> vs <b>"+m.names[1]+"</b><br><span class='note'>"+m.title+" · "+m.tour+(m.doubles?" doubles":" singles")+"</span> "+pm+kk+"<br>"+profTag+" <span class='tag "+m.gcls+"'>"+m.graded+"</span></span>"+our+"</span></button>"
+    +"<div style='text-align:right;margin:-4px 2px 6px'><button class='addbtn' data-add='"+m.key+"'>＋ TICKET</button></div>"
+    +(OPENKEY===m.key?panelHTML(m):"");
+}
+function panelHTML(m){
+  const sp=m.sp;
+  const profBits=m.names.map(n=>{const e=lookup(n);const t=tier(n);
+    if(e&&e.card)return "<b>"+n+"</b> — FULL card · serve "+e.card.serve+" · return "+e.card.return+" · "+(e.card.matches||"")+" archive matches";
+    if(e&&e.nodes)return "<b>"+n+"</b> — TEXTURE · serve pts "+Math.round((e.nodes.srv_pct||0)*1000)/10+"% · return pts "+Math.round((e.nodes.ret_pct||0)*1000)/10+"%";
+    if(t==="GAME-BUILT")return "<b>"+n+"</b> — GAME-BUILT starter profile: first seen on today's books, built from this game's own data; joins the player list on the desk's next import.";
+    if(e)return "<b>"+n+"</b> — THIN card on file";
+    return "<b>"+n+"</b> — NO DATA yet (the door is open: this listing itself starts the profile)";}).join("<br>");
+  const chainNow=CHAIN.length?("<p class='note'>⛓ YOUR CHAIN: "+CHAIN.join(" → ")+" <button class='addbtn' id='runchain'>RUN THE CHAIN ON THIS GAME</button> <button class='addbtn' id='clearchain'>clear</button></p><div id='chainout'></div>"):"<p class='note'>⛓ ENGINE CHAINING: tap ＋CHAIN on engines below to link them in order — one engine's output feeds the next, a bigger equation than either alone.</p>";
+  return "<div class='panel'><b>THE GAME'S OWN DATA</b><br>"+profBits
+   +"<p style='margin:9px 0 2px'><b>RUN AN ENGINE ON IT</b> — the game's real data flows in; engines stay separate features, pick the ones you like:</p>"
+   +"<button class='eng' data-eng='profile'>👤 PROFILE</button><button class='eng' data-eng='fork'>🌳 1-2-3 FORK</button><button class='eng' data-eng='dp'>🎯 DP %</button><button class='eng' data-eng='gap'>⚖️ MARKET GAP</button>"
+   +"<a class='eng door' href='livepull.html' target='_blank'>🎣 LIVE PULL ↗</a><a class='eng door' href='liveboard.html' target='_blank'>🔴 LIVE BOARD ↗</a><a class='eng door' href='find.html?q="+encodeURIComponent(m.names[0])+"' target='_blank'>🔎 FIND ↗</a><a class='eng door' href='profiles.html#"+encodeURIComponent(m.names[0])+"' target='_blank'>📇 THEIR CARDS ↗</a>"
+   +"<p style='margin:6px 0 0'><button class='eng' data-chain='PROFILE'>＋CHAIN 👤</button><button class='eng' data-chain='FORK'>＋CHAIN 🌳</button><button class='eng' data-chain='DP'>＋CHAIN 🎯</button><button class='eng' data-chain='GAP'>＋CHAIN ⚖️</button></p>"
+   +chainNow+"<div id='engout'></div></div>";
+}
+function engRun(kind,m){
+  const sp=m.sp;
+  if(kind==="profile")return "<p><b>👤 PROFILE →</b> serve splits for the pair: "+m.names[0]+" wins "+Math.round(sp.pa*1000)/10+"% of serve points, "+m.names[1]+" "+Math.round(sp.pb*1000)/10+"% ("+sp.src+"). These two numbers are the fuel every other engine burns.</p>";
+  if(kind==="fork"){ if(!MATRIX)return "<p>🌳 matrix data still loading…</p>";
+    const fav=m.our!==null?(m.our>=50?0:1):0; const favPct=m.our!==null?Math.max(m.our,100-m.our):50;
+    return "<p><b>🌳 1-2-3 FORK →</b> the counted forks (53,530-match archive): a first-set winner takes the match "+ "76.9–90.2% of the time depending on the set score (6-0 steepest, 7-6 shallowest); the S1 loser at 0–2 in set 2 is THE GRAVE (7.7%). For this game the pre-match lean is "+m.names[fav]+" "+favPct+"% — the fork to watch is their first-set score: the wider it lands, the steeper the road.</p>";}
+  if(kind==="dp")return "<p><b>🎯 DP % →</b> exact repricer on the frozen pre-match state: <b>"+m.names[0]+" "+(m.our!==null?m.our:"—")+"%</b> · "+m.names[1]+" "+(m.our!==null?Math.round((100-m.our)*10)/10:"—")+"% ("+sp.src+").</p>";
+  if(kind==="gap"){ if(!m.pm)return "<p>⚖️ no Polymarket price on this game right now — no gap to measure.</p>";
+    const mid=m.pm[0]*100; const edge=m.our!==null?Math.round((m.our-mid)*10)/10:null;
+    return "<p><b>⚖️ MARKET GAP →</b> ours "+(m.our!==null?m.our+"%":"—")+" vs the book's "+Math.round(mid*10)/10+"% <span class='tag ext'>EXT</span> on "+m.names[0]+": gap <b class='"+(edge>=0?"up":"down")+"'>"+(edge===null?"—":((edge>=0?"+":"")+edge))+" pts</b>. The gap is a signal to study, stamped external — it never rewrites the core call.</p>";}
+  return "";}
+function runChain(m){
+  let html="<div class='box'><b>⛓ THE CHAIN, RUNNING ON "+m.names.join(" vs ")+"</b>", carry="";
+  CHAIN.forEach((step,i)=>{
+    html+="<p style='margin:7px 0'><span class='tag house'>STEP "+(i+1)+" · "+step+"</span>"+(carry?"<br><span class='note'>input from the step above: "+carry+"</span>":"");
+    if(step==="PROFILE"){const o=engRun("profile",m);html+=o;carry="serve splits "+Math.round(m.sp.pa*1000)/10+" / "+Math.round(m.sp.pb*1000)/10;}
+    if(step==="FORK"){html+=engRun("fork",m);carry="the fork discipline: first-set score sets the slope";}
+    if(step==="DP"){html+=engRun("dp",m);carry="our number: "+m.names[0]+" "+m.our+"%";}
+    if(step==="GAP"){html+=engRun("gap",m);carry="the final read: our number against the book, gap stamped";}
+    html+="</p>";});
+  html+="<p class='note'>The chain's output is the last step's line — each engine stayed itself; the equation is bigger than any one of them.</p></div>";
+  return html;}
+function renderList(){
+  const rows=MATCHES.filter(passF);
+  $("list").innerHTML=rows.length?rows.map(rowHTML).join(""):"<p class='note'>No matches pass the filters right now.</p>";
+  document.querySelectorAll("#list button.pick").forEach(b=>b.onclick=e=>{
+    if(e.target.dataset.add)return;
+    OPENKEY=(OPENKEY===b.dataset.k?null:b.dataset.k); renderList();});
+  document.querySelectorAll("#list [data-add]").forEach(b=>b.onclick=e=>{e.stopPropagation();addLeg(b.dataset.add);});
+  const m=MATCHES.find(x=>x.key===OPENKEY);
+  if(m){ document.querySelectorAll(".panel [data-eng]").forEach(b=>b.onclick=()=>{$("engout").innerHTML=engRun(b.dataset.eng,m);});
+    document.querySelectorAll(".panel [data-chain]").forEach(b=>b.onclick=()=>{CHAIN.push(b.dataset.chain);renderList();});
+    const rc=$("runchain"); if(rc)rc.onclick=()=>{$("chainout").innerHTML=runChain(m);};
+    const cc=$("clearchain"); if(cc)cc.onclick=()=>{CHAIN=[];renderList();}; }
+}
+/* ---------- ticket ---------- */
+function saveTicket(){localStorage.setItem("nodal-ticket",JSON.stringify(TICKET));}
+function addLeg(key){
+  const m=MATCHES.find(x=>x.key===key); if(!m||m.our===null)return;
+  if(TICKET.some(l=>l.key===key))return;
+  const side=m.our>=50?0:1;
+  TICKET.push({key,title:m.title,names:m.names,side,prob:side===0?m.our:100-m.our,midAtAdd:m.pm?m.pm[side]:null,at:Date.now()});
+  saveTicket(); renderTicket();}
+function renderTicket(){
+  if(!TICKET.length){$("ticket").innerHTML="No legs yet — add from any row's ＋ TICKET button, or click a recommendation.";$("ticketwatch").innerHTML="";return;}
+  const comb=TICKET.reduce((a,l)=>a*l.prob/100,1)*100;
+  let html="<table><tr><th>#</th><th>leg</th><th>our %</th><th></th></tr>";
+  TICKET.forEach((l,i)=>{html+="<tr><td>"+(i+1)+"</td><td>"+l.names[l.side]+" <span class='note'>("+l.title+")</span>"+(l.prob<55?" <span class='tag red'>WATCH — under 55%</span>":"")+"</td><td>"+l.prob+"%</td><td><button class='addbtn' data-rm='"+i+"'>✕</button></td></tr>";});
+  html+="</table><p>COMBINED: <b style='font-size:19px'>"+Math.round(comb*10)/10+"%</b> <span class='note'>(product of the legs' own percentages — naive independence, labeled)</span></p>";
+  $("ticket").innerHTML=html;
+  document.querySelectorAll("#ticket [data-rm]").forEach(b=>b.onclick=()=>{TICKET.splice(+b.dataset.rm,1);saveTicket();renderTicket();});
+  /* the watch: market-implied combined now vs at build */
+  const nowComb=TICKET.reduce((a,l)=>{const m=MATCHES.find(x=>x.key===l.key);return a*((m&&m.pm)?m.pm[l.side]:(l.midAtAdd||l.prob/100));},1)*100;
+  const buildComb=TICKET.reduce((a,l)=>a*(l.midAtAdd||l.prob/100),1)*100;
+  let watch="<p class='note'>Ticket watch (live): market-implied combined <b>"+Math.round(nowComb*10)/10+"%</b> vs "+Math.round(buildComb*10)/10+"% when the legs went on.</p>";
+  TICKET.forEach(l=>{const m=MATCHES.find(x=>x.key===l.key);
+    if(m&&m.pm&&l.midAtAdd!==null){const mv=(m.pm[l.side]-l.midAtAdd)*100;
+      if(mv<=-10)watch+="<p class='down'>⚠ LEVERAGE: "+l.names[l.side]+"'s price moved "+Math.round(mv)+"¢ against the ticket since it went on.</p>";}});
+  if(buildComb>0&&nowComb<0.6*buildComb)watch+="<div class='exitbanner'><b>EXIT THE TICKET?</b> The combined market-implied chance has fallen under 60% of its build value — the desk's rule for a ticket whose leverage sours: cash the legs that still carry value, don't ride a dying ticket to the last point. (Advice printed, nothing executed — Overlay Mode.)</div>";
+  $("ticketwatch").innerHTML=watch;}
+/* ---------- recommendations ---------- */
+function renderRecs(){
+  const cand=MATCHES.filter(m=>m.our!==null);
+  cand.sort((a,b)=>Math.max(b.our,100-b.our)-Math.max(a.our,100-a.our));
+  const top=cand.slice(0,6);
+  if(!top.length){$("recs").innerHTML="No priced games yet.";return;}
+  let html="<p class='note'>Ranked by our number; colors: <span class='recnum gold'> </span> ≥80 · <span class='recnum teal'> </span> 65–80 · <span class='recnum plain'> </span> 55–65 · <span class='recnum watch'> </span> &lt;55 watch-out.</p>";
+  let cum=1;
+  top.forEach((m,i)=>{const side=m.our>=50?0:1;const p=side===0?m.our:100-m.our;cum*=p/100;
+    const band=p>=80?"gold":p>=65?"teal":p>=55?"plain":"watch";
+    html+="<p style='margin:6px 0'><span class='recnum "+band+"'>"+(i+1)+"</span> <b>"+m.names[side]+"</b> "+p+"% <span class='note'>vs "+m.names[1-side]+" · "+etTime(m.start)+"</span> <button class='addbtn' data-rec='"+m.key+"'>＋</button><br><span class='note'>combo through this leg: <b>"+Math.round(cum*1000)/10+"%</b>"+(i?" (fell "+Math.round((1-p/100)*1000)/10+"% on this leg)":"")+"</span></p>";});
+  $("recs").innerHTML=html;
+  document.querySelectorAll("#recs [data-rec]").forEach(b=>b.onclick=()=>addLeg(b.dataset.rec));}
+/* ---------- rail: scores, specialists, threshold ---------- */
+function laneRows(){
+  const rows=[];
+  if(SCORES){ (SCORES.callers||[]).concat(SCORES.engines||[]).forEach(r=>rows.push(r)); }
+  if(ARENA){ (ARENA.specialists?Object.values(ARENA.specialists):[]).forEach(s=>rows.push({name:s.name,graded:s.combined_trades,acc:null,brier:null,status:s.status,note:"equity $"+s.combined_equity.toFixed(2)+" · realized "+(s.combined_realized>=0?"+":"")+s.combined_realized.toFixed(2)})); }
+  return rows;}
+function renderRail(){
+  const rows=laneRows();
+  $("railscores").innerHTML=rows.length?rows.map(r=>"<p style='margin:5px 0'><b>"+r.name+"</b> — "+(r.graded!=null?r.graded+" graded":"")+(r.acc!=null?" · "+Math.round(r.acc*1000)/10+"%":"")+(r.brier!=null?" · Brier "+r.brier:"")+" <span class='tag'>"+(r.status||"")+"</span>"+(r.note?"<br><span class='note'>"+r.note+"</span>":"")+"</p>").join(""):"scores still loading…";
+  if(ARENA&&ARENA.specialists){
+    $("railspecs").innerHTML=Object.values(ARENA.specialists).map(s=>"<p style='margin:5px 0'><b>"+s.name+"</b> — equity <b>$"+s.combined_equity.toFixed(2)+"</b> · realized "+(s.combined_realized>=0?"+":"")+s.combined_realized.toFixed(2)+" · "+s.combined_trades+" closes · "+s.status+"</p>").join("");
+  }
+  if(SCORES&&SCORES.rule){
+    $("thresh").innerHTML="<b>THE RULE (printed on the FIND scoreboard, computed from the sealed ledger):</b> "+SCORES.rule.text;
+    $("threshstand").innerHTML=rows.map(r=>{ if(r.graded==null)return"";
+      const d20=Math.max(0,SCORES.rule.graded_min-r.graded);
+      return "<p style='margin:4px 0'>"+r.name+": "+(d20?d20+" more graded to the count":"count met")+(r.acc!=null?(" · win rate "+Math.round(r.acc*1000)/10+"% vs "+SCORES.rule.accuracy_min+"%"):"")+(r.brier!=null?(" · Brier "+r.brier+" vs ≤"+SCORES.rule.brier_max):"")+" → <b>"+(r.status||"")+"</b></p>";}).join("");
+  }
+  $("scorestable").innerHTML=$("railscores").innerHTML;
+  if(FOLLOW&&FOLLOW.specialists){
+    $("arenafeed").innerHTML=FOLLOW.specialists.map(s=>"<div class='box'><b>"+s.specialist+"</b> — "+s.status+"<br>"+(s.plays||[]).map(p=>"<p style='margin:5px 0'><span class='tag'>"+p.state+"</span> "+p.match+" · "+p.rail+" · "+p.side+" — most likely: "+(p.most_likely_pattern||"—")+" ("+Math.round((p.pattern_probability||0)*1000)/10+"%)</p>").join("")+"</div>").join("");
+  }
+}
+/* ---------- views ---------- */
+function showView(v){ ["list","arena","scores"].forEach(x=>$("view-"+x).style.display=(x===v?"":"none")); }
+$("mm-arena").onclick=()=>showView("arena");
+$("mm-scores").onclick=()=>showView("scores");
+$("backlist1").onclick=e=>{e.preventDefault();showView("list");};
+$("backlist2").onclick=e=>{e.preventDefault();showView("list");};
+/* ---------- boot ---------- */
+async function boot(){
+  const get=async u=>{try{const r=await fetch(u);return await r.json();}catch(e){return null;}};
+  DATA=await get("livedata.json");
+  if(DATA&&DATA.players)Object.keys(DATA.players).forEach(k=>KEYMAP[keyOf(k)]=k);
+  const today=(await get("todaydata.json"))||{kalshi:[]};
+  TP=(await get("todayprofiles.json"))||{players:{}};
+  const gd=await get("gamesdata.json");
+  if(gd&&(gd.games||[]).length)gd.games.forEach(g=>{GD[pairKey(g.names)]=g;});
+  SCORES=await get("scoresdata.json");
+  ARENA=await get("arenadata.json");
+  FOLLOW=await get("followdata.json");
+  MATRIX=await get("matrixdata.json");
+  const gamma=await pullGamma();
+  MATCHES=assemble(gamma,today);
+  $("wire-note").innerHTML="Books pulled "+new Date().toLocaleTimeString()+" — <b style='color:#eef2fa'>"+MATCHES.length+" matches</b> ("+MATCHES.filter(m=>m.live).length+" live) · Polymarket live in your browser + Kalshi via the desk poll ("+(today.kalshi_matches??0)+" matches, "+(today.updated||"")+") · auto-refresh 60s";
+  renderChips(); renderList(); renderRail(); renderRecs(); renderTicket();
+  setInterval(async()=>{const g2=await pullGamma(); const t2=(await get("todaydata.json"))||today;
+    MATCHES=assemble(g2,t2); renderList(); renderRecs(); renderTicket();},60000);
+}
+$("q").addEventListener("input",renderList);
+boot();
+</script>
+</body></html>
