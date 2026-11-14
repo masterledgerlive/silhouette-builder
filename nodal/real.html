@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE REAL BOARD — $5 vs $5 · PLAIN vs THE EARLY CALLER, for real</title>
+<style>
+  :root{--gold:#f5b942;--teal:#2dd4bf;--red:#f87171;--green:#4ade80;--ink:#e8e6df;--dim:#9a97a3;--card:#17171f;--line:#2a2a38;--org:#fb923c}
+  *{box-sizing:border-box}
+  body{background:#0c0c12;color:var(--ink);font-family:Georgia,'Times New Roman',serif;margin:0;padding:18px 14px 60px}
+  .wrap{max-width:1060px;margin:0 auto}
+  h1{font-size:30px;letter-spacing:2px;margin:4px 0 2px;color:var(--gold)}
+  h2{font-size:19px;letter-spacing:1.5px;color:var(--teal);margin:26px 0 8px;border-bottom:1px solid var(--line);padding-bottom:5px}
+  .sub{color:var(--dim);font-size:14.5px;line-height:1.45}
+  .stamp{display:inline-block;border:1px solid var(--gold);color:var(--gold);border-radius:4px;padding:1px 7px;font-size:12px;letter-spacing:1px;margin-right:6px}
+  .stamp.real{border-color:var(--red);color:var(--red)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin:9px 0}
+  .ok{color:var(--green)} .bad{color:var(--red)} .mid{color:var(--gold)}
+  .small{font-size:13px;color:var(--dim);line-height:1.45}
+  a{color:var(--teal)}
+  .foot{margin-top:34px;color:var(--dim);font-size:13px;line-height:1.5;border-top:1px solid var(--line);padding-top:10px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:9px}
+  .stat b{display:block;font-size:20px;color:var(--gold);margin-top:2px}
+  .stat span{color:var(--dim);font-size:12.5px;letter-spacing:1px}
+  .vs{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media (max-width:700px){.vs{grid-template-columns:1fr}}
+  .eng{border-radius:12px;padding:16px;background:var(--card)}
+  .eng.plain{border:2px solid var(--teal)} .eng.early{border:2px solid var(--org)}
+  .eng h3{margin:2px 0 8px;font-size:21px;letter-spacing:1px}
+  .empty{font-size:30px;letter-spacing:3px;color:var(--dim);text-align:center;padding:26px 0 6px}
+  .row{border:1px solid var(--line);border-radius:8px;padding:10px 13px;margin:8px 0;background:var(--card);font-size:14.5px;line-height:1.55}
+  .badge{display:inline-block;border-radius:4px;padding:1px 8px;font-size:12.5px;letter-spacing:1px;font-weight:bold}
+  .b-win{background:#14532d;color:#bbf7d0} .b-loss{background:#7f1d1d;color:#fecaca} .b-fill{background:#1e3a5f;color:#bfdbfe} .b-double{background:var(--gold);color:#0c0c12}
+  table{border-collapse:collapse;width:100%;font-size:14px}
+  td,th{border:1px solid var(--line);padding:6px 9px;text-align:left}
+  th{color:var(--dim);letter-spacing:1px;font-size:12.5px}
+  .lesson{border-left:3px solid var(--gold);padding:8px 12px;margin:8px 0;background:#14141c;font-size:14.5px;line-height:1.55}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="small"><a href="index.html">← NODAL hub</a> · <a href="calls.html">THE CALLS — PLAIN in sim</a> · <a href="early.html">THE EARLY CALL — in sim</a> · <a href="profitdesk.html">The Profit Desk</a></div>
+  <h1>💵 THE REAL BOARD — $5 vs $5</h1>
+  <div class="sub">Phase 2, authorized by David on 2026-11-14: the two house engines run <b>for real</b> on Polymarket US — <b style="color:var(--teal)">PLAIN</b> with a $5.00 bank and <b style="color:var(--org)">THE EARLY CALLER</b> with its own $5.00 bank — to see which engine does better with real money. The banks never mix. Every real fill is sealed as a REAL record and graded on the <b>venue's own settlement</b>, never on our sim index, and never blended with the simulation record. <span class="stamp real">REAL MONEY</span><span class="stamp">DAVID PLACES EVERY ORDER — OVERLAY MODE</span></div>
+
+  <div class="card" style="border-color:var(--gold)"><b>RUN STATUS —</b> <span id="runStatus">…</span></div>
+
+  <div class="vs">
+    <div class="eng plain">
+      <h3 style="color:var(--teal)">PLAIN — the caller</h3>
+      <div class="small">Rule btc5-plain-v1 + the two adopted guards: real money only on calls ≥ 70%, one open position at a time. Stake $0.50 · buy only ≥3¢ under the model · exit at a 95¢ bid · day stop −$2.00 · bank floor $1.00.</div>
+      <div class="grid" style="margin-top:10px">
+        <div class="card stat"><span>BANK</span><b id="pBank">—</b></div>
+        <div class="card stat"><span>DAY P&amp;L</span><b id="pDay">—</b></div>
+        <div class="card stat"><span>GRADED</span><b id="pGraded">—</b></div>
+        <div class="card stat"><span>WIN RATE</span><b id="pRate">—</b></div>
+        <div class="card stat"><span>REAL P&amp;L</span><b id="pPnl">—</b></div>
+        <div class="card stat"><span>STATUS</span><b id="pStatus">—</b></div>
+      </div>
+    </div>
+    <div class="eng early">
+      <h3 style="color:var(--org)">THE EARLY CALLER — the flip engine</h3>
+      <div class="small">Rule btc5-early-flip-v1, unchanged: early call at 80–140s from a 0.60 floor, take value at 0.88, one flip. Stake $0.50 per leg action · day stop −$2.00 · bank floor $1.00. A ★ DOUBLE WIN scores 2 points for one play.</div>
+      <div class="grid" style="margin-top:10px">
+        <div class="card stat"><span>BANK</span><b id="eBank">—</b></div>
+        <div class="card stat"><span>DAY P&amp;L</span><b id="eDay">—</b></div>
+        <div class="card stat"><span>GRADED</span><b id="eGraded">—</b></div>
+        <div class="card stat"><span>WIN RATE</span><b id="eRate">—</b></div>
+        <div class="card stat"><span>SCORE (POINTS)</span><b id="eScore">—</b></div>
+        <div class="card stat"><span>STATUS</span><b id="eStatus">—</b></div>
+      </div>
+    </div>
+  </div>
+
+  <h2>THE REAL RECORD — SEALED FILLS &amp; VENUE SETTLEMENTS</h2>
+  <div id="record"><div class="empty">EMPTY</div><p class="small" style="text-align:center">No real trade has settled yet. This board starts empty on purpose — the sim numbers live on their own pages and never migrate here.</p></div>
+
+  <h2>IS THE PERCENTAGE HONEST? — REAL CALIBRATION</h2>
+  <p class="small">Stated model band vs what actually happened, computed from REAL settlements only, per engine. Beside it, the same engine's SIM band record — labeled, separate, never merged. The learner watches both.</p>
+  <div class="vs">
+    <div class="card"><b style="color:var(--teal)">PLAIN — REAL</b><div id="pBands" style="margin-top:8px"></div></div>
+    <div class="card"><b style="color:var(--org)">EARLY — REAL</b><div id="eBands" style="margin-top:8px"></div></div>
+  </div>
+
+  <h2>🧠 THE LEARNER RIDES THE RUN</h2>
+  <div class="lesson">The simulations <b>never stop</b> — the plain desk, the early caller, the race and the arena keep cycling while the real run plays, so the percentages stay current and every real window can be compared against what the sim did on the same window.</div>
+  <div class="lesson">Every real fill is sealed with the sim's call for that window attached, so real-vs-sim divergence is <b>measured, not remembered</b>.</div>
+  <div class="lesson">What the learner finds becomes a <b>proposal</b> to David — a band going cold for real, a fee-drag pattern, a flip rule misfiring. <b>Real-money rules never change without David's word.</b></div>
+  <div class="card"><b>SIM REFERENCE (not real money):</b> <span id="simRef">…</span></div>
+
+  <div class="foot">Phase 2 rulebook: <i>PHASE2-5-RULEBOOK.md</i> (AUTHORIZED v2) in the desk's sealed record set. Risks, printed plain: the whole $10 can be lost; fees and spread are charged on every trade; a photo-finish window settles on the venue's price source, not ours. Both REAL lanes earn their own verdict under the house bar — ≥20 graded · ≥62% · Brier ≤0.21 = APPROVED. No automation places orders; David clicks every trade himself.</div>
+</div>
+<script>
+function money(x){return (x<0?'−$':'$')+Math.abs(x).toFixed(2)}
+function bandsHTML(bands){
+  if(!bands || !bands.some(b=>b.n>0)) return '<p class="small">No real settlements in any band yet — EMPTY.</p>';
+  let h='<table><tr><th>BAND</th><th>N</th><th>STATED</th><th>ACTUAL</th></tr>';
+  for(const b of bands){ if(b.n>0) h+='<tr><td>'+b.band+'%</td><td>'+b.n+'</td><td>'+b.stated+'%</td><td>'+b.actual+'%</td></tr>'; }
+  return h+'</table>';
+}
+fetch('realdata.json?_='+Date.now()).then(r=>r.json()).then(d=>{
+  document.getElementById('runStatus').textContent=d.run_status;
+  const P=d.plain,E=d.early;
+  const fill=(id,v)=>document.getElementById(id).textContent=v;
+  fill('pBank',money(P.bank.cash)+' / $5.00'); fill('pDay',money(P.bank.day_pnl));
+  fill('pGraded',P.graded); fill('pRate',P.win_rate===null?'—':P.win_rate+'%');
+  fill('pPnl',money(P.pnl)); fill('pStatus',P.status);
+  fill('eBank',money(E.bank.cash)+' / $5.00'); fill('eDay',money(E.bank.day_pnl));
+  fill('eGraded',E.graded); fill('eRate',E.win_rate===null?'—':E.win_rate+'%');
+  fill('eScore',E.points+' pts · ★ '+E.double_wins); fill('eStatus',E.status);
+  document.getElementById('pBands').innerHTML=bandsHTML(P.bands);
+  document.getElementById('eBands').innerHTML=bandsHTML(E.bands);
+  const rows=[];
+  for(const f of P.fills.concat(E.fills)) rows.push({t:f.at||'',seq:f.seq,html:'<span class="badge b-fill">FILL</span> <b>'+f.engine+'</b> · '+(f.window||'')+' · '+(f.action?f.action+' · ':'')+(f.side||'')+' @ '+(f.price!==undefined?Math.round(f.price*100)+'¢':'')+' · stake '+money(f.stake||0)});
+  for(const s of P.settles.concat(E.settles)){
+    const win=s.correct, dbl=s.outcome==='DOUBLE_WIN';
+    rows.push({t:s.at||'',seq:s.seq,html:'<span class="badge '+(dbl?'b-double':win?'b-win':'b-loss')+'">'+(dbl?'★ DOUBLE WIN':win?'WIN':'LOSS')+'</span> <b>'+s.engine+'</b> · '+(s.window||'')+' · venue settled '+(s.venue_result||'')+' · P&amp;L <b class="'+(s.pnl>=0?'ok':'bad')+'">'+money(s.pnl||0)+'</b>'});
+  }
+  rows.sort((a,b)=>a.seq-b.seq);
+  if(rows.length) document.getElementById('record').innerHTML=rows.map(r=>'<div class="row">'+r.html+'</div>').join('');
+  const S=d.sim_reference||{};
+  let sr=[];
+  if(S.plain) sr.push('PLAIN sim: '+S.plain.graded+' graded · '+S.plain.win_rate+'%');
+  if(S.early) sr.push('EARLY sim: '+S.early.graded+' plays · '+S.early.win_rate+'% · score '+S.early.score);
+  document.getElementById('simRef').textContent=sr.join(' · ')||'—';
+}).catch(()=>{document.getElementById('runStatus').textContent='realdata.json not on the wire yet';});
+</script>
+</body>
+</html>
