@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE BTC PORTAL — two models, five minutes, real money</title>
+<style>
+  :root{--btc:#f7931a;--gold:#f5b942;--teal:#2dd4bf;--red:#f87171;--green:#4ade80;--ink:#e8e6df;--dim:#9a97a3;--card:#17171f;--line:#2a2a38;--org:#fb923c}
+  *{box-sizing:border-box}
+  body{background:#0b0b10;color:var(--ink);font-family:Georgia,'Times New Roman',serif;margin:0;padding:18px 14px 60px}
+  .wrap{max-width:1060px;margin:0 auto}
+  h1{font-size:31px;letter-spacing:2px;margin:4px 0 2px;color:var(--btc)}
+  h2{font-size:19px;letter-spacing:1.5px;color:var(--btc);margin:26px 0 8px;border-bottom:1px solid var(--line);padding-bottom:5px}
+  .sub{color:var(--dim);font-size:14.5px;line-height:1.45}
+  .stamp{display:inline-block;border:1px solid var(--gold);color:var(--gold);border-radius:4px;padding:1px 7px;font-size:12px;letter-spacing:1px;margin-right:6px}
+  .stamp.real{border-color:var(--red);color:var(--red)}
+  .stamp.sim{border-color:var(--teal);color:var(--teal)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin:9px 0}
+  .ok{color:var(--green)} .bad{color:var(--red)} .mid{color:var(--gold)}
+  .small{font-size:13px;color:var(--dim);line-height:1.45}
+  a{color:var(--teal)}
+  .foot{margin-top:34px;color:var(--dim);font-size:13px;line-height:1.5;border-top:1px solid var(--line);padding-top:10px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:9px}
+  .stat b{display:block;font-size:20px;color:var(--gold);margin-top:2px}
+  .stat span{color:var(--dim);font-size:12.5px;letter-spacing:1px}
+  .vs{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media (max-width:700px){.vs{grid-template-columns:1fr}}
+  .eng{border-radius:12px;padding:16px;background:var(--card)}
+  .eng.plain{border:2px solid var(--teal)} .eng.early{border:2px solid var(--gold)}
+  .eng h3{margin:2px 0 8px;font-size:21px;letter-spacing:1px}
+  .empty{font-size:30px;letter-spacing:3px;color:var(--dim);text-align:center;padding:26px 0 6px}
+  .row{border:1px solid var(--line);border-radius:8px;padding:10px 13px;margin:8px 0;background:var(--card);font-size:14.5px;line-height:1.55}
+  .badge{display:inline-block;border-radius:4px;padding:1px 8px;font-size:12.5px;letter-spacing:1px;font-weight:bold}
+  .b-win{background:#14532d;color:#bbf7d0} .b-loss{background:#7f1d1d;color:#fecaca} .b-fill{background:#1e3a5f;color:#bfdbfe} .b-double{background:var(--gold);color:#0c0c12}
+  table{border-collapse:collapse;width:100%;font-size:14px}
+  td,th{border:1px solid var(--line);padding:6px 9px;text-align:left}
+  th{color:var(--dim);letter-spacing:1px;font-size:12.5px}
+  .hero{border:2px solid var(--btc);border-radius:12px;padding:16px;background:#141019}
+  .big{font-size:34px;letter-spacing:1px}
+  .bar{height:14px;background:#26262f;border-radius:7px;overflow:hidden;margin:6px 0}
+  .bar i{display:block;height:100%;background:var(--teal)}
+  .bar.gold i{background:var(--gold)}
+  .dock{border:2px dashed #4a4a58;border-radius:12px;padding:16px;background:#101016}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="small"><a href="/">← highscores.live</a></div>
+  <h1>₿ THE BTC PORTAL</h1>
+  <div class="sub">Two house models trade the same 5-minute question — <i>is Bitcoin up or down when this window closes?</i> — and nothing else. No tennis, no other sport: this page is the BTC desk, whole and separate. <b style="color:var(--teal)">PLAIN</b> makes one careful call per window. <b style="color:var(--gold)">THE EARLY CALLER</b> calls 30 seconds earlier and can bank value and flip. Both now run <b>for real</b> on Polymarket US with $5.00 banks, under David's sizing equation and reserve law — and a third, more aggressive model is being born from the two of them, in simulation only. <span class="stamp real">REAL MONEY</span><span class="stamp">DAVID PLACES EVERY ORDER — OVERLAY MODE</span></div>
+
+  <div class="card" style="border-color:var(--btc)"><b>RUN STATUS —</b> <span id="runStatus">…</span></div>
+
+  <h2>⏱ THE LIVE WINDOW <span class="stamp sim">SIM MIRROR — THE SEALED RECORD GOVERNS</span></h2>
+  <div class="hero">
+    <div class="vs" style="align-items:start">
+      <div>
+        <div class="small">WINDOW <span id="lwWindow">—</span> · CLOSES IN <b id="lwCount" style="color:var(--btc)">—</b></div>
+        <div class="big" id="lwPx">BTC $—</div>
+        <div class="small">open <span id="lwOpen">—</span> · drift <span id="lwDrift">—</span> · mirror = median of Coinbase + Kraken spot, open = Coinbase candle open (the desk's sealed open is its own first median sample and can differ by a few dollars)</div>
+      </div>
+      <div>
+        <div class="small" style="color:var(--teal)">PLAIN'S MODEL (mirror)</div>
+        <div class="bar"><i id="lwPlainBar" style="width:50%"></i></div>
+        <div id="lwPlain" class="small">—</div>
+        <div class="small" style="color:var(--gold);margin-top:8px">EARLY'S MODEL (mirror)</div>
+        <div class="bar gold"><i id="lwEarlyBar" style="width:50%"></i></div>
+        <div id="lwEarly" class="small">—</div>
+      </div>
+    </div>
+    <div id="lwSealed" style="margin-top:10px;font-size:15px;line-height:1.55">sealed calls for this window appear here as the desk seals them…</div>
+  </div>
+
+  <h2>💵 THE TWO MODELS — FOR REAL</h2>
+  <div class="vs">
+    <div class="eng plain">
+      <h3 style="color:var(--teal)">PLAIN — the caller</h3>
+      <div class="small">Rule btc5-plain-v1 + the real-money guards: calls ≥ 70% only · buy ≥3¢ under the model · exit at a 95¢ bid · one open position · day stop −$2.00. Stake by the equation: <b>s = 10% of day-start bank B</b> (down to 10¢, floor $0.50), set once a day. A play fires only if savings lock L plus two more rounds stay uncommitted.</div>
+      <div class="grid" style="margin-top:10px">
+        <div class="card stat"><span>BANK</span><b id="pBank">—</b></div>
+        <div class="card stat"><span>DAY-START B</span><b id="pB">—</b></div>
+        <div class="card stat"><span>TODAY'S STAKE s</span><b id="pS">—</b></div>
+        <div class="card stat"><span>SAVINGS LOCK L</span><b id="pL">—</b></div>
+        <div class="card stat"><span>DAY P&amp;L</span><b id="pDay">—</b></div>
+        <div class="card stat"><span>REAL GRADED</span><b id="pGraded">—</b></div>
+        <div class="card stat"><span>REAL WIN RATE</span><b id="pRate">—</b></div>
+        <div class="card stat"><span>REAL STREAK</span><b id="pStreak">—</b></div>
+        <div class="card stat"><span>REAL P&amp;L</span><b id="pPnl">—</b></div>
+        <div class="card stat"><span>STATUS</span><b id="pStatus">—</b></div>
+      </div>
+      <div class="small" style="margin-top:8px">SIM record (labeled, never blended): <span id="pSim">—</span></div>
+    </div>
+    <div class="eng early">
+      <h3 style="color:var(--gold)">THE EARLY CALLER — the flip engine</h3>
+      <div class="small">Rule btc5-early-flip-v1, unchanged: early call at 80–140s from a 0.60 floor, take value at 0.88, one flip. Same sizing equation, same reserve law, day stop −$2.00. A ★ DOUBLE WIN — value banked, flipped, final answer right — scores 2 points for one play.</div>
+      <div class="grid" style="margin-top:10px">
+        <div class="card stat"><span>BANK</span><b id="eBank">—</b></div>
+        <div class="card stat"><span>DAY-START B</span><b id="eB">—</b></div>
+        <div class="card stat"><span>TODAY'S STAKE s</span><b id="eS">—</b></div>
+        <div class="card stat"><span>SAVINGS LOCK L</span><b id="eL">—</b></div>
+        <div class="card stat"><span>DAY P&amp;L</span><b id="eDay">—</b></div>
+        <div class="card stat"><span>REAL GRADED</span><b id="eGraded">—</b></div>
+        <div class="card stat"><span>REAL WIN RATE</span><b id="eRate">—</b></div>
+        <div class="card stat"><span>REAL STREAK</span><b id="eStreak">—</b></div>
+        <div class="card stat"><span>REAL SCORE</span><b id="eScore">—</b></div>
+        <div class="card stat"><span>STATUS</span><b id="eStatus">—</b></div>
+      </div>
+      <div class="small" style="margin-top:8px">SIM record (labeled, never blended): <span id="eSim">—</span></div>
+    </div>
+  </div>
+
+  <h2>⚔️ HEAD-TO-HEAD — WHICH MODEL IS BETTER?</h2>
+  <div class="card" style="border-color:var(--btc)"><b id="h2hVerdict">…</b>
+    <div class="small" style="margin-top:6px">Judged on REAL settlements only, and updated by the learner as each real play grades. The same house bar applies to both: ≥20 graded · ≥62% · Brier ≤0.21 = APPROVED.</div>
+  </div>
+  <div class="vs">
+    <div class="card"><b style="color:var(--teal)">PLAIN — REAL bands</b> <span class="small">vs its SIM bands (labeled)</span><div id="pBands" style="margin-top:8px"></div></div>
+    <div class="card"><b style="color:var(--gold)">EARLY — REAL bands</b> <span class="small">vs its SIM bands (labeled)</span><div id="eBands" style="margin-top:8px"></div></div>
+  </div>
+
+  <h2>📜 THE REAL RECORD — SEALED FILLS &amp; VENUE SETTLEMENTS</h2>
+  <div id="record"><div class="empty">EMPTY</div><p class="small" style="text-align:center">No real trade has settled yet. This board starts empty on purpose — real fills and the venue's own settlements land here, sealed, as they happen.</p></div>
+
+  <h2>🏦 VENUE STATUS — SAID PLAINLY</h2>
+  <div class="vs">
+    <div class="card" style="border-color:var(--green)"><b class="ok">● LIVE RAIL — POLYMARKET US</b><div class="small" style="margin-top:6px" id="venueLive">The live 5-minute BTC Up/Down rail for the real run. David holds the funded account and taps every order himself (overlay mode). Real fills grade on this venue's settlement.</div></div>
+    <div class="dock"><b style="color:var(--dim)">○ DOCKED — KALSHI</b><div class="small" style="margin-top:6px" id="venueKalshi">Kalshi has NO 5-minute BTC series (verified — KXBTC5M does not exist); its fastest BTC market is the 15-minute KXBTC15M, a different game. The desk's Kalshi BTC client is built and refusal-tested, but the BTC mandate is unsigned and the Kalshi balance is $0. Kalshi is not live, and this page will never show it as live.</div></div>
+  </div>
+
+  <h2>🌊 THE THIRD MODEL <span class="stamp sim">SIM ONLY — NO REAL MONEY</span></h2>
+  <div class="card" id="thirdCard"><span class="small">…</span></div>
+
+  <div class="foot">The rules, printed plain: both real banks are $5.00 and never mix; the whole $10 can be lost; fees and spread are charged on every trade; a photo-finish window settles on the venue's price source, not ours. The simulations never stop running beside the real run, so every real window can be compared against what the sim did on the same window — divergence is measured, not remembered. Real-money rules never change without David's word. The third model is a simulation experiment: its scaled-bank ledger is a labeled hypothesis, not a promise.</div>
+</div>
+<script>
+function money(x){return (x<0?'−$':'$')+Math.abs(x).toFixed(2)}
+function streakTxt(s){ if(!s||!s.current_n) return '—'; return (s.current_type==='W'?'🔥 W':'❄ L')+s.current_n+' · best W'+s.best_win; }
+function bandsHTML(real, sim){
+  let h='';
+  if(real && real.some(b=>b.n>0)){
+    h+='<table><tr><th>REAL BAND</th><th>N</th><th>STATED</th><th>ACTUAL</th></tr>';
+    for(const b of real){ if(b.n>0) h+='<tr><td>'+b.band+'%</td><td>'+b.n+'</td><td>'+b.stated+'%</td><td>'+b.actual+'%</td></tr>'; }
+    h+='</table>';
+  } else h+='<p class="small">REAL: no settlements in any band yet — EMPTY.</p>';
+  if(sim && sim.length){
+    h+='<table style="margin-top:8px"><tr><th>SIM BAND (labeled)</th><th>N</th><th>STATED</th><th>ACTUAL</th></tr>';
+    for(const b of sim){ if(b.n>0) h+='<tr><td>'+b.band+'</td><td>'+b.n+'</td><td>'+b.stated+'%</td><td>'+b.actual+'%</td></tr>'; }
+    h+='</table>';
+  }
+  return h;
+}
+let DATA=null;
+function render(){
+  if(!DATA) return;
+  const d=DATA, P=d.real.plain, E=d.real.early;
+  document.getElementById('runStatus').textContent=d.run_status||'—';
+  const fill=(id,v)=>document.getElementById(id).textContent=v;
+  fill('pBank',money(P.bank.cash)+' / $5.00'); fill('pDay',money(P.bank.day_pnl));
+  fill('pB',money(P.sizing.B)); fill('pS',money(P.sizing.s)); fill('pL',money(P.sizing.L));
+  fill('pGraded',P.graded); fill('pRate',P.win_rate===null?'—':P.win_rate+'%');
+  fill('pStreak',streakTxt(P.streaks)); fill('pPnl',money(P.pnl)); fill('pStatus',P.status);
+  fill('eBank',money(E.bank.cash)+' / $5.00'); fill('eDay',money(E.bank.day_pnl));
+  fill('eB',money(E.sizing.B)); fill('eS',money(E.sizing.s)); fill('eL',money(E.sizing.L));
+  fill('eGraded',E.graded); fill('eRate',E.win_rate===null?'—':E.win_rate+'%');
+  fill('eStreak',streakTxt(E.streaks)); fill('eScore',(E.points||0)+' pts · ★ '+(E.double_wins||0)); fill('eStatus',E.status);
+  const pc=d.live.plain.counters||{}, ec=d.live.early.counters||{};
+  fill('pSim',(pc.graded||0)+' graded · '+(pc.win_rate||0)+'% · streak '+(pc.streak_type||'')+(pc.streak_n||'')+' · best W'+(pc.best_win_streak||0));
+  fill('eSim',(ec.plays||0)+' plays · '+(ec.win_rate||0)+'% · score '+(ec.score||0)+' · ★ '+(ec.double_wins||0)+' · form '+(ec.form||''));
+  fill('h2hVerdict',d.head2head.verdict);
+  const simB=(d.sim_reference&&d.sim_reference.plain)?d.sim_reference.plain.bands:null;
+  document.getElementById('pBands').innerHTML=bandsHTML(P.bands, simB);
+  document.getElementById('eBands').innerHTML=bandsHTML(E.bands, null)+(E.graded? '' : '<p class="small">EARLY SIM bands live on THE EARLY CALL page; its sim line above is the summary.</p>');
+  const rows=[];
+  for(const f of P.fills.concat(E.fills)) rows.push({seq:f.seq,html:'<span class="badge b-fill">FILL</span> <b>'+f.engine+'</b> · '+(f.window||'')+' · '+(f.action?f.action+' · ':'')+(f.side||'')+' @ '+(f.price!==undefined?Math.round(f.price*100)+'¢':'')+' · stake '+money(f.stake||0)});
+  for(const s of P.settles.concat(E.settles)){
+    const win=s.correct, dbl=s.outcome==='DOUBLE_WIN';
+    rows.push({seq:s.seq,html:'<span class="badge '+(dbl?'b-double':win?'b-win':'b-loss')+'">'+(dbl?'★ DOUBLE WIN':win?'WIN':'LOSS')+'</span> <b>'+s.engine+'</b> · '+(s.window||'')+' · venue settled '+(s.venue_result||'')+' · P&amp;L <b class="'+(s.pnl>=0?'ok':'bad')+'">'+money(s.pnl||0)+'</b>'});
+  }
+  rows.sort((a,b)=>a.seq-b.seq);
+  if(rows.length) document.getElementById('record').innerHTML=rows.map(r=>'<div class="row">'+r.html+'</div>').join('');
+  // sealed sim calls for the live window
+  const lw=d.live.plain.window||{}, ew=d.live.early.window||{};
+  let sh='';
+  if(lw.window) sh+='<div>Window <b>'+lw.window+'</b> (SIM feed) — ';
+  if(lw.call) sh+='<span style="color:var(--teal)"><b>PLAIN sealed: '+lw.call.side.toUpperCase()+' '+Math.round(lw.call.chance*100)+'%</b></span>';
+  else if(lw.abstain) sh+='<span style="color:var(--teal)">PLAIN: no call (abstained)</span>';
+  else sh+='<span style="color:var(--teal)">PLAIN: watching…</span>';
+  if(ew.call) sh+=' · <span style="color:var(--gold)"><b>EARLY sealed: '+ew.call.side.toUpperCase()+' '+Math.round(ew.call.chance*100)+'%</b></span>';
+  else if(ew.abstain) sh+=' · <span style="color:var(--gold)">EARLY: no play</span>';
+  else sh+=' · <span style="color:var(--gold)">EARLY: telegraphing…</span>';
+  if(ew.value) sh+=' · <span class="ok">EARLY banked value at '+Math.round(ew.value.chance*100)+'%</span>';
+  if(ew.flip) sh+=' · <span class="mid">EARLY FLIPPED to '+ew.flip.to_side.toUpperCase()+'</span>';
+  sh+='</div>';
+  document.getElementById('lwSealed').innerHTML=sh;
+  document.getElementById('lwWindow').textContent=lw.window||'—';
+  // third model
+  const T=d.third||{status:'NOT BUILT YET'};
+  const tc=document.getElementById('thirdCard');
+  if(T.status==='NOT BUILT YET'){ tc.innerHTML='<span class="small">The third model is being built — its scoreboard lands here.</span>'; }
+  else {
+    const L=T.ledgers.law, H=T.ledgers.hypo, S=T.scoreboard;
+    tc.innerHTML='<b>'+(T.name||'THE THIRD MODEL')+'</b> <span class="stamp sim">SIM ONLY</span> <span class="small">'+(T.concept||'')+'</span>'
+      +'<div class="grid" style="margin-top:10px">'
+      +'<div class="card stat"><span>WINDOWS SEEDED</span><b>'+S.windows+'</b></div>'
+      +'<div class="card stat"><span>WINDOW CALLS LANDED</span><b>'+S.call_hits+' / '+S.windows+'</b></div>'
+      +'<div class="card stat"><span>MICRO PLAYS</span><b>'+S.plays+'</b></div>'
+      +'<div class="card stat"><span>PLAYS CORRECT</span><b>'+S.correct+' / '+S.plays+'</b></div>'
+      +'<div class="card stat"><span>PLAY STREAK</span><b>'+(S.streak_type||'—')+(S.streak_n||'')+'</b></div>'
+      +'<div class="card stat"><span>BEST PLAY STREAK</span><b>W'+S.best_win_streak+'</b></div>'
+      +'<div class="card stat"><span>BIGGEST WINDOW HAUL (LAW)</span><b>'+money(S.best_haul_law)+'</b></div>'
+      +'<div class="card stat"><span>LAW LEDGER BANK ($5 RULES)</span><b>'+money(L.bank)+'</b></div>'
+      +'<div class="card stat"><span>LAW LEDGER P&amp;L</span><b>'+money(L.pnl)+'</b></div>'
+      +'<div class="card stat"><span>HYPOTHETICAL BANK ($500, LABELED)</span><b>'+money(H.bank)+'</b></div>'
+      +'<div class="card stat"><span>HYPOTHETICAL P&amp;L (NOT A PROMISE)</span><b>'+money(H.pnl)+'</b></div>'
+      +'</div><div class="small">Two ledgers, same plays: the LAW ledger runs David\'s real sizing equation, reserve law and day stops on a $5 sim bank. The HYPOTHETICAL ledger runs the identical plays at a $500 scale with fees and ladder-walk fills counted — it tests David\'s hypothesis that more capital earns more over time. It is a hypothesis under test, not a proven fact.</div>'
+      +((T.recent_windows&&T.recent_windows.length)? '<div style="margin-top:8px">'+T.recent_windows.map(w=>'<div class="row"><b>'+w.window+'</b> · seeded '+w.seed_side.toUpperCase()+' (followed '+w.followed+') · call '+(w.call_hit===null?'pending':w.call_hit?'LANDED ✓':'missed ✗')+' · '+w.plays+' plays · '+w.correct+' correct · haul <b class="'+(w.haul_law>=0?'ok':'bad')+'">'+money(w.haul_law)+'</b> law / '+money(w.haul_hypo)+' hypo</div>').join('')+'</div>':'');
+  }
+}
+function loadData(){ fetch('btcportal.json?_='+Date.now()).then(r=>r.json()).then(d=>{DATA=d;render();}).catch(()=>{}); }
+loadData(); setInterval(loadData, 20000);
+// ---- live mirror (indicative only; the sealed record governs) ----
+let VOL=[];
+function phi(z){return 0.5*(1+Math.erf(z/Math.SQRT2));}
+Math.erf=Math.erf||function(x){const s=x<0?-1:1;x=Math.abs(x);const t=1/(1+0.3275911*x);const y=1-(((((1.061405429*t-1.453152027)*t)+1.421413741)*t-0.284496736)*t+0.254829592)*t*Math.exp(-x*x);return s*y;};
+async function tick(){
+  try{
+    const now=Date.now()/1000, w=Math.floor(now/300)*300;
+    const [cb,kr]=await Promise.all([
+      fetch('https://api.exchange.coinbase.com/products/BTC-USD/ticker').then(r=>r.json()),
+      fetch('https://api.kraken.com/0/public/Ticker?pair=XBTUSD').then(r=>r.json())]);
+    const a=parseFloat(cb.price), b=parseFloat(kr.result.XXBTZUSD.c[0]);
+    const px=[a,b].sort((x,y)=>x-y)[0]+([a,b].sort((x,y)=>x-y)[1]-[a,b].sort((x,y)=>x-y)[0])/2;
+    if(!VOL.length || now-VOL[0].t>1500){
+      const cd=await fetch('https://api.exchange.coinbase.com/products/BTC-USD/candles?granularity=60').then(r=>r.json());
+      VOL=cd.map(r=>({t:r[0],o:r[3],c:r[4]})).sort((x,y)=>x.t-y.t); VOL.t=now;
+    }
+    const candle=VOL.find(c=>c.t===w);
+    const open=candle?candle.o:(DATA&&DATA.live.plain.window?DATA.live.plain.window.open_px:null);
+    document.getElementById('lwPx').textContent='BTC $'+px.toLocaleString('en-US',{maximumFractionDigits:0});
+    const left=Math.max(0,Math.round(w+300-now));
+    document.getElementById('lwCount').textContent=Math.floor(left/60)+':'+String(left%60).padStart(2,'0');
+    if(open){
+      const drift=px-open;
+      document.getElementById('lwOpen').textContent='$'+open.toLocaleString('en-US',{maximumFractionDigits:0});
+      const de=document.getElementById('lwDrift');
+      de.textContent=(drift>=0?'+$':'−$')+Math.abs(drift).toFixed(0);
+      de.className=drift>=0?'ok':'bad';
+      // sigma from the last hour of 1m closes (desk method, mirror-grade)
+      const closes=VOL.filter(c=>c.t>now-3700).map(c=>c.c);
+      let sig=0.000045;
+      if(closes.length>10){ const rets=[]; for(let i=1;i<closes.length;i++) rets.push(Math.log(closes[i]/closes[i-1])); const m=rets.reduce((s,x)=>s+x,0)/rets.length; sig=Math.sqrt(rets.reduce((s,x)=>s+(x-m)*(x-m),0)/rets.length)/Math.sqrt(60); }
+      const cu=phi(Math.log(px/open)/(sig*Math.sqrt(Math.max(left,1))));
+      const up=cu>=0.5, ch=Math.round((up?cu:1-cu)*100);
+      const txt=(up?'⬆ UP':'⬇ DOWN')+' '+ch+'% chance on the mirror model';
+      document.getElementById('lwPlain').textContent=txt+' · PLAIN seals 110–200s in, calls ≥60% (real relays need ≥70%)';
+      document.getElementById('lwEarly').textContent=txt+' · EARLY seals 80–140s in at ≥60%, takes value at 88%';
+      document.getElementById('lwPlainBar').style.width=((up?cu:1-cu)*100)+'%';
+      document.getElementById('lwEarlyBar').style.width=((up?cu:1-cu)*100)+'%';
+    }
+  }catch(e){}
+}
+tick(); setInterval(tick, 5000);
+</script>
+</body>
+</html>
