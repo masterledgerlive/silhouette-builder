@@ -1,17 +1,17 @@
 {
- "built_at": "2026-11-14T07:40:02Z",
+ "built_at": "2026-11-14T07:59:48Z",
  "bands": [
   {
    "band": "60\u201370%",
-   "n": 20,
+   "n": 22,
    "stated": 65.0,
-   "actual": 55.0
+   "actual": 59.1
   },
   {
    "band": "70\u201380%",
-   "n": 12,
+   "n": 14,
    "stated": 74.6,
-   "actual": 91.7
+   "actual": 85.7
   },
   {
    "band": "80\u201390%",
@@ -30,17 +30,77 @@
   "id": "BTC5",
   "name": "BTC 5-min desk (our specialist, sim)",
   "kind": "BTC Up/Down 5m windows \u00b7 plain vol model btc5-plain-v1 \u00b7 stand-in index",
-  "calls": 57,
-  "graded": 55,
-  "correct": 45,
-  "accuracy": 81.8,
-  "brier": 0.1241,
-  "streak_now": 0,
+  "calls": 61,
+  "graded": 59,
+  "correct": 48,
+  "accuracy": 81.4,
+  "brier": 0.1306,
+  "streak_now": 3,
   "streak_best": 13,
   "status": "APPROVED",
   "note": "graded from BTC5_GRADE records in the sealed ledger"
  },
  "recent_calls": [
+  {
+   "window": "2026-11-14T07:55:00Z",
+   "side": "down",
+   "chance": 0.8048,
+   "at_elapsed_s": 125,
+   "seconds_left": 174,
+   "index_px": 67148.275,
+   "open_px": 67226.62,
+   "move_usd": -78.35,
+   "band": "80\u201390%",
+   "why": "BTC fell $78 from the window open with 174s left \u2014 the model put DOWN at 80%. Top honesty band: 80\u201390% calls are 9-for-9 so far.",
+   "result": null,
+   "correct": null,
+   "brier": null
+  },
+  {
+   "window": "2026-11-14T07:50:00Z",
+   "side": "up",
+   "chance": 0.6862,
+   "at_elapsed_s": 114,
+   "seconds_left": 185,
+   "index_px": 67001.88,
+   "open_px": 66961.35,
+   "move_usd": 40.53,
+   "band": "60\u201370%",
+   "why": "BTC rose $41 from the window open with 185s left \u2014 the model put UP at 69%.",
+   "result": "up",
+   "correct": true,
+   "brier": 0.0985
+  },
+  {
+   "window": "2026-11-14T07:45:00Z",
+   "side": "down",
+   "chance": 0.7396,
+   "at_elapsed_s": 146,
+   "seconds_left": 153,
+   "index_px": 66952.88500000001,
+   "open_px": 67000.765,
+   "move_usd": -47.88,
+   "band": "70\u201380%",
+   "why": "BTC fell $48 from the window open with 153s left \u2014 the model put DOWN at 74%.",
+   "result": "down",
+   "correct": true,
+   "brier": 0.0678
+  },
+  {
+   "window": "2026-11-14T07:40:00Z",
+   "side": "down",
+   "chance": 0.6073,
+   "at_elapsed_s": 134,
+   "seconds_left": 165,
+   "index_px": 67010.765,
+   "open_px": 67032.5,
+   "move_usd": -21.74,
+   "band": "60\u201370%",
+   "why": "BTC fell $22 from the window open with 165s left \u2014 the model put DOWN at 61%.",
+   "result": "down",
+   "correct": true,
+   "brier": 0.1542
+  },
   {
    "window": "2026-11-14T07:35:00Z",
    "side": "up",
@@ -52,9 +112,9 @@
    "move_usd": 48.46,
    "band": "70\u201380%",
    "why": "BTC rose $48 from the window open with 155s left \u2014 the model put UP at 75%.",
-   "result": null,
-   "correct": null,
-   "brier": null
+   "result": "down",
+   "correct": false,
+   "brier": 0.5604
   },
   {
    "window": "2026-11-14T07:30:00Z",
@@ -340,69 +400,65 @@
    "result": "down",
    "correct": true,
    "brier": 0.0712
-  },
-  {
-   "window": "2026-11-14T05:10:00Z",
-   "side": "up",
-   "chance": 0.6127,
-   "at_elapsed_s": 161,
-   "seconds_left": 138,
-   "index_px": 67111.505,
-   "open_px": 67085.45,
-   "move_usd": 26.06,
-   "band": "60\u201370%",
-   "why": "BTC rose $26 from the window open with 138s left \u2014 the model put UP at 61%.",
-   "result": "up",
-   "correct": true,
-   "brier": 0.15
-  },
-  {
-   "window": "2026-11-14T05:05:00Z",
-   "side": "down",
-   "chance": 0.6737,
-   "at_elapsed_s": 119,
-   "seconds_left": 180,
-   "index_px": 66860.59,
-   "open_px": 66908.58499999999,
-   "move_usd": -47.99,
-   "band": "60\u201370%",
-   "why": "BTC fell $48 from the window open with 180s left \u2014 the model put DOWN at 67%.",
-   "result": "up",
-   "correct": false,
-   "brier": 0.4539
-  },
-  {
-   "window": "2026-11-14T05:00:00Z",
-   "side": "down",
-   "chance": 0.8989,
-   "at_elapsed_s": 165,
-   "seconds_left": 134,
-   "index_px": 66941.005,
-   "open_px": 67056.515,
-   "move_usd": -115.51,
-   "band": "80\u201390%",
-   "why": "BTC fell $116 from the window open with 134s left \u2014 the model put DOWN at 90%. Top honesty band: 80\u201390% calls are 9-for-9 so far.",
-   "result": "down",
-   "correct": true,
-   "brier": 0.0102
-  },
-  {
-   "window": "2026-11-14T04:55:00Z",
-   "side": "up",
-   "chance": 0.6616,
-   "at_elapsed_s": 165,
-   "seconds_left": 134,
-   "index_px": 67089.475,
-   "open_px": 67053.26999999999,
-   "move_usd": 36.21,
-   "band": "60\u201370%",
-   "why": "BTC rose $36 from the window open with 134s left \u2014 the model put UP at 66%.",
-   "result": "down",
-   "correct": false,
-   "brier": 0.4377
   }
  ],
  "recent_windows": [
+  {
+   "window": "2026-11-14T07:55:00Z",
+   "open_px": 67226.62,
+   "call": {
+    "side": "down",
+    "chance": 0.8048,
+    "at": 1794643025
+   },
+   "abstain": null,
+   "grade": null
+  },
+  {
+   "window": "2026-11-14T07:50:00Z",
+   "open_px": 66961.35,
+   "call": {
+    "side": "up",
+    "chance": 0.6862,
+    "at": 1794642714
+   },
+   "abstain": null,
+   "grade": {
+    "result": "up",
+    "correct": true,
+    "brier": 0.0985
+   }
+  },
+  {
+   "window": "2026-11-14T07:45:00Z",
+   "open_px": 67000.765,
+   "call": {
+    "side": "down",
+    "chance": 0.7396,
+    "at": 1794642446
+   },
+   "abstain": null,
+   "grade": {
+    "result": "down",
+    "correct": true,
+    "brier": 0.0678
+   }
+  },
+  {
+   "window": "2026-11-14T07:40:00Z",
+   "open_px": 67032.5,
+   "call": {
+    "side": "down",
+    "chance": 0.6073,
+    "at": 1794642134
+   },
+   "abstain": null,
+   "grade": {
+    "result": "down",
+    "correct": true,
+    "brier": 0.1542
+   }
+  },
   {
    "window": "2026-11-14T07:35:00Z",
    "open_px": 67166.33499999999,
@@ -412,7 +468,11 @@
     "at": 1794641844
    },
    "abstain": null,
-   "grade": null
+   "grade": {
+    "result": "down",
+    "correct": false,
+    "brier": 0.5604
+   }
   },
   {
    "window": "2026-11-14T07:30:00Z",
@@ -540,82 +600,41 @@
     "correct": true,
     "brier": 0.0079
    }
-  },
-  {
-   "window": "2026-11-14T06:45:00Z",
-   "open_px": 67264.14,
-   "call": {
-    "side": "up",
-    "chance": 0.9542,
-    "at": 1794638865
-   },
-   "abstain": null,
-   "grade": {
-    "result": "up",
-    "correct": true,
-    "brier": 0.0021
-   }
-  },
-  {
-   "window": "2026-11-14T06:40:00Z",
-   "open_px": 67261.66,
-   "call": null,
-   "abstain": {
-    "why": "model chance 0.5939 < 0.6",
-    "chance": 0.5939,
-    "at": 1794638599
-   },
-   "grade": null
-  },
-  {
-   "window": "2026-11-14T06:35:00Z",
-   "open_px": 67271.68,
-   "call": null,
-   "abstain": {
-    "why": "model chance 0.5643 < 0.6",
-    "chance": 0.5643,
-    "at": 1794638256
-   },
-   "grade": null
-  },
-  {
-   "window": "2026-11-14T06:30:00Z",
-   "open_px": 67307.705,
-   "call": {
-    "side": "down",
-    "chance": 0.6899,
-    "at": 1794637980
-   },
-   "abstain": null,
-   "grade": {
-    "result": "down",
-    "correct": true,
-    "brier": 0.0962
-   }
   }
  ],
  "abstains_total": 25,
  "counters": {
-  "graded": 55,
-  "wins": 45,
-  "win_rate": 81.8,
-  "streak_type": "L",
-  "streak_n": 1,
+  "graded": 59,
+  "wins": 48,
+  "win_rate": 81.4,
+  "streak_type": "W",
+  "streak_n": 3,
   "best_win_streak": 13,
-  "last12": "WWWWWWWWWWWL"
+  "last12": "WWWWWWWLLWWW"
  },
  "live_window": {
-  "window": "2026-11-14T07:35:00Z",
-  "open_px": 67166.33499999999,
+  "window": "2026-11-14T07:55:00Z",
+  "open_px": 67226.62,
   "call": {
-   "side": "up",
-   "chance": 0.7486,
-   "at": 1794641844
+   "side": "down",
+   "chance": 0.8048,
+   "at": 1794643025
   },
   "abstain": null,
   "grade": null
  },
  "lessons": [
+  {
+   "window": "2026-11-14T07:35:00Z",
+   "side": "up",
+   "chance": 0.7486,
+   "band": "70\u201380%",
+   "move_usd": 48.46,
+   "settle_move_usd": -136.48,
+   "brier": 0.5604,
+   "what_happened": "Called UP at 75% on a $+48 move from the open. BTC settled $-136 on the other side of the open. After the call the price reversed back through the open and never came back.",
+   "lesson": "Momentum is not a promise: a real move reversed inside three minutes. The model prices the drift it sees; it cannot see the turn coming. Streaks end like this, not with a bang."
+  },
   {
    "window": "2026-11-14T07:30:00Z",
    "side": "up",
@@ -691,17 +710,6 @@
    "settle_move_usd": -69.02,
    "brier": 0.4664,
    "what_happened": "Called UP at 68% on a $+24 move from the open. BTC settled $-69 on the other side of the open. After the call the price reversed back through the open and never came back.",
-   "lesson": "Thin move + the cold band: a sub-70% call on a sub-$25 drift is the desk's known leak \u2014 this band has run near 50%, not its stated ~65%. The $5 rulebook's 0.70 floor exists because of calls like this."
-  },
-  {
-   "window": "2026-11-14T01:45:00Z",
-   "side": "down",
-   "chance": 0.6546,
-   "band": "60\u201370%",
-   "move_usd": -17.01,
-   "settle_move_usd": 13.76,
-   "brier": 0.4285,
-   "what_happened": "Called DOWN at 65% on a $-17 move from the open. BTC settled $+14 on the other side of the open. After the call the price reversed back through the open and never came back.",
    "lesson": "Thin move + the cold band: a sub-70% call on a sub-$25 drift is the desk's known leak \u2014 this band has run near 50%, not its stated ~65%. The $5 rulebook's 0.70 floor exists because of calls like this."
   }
  ],
