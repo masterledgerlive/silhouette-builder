@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE PROFIT DESK — NODAL hub engine</title>
+<style>
+  :root{--gold:#f5b942;--teal:#2dd4bf;--red:#f87171;--green:#4ade80;--ink:#e8e6df;--dim:#9a97a3;--card:#17171f;--line:#2a2a38}
+  *{box-sizing:border-box}
+  body{background:#0c0c12;color:var(--ink);font-family:Georgia,'Times New Roman',serif;margin:0;padding:18px 14px 60px}
+  .wrap{max-width:1060px;margin:0 auto}
+  h1{font-size:30px;letter-spacing:2px;margin:4px 0 2px;color:var(--gold)}
+  h2{font-size:19px;letter-spacing:1.5px;color:var(--teal);margin:26px 0 8px;border-bottom:1px solid var(--line);padding-bottom:5px}
+  .sub{color:var(--dim);font-size:14.5px;line-height:1.45}
+  .stamp{display:inline-block;border:1px solid var(--gold);color:var(--gold);border-radius:4px;padding:1px 7px;font-size:12px;letter-spacing:1px;margin-right:6px}
+  .ext{border-color:#7c6cf0;color:#b3a8ff}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin:9px 0}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(225px,1fr));gap:9px}
+  .lane b{font-size:16px}
+  .big{font-size:22px;color:var(--gold)}
+  .ok{color:var(--green)} .bad{color:var(--red)} .mid{color:var(--gold)}
+  table{width:100%;border-collapse:collapse;font-size:14.5px}
+  td,th{padding:5px 7px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+  th{color:var(--dim);font-weight:normal;letter-spacing:.5px}
+  .num{text-align:right;font-variant-numeric:tabular-nums}
+  input,select,textarea{background:#0c0c12;color:var(--ink);border:1px solid var(--line);border-radius:5px;padding:6px 8px;font-size:14.5px;font-family:inherit}
+  textarea{width:100%;min-height:88px;font-family:ui-monospace,Menlo,monospace;font-size:13px}
+  button{background:#1d1d2a;color:var(--gold);border:1px solid var(--gold);border-radius:6px;padding:7px 14px;font-size:14.5px;cursor:pointer;font-family:inherit}
+  .out{font-size:15.5px;line-height:1.6}
+  .small{font-size:13px;color:var(--dim);line-height:1.45}
+  a{color:var(--teal)}
+  .foot{margin-top:34px;color:var(--dim);font-size:13px;line-height:1.5;border-top:1px solid var(--line);padding-top:10px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="small"><a href="index.html">← NODAL hub</a> · <a href="arena.html">The Specialist Arena</a> · <a href="mainstage.html">The Main Stage</a> · <a href="find.html">FIND + Highscores</a></div>
+  <h1>💰 THE PROFIT DESK</h1>
+  <div class="sub">The hub engine in the TerryCalls pattern: <b>price discipline, honest calibration, and the followed record</b> — run on our own sealed numbers. Terry asks one question of every trade: <i>is this contract cheaper right now than its real chance of paying $1, after fees?</i> This room asks it of everything we run. <span class="stamp">SIMULATION ONLY</span><span class="stamp">NO ORDERS — EVER</span></div>
+  <div class="sub" id="fresh">loading the desk data…</div>
+
+  <h2>🎯 THE DESKS — WHO IS CALLING, AND WHAT THEIR RECORD IS</h2>
+  <div class="sub">Every caller on one board, graded from sealed records. <b>The high threshold, printed:</b> APPROVED = at least 20 graded calls AND accuracy at least 62% AND mean Brier at most 0.21. Nothing self-approves.</div>
+  <div class="grid" id="lanes"></div>
+
+  <h2>🎚️ IS THE PERCENTAGE HONEST? — BTC5 CALIBRATION</h2>
+  <div class="sub">What the BTC desk <i>said</i> vs what <i>happened</i>, by the chance band it stated. A band that says 80 and lands 60 is a liar, however good the headline accuracy looks.</div>
+  <div class="card" id="bands"><span class="small">loading…</span></div>
+
+  <h2>🧬 PERFORMANCE BY SETUP — WHAT ACTUALLY MAKES OR LOSES THE MONEY</h2>
+  <div class="sub">Every closed arena trade, grouped by the rule that closed it. This is the table that found the settlement-ride tax and rebuilt the specialists — Terry reads his own book exactly this way.</div>
+  <div class="card" id="setups"><span class="small">loading…</span></div>
+
+  <h2>👣 IF YOU HAD FOLLOWED THE SPECIALISTS</h2>
+  <div class="sub">The arena is the followed record: every specialist fill is a sealed simulation at live prices. Per rail: equity, realized P&amp;L, trades, win rate. Survival is the record — a busted rail is out.</div>
+  <div class="card" id="follow"><span class="small">loading…</span></div>
+
+  <h2>🧪 EXECUTION LAB — CAN THE EDGE BE FILLED?</h2>
+  <div class="sub">Terry's Terminal question, on any book you paste: walk the ladder with real size and see what is left of the edge after fees and slippage. A price you cannot fill is not a price.</div>
+  <div class="card">
+    <div class="small">ASK LADDER — one line per level: <b>price¢ shares</b>, best (lowest) first. Edit it — paste a real book.</div>
+    <textarea id="ladder">52 140
+53 260
+54 480
+55 900
+57 1500
+60 2400</textarea>
+    <div style="margin-top:8px;display:flex;gap:14px;flex-wrap:wrap;align-items:end">
+      <label class="small">Max spend $<br><input id="spend" type="number" value="25" min="1" style="width:90px"></label>
+      <label class="small">Max limit price ¢<br><input id="limit" type="number" value="58" min="1" max="99" style="width:90px"></label>
+      <label class="small">Your number (fair chance %)<br><input id="fair" type="number" value="61" min="1" max="99" style="width:90px"></label>
+      <label class="small">Fee model<br><select id="feemodel"><option value="us">Polymarket US taker — 0.0695·p·(1−p)</option><option value="none">No fee (arena sim flat)</option></select></label>
+      <button onclick="walk()">WALK THE BOOK</button>
+    </div>
+    <div class="out" id="walkout" style="margin-top:10px"></div>
+    <div class="small">Net model edge = your fair chance − all-in break-even, per share. Negative means the walk ate the edge: the honest answer is NO TRADE, however good the call was.</div>
+  </div>
+
+  <h2>🎟️ COMBO TRUTH PANEL</h2>
+  <div class="sub">Our ticket builder multiplied prices and called it a day. Terry's Sports desk prints the rest: the combo runs <b>above</b> fair, the premium grows with legs, and the combo fee takes more. Build a ticket and see all of it. Combined chances multiply legs (naive independence — the legs are separate matches).</div>
+  <div class="card">
+    <table id="legs"><tr><th>Leg</th><th>Our %</th><th>Market ¢</th><th></th></tr></table>
+    <button onclick="addLeg()">+ ADD LEG</button>
+    <div class="out" id="comboout" style="margin-top:10px"></div>
+    <div class="small">Combo fee (Polymarket US, TerryCalls' published formula): price × [0.0695 × (1−price) + 0.06 × (1−price)⁴]. A <b>locked-profit</b> combo is the special case: a basket whose every-outcome prices sum to under $1 after fees — any single outcome pays. This panel prices single tickets; the basket check joins when live combo books are wired.</div>
+  </div>
+
+  <h2>📻 TERRY'S DESK — THE REFERENCE <span class="stamp ext">EXTERNAL</span></h2>
+  <div class="card" id="terry"><span class="small">loading…</span></div>
+
+  <div class="foot">THE PROFIT DESK · a NODAL hub engine in the TerryCalls pattern, built with credit to <a href="https://terrycalls.com" target="_blank" rel="noopener">TerryCalls</a> for the design lessons. Every house number on this page is computed from the desk's sealed ledger and sim state by build_profitdata.py / build_scores.py — if a panel is thin, it prints thin. Terry's numbers are his published record, stamped EXTERNAL with their date, never blended into house lanes. Simulation only: this desk predicts and grades; it has never placed an order and cannot. Real-money anything stays behind David's exact word (Phase 2, DOCKED).</div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const money=v=>(v<0?'−$':'+$')+Math.abs(v).toFixed(2);
+async function J(u){const r=await fetch(u+'?t='+Date.now());if(!r.ok)throw new Error(u);return r.json()}
+function statusChip(s){const c=s=='APPROVED'?'ok':(s=='ON THE CUSP'?'mid':(s=='BUILDING RECORD'?'mid':'bad'));return '<span class="'+c+'"><b>'+s+'</b></span>'}
+async function load(){
+  let sc,pd;
+  try{sc=await J('scoresdata.json')}catch(e){$('lanes').innerHTML='<div class="card">scoresdata not on the wire yet.</div>'}
+  try{pd=await J('profitdata.json')}catch(e){}
+  if(sc){
+    $('fresh').textContent='Desk data built from the sealed records · highscores rule: '+sc.rule.text;
+    $('lanes').innerHTML=sc.callers.map(c=>'<div class="card lane"><b>'+c.name+'</b><br><span class="small">'+c.kind+'</span><br>'+
+      '<span class="big">'+(c.accuracy==null?'—':c.accuracy+'%')+'</span> <span class="small">accuracy · Brier '+(c.brier==null?'—':c.brier)+'</span><br>'+
+      '<span class="small">calls '+c.calls+' · graded '+c.graded+' · correct '+c.correct+' · streak '+c.streak_now+' (best '+c.streak_best+')</span><br>'+statusChip(c.status)+
+      (c.id=='BTC5'?'<br><span class="small">our BTC specialist — sim only, stand-in index, labeled in every sealed record</span>':'')+'</div>').join('');
+  }
+  if(pd){
+    const b=pd.btc5;
+    $('bands').innerHTML='<table><tr><th>Stated band</th><th class="num">Graded</th><th class="num">Desk said</th><th class="num">It happened</th><th>Read</th></tr>'+
+      b.bands.map(x=>'<tr><td>'+x.band+'</td><td class="num">'+x.n+'</td><td class="num">'+(x.stated==null?'—':x.stated+'%')+'</td><td class="num">'+(x.actual==null?'—':x.actual+'%')+'</td><td class="small">'+(x.n==0?'no graded calls in this band yet':(Math.abs(x.stated-x.actual)<=7?'<span class="ok">honest</span>':(x.actual<x.stated?'<span class="bad">overconfident</span>':'<span class="mid">underconfident</span>')))+'</td></tr>').join('')+
+      '</table><div class="small" style="margin-top:6px">BTC5 calls so far: '+b.calls+' · graded '+b.graded+' · abstains '+b.abstains+' (counted, never graded, never hidden). '+b.note+'</div>';
+    const s=pd.arena_setups;
+    $('setups').innerHTML='<table><tr><th>Setup that fired</th><th class="num">Trades</th><th class="num">Win rate</th><th class="num">Realized P&amp;L</th></tr>'+
+      s.rows.map(r=>'<tr><td>'+r.setup+'</td><td class="num">'+r.n+'</td><td class="num">'+r.win_rate+'%</td><td class="num '+(r.pnl>=0?'ok':'bad')+'">'+money(r.pnl)+'</td></tr>').join('')+
+      '</table><div class="small" style="margin-top:6px">'+s.total_closed+' closed trades. '+s.note+'</div>';
+    const f=pd.arena_follow;
+    $('follow').innerHTML='<table><tr><th>Specialist · rail</th><th>Status</th><th class="num">Equity</th><th class="num">Realized</th><th class="num">Trades</th><th class="num">Win rate</th></tr>'+
+      f.rows.map(r=>'<tr><td>'+r.name+' · '+r.rail+'</td><td>'+r.status+'</td><td class="num">$'+Number(r.equity).toFixed(2)+'</td><td class="num '+(r.realized>=0?'ok':'bad')+'">'+money(r.realized)+'</td><td class="num">'+r.trades+'</td><td class="num">'+r.win_rate+'%</td></tr>').join('')+
+      '</table><div class="small" style="margin-top:6px">Arena snapshot: '+(f.updated||'')+'. '+f.note+'</div>';
+    const t=pd.terry_ref;
+    $('terry').innerHTML='<div class="out">His closed-trade record ('+t.observed+', '+t.source+'): <b>'+t.record.trades+' trades · '+t.record.win_rate+'% won · <span class="bad">'+money(t.record.pnl)+'</span></b> · avg win +$'+t.record.avg_win+' vs avg loss −$'+Math.abs(t.record.avg_loss)+' · break-even needs '+t.record.breakeven_win_rate+'% · '+t.record.verdict+'</div>'+
+      '<div class="out">If you had followed ($100 a call): <span class="ok">'+money(t.follower.at_call_price)+'</span> at the call price over '+t.follower.windows+' windows · <span class="ok">'+money(t.follower.still_worth_it)+'</span> only when still worth it · <span class="bad">'+money(t.follower.at_lock_price)+'</span> at the lock price. First calls: 5m '+t.first_calls['5m']+'% · 15m '+t.first_calls['15m']+'% · 1h '+t.first_calls['1h']+'% · locks '+t.locks+'.</div>'+
+      '<div class="out"><b>'+t.lesson+'</b></div>'+
+      '<div class="small">His desk bankrolls at last read: '+t.desks.map(d=>d.desk+' $'+d.bankroll+' (from $'+d.from+')').join(' · ')+'. Live calls join this panel as an EXTERNAL feed when the API key verifies — credited “Calls by TerryCalls” (<a href="https://terrycalls.com" target="_blank" rel="noopener">terrycalls.com</a>), never blended into the house call.</div>';
+  }
+}
+function walk(){
+  const lines=$('ladder').value.trim().split('\n').map(s=>s.trim()).filter(Boolean).map(s=>{const p=s.split(/\s+/);return{c:+p[0],n:+p[1]}}).filter(x=>x.c>0&&x.n>0).sort((a,b)=>a.c-b.c);
+  const spend=+$('spend').value, limit=+$('limit').value, fair=+$('fair').value/100, feeM=$('feemodel').value;
+  let left=spend, shares=0, cost=0, fees=0;
+  for(const L of lines){
+    if(left<=0)break;
+    if(L.c>limit)break;
+    const p=L.c/100, feePer=feeM=='us'?0.0695*p*(1-p):0;
+    const perShare=p+feePer;
+    const take=Math.min(L.n, Math.floor(left/perShare*100)/100);
+    if(take<=0)continue;
+    shares+=take; cost+=take*p; fees+=take*feePer; left-=take*perShare;
+  }
+  if(shares<=0){$('walkout').innerHTML='<span class="bad">Nothing fills inside your limit — the book is too expensive for the spend. NO TRADE.</span>';return}
+  const avg=cost/shares*100, allIn=(cost+fees), be=(allIn/shares)*100, slip=avg-lines[0].c;
+  const edge=(fair-be/100)*100;
+  $('walkout').innerHTML='Fillable: <b>'+shares.toFixed(2)+' shares</b> @ avg <b>'+avg.toFixed(1)+'¢</b> · entry fees <b>$'+fees.toFixed(2)+'</b> · slippage <b>'+slip.toFixed(1)+'¢</b> vs best ask · all-in <b>$'+allIn.toFixed(2)+'</b> of $'+spend.toFixed(2)+'<br>Break-even <b>'+be.toFixed(1)+'¢</b> · your number '+(fair*100).toFixed(0)+'% · <b>net model edge <span class="'+(edge>=0?'ok':'bad')+'">'+(edge>=0?'+':'')+edge.toFixed(2)+'¢/share</span></b>'+(edge<0?' — the walk ate the edge. NO TRADE.':'');
+}
+let legN=0;
+function addLeg(){
+  legN++;
+  const tr=document.createElement('tr');
+  tr.innerHTML='<td><input placeholder="e.g. Sinner" style="width:130px"></td><td><input type="number" value="70" min="1" max="99" style="width:70px" oninput="combo()"></td><td><input type="number" value="66" min="1" max="99" style="width:70px" oninput="combo()"></td><td><button onclick="this.parentNode.parentNode.remove();combo()">×</button></td>';
+  $('legs').appendChild(tr);combo();
+}
+function combo(){
+  const rows=[...$('legs').querySelectorAll('tr')].slice(1);
+  const legs=rows.map(r=>{const i=r.querySelectorAll('input');return{our:+i[1].value/100,mkt:+i[2].value/100}}).filter(x=>x.our>0&&x.mkt>0);
+  if(legs.length<2){$('comboout').innerHTML='<span class="small">Add at least two legs.</span>';return}
+  const ourP=legs.reduce((a,l)=>a*l.our,1), mktP=legs.reduce((a,l)=>a*l.mkt,1);
+  const fee=mktP*(0.0695*(1-mktP)+0.06*Math.pow(1-mktP,4));
+  const prem=(mktP/ourP-1)*100;
+  $('comboout').innerHTML='Legs: '+legs.length+' · our combined chance <b>'+(ourP*100).toFixed(1)+'%</b> (fair price '+(ourP*100).toFixed(1)+'¢) · market product <b>'+(mktP*100).toFixed(1)+'¢</b> · combo fee <b>'+(fee*100).toFixed(2)+'¢</b> → all-in <b>'+((mktP+fee)*100).toFixed(1)+'¢</b><br>Payout multiple <b>'+(1/mktP).toFixed(2)+'×</b> · premium of the market product over our fair: <b><span class="'+(prem<=0?'ok':'bad')+'">'+(prem>=0?'+':'')+prem.toFixed(1)+'%</span></b> '+(prem>0?'— the crossing book and the fee keep the difference; Terry’s desk prints this before anyone buys. So do we.':'— priced at or under our fair. That is the rare side of this panel.');
+}
+addLeg();addLeg();
+load();
+</script>
+</body>
+</html>
