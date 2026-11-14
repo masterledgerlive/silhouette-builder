@@ -1,5 +1,5 @@
 {
- "built_at": "2026-11-14T17:59:51Z",
+ "built_at": "2026-11-14T18:09:56Z",
  "bands": [
   {
    "band": "60\u201370%",
@@ -9,9 +9,9 @@
   },
   {
    "band": "70\u201380%",
-   "n": 37,
-   "stated": 75.5,
-   "actual": 78.4
+   "n": 38,
+   "stated": 75.4,
+   "actual": 78.9
   },
   {
    "band": "80\u201390%",
@@ -30,17 +30,32 @@
   "id": "BTC5",
   "name": "BTC 5-min desk (our specialist, sim)",
   "kind": "BTC Up/Down 5m windows \u00b7 plain vol model btc5-plain-v1 \u00b7 stand-in index",
-  "calls": 147,
-  "graded": 145,
-  "correct": 116,
-  "accuracy": 80.0,
-  "brier": 0.1366,
-  "streak_now": 2,
+  "calls": 148,
+  "graded": 146,
+  "correct": 117,
+  "accuracy": 80.1,
+  "brier": 0.1361,
+  "streak_now": 3,
   "streak_best": 19,
   "status": "APPROVED",
   "note": "graded from BTC5_GRADE records in the sealed ledger"
  },
  "recent_calls": [
+  {
+   "window": "2026-11-14T18:05:00Z",
+   "side": "up",
+   "chance": 0.6278,
+   "at_elapsed_s": 142,
+   "seconds_left": 157,
+   "index_px": 65817.73999999999,
+   "open_px": 65772.18,
+   "move_usd": 45.56,
+   "band": "60\u201370%",
+   "why": "BTC rose $46 from the window open with 157s left \u2014 the model put UP at 63%.",
+   "result": null,
+   "correct": null,
+   "brier": null
+  },
   {
    "window": "2026-11-14T17:55:00Z",
    "side": "up",
@@ -52,9 +67,9 @@
    "move_usd": 92.68,
    "band": "70\u201380%",
    "why": "BTC rose $93 from the window open with 157s left \u2014 the model put UP at 75%.",
-   "result": null,
-   "correct": null,
-   "brier": null
+   "result": "up",
+   "correct": true,
+   "brier": 0.0648
   },
   {
    "window": "2026-11-14T17:45:00Z",
@@ -385,24 +400,31 @@
    "result": "up",
    "correct": true,
    "brier": 0.0087
-  },
-  {
-   "window": "2026-11-14T14:20:00Z",
-   "side": "down",
-   "chance": 0.6821,
-   "at_elapsed_s": 180,
-   "seconds_left": 119,
-   "index_px": 66454.815,
-   "open_px": 66497.45,
-   "move_usd": -42.63,
-   "band": "60\u201370%",
-   "why": "BTC fell $43 from the window open with 119s left \u2014 the model put DOWN at 68%.",
-   "result": "down",
-   "correct": true,
-   "brier": 0.1011
   }
  ],
  "recent_windows": [
+  {
+   "window": "2026-11-14T18:05:00Z",
+   "open_px": 65772.18,
+   "call": {
+    "side": "up",
+    "chance": 0.6278,
+    "at": 1794679642
+   },
+   "abstain": null,
+   "grade": null
+  },
+  {
+   "window": "2026-11-14T18:00:00Z",
+   "open_px": 65965.38,
+   "call": null,
+   "abstain": {
+    "why": "model chance 0.53 < 0.6",
+    "chance": 0.53,
+    "at": 1794679316
+   },
+   "grade": null
+  },
   {
    "window": "2026-11-14T17:55:00Z",
    "open_px": 65758.505,
@@ -412,7 +434,11 @@
     "at": 1794679042
    },
    "abstain": null,
-   "grade": null
+   "grade": {
+    "result": "up",
+    "correct": true,
+    "brier": 0.0648
+   }
   },
   {
    "window": "2026-11-14T17:50:00Z",
@@ -554,51 +580,25 @@
    "call": null,
    "abstain": null,
    "grade": null
-  },
-  {
-   "window": "2026-11-14T16:55:00Z",
-   "open_px": 65401.58500000001,
-   "call": {
-    "side": "down",
-    "chance": 0.6237,
-    "at": 1794675451
-   },
-   "abstain": null,
-   "grade": {
-    "result": "down",
-    "correct": true,
-    "brier": 0.1416
-   }
-  },
-  {
-   "window": "2026-11-14T16:50:00Z",
-   "open_px": 65308.770000000004,
-   "call": null,
-   "abstain": {
-    "why": "model chance 0.5855 < 0.6",
-    "chance": 0.5855,
-    "at": 1794675112
-   },
-   "grade": null
   }
  ],
- "abstains_total": 58,
+ "abstains_total": 59,
  "counters": {
-  "graded": 145,
-  "wins": 116,
-  "win_rate": 80.0,
+  "graded": 146,
+  "wins": 117,
+  "win_rate": 80.1,
   "streak_type": "W",
-  "streak_n": 2,
+  "streak_n": 3,
   "best_win_streak": 19,
-  "last12": "WWWWWWWLLLWW"
+  "last12": "WWWWWWLLLWWW"
  },
  "live_window": {
-  "window": "2026-11-14T17:55:00Z",
-  "open_px": 65758.505,
+  "window": "2026-11-14T18:05:00Z",
+  "open_px": 65772.18,
   "call": {
    "side": "up",
-   "chance": 0.7455,
-   "at": 1794679042
+   "chance": 0.6278,
+   "at": 1794679642
   },
   "abstain": null,
   "grade": null
