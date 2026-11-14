@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE CALLS — BTC5 LIVE · follow the desk</title>
+<style>
+  :root{--gold:#f5b942;--teal:#2dd4bf;--red:#f87171;--green:#4ade80;--ink:#e8e6df;--dim:#9a97a3;--card:#17171f;--line:#2a2a38}
+  *{box-sizing:border-box}
+  body{background:#0c0c12;color:var(--ink);font-family:Georgia,'Times New Roman',serif;margin:0;padding:18px 14px 60px}
+  .wrap{max-width:1060px;margin:0 auto}
+  h1{font-size:30px;letter-spacing:2px;margin:4px 0 2px;color:var(--gold)}
+  h2{font-size:19px;letter-spacing:1.5px;color:var(--teal);margin:26px 0 8px;border-bottom:1px solid var(--line);padding-bottom:5px}
+  .sub{color:var(--dim);font-size:14.5px;line-height:1.45}
+  .stamp{display:inline-block;border:1px solid var(--gold);color:var(--gold);border-radius:4px;padding:1px 7px;font-size:12px;letter-spacing:1px;margin-right:6px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin:9px 0}
+  .ok{color:var(--green)} .bad{color:var(--red)} .mid{color:var(--gold)}
+  table{width:100%;border-collapse:collapse;font-size:14.5px}
+  td,th{padding:5px 7px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+  th{color:var(--dim);font-weight:normal;letter-spacing:.5px}
+  .num{text-align:right;font-variant-numeric:tabular-nums}
+  .small{font-size:13px;color:var(--dim);line-height:1.45}
+  a{color:var(--teal)}
+  .foot{margin-top:34px;color:var(--dim);font-size:13px;line-height:1.5;border-top:1px solid var(--line);padding-top:10px}
+  .toggle{display:flex;gap:8px;margin:14px 0 4px}
+  .toggle button{flex:1;background:#1d1d2a;color:var(--dim);border:1px solid var(--line);border-radius:8px;padding:12px;font-size:17px;letter-spacing:1.5px;cursor:pointer;font-family:inherit}
+  .toggle button.on{color:#0c0c12;background:var(--gold);border-color:var(--gold);font-weight:bold}
+  .hero{background:var(--card);border:2px solid var(--gold);border-radius:12px;padding:22px 18px;margin:12px 0;text-align:center}
+  .hero .state{font-size:52px;font-weight:800;letter-spacing:1px;line-height:1.1;margin:4px 0}
+  .hero .why{font-size:19px;line-height:1.55;margin:10px auto 4px;max-width:640px}
+  .hero .meta{color:var(--dim);font-size:15px;margin-top:8px}
+  .up{color:var(--green)} .down{color:var(--red)} .wait{color:var(--gold)}
+  .qrow{display:flex;justify-content:space-between;gap:10px;padding:7px 2px;border-bottom:1px solid var(--line);font-size:15.5px}
+  .histrow{padding:8px 2px;border-bottom:1px solid var(--line);font-size:15px;line-height:1.5}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:9px}
+  .stat b{display:block;font-size:20px;color:var(--gold);margin-top:2px}
+  .stat span{color:var(--dim);font-size:12.5px;letter-spacing:1px}
+  .bar{height:22px;border-radius:5px;background:#26262f;position:relative;overflow:hidden;margin:6px 0}
+  .bar .fill{position:absolute;top:0;bottom:0;left:0;background:var(--green)}
+  .bar .fill2{position:absolute;top:0;bottom:0;right:0;background:var(--red)}
+  .bar .lab{position:absolute;top:2px;font-size:13px;color:#0c0c12;font-weight:bold}
+  @media (max-width:560px){.hero .state{font-size:38px}.hero .why{font-size:17px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="small"><a href="index.html">← NODAL hub</a> · <a href="profitdesk.html">The Profit Desk</a> · <a href="arena.html">The Specialist Arena</a> · <a href="mainstage.html">The Main Stage</a></div>
+  <h1>📣 THE CALLS — BTC5 LIVE</h1>
+  <div class="sub">Our own engine, calling the Bitcoin 5-minute Up/Down game in the open — the same way TerryCalls shows his. Watch it work window by window, follow the calls, and see what's queued ahead. Every call is sealed into the house ledger before the window ends; the desk's passes are printed too. <span class="stamp">SIMULATION ONLY</span><span class="stamp">NO ORDERS — EVER</span></div>
+
+  <div class="toggle">
+    <button id="btnSimple" class="on" onclick="setView('simple')">SIMPLE — JUST TELL ME</button>
+    <button id="btnTech" onclick="setView('tech')">TECHNICAL — THE DESK</button>
+  </div>
+
+  <!-- ============ SIMPLE VIEW ============ -->
+  <div id="viewSimple">
+    <div class="hero">
+      <div class="small" id="sWindow">this 5-minute window</div>
+      <div class="state wait" id="sState">WATCHING…</div>
+      <div class="why" id="sWhy"><b>The desk is watching this window.</b></div>
+      <div class="meta" id="sMeta">connecting to the live price feed…</div>
+    </div>
+    <h2>⏭️ COMING UP</h2>
+    <div class="card" id="sQueue">…</div>
+    <h2>🧾 THE DESK SO FAR</h2>
+    <div class="card">
+      <div id="sRecord" style="font-size:16.5px">…</div>
+      <div id="sHist" style="margin-top:6px"></div>
+    </div>
+    <p class="small">How to read this page: the big word is the desk's call for the current 5-minute window — <b>UP</b>, <b>DOWN</b>, or <b>NO CALL</b> (the desk passes when the move is too small to trust; passing is the system working). The bold line under it is always the reason why. The live read on this page is a mirror of the desk's model fed by public prices; the sealed call in the ledger is the official record, and the recent-windows list below is that record as of the stamp shown.</p>
+  </div>
+
+  <!-- ============ TECHNICAL VIEW ============ -->
+  <div id="viewTech" style="display:none">
+    <h2>📡 THE LIVE MODEL — btc5-plain-v1, mirrored in your browser</h2>
+    <div class="grid">
+      <div class="card stat"><span>INDEX (MEDIAN SPOT)</span><b id="tPx">—</b></div>
+      <div class="card stat"><span>WINDOW OPEN (MIRROR)</span><b id="tOpen">—</b></div>
+      <div class="card stat"><span>DRIFT FROM OPEN</span><b id="tDrift">—</b></div>
+      <div class="card stat"><span>SECONDS LEFT</span><b id="tLeft">—</b></div>
+      <div class="card stat"><span>σ PER SECOND (1H TRAIL)</span><b id="tSig">—</b></div>
+      <div class="card stat"><span>DESK STATE</span><b id="tState">—</b></div>
+    </div>
+    <div class="card">
+      <div class="small">MODEL CHANCE — UP vs DOWN (plain no-drift model: chance_up = Φ( ln(index/open) ÷ (σ_s·√seconds_left) ); the desk calls a side only at ≥60%, and only between 110s and 200s into the window)</div>
+      <div class="bar"><div class="fill" id="barUp" style="width:50%"></div><div class="fill2" id="barDn" style="width:50%"></div><div class="lab" id="labUp" style="left:8px">UP 50%</div><div class="lab" id="labDn" style="right:8px">DOWN 50%</div></div>
+      <div class="small" id="tFeed">feed: —</div>
+    </div>
+    <h2>⏭️ THE QUEUE AHEAD</h2>
+    <div class="card"><table id="tQueue"><tr><th>WINDOW (ET)</th><th>DECISION SPAN (ET)</th><th>STATUS</th></tr></table></div>
+    <h2>🔒 THE SEALED RECORD — last 24 calls</h2>
+    <div class="card"><div class="small" id="tSealStamp">…</div><table id="tCalls"><tr><th>WINDOW (ET)</th><th>CALL</th><th class="num">CHANCE</th><th>BAND</th><th class="num">MOVE $</th><th>RESULT</th><th class="num">BRIER</th><th>WHY</th></tr></table></div>
+    <h2>🎯 IS THE PERCENTAGE HONEST? — calibration</h2>
+    <div class="card"><table id="tBands"><tr><th>STATED BAND</th><th class="num">CALLS</th><th class="num">STATED AVG</th><th class="num">ACTUALLY RIGHT</th><th>READ</th></tr></table><div class="small" id="tAbstain" style="margin-top:6px"></div></div>
+    <h2>🏁 FOLLOW THE RACE — the same model, trading paper</h2>
+    <div class="card"><table id="tRace"><tr><th>SYSTEM</th><th>VENUE RAIL</th><th class="num">EQUITY</th><th class="num">REALIZED</th><th class="num">TRADES</th><th class="num">WIN %</th><th>STATUS</th></tr></table><div class="small" style="margin-top:6px">Three systems race $10.00 each on live books (Polymarket's true 5-minute game + Kalshi's 15-minute game — Kalshi has no 5-minute BTC series). PLAIN runs this page's model with price discipline (buy only ≥3¢ under the model, out at 95¢). Full race board: <a href="profitdesk.html">THE PROFIT DESK</a>.</div></div>
+    <h2>📏 THE RULES</h2>
+    <div class="card small" id="tRules">…</div>
+  </div>
+
+  <div class="foot">THE CALLS · NODAL desk · The desk predicts; it never trades. Phase 2 (real money) is DOCKED behind David's exact word — see the $5 rulebook on the desk. Index note: <span id="idxNote">STAND-IN index — median of Coinbase + Kraken spot (BRTI fallback, per TerryCalls' own docs); simulation settles on this stand-in and every sealed record says so.</span> Sealed records: hash-chained house ledger, verified on every desk cycle. Live mirror prices come straight from the exchanges' public feeds to your browser — the mirror can differ from the desk's sealed open by a few dollars; the sealed record governs. Calls by our own desk — built from TerryCalls' published pattern, run on our own data. <a href="https://terrycalls.com" target="_blank" rel="noopener">terrycalls.com</a></div>
+</div>
+<script>
+"use strict";
+const $=id=>document.getElementById(id);
+const WIN=300, CALL_LO=110, CALL_HI=200, FLOOR=0.60;
+let CD=null, PD=null, spot=null, spotSrc=[], candles=[], mirrorOpen=null, mirrorWin=null, frozen={};
+function erf(x){const s=x<0?-1:1;x=Math.abs(x);const t=1/(1+0.3275911*x);const y=1-((((1.061405429*t-1.453152027)*t+1.421413741)*t-0.284496736)*t+0.254829592)*t*Math.exp(-x*x);return s*y}
+function phi(z){return 0.5*(1+erf(z/Math.SQRT2))}
+function clamp(v,a,b){return Math.min(b,Math.max(a,v))}
+function fmt$(v){return v==null?"—":"$"+Number(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}
+function fmtT(ts){return new Date(ts*1000).toLocaleTimeString('en-US',{timeZone:'America/New_York',hour:'numeric',minute:'2-digit'})}
+function wiso(w){return new Date(w*1000).toISOString().replace(/\.\d+Z$/,'Z')}
+function mmss(s){s=Math.max(0,Math.round(s));return Math.floor(s/60)+":"+String(s%60).padStart(2,'0')}
+async function jget(u){const r=await fetch(u,{cache:'no-store'});if(!r.ok)throw new Error(r.status);return r.json()}
+async function loadData(){
+  try{CD=await jget('callsdata.json');renderRecord();}catch(e){}
+  try{PD=await jget('profitdata.json');renderRace();}catch(e){}
+}
+async function loadSpot(){
+  const pxs=[];const src=[];
+  try{const cb=await jget('https://api.exchange.coinbase.com/products/BTC-USD/ticker');pxs.push(parseFloat(cb.price));src.push('coinbase');}catch(e){}
+  try{const kr=await jget('https://api.kraken.com/0/public/Ticker?pair=XBTUSD');const k=Object.keys(kr.result||{})[0];if(k){pxs.push(parseFloat(kr.result[k].c[0]));src.push('kraken');}}catch(e){}
+  if(pxs.length){pxs.sort((a,b)=>a-b);spot=pxs[Math.floor(pxs.length/2)];spotSrc=src;}
+}
+async function loadCandles(){
+  try{const rows=await jget('https://api.exchange.coinbase.com/products/BTC-USD/candles?granularity=60');if(Array.isArray(rows))candles=rows.slice().sort((a,b)=>a[0]-b[0]);}catch(e){}
+}
+function sigmaS(){
+  if(candles.length<25)return null;
+  const now=Date.now()/1000, pts=candles.filter(c=>now-c[0]<=3600);
+  const rets=[];
+  for(let i=1;i<pts.length;i++){const dt=pts[i][0]-pts[i-1][0];if(dt>=30&&dt<=120&&pts[i-1][4]>0)rets.push(Math.log(pts[i][4]/pts[i-1][4])/Math.sqrt(dt));}
+  if(rets.length<20)return null;
+  const m=rets.reduce((a,b)=>a+b,0)/rets.length;
+  return Math.sqrt(rets.reduce((a,b)=>a+(b-m)*(b-m),0)/rets.length);
+}
+function openFor(w){
+  const c=candles.find(c=>c[0]===w);
+  if(c)return c[3];
+  if(mirrorWin===w&&mirrorOpen!=null)return mirrorOpen;
+  return null;
+}
+function bandOf(ch){if(ch<0.70)return'60–70%';if(ch<0.80)return'70–80%';if(ch<0.90)return'80–90%';return'90–99%'}
+function bandNote(ch){
+  if(!CD||!CD.bands)return'';
+  const b=CD.bands.find(x=>x.band===bandOf(ch));
+  if(!b||!b.n||b.n<3)return'';
+  if(b.actual<b.stated-10)return ' Careful — this is the desk\u2019s hot band: '+b.band+' calls have actually been right '+b.actual+'% of the time ('+b.n+' graded).';
+  if(b.actual>=99)return ' This band has been perfect so far: '+b.n+'-for-'+b.n+'.';
+  return '';
+}
+function sealedFor(w){
+  if(!CD||!CD.recent_windows)return null;
+  const iso=wiso(w);
+  return CD.recent_windows.find(x=>x.window===iso)||null;
+}
+function state(){
+  const now=Date.now()/1000, w=Math.floor(now/WIN)*WIN, el=now-w, left=w+WIN-now;
+  if(mirrorWin!==w){mirrorWin=w;mirrorOpen=spot;}
+  const open=openFor(w);
+  const sig=sigmaS();
+  let cup=null;
+  if(spot&&open&&sig){const srem=sig*Math.sqrt(left);cup=srem>0?clamp(phi(Math.log(spot/open)/srem),0.01,0.99):null;}
+  const side=cup==null?null:(cup>=0.5?'up':'down');
+  const chance=cup==null?null:(side==='up'?cup:1-cup);
+  const key=wiso(w);
+  if(el>=CALL_LO&&el<=CALL_HI&&chance!=null&&chance>=FLOOR&&!frozen[key])frozen[key]={side:side,chance:chance,drift:spot-open};
+  const sealed=sealedFor(w);
+  return {now:now,w:w,el:el,left:left,open:open,sig:sig,cup:cup,side:side,chance:chance,frozen:frozen[key]||null,sealed:sealed};
+}
+function whyWatching(st){
+  if(spot==null)return '<b>The live price feed has not answered yet — the sealed record below is the desk\u2019s latest word.</b>';
+  if(st.open==null||st.chance==null)return '<b>Prices are live but the model is still warming up its volatility read — no call can be priced yet.</b>';
+  const d=spot-st.open, ad=Math.abs(d), dir=d>0?'risen':'fallen';
+  if(st.el<CALL_LO)return '<b>BTC has '+dir+' $'+ad.toFixed(0)+' from the window open, but the desk never calls early — it decides between 1:50 and 3:20 into the window, when the move has had time to mean something.</b>';
+  return '<b>BTC has '+dir+' $'+ad.toFixed(0)+' from the open and the model reads '+st.side.toUpperCase()+' at '+Math.round(st.chance*100)+'% — under the desk\u2019s 60% bar, so it is still just watching.</b>';
+}
+function whyCall(side,chance,drift,sealedTag){
+  const ad=Math.abs(drift), dir=drift>0?'rose':'fell';
+  return '<b>BTC '+dir+' $'+ad.toFixed(0)+' from the window open and the model put '+side.toUpperCase()+' at '+Math.round(chance*100)+'% — clear of the desk\u2019s 60% bar.'+bandNote(chance)+'</b>'+(sealedTag?' <b>Sealed in the ledger.</b>':'');
+}
+function render(){
+  const st=state();
+  // SIMPLE
+  $('sWindow').textContent='the '+fmtT(st.w)+' – '+fmtT(st.w+WIN)+' ET window';
+  let cls='wait', big='WATCHING…', why=whyWatching(st);
+  if(st.sealed&&st.sealed.call){
+    const c=st.sealed.call;cls=c.side==='up'?'up':'down';
+    big=(c.side==='up'?'⬆ UP':'⬇ DOWN')+' · '+Math.round(c.chance*100)+'%';
+    const sc=(CD.recent_calls||[]).find(x=>x.window===wiso(st.w));
+    why=sc?'<b>'+sc.why+'</b> <b>Sealed in the ledger.</b>':whyCall(c.side,c.chance,0,true);
+  } else if(st.frozen){
+    cls=st.frozen.side==='up'?'up':'down';
+    big=(st.frozen.side==='up'?'⬆ UP':'⬇ DOWN')+' · '+Math.round(st.frozen.chance*100)+'%';
+    why=whyCall(st.frozen.side,st.frozen.chance,st.frozen.drift,false)+' The desk seals its own call on its next pass (it runs every minute).';
+  } else if(st.el>CALL_HI){
+    big='NO CALL';cls='wait';
+    why='<b>The decision window closed and the model never reached 60% — the desk passes on this one. Passing is the system working: it only speaks when the move is big enough to trust.</b>';
+  }
+  const sEl=$('sState');sEl.textContent=big;sEl.className='state '+cls;
+  $('sWhy').innerHTML=why;
+  $('sMeta').textContent='window ends in '+mmss(st.left)+' · BTC '+(spot?fmt$(spot):'—')+' · next window opens '+fmtT(st.w+WIN)+' ET';
+  // queue (simple)
+  let q='';
+  for(let i=1;i<=4;i++){const ws=st.w+i*WIN;q+='<div class="qrow"><span>'+fmtT(ws)+' – '+fmtT(ws+WIN)+' ET</span><span class="small">the desk decides around '+fmtT(ws+155)+'</span></div>';}
+  $('sQueue').innerHTML=q;
+  // TECHNICAL
+  $('tPx').textContent=spot?fmt$(spot):'—';
+  $('tOpen').textContent=st.open?fmt$(st.open):'—';
+  $('tDrift').textContent=(spot&&st.open)?((spot-st.open>=0?'+':'−')+'$'+Math.abs(spot-st.open).toFixed(2)):'—';
+  $('tLeft').textContent=mmss(st.left)+' ('+Math.round(st.el)+'s in)';
+  $('tSig').textContent=st.sig?st.sig.toExponential(2):'—';
+  $('tState').textContent=st.sealed&&st.sealed.call?('SEALED '+st.sealed.call.side.toUpperCase()+' '+Math.round(st.sealed.call.chance*100)+'%'):(st.frozen?('MIRROR CALL '+st.frozen.side.toUpperCase()+' '+Math.round(st.frozen.chance*100)+'%'):(st.el>CALL_HI?'ABSTAIN (mirror)':'WATCHING'));
+  const upPct=st.cup?Math.round(st.cup*100):50;
+  $('barUp').style.width=upPct+'%';$('barDn').style.width=(100-upPct)+'%';
+  $('labUp').textContent='UP '+upPct+'%';$('labDn').textContent='DOWN '+(100-upPct)+'%';
+  $('tFeed').textContent='feed: '+(spotSrc.length?spotSrc.join(' + '):'DOWN')+' · mirror open = Coinbase candle open at the window start (the desk\u2019s sealed open is its own first median sample — they can differ by a few dollars) · page pulled '+new Date().toLocaleTimeString('en-US',{timeZone:'America/New_York'})+' ET';
+  let tq='<tr><th>WINDOW (ET)</th><th>DECISION SPAN (ET)</th><th>STATUS</th></tr>';
+  for(let i=0;i<=5;i++){const ws=st.w+i*WIN;const stat=i===0?('<span class="mid">LIVE — ends in '+mmss(st.left)+'</span>'):('opens in '+mmss(ws-st.now));tq+='<tr><td>'+fmtT(ws)+' – '+fmtT(ws+WIN)+'</td><td>'+fmtT(ws+CALL_LO)+' – '+fmtT(ws+CALL_HI)+'</td><td>'+stat+'</td></tr>';}
+  $('tQueue').innerHTML=tq;
+}
+function renderRecord(){
+  if(!CD)return;
+  const L=CD.lane;
+  if(L){$('sRecord').innerHTML='The desk\u2019s sealed record: <b>'+L.graded+' calls graded · '+L.accuracy+'% right · best streak '+L.streak_best+'</b> · status <b class="'+(L.status==='APPROVED'?'ok':'mid')+'">'+L.status+'</b> under the house bar (≥20 graded · ≥62% · Brier ≤0.21). It has also passed on '+CD.abstains_total+' windows — passes count, they are never hidden.';}
+  const whyByWin={};(CD.recent_calls||[]).forEach(c=>whyByWin[c.window]=c);
+  let h='';
+  (CD.recent_windows||[]).slice(0,7).forEach(wn=>{
+    const t=fmtT(Date.parse(wn.window)/1000);
+    if(wn.call){const c=whyByWin[wn.window];const res=wn.grade?(wn.grade.correct?'<span class="ok">✓ right</span>':'<span class="bad">✗ wrong</span>'):'<span class="mid">settling…</span>';h+='<div class="histrow"><b>'+t+' ET</b> — CALL '+(wn.call.side==='up'?'⬆ UP':'⬇ DOWN')+' '+Math.round(wn.call.chance*100)+'% · '+res+(c?'<br><span class="small">'+c.why+'</span>':'')+'</div>';}
+    else if(wn.abstain){h+='<div class="histrow"><b>'+t+' ET</b> — NO CALL · <span class="small">the model never reached 60% — the desk passed.</span></div>';}
+  });
+  $('sHist').innerHTML=h||'<span class="small">the sealed record is still loading…</span>';
+  $('tSealStamp').textContent='sealed record as of '+CD.built_at+' (UTC) — refreshed by the desk\u2019s minute loops; the hash-chained ledger is the real-time original';
+  let tc='<tr><th>WINDOW (ET)</th><th>CALL</th><th class="num">CHANCE</th><th>BAND</th><th class="num">MOVE $</th><th>RESULT</th><th class="num">BRIER</th><th>WHY</th></tr>';
+  (CD.recent_calls||[]).forEach(c=>{
+    const res=c.result?(c.correct?'<span class="ok">✓ '+c.result+'</span>':'<span class="bad">✗ '+c.result+'</span>'):'<span class="mid">open</span>';
+    tc+='<tr><td>'+fmtT(Date.parse(c.window)/1000)+'</td><td>'+(c.side==='up'?'⬆ UP':'⬇ DOWN')+'</td><td class="num">'+Math.round(c.chance*100)+'%</td><td>'+c.band+'</td><td class="num">'+(c.move_usd>=0?'+':'−')+'$'+Math.abs(c.move_usd).toFixed(0)+'</td><td>'+res+'</td><td class="num">'+(c.brier==null?'—':c.brier)+'</td><td class="small">'+c.why+'</td></tr>';
+  });
+  $('tCalls').innerHTML=tc;
+  let tb='<tr><th>STATED BAND</th><th class="num">CALLS</th><th class="num">STATED AVG</th><th class="num">ACTUALLY RIGHT</th><th>READ</th></tr>';
+  (CD.bands||[]).forEach(b=>{
+    const read=!b.n?'no calls yet':(b.actual>=99?'<span class="ok">honest — perfect so far</span>':(b.actual<b.stated-10?'<span class="bad">running hot — stated higher than it lands</span>':'<span class="mid">close to honest</span>'));
+    tb+='<tr><td>'+b.band+'</td><td class="num">'+b.n+'</td><td class="num">'+(b.stated==null?'—':b.stated+'%')+'</td><td class="num">'+(b.actual==null?'—':b.actual+'%')+'</td><td>'+read+'</td></tr>';
+  });
+  $('tBands').innerHTML=tb;
+  $('tAbstain').textContent='The desk has ABSTAINED on '+CD.abstains_total+' windows in its state window — a pass is a decision, counted and never graded as a call.';
+  if(CD.rule)$('tRules').innerHTML='Rule <b>'+CD.rule.name+'</b> — windows are the clock-aligned 5 minutes. One call per window, made by the desk\u2019s first pass landing 110–200s in. Call only at model chance ≥60%; otherwise ABSTAIN (counted, never graded, never hidden). Model: no drift assumed; chance_up = Φ( ln(index/open) ÷ (σ_s·√seconds_left) ), σ_s = trailing 1-hour per-second volatility. Settlement (sim): up wins when the settle index is at or above the window open; settle index = mean of desk samples in the final 60 seconds. Index: '+CD.rule.index+'. The lane earns APPROVED under the same printed bar as every house lane: ≥20 graded · accuracy ≥62% · mean Brier ≤0.21. Nothing on this page places an order.';
+}
+function renderRace(){
+  if(!PD||!PD.btc_arena)return;
+  const rows=PD.btc_arena.rows||[];
+  const bySys={};
+  rows.forEach(r=>{bySys[r.system]=bySys[r.system]||{eq:0,rl:0,tr:0,wn:0};bySys[r.system].eq+=r.equity;bySys[r.system].rl+=r.realized;bySys[r.system].tr+=r.trades;bySys[r.system].wn+=r.wins;});
+  let tr='<tr><th>SYSTEM</th><th>VENUE RAIL</th><th class="num">EQUITY</th><th class="num">REALIZED</th><th class="num">TRADES</th><th class="num">WIN %</th><th>STATUS</th></tr>';
+  rows.forEach(r=>{tr+='<tr><td><b>'+r.system+'</b></td><td>'+r.venue+'</td><td class="num">'+fmt$(r.equity)+'</td><td class="num">'+fmt$(r.realized)+'</td><td class="num">'+r.trades+'</td><td class="num">'+(r.win_rate==null?'—':r.win_rate+'%')+'</td><td>'+r.status+'</td></tr>';});
+  Object.keys(bySys).forEach(s=>{const a=bySys[s];tr+='<tr><td colspan="2"><b>'+s+' — combined</b> (started $10.00)</td><td class="num"><b>'+fmt$(a.eq)+'</b></td><td class="num">'+fmt$(a.rl)+'</td><td class="num">'+a.tr+'</td><td class="num">'+(a.tr?Math.round(100*a.wn/a.tr)+'%':'—')+'</td><td></td></tr>';});
+  $('tRace').innerHTML=tr;
+}
+function setView(v){
+  $('viewSimple').style.display=v==='simple'?'':'none';
+  $('viewTech').style.display=v==='tech'?'':'none';
+  $('btnSimple').className=v==='simple'?'on':'';
+  $('btnTech').className=v==='tech'?'on':'';
+}
+loadData();loadSpot();loadCandles();
+setInterval(loadSpot,5000);
+setInterval(loadCandles,60000);
+setInterval(loadData,60000);
+setInterval(render,1000);
+render();
+</script>
+</body>
+</html>
