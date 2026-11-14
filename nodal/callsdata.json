@@ -1,11 +1,11 @@
 {
- "built_at": "2026-11-14T08:59:47Z",
+ "built_at": "2026-11-14T09:09:49Z",
  "bands": [
   {
    "band": "60\u201370%",
-   "n": 26,
+   "n": 27,
    "stated": 65.2,
-   "actual": 57.7
+   "actual": 59.3
   },
   {
    "band": "70\u201380%",
@@ -21,8 +21,8 @@
   },
   {
    "band": "90\u201399%",
-   "n": 14,
-   "stated": 94.8,
+   "n": 15,
+   "stated": 94.6,
    "actual": 100.0
   }
  ],
@@ -30,17 +30,32 @@
   "id": "BTC5",
   "name": "BTC 5-min desk (our specialist, sim)",
   "kind": "BTC Up/Down 5m windows \u00b7 plain vol model btc5-plain-v1 \u00b7 stand-in index",
-  "calls": 71,
-  "graded": 69,
-  "correct": 56,
-  "accuracy": 81.2,
-  "brier": 0.1312,
-  "streak_now": 4,
+  "calls": 72,
+  "graded": 71,
+  "correct": 58,
+  "accuracy": 81.7,
+  "brier": 0.1293,
+  "streak_now": 6,
   "streak_best": 13,
   "status": "APPROVED",
   "note": "graded from BTC5_GRADE records in the sealed ledger"
  },
  "recent_calls": [
+  {
+   "window": "2026-11-14T09:00:00Z",
+   "side": "up",
+   "chance": 0.9164,
+   "at_elapsed_s": 164,
+   "seconds_left": 135,
+   "index_px": 67006.41,
+   "open_px": 66945.505,
+   "move_usd": 60.9,
+   "band": "90\u201399%",
+   "why": "BTC rose $61 from the window open with 135s left \u2014 the model put UP at 92%. Top honesty band: 90\u201399% calls are 15-for-15 so far.",
+   "result": "up",
+   "correct": true,
+   "brier": 0.007
+  },
   {
    "window": "2026-11-14T08:55:00Z",
    "side": "up",
@@ -52,9 +67,9 @@
    "move_usd": 15.95,
    "band": "60\u201370%",
    "why": "BTC rose $16 from the window open with 105s left \u2014 the model put UP at 66%.",
-   "result": null,
-   "correct": null,
-   "brier": null
+   "result": "up",
+   "correct": true,
+   "brier": 0.1183
   },
   {
    "window": "2026-11-14T08:50:00Z",
@@ -291,7 +306,7 @@
    "open_px": 67077.705,
    "move_usd": 89.79,
    "band": "90\u201399%",
-   "why": "BTC rose $90 from the window open with 106s left \u2014 the model put UP at 93%. Top honesty band: 90\u201399% calls are 14-for-14 so far.",
+   "why": "BTC rose $90 from the window open with 106s left \u2014 the model put UP at 93%. Top honesty band: 90\u201399% calls are 15-for-15 so far.",
    "result": "up",
    "correct": true,
    "brier": 0.0046
@@ -306,7 +321,7 @@
    "open_px": 66974.445,
    "move_usd": 148.18,
    "band": "90\u201399%",
-   "why": "BTC rose $148 from the window open with 176s left \u2014 the model put UP at 98%. Top honesty band: 90\u201399% calls are 14-for-14 so far.",
+   "why": "BTC rose $148 from the window open with 176s left \u2014 the model put UP at 98%. Top honesty band: 90\u201399% calls are 15-for-15 so far.",
    "result": "up",
    "correct": true,
    "brier": 0.0005
@@ -381,28 +396,39 @@
    "open_px": 67291.205,
    "move_usd": 67.72,
    "band": "90\u201399%",
-   "why": "BTC rose $68 from the window open with 136s left \u2014 the model put UP at 91%. Top honesty band: 90\u201399% calls are 14-for-14 so far.",
+   "why": "BTC rose $68 from the window open with 136s left \u2014 the model put UP at 91%. Top honesty band: 90\u201399% calls are 15-for-15 so far.",
    "result": "up",
    "correct": true,
    "brier": 0.0079
-  },
-  {
-   "window": "2026-11-14T06:45:00Z",
-   "side": "up",
-   "chance": 0.9542,
-   "at_elapsed_s": 165,
-   "seconds_left": 134,
-   "index_px": 67349.36499999999,
-   "open_px": 67264.14,
-   "move_usd": 85.22,
-   "band": "90\u201399%",
-   "why": "BTC rose $85 from the window open with 134s left \u2014 the model put UP at 95%. Top honesty band: 90\u201399% calls are 14-for-14 so far.",
-   "result": "up",
-   "correct": true,
-   "brier": 0.0021
   }
  ],
  "recent_windows": [
+  {
+   "window": "2026-11-14T09:05:00Z",
+   "open_px": 67052.655,
+   "call": null,
+   "abstain": {
+    "why": "model chance 0.5633 < 0.6",
+    "chance": 0.5633,
+    "at": 1794647246
+   },
+   "grade": null
+  },
+  {
+   "window": "2026-11-14T09:00:00Z",
+   "open_px": 66945.505,
+   "call": {
+    "side": "up",
+    "chance": 0.9164,
+    "at": 1794646964
+   },
+   "abstain": null,
+   "grade": {
+    "result": "up",
+    "correct": true,
+    "brier": 0.007
+   }
+  },
   {
    "window": "2026-11-14T08:55:00Z",
    "open_px": 66923.6,
@@ -412,7 +438,11 @@
     "at": 1794646694
    },
    "abstain": null,
-   "grade": null
+   "grade": {
+    "result": "up",
+    "correct": true,
+    "brier": 0.1183
+   }
   },
   {
    "window": "2026-11-14T08:50:00Z",
@@ -570,57 +600,27 @@
     "correct": true,
     "brier": 0.0435
    }
-  },
-  {
-   "window": "2026-11-14T07:55:00Z",
-   "open_px": 67226.62,
-   "call": {
-    "side": "down",
-    "chance": 0.8048,
-    "at": 1794643025
-   },
-   "abstain": null,
-   "grade": {
-    "result": "down",
-    "correct": true,
-    "brier": 0.0381
-   }
-  },
-  {
-   "window": "2026-11-14T07:50:00Z",
-   "open_px": 66961.35,
-   "call": {
-    "side": "up",
-    "chance": 0.6862,
-    "at": 1794642714
-   },
-   "abstain": null,
-   "grade": {
-    "result": "up",
-    "correct": true,
-    "brier": 0.0985
-   }
   }
  ],
- "abstains_total": 27,
+ "abstains_total": 28,
  "counters": {
-  "graded": 69,
-  "wins": 56,
-  "win_rate": 81.2,
+  "graded": 71,
+  "wins": 58,
+  "win_rate": 81.7,
   "streak_type": "W",
-  "streak_n": 4,
+  "streak_n": 6,
   "best_win_streak": 13,
-  "last12": "WWWWWWLLWWWW"
+  "last12": "WWWWLLWWWWWW"
  },
  "live_window": {
-  "window": "2026-11-14T08:55:00Z",
-  "open_px": 66923.6,
-  "call": {
-   "side": "up",
-   "chance": 0.6561,
-   "at": 1794646694
+  "window": "2026-11-14T09:05:00Z",
+  "open_px": 67052.655,
+  "call": null,
+  "abstain": {
+   "why": "model chance 0.5633 < 0.6",
+   "chance": 0.5633,
+   "at": 1794647246
   },
-  "abstain": null,
   "grade": null
  },
  "lessons": [
