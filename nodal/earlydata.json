@@ -1,19 +1,99 @@
 {
- "built_at": "2026-11-14T14:33:00Z",
+ "built_at": "2026-11-14T14:42:58Z",
  "counters": {
-  "plays": 55,
-  "plays_won": 46,
-  "win_rate": 83.6,
-  "score": 46,
-  "streak_points": 3,
+  "plays": 57,
+  "plays_won": 48,
+  "win_rate": 84.2,
+  "score": 48,
+  "streak_points": 5,
   "best_streak_points": 20,
   "double_wins": 0,
-  "form": "WWWWWWWWWWLWWW",
-  "calls_made": 56,
-  "values": 33,
-  "flips": 3
+  "form": "WWWWWWWWLWWWWW",
+  "calls_made": 57,
+  "values": 34,
+  "flips": 4
  },
  "recent_plays": [
+  {
+   "window": "2026-11-14T14:35:00Z",
+   "side": "up",
+   "chance": 0.609,
+   "at_elapsed_s": 114,
+   "seconds_left": 185,
+   "open_px": 65998.715,
+   "index_px": 66041.23999999999,
+   "move_usd": 42.52,
+   "why_call": "BTC rose $43 from the window open with 185s left \u2014 the model put UP at 61%. Early read at 114s in, 30s before the plain desk's span opens.",
+   "telegraph": [
+    {
+     "chance": 0.5,
+     "elapsed": 56,
+     "side": "up",
+     "t": 1794666956
+    },
+    {
+     "chance": 0.609,
+     "elapsed": 114,
+     "side": "up",
+     "t": 1794667014
+    }
+   ],
+   "value": null,
+   "flip": {
+    "to_side": "down",
+    "chance": 0.7729,
+    "kind": "SAVE_FLIP",
+    "at_elapsed_s": 242,
+    "why": "No value banked and the early read is being run over: BTC crossed back through the open to $-64 and the model puts DOWN at 77% with 57s left. SAVE FLIP \u2014 take the other side for the final answer rather than ride a dead call."
+   },
+   "grade": {
+    "result": "down",
+    "correct": true,
+    "outcome": "WIN",
+    "points": 1,
+    "brier": 0.0516,
+    "early_correct": false,
+    "settle_px": 65903.25
+   },
+   "playback": [
+    {
+     "chance_up": 0.5,
+     "drift": 0.0,
+     "elapsed": 56,
+     "px": 65998.715,
+     "t": 1794666956
+    },
+    {
+     "chance_up": 0.609,
+     "drift": 42.52,
+     "elapsed": 114,
+     "px": 66041.23999999999,
+     "t": 1794667014
+    },
+    {
+     "chance_up": 0.3523,
+     "drift": -47.34,
+     "elapsed": 177,
+     "px": 65951.375,
+     "t": 1794667077
+    },
+    {
+     "chance_up": 0.2271,
+     "drift": -64.43,
+     "elapsed": 242,
+     "px": 65934.28,
+     "t": 1794667142
+    },
+    {
+     "chance_up": 0.01,
+     "drift": -126.5,
+     "elapsed": 294,
+     "px": 65872.215,
+     "t": 1794667194
+    }
+   ],
+   "lesson": "A clean early read that never needed the second move. The early span's whole edge is deciding 30 seconds sooner with the same model \u2014 this window, sooner was right."
+  },
   {
    "window": "2026-11-14T14:30:00Z",
    "side": "down",
@@ -38,33 +118,59 @@
      "t": 1794666713
     }
    ],
-   "value": null,
+   "value": {
+    "chance": 0.9661,
+    "at_elapsed_s": 235,
+    "why": "Early DOWN ran to 97% ($-163 from the open) at 235s \u2014 value taken, the early read is banked whatever happens next."
+   },
    "flip": null,
-   "grade": null,
+   "grade": {
+    "result": "down",
+    "correct": true,
+    "outcome": "WIN",
+    "points": 1,
+    "brier": 0.0422,
+    "early_correct": true,
+    "settle_px": 65991.79
+   },
    "playback": [
     {
-     "t": 1794666657,
+     "chance_up": 0.5,
+     "drift": 0.0,
      "elapsed": 57,
      "px": 66303.70000000001,
-     "drift": 0.0,
-     "chance_up": 0.5
+     "t": 1794666657
     },
     {
-     "t": 1794666713,
+     "chance_up": 0.2055,
+     "drift": -123.93,
      "elapsed": 113,
      "px": 66179.775,
-     "drift": -123.93,
-     "chance_up": 0.2055
+     "t": 1794666713
     },
     {
-     "t": 1794666775,
+     "chance_up": 0.1868,
+     "drift": -109.46,
      "elapsed": 175,
      "px": 66194.245,
-     "drift": -109.46,
-     "chance_up": 0.1868
+     "t": 1794666775
+    },
+    {
+     "chance_up": 0.0339,
+     "drift": -163.33,
+     "elapsed": 235,
+     "px": 66140.375,
+     "t": 1794666835
+    },
+    {
+     "chance_up": 0.01,
+     "drift": -311.91,
+     "elapsed": 299,
+     "px": 65991.795,
+     "t": 1794666899
     }
    ],
-   "lesson": null
+   "lesson": "A clean early read that never needed the second move. The early span's whole edge is deciding 30 seconds sooner with the same model \u2014 this window, sooner was right."
   },
   {
    "window": "2026-11-14T14:25:00Z",
@@ -1449,35 +1555,117 @@
     }
    ],
    "lesson": "A clean early read that never needed the second move. The early span's whole edge is deciding 30 seconds sooner with the same model \u2014 this window, sooner was right."
-  },
+  }
+ ],
+ "lessons": [
   {
-   "window": "2026-11-14T12:20:00Z",
-   "side": "down",
-   "chance": 0.7659,
-   "at_elapsed_s": 115,
-   "seconds_left": 184,
-   "open_px": 67109.525,
-   "index_px": 67079.515,
-   "move_usd": -30.01,
-   "why_call": "BTC fell $30 from the window open with 184s left \u2014 the model put DOWN at 77%. Early read at 115s in, 30s before the plain desk's span opens.",
+   "window": "2026-11-14T14:35:00Z",
+   "side": "up",
+   "chance": 0.609,
+   "at_elapsed_s": 114,
+   "seconds_left": 185,
+   "open_px": 65998.715,
+   "index_px": 66041.23999999999,
+   "move_usd": 42.52,
+   "why_call": "BTC rose $43 from the window open with 185s left \u2014 the model put UP at 61%. Early read at 114s in, 30s before the plain desk's span opens.",
    "telegraph": [
     {
      "chance": 0.5,
-     "elapsed": 52,
+     "elapsed": 56,
      "side": "up",
-     "t": 1794658852
+     "t": 1794666956
     },
     {
-     "chance": 0.7659,
-     "elapsed": 115,
+     "chance": 0.609,
+     "elapsed": 114,
+     "side": "up",
+     "t": 1794667014
+    }
+   ],
+   "value": null,
+   "flip": {
+    "to_side": "down",
+    "chance": 0.7729,
+    "kind": "SAVE_FLIP",
+    "at_elapsed_s": 242,
+    "why": "No value banked and the early read is being run over: BTC crossed back through the open to $-64 and the model puts DOWN at 77% with 57s left. SAVE FLIP \u2014 take the other side for the final answer rather than ride a dead call."
+   },
+   "grade": {
+    "result": "down",
+    "correct": true,
+    "outcome": "WIN",
+    "points": 1,
+    "brier": 0.0516,
+    "early_correct": false,
+    "settle_px": 65903.25
+   },
+   "playback": [
+    {
+     "chance_up": 0.5,
+     "drift": 0.0,
+     "elapsed": 56,
+     "px": 65998.715,
+     "t": 1794666956
+    },
+    {
+     "chance_up": 0.609,
+     "drift": 42.52,
+     "elapsed": 114,
+     "px": 66041.23999999999,
+     "t": 1794667014
+    },
+    {
+     "chance_up": 0.3523,
+     "drift": -47.34,
+     "elapsed": 177,
+     "px": 65951.375,
+     "t": 1794667077
+    },
+    {
+     "chance_up": 0.2271,
+     "drift": -64.43,
+     "elapsed": 242,
+     "px": 65934.28,
+     "t": 1794667142
+    },
+    {
+     "chance_up": 0.01,
+     "drift": -126.5,
+     "elapsed": 294,
+     "px": 65872.215,
+     "t": 1794667194
+    }
+   ],
+   "lesson": "A clean early read that never needed the second move. The early span's whole edge is deciding 30 seconds sooner with the same model \u2014 this window, sooner was right."
+  },
+  {
+   "window": "2026-11-14T14:30:00Z",
+   "side": "down",
+   "chance": 0.7945,
+   "at_elapsed_s": 113,
+   "seconds_left": 186,
+   "open_px": 66303.70000000001,
+   "index_px": 66179.775,
+   "move_usd": -123.93,
+   "why_call": "BTC fell $124 from the window open with 186s left \u2014 the model put DOWN at 79%. Early read at 113s in, 30s before the plain desk's span opens.",
+   "telegraph": [
+    {
+     "chance": 0.5,
+     "elapsed": 57,
+     "side": "up",
+     "t": 1794666657
+    },
+    {
+     "chance": 0.7945,
+     "elapsed": 113,
      "side": "down",
-     "t": 1794658915
+     "t": 1794666713
     }
    ],
    "value": {
-    "chance": 0.9642,
-    "at_elapsed_s": 172,
-    "why": "Early DOWN ran to 96% ($-63 from the open) at 172s \u2014 value taken, the early read is banked whatever happens next."
+    "chance": 0.9661,
+    "at_elapsed_s": 235,
+    "why": "Early DOWN ran to 97% ($-163 from the open) at 235s \u2014 value taken, the early read is banked whatever happens next."
    },
    "flip": null,
    "grade": {
@@ -1485,44 +1673,49 @@
     "correct": true,
     "outcome": "WIN",
     "points": 1,
-    "brier": 0.0548,
+    "brier": 0.0422,
     "early_correct": true,
-    "settle_px": 67085.94
+    "settle_px": 65991.79
    },
    "playback": [
     {
      "chance_up": 0.5,
      "drift": 0.0,
-     "elapsed": 52,
-     "px": 67109.525,
-     "t": 1794658852
+     "elapsed": 57,
+     "px": 66303.70000000001,
+     "t": 1794666657
     },
     {
-     "chance_up": 0.2341,
-     "drift": -30.01,
-     "elapsed": 115,
-     "px": 67079.515,
-     "t": 1794658915
+     "chance_up": 0.2055,
+     "drift": -123.93,
+     "elapsed": 113,
+     "px": 66179.775,
+     "t": 1794666713
     },
     {
-     "chance_up": 0.0358,
-     "drift": -62.91,
-     "elapsed": 172,
-     "px": 67046.61,
-     "t": 1794658972
+     "chance_up": 0.1868,
+     "drift": -109.46,
+     "elapsed": 175,
+     "px": 66194.245,
+     "t": 1794666775
     },
     {
-     "chance_up": 0.0102,
-     "drift": -58.38,
-     "elapsed": 233,
-     "px": 67051.15,
-     "t": 1794659033
+     "chance_up": 0.0339,
+     "drift": -163.33,
+     "elapsed": 235,
+     "px": 66140.375,
+     "t": 1794666835
+    },
+    {
+     "chance_up": 0.01,
+     "drift": -311.91,
+     "elapsed": 299,
+     "px": 65991.795,
+     "t": 1794666899
     }
    ],
    "lesson": "A clean early read that never needed the second move. The early span's whole edge is deciding 30 seconds sooner with the same model \u2014 this window, sooner was right."
-  }
- ],
- "lessons": [
+  },
   {
    "window": "2026-11-14T14:25:00Z",
    "side": "up",
@@ -1978,239 +2171,73 @@
     }
    ],
    "lesson": "A clean early read that never needed the second move. The early span's whole edge is deciding 30 seconds sooner with the same model \u2014 this window, sooner was right."
-  },
-  {
-   "window": "2026-11-14T13:30:00Z",
-   "side": "up",
-   "chance": 0.7791,
-   "at_elapsed_s": 114,
-   "seconds_left": 185,
-   "open_px": 66597.57999999999,
-   "index_px": 66650.495,
-   "move_usd": 52.92,
-   "why_call": "BTC rose $53 from the window open with 185s left \u2014 the model put UP at 78%. Early read at 114s in, 30s before the plain desk's span opens.",
-   "telegraph": [
-    {
-     "chance": 0.5,
-     "elapsed": 51,
-     "side": "up",
-     "t": 1794663051
-    },
-    {
-     "chance": 0.7791,
-     "elapsed": 114,
-     "side": "up",
-     "t": 1794663114
-    }
-   ],
-   "value": {
-    "chance": 0.8938,
-    "at_elapsed_s": 176,
-    "why": "Early UP ran to 89% ($+70 from the open) at 176s \u2014 value taken, the early read is banked whatever happens next."
-   },
-   "flip": null,
-   "grade": {
-    "result": "up",
-    "correct": true,
-    "outcome": "WIN",
-    "points": 1,
-    "brier": 0.0488,
-    "early_correct": true,
-    "settle_px": 66645.66
-   },
-   "playback": [
-    {
-     "chance_up": 0.5,
-     "drift": 0.0,
-     "elapsed": 51,
-     "px": 66597.57999999999,
-     "t": 1794663051
-    },
-    {
-     "chance_up": 0.7791,
-     "drift": 52.92,
-     "elapsed": 114,
-     "px": 66650.495,
-     "t": 1794663114
-    },
-    {
-     "chance_up": 0.8938,
-     "drift": 70.49,
-     "elapsed": 176,
-     "px": 66668.065,
-     "t": 1794663176
-    },
-    {
-     "chance_up": 0.8925,
-     "drift": 51.37,
-     "elapsed": 233,
-     "px": 66648.95000000001,
-     "t": 1794663233
-    },
-    {
-     "chance_up": 0.99,
-     "drift": 48.08,
-     "elapsed": 293,
-     "px": 66645.66,
-     "t": 1794663293
-    }
-   ],
-   "lesson": "A clean early read that never needed the second move. The early span's whole edge is deciding 30 seconds sooner with the same model \u2014 this window, sooner was right."
-  },
-  {
-   "window": "2026-11-14T13:25:00Z",
-   "side": "up",
-   "chance": 0.8901,
-   "at_elapsed_s": 114,
-   "seconds_left": 185,
-   "open_px": 66543.9,
-   "index_px": 66628.48000000001,
-   "move_usd": 84.58,
-   "why_call": "BTC rose $85 from the window open with 185s left \u2014 the model put UP at 89%. Early read at 114s in, 30s before the plain desk's span opens.",
-   "telegraph": [
-    {
-     "chance": 0.7343,
-     "elapsed": 59,
-     "side": "up",
-     "t": 1794662759
-    },
-    {
-     "chance": 0.8901,
-     "elapsed": 114,
-     "side": "up",
-     "t": 1794662814
-    }
-   ],
-   "value": {
-    "chance": 0.8901,
-    "at_elapsed_s": 114,
-    "why": "Early UP ran to 89% ($+85 from the open) at 114s \u2014 value taken, the early read is banked whatever happens next."
-   },
-   "flip": null,
-   "grade": {
-    "result": "up",
-    "correct": true,
-    "outcome": "WIN",
-    "points": 1,
-    "brier": 0.0121,
-    "early_correct": true,
-    "settle_px": 66618.51
-   },
-   "playback": [
-    {
-     "chance_up": 0.5,
-     "drift": 0.0,
-     "elapsed": 0,
-     "px": 66543.9,
-     "t": 1794662700
-    },
-    {
-     "chance_up": 0.7343,
-     "drift": 48.59,
-     "elapsed": 59,
-     "px": 66592.48999999999,
-     "t": 1794662759
-    },
-    {
-     "chance_up": 0.8901,
-     "drift": 84.58,
-     "elapsed": 114,
-     "px": 66628.48000000001,
-     "t": 1794662814
-    },
-    {
-     "chance_up": 0.9537,
-     "drift": 95.31,
-     "elapsed": 174,
-     "px": 66639.205,
-     "t": 1794662874
-    },
-    {
-     "chance_up": 0.7808,
-     "drift": 31.46,
-     "elapsed": 237,
-     "px": 66575.36,
-     "t": 1794662937
-    },
-    {
-     "chance_up": 0.99,
-     "drift": 74.62,
-     "elapsed": 295,
-     "px": 66618.515,
-     "t": 1794662995
-    }
-   ],
-   "lesson": "A clean early read that never needed the second move. The early span's whole edge is deciding 30 seconds sooner with the same model \u2014 this window, sooner was right."
   }
  ],
  "live_window": {
-  "window": "2026-11-14T14:30:00Z",
-  "open_px": 66303.70000000001,
+  "window": "2026-11-14T14:40:00Z",
+  "open_px": 65943.33499999999,
   "lean": {
    "side": "down",
-   "chance": 0.8132,
-   "at": 1794666775
+   "chance": 0.6221,
+   "at": 1794667375
   },
   "telegraph": [
    {
-    "t": 1794666657,
-    "elapsed": 57,
+    "t": 1794667252,
+    "elapsed": 52,
     "side": "up",
     "chance": 0.5
    },
    {
-    "t": 1794666713,
-    "elapsed": 113,
-    "side": "down",
-    "chance": 0.7945
+    "t": 1794667315,
+    "elapsed": 115,
+    "side": "up",
+    "chance": 0.5136
    },
    {
-    "t": 1794666775,
+    "t": 1794667375,
     "elapsed": 175,
     "side": "down",
-    "chance": 0.8132
+    "chance": 0.6221
    }
   ],
-  "call": {
-   "side": "down",
-   "chance": 0.7945,
-   "at": 1794666713,
-   "at_elapsed_s": 113,
-   "why": "BTC fell $124 from the window open with 186s left \u2014 the model put DOWN at 79%. Early read at 113s in, 30s before the plain desk's span opens."
-  },
+  "call": null,
   "value": null,
   "flip": null,
-  "abstain": null,
+  "abstain": {
+   "why": "no early call by 140s (span closed)",
+   "at": 1794667375
+  },
   "grade": null,
   "samples": [
    {
-    "t": 1794666657,
-    "elapsed": 57,
-    "px": 66303.70000000001,
+    "t": 1794667252,
+    "elapsed": 52,
+    "px": 65943.33499999999,
     "drift": 0.0,
     "chance_up": 0.5
    },
    {
-    "t": 1794666713,
-    "elapsed": 113,
-    "px": 66179.775,
-    "drift": -123.93,
-    "chance_up": 0.2055
+    "t": 1794667315,
+    "elapsed": 115,
+    "px": 65948.61499999999,
+    "drift": 5.28,
+    "chance_up": 0.5136
    },
    {
-    "t": 1794666775,
+    "t": 1794667375,
     "elapsed": 175,
-    "px": 66194.245,
-    "drift": -109.46,
-    "chance_up": 0.1868
+    "px": 65903.755,
+    "drift": -39.58,
+    "chance_up": 0.3779
    }
   ],
   "plain": {
    "call": null,
    "abstain": {
-    "why": "model chance 0.5294 < 0.6",
-    "chance": 0.5294,
-    "at": 1794666732
+    "why": "model chance 0.5667 < 0.6",
+    "chance": 0.5667,
+    "at": 1794667314
    }
   }
  },
