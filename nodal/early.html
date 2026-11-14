@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE EARLY CALL — the flip engine · BTC5E live</title>
+<style>
+  :root{--gold:#f5b942;--teal:#2dd4bf;--red:#f87171;--green:#4ade80;--ink:#e8e6df;--dim:#9a97a3;--card:#17171f;--line:#2a2a38;--org:#fb923c}
+  *{box-sizing:border-box}
+  body{background:#0c0c12;color:var(--ink);font-family:Georgia,'Times New Roman',serif;margin:0;padding:18px 14px 60px}
+  .wrap{max-width:1060px;margin:0 auto}
+  h1{font-size:30px;letter-spacing:2px;margin:4px 0 2px;color:var(--gold)}
+  h2{font-size:19px;letter-spacing:1.5px;color:var(--teal);margin:26px 0 8px;border-bottom:1px solid var(--line);padding-bottom:5px}
+  .sub{color:var(--dim);font-size:14.5px;line-height:1.45}
+  .stamp{display:inline-block;border:1px solid var(--gold);color:var(--gold);border-radius:4px;padding:1px 7px;font-size:12px;letter-spacing:1px;margin-right:6px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin:9px 0}
+  .ok{color:var(--green)} .bad{color:var(--red)} .mid{color:var(--gold)}
+  .small{font-size:13px;color:var(--dim);line-height:1.45}
+  a{color:var(--teal)}
+  .foot{margin-top:34px;color:var(--dim);font-size:13px;line-height:1.5;border-top:1px solid var(--line);padding-top:10px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:9px}
+  .stat b{display:block;font-size:20px;color:var(--gold);margin-top:2px}
+  .stat span{color:var(--dim);font-size:12.5px;letter-spacing:1px}
+  .hero{background:var(--card);border:2px solid var(--gold);border-radius:12px;padding:22px 18px;margin:12px 0;text-align:center}
+  .hero .state{font-size:46px;font-weight:800;letter-spacing:1px;line-height:1.1;margin:4px 0}
+  .hero .why{font-size:18px;line-height:1.55;margin:10px auto 4px;max-width:680px}
+  .hero .meta{color:var(--dim);font-size:15px;margin-top:8px}
+  .up{color:var(--green)} .down{color:var(--red)} .wait{color:var(--gold)}
+  .confbar{height:30px;border-radius:6px;background:#26262f;position:relative;overflow:hidden;margin:10px auto 4px;max-width:640px}
+  .confbar .fill{position:absolute;top:0;bottom:0;left:0;transition:width .6s}
+  .confbar .lab{position:absolute;top:5px;left:0;right:0;font-size:15px;color:#0c0c12;font-weight:bold;letter-spacing:1px}
+  .chip{display:inline-block;border:1px solid var(--line);border-radius:20px;padding:3px 11px;font-size:13.5px;margin:3px 4px 3px 0;background:#1d1d2a}
+  .chip.gold{border-color:var(--gold);color:var(--gold)} .chip.teal{border-color:var(--teal);color:var(--teal)} .chip.org{border-color:var(--org);color:var(--org)}
+  .play{border:1px solid var(--line);border-radius:8px;padding:11px 14px;margin:9px 0;background:var(--card);font-size:15px;line-height:1.55}
+  .play.double{border:2px solid var(--gold);background:#221d10}
+  .badge{display:inline-block;border-radius:4px;padding:1px 8px;font-size:12.5px;letter-spacing:1px;font-weight:bold}
+  .b-win{background:#14532d;color:#bbf7d0} .b-loss{background:#7f1d1d;color:#fecaca} .b-double{background:var(--gold);color:#0c0c12} .b-live{background:#1d4ed8;color:#dbeafe}
+  details{margin-top:7px} summary{cursor:pointer;color:var(--teal);font-size:14px}
+  .lesson{border-left:3px solid var(--gold);padding:8px 12px;margin:8px 0;background:#14141c;font-size:14.5px;line-height:1.55}
+  @media (max-width:560px){.hero .state{font-size:32px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="small"><a href="index.html">← NODAL hub</a> · <a href="calls.html">THE CALLS — the plain desk</a> · <a href="profitdesk.html">The Profit Desk</a> · <a href="arena.html">The Specialist Arena</a></div>
+  <h1>⚡ THE EARLY CALL — THE FLIP ENGINE</h1>
+  <div class="sub">A second caller beside the plain desk, on the same Bitcoin 5-minute game and the same plain model — but it speaks <b>30 seconds sooner</b>, telegraphs its lean to everyone while the move forms, can <b>take value</b> when its early side runs hot, and can <b>flip</b> its final answer when the move turns. Bank the value AND flip right and the one play scores a <b>★ DOUBLE WIN</b>. Every step is sealed with its reasoning, and every play keeps its tick-by-tick playback. <span class="stamp">SIMULATION ONLY</span><span class="stamp">NO ORDERS — EVER</span></div>
+
+  <div class="grid" style="margin-top:12px">
+    <div class="card stat"><span>PLAYS GRADED</span><b id="cPlays">—</b></div>
+    <div class="card stat"><span>PLAYS WON</span><b id="cWon">—</b></div>
+    <div class="card stat"><span>SCORE (POINTS)</span><b id="cScore">—</b></div>
+    <div class="card stat"><span>IN A ROW (POINTS)</span><b id="cStreak">—</b></div>
+    <div class="card stat"><span>BEST STREAK</span><b id="cBest">—</b></div>
+    <div class="card stat"><span>★ DOUBLE WINS</span><b id="cDouble">—</b></div>
+  </div>
+  <div class="small" id="cForm" style="margin:2px 0 6px"></div>
+
+  <div class="hero">
+    <div class="small" id="tWindow">this 5-minute window</div>
+    <div class="state wait" id="tState">TELEGRAPHING…</div>
+    <div class="confbar"><div class="fill" id="confFill" style="width:50%;background:#9a97a3"></div><div class="lab" id="confLab">CONFIDENCE —</div></div>
+    <div class="why" id="tWhy"><b>The engine is watching this window form.</b></div>
+    <div id="tChips"></div>
+    <div class="meta" id="tMeta">connecting to the live price feed…</div>
+    <div class="small" id="tPlain" style="margin-top:6px"></div>
+  </div>
+
+  <h2>🧾 THE PLAYS — one row per play, double wins highlighted</h2>
+  <div id="plays">…</div>
+
+  <h2>🧠 LESSONS — what the wins and the misses teach</h2>
+  <div id="lessons">…</div>
+
+  <h2>📏 THE RULES — btc5-early-flip-v1, printed in the open</h2>
+  <div class="card" id="rules" style="font-size:14.5px;line-height:1.6">…</div>
+
+  <div class="foot">THE EARLY CALLER runs beside the plain BTC5 desk on the same stand-in index (median of Coinbase + Kraken spot, Terry's documented BRTI fallback) and settles on the same method — so the two desks can be compared honestly, window by window. The live telegraph above is this page's own mirror of the model; the engine's sealed record governs. Poll grain is the desk's ~60-second loop: "30 seconds before" is the call span opening 30 seconds before the plain desk's span. Every play is sealed into the house ledger (BTC5E records) and blobbed with the engine pack on the standing reblob cycle, so any play can be recalled and re-watched. Simulation only — nothing here places an order, ever.</div>
+</div>
+
+<script>
+"use strict";
+const $=id=>document.getElementById(id);
+const WIN=300, TG_FROM=45, E_LO=80, E_HI=140, FLOOR=0.60, VLINE=0.88, FLIP_DL=255;
+let ED=null, spot=null, spotSrc=[], candles=[], mirrorOpen=null, mirrorWin=null;
+function erf(x){const s=x<0?-1:1;x=Math.abs(x);const t=1/(1+0.3275911*x);const y=1-((((1.061405429*t-1.453152027)*t+1.421413741)*t-0.284496736)*t+0.254829592)*t*Math.exp(-x*x);return s*y}
+function phi(z){return 0.5*(1+erf(z/Math.SQRT2))}
+function clamp(v,a,b){return Math.min(b,Math.max(a,v))}
+function fmt$(v){return v==null?"—":"$"+Number(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}
+function fmtT(ts){return new Date(ts*1000).toLocaleTimeString('en-US',{timeZone:'America/New_York',hour:'numeric',minute:'2-digit'})}
+function wiso(w){return new Date(w*1000).toISOString().replace(/\.\\d+Z$/,'Z')}
+function mmss(s){s=Math.max(0,Math.round(s));return Math.floor(s/60)+":"+String(s%60).padStart(2,'0')}
+function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;')}
+async function jget(u){const r=await fetch(u,{cache:'no-store'});if(!r.ok)throw new Error(r.status);return r.json()}
+async function loadData(){try{ED=await jget('earlydata.json');renderRecord();}catch(e){}}
+async function loadSpot(){const pxs=[];const src=[];
+  try{const cb=await jget('https://api.exchange.coinbase.com/products/BTC-USD/ticker');pxs.push(parseFloat(cb.price));src.push('coinbase');}catch(e){}
+  try{const kr=await jget('https://api.kraken.com/0/public/Ticker?pair=XBTUSD');const k=Object.keys(kr.result||{})[0];if(k){pxs.push(parseFloat(kr.result[k].c[0]));src.push('kraken');}}catch(e){}
+  if(pxs.length){pxs.sort((a,b)=>a-b);spot=pxs[Math.floor(pxs.length/2)];spotSrc=src;}}
+async function loadCandles(){try{const rows=await jget('https://api.exchange.coinbase.com/products/BTC-USD/candles?granularity=60');if(Array.isArray(rows))candles=rows.slice().sort((a,b)=>a[0]-b[0]);}catch(e){}}
+function sigmaS(){if(candles.length<25)return null;const now=Date.now()/1000,pts=candles.filter(c=>now-c[0]<=3600);const rets=[];
+  for(let i=1;i<pts.length;i++){const dt=pts[i][0]-pts[i-1][0];if(dt>=30&&dt<=120&&pts[i-1][4]>0)rets.push(Math.log(pts[i][4]/pts[i-1][4])/Math.sqrt(dt));}
+  if(rets.length<20)return null;const m=rets.reduce((a,b)=>a+b,0)/rets.length;return Math.sqrt(rets.reduce((a,b)=>a+(b-m)*(b-m),0)/rets.length);}
+function openFor(w){const c=candles.find(c=>c[0]===w);if(c)return c[3];if(mirrorWin===w&&mirrorOpen!=null)return mirrorOpen;return null}
+function spark(samples, marks){
+  if(!samples||samples.length<2)return '<div class="small">playback trail not captured for this play</div>';
+  const W=640,H=110,PAD=8;
+  let mn=Infinity,mx=-Infinity;samples.forEach(s=>{mn=Math.min(mn,s.drift);mx=Math.max(mx,s.drift)});mn=Math.min(mn,0);mx=Math.max(mx,0);if(mx-mn<10){mx+=5;mn-=5;}
+  const X=e=>PAD+(e/300)*(W-2*PAD), Y=d=>H-PAD-((d-mn)/(mx-mn))*(H-2*PAD);
+  let pts=samples.map(s=>X(s.elapsed).toFixed(1)+','+Y(s.drift).toFixed(1)).join(' ');
+  let out='<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;background:#101018;border:1px solid var(--line);border-radius:6px">';
+  out+='<line x1="'+PAD+'" y1="'+Y(0)+'" x2="'+(W-PAD)+'" y2="'+Y(0)+'" stroke="#3a3a4a" stroke-dasharray="4 3"/>';
+  out+='<polyline fill="none" stroke="#2dd4bf" stroke-width="2" points="'+pts+'"/>';
+  (marks||[]).forEach(m=>{const s=samples.reduce((a,b)=>Math.abs(b.elapsed-m.elapsed)<Math.abs(a.elapsed-m.elapsed)?b:a,samples[0]);
+    out+='<circle cx="'+X(s.elapsed)+'" cy="'+Y(s.drift)+'" r="5" fill="'+m.color+'"/><text x="'+(X(s.elapsed)+8)+'" y="'+(Y(s.drift)-7)+'" fill="'+m.color+'" font-size="11">'+m.label+'</text>';});
+  out+='<text x="'+PAD+'" y="12" fill="#9a97a3" font-size="10">drift vs the open · +'+mx.toFixed(0)+'</text>';
+  out+='<text x="'+PAD+'" y="'+(H-2)+'" fill="#9a97a3" font-size="10">window start → settle · '+mn.toFixed(0)+'</text></svg>';
+  return out;
+}
+function renderRecord(){
+  if(!ED)return;
+  const c=ED.counters||{};
+  $('cPlays').textContent=c.plays!=null?c.plays:'—';
+  $('cWon').textContent=c.plays_won!=null?(c.plays_won+(c.win_rate!=null?' · '+c.win_rate+'%':'')):'—';
+  $('cScore').textContent=c.score!=null?c.score:'—';
+  $('cStreak').textContent=c.streak_points!=null?(c.streak_points>0?'🔥 '+c.streak_points:'0'):'—';
+  $('cBest').textContent=c.best_streak_points!=null?c.best_streak_points:'—';
+  $('cDouble').textContent=c.double_wins!=null?c.double_wins:'—';
+  $('cForm').innerHTML='recent form (★ = double win): <b>'+esc(c.form||'—')+'</b> · calls made '+ (c.calls_made||0) +' · values banked '+(c.values||0)+' · flips '+(c.flips||0)+' · sealed record as of '+esc(ED.built_at||'');
+  // plays
+  let h='';
+  (ED.recent_plays||[]).forEach(p=>{
+    const g=p.grade, dbl=g&&g.outcome==='DOUBLE_WIN';
+    let badge;
+    if(!g)badge='<span class="badge b-live">IN PLAY</span>';
+    else if(dbl)badge='<span class="badge b-double">★ DOUBLE WIN · 2 PTS</span>';
+    else if(g.correct)badge='<span class="badge b-win">WIN · 1 PT</span>';
+    else badge='<span class="badge b-loss">LOSS</span>';
+    h+='<div class="play'+(dbl?' double':'')+'"><div><b>'+esc(fmtT(Date.parse(p.window)/1000))+' ET</b> · early call <b class="'+(p.side==='up'?'up':'down')+'">'+(p.side==='up'?'⬆ UP':'⬇ DOWN')+' '+Math.round(p.chance*100)+'%</b> at '+p.at_elapsed_s+'s in '+badge+'</div>';
+    h+='<div style="margin-top:4px"><b>'+esc(p.why_call||'')+'</b></div>';
+    if(p.value)h+='<div style="margin-top:4px">💰 <b>VALUE TAKEN</b> at '+p.value.at_elapsed_s+'s — '+esc(p.value.why)+'</div>';
+    if(p.flip)h+='<div style="margin-top:4px">🔄 <b>FLIPPED to '+(p.flip.to_side==='up'?'⬆ UP':'⬇ DOWN')+' '+Math.round(p.flip.chance*100)+'%</b> ('+esc(p.flip.kind||'')+') at '+p.flip.at_elapsed_s+'s — '+esc(p.flip.why)+'</div>';
+    if(g)h+='<div style="margin-top:4px">settled <b>'+(g.result==='up'?'⬆ UP':'⬇ DOWN')+'</b> · final answer '+(g.correct?'<span class="ok">RIGHT</span>':'<span class="bad">WRONG</span>')+' · the early side alone would have been '+(g.early_correct?'right':'wrong')+' · Brier '+g.brier+'</div>';
+    const marks=[];if(p.at_elapsed_s!=null)marks.push({elapsed:p.at_elapsed_s,color:'#f5b942',label:'CALL'});
+    if(p.value)marks.push({elapsed:p.value.at_elapsed_s,color:'#2dd4bf',label:'VALUE'});
+    if(p.flip)marks.push({elapsed:p.flip.at_elapsed_s,color:'#fb923c',label:'FLIP'});
+    h+='<details><summary>▶ PLAYBACK — re-watch this window tick by tick</summary><div style="margin-top:6px">'+spark(p.playback,marks)+'</div></details>';
+    h+='</div>';
+  });
+  $('plays').innerHTML=h||'<div class="card">No plays sealed yet — the first early call lands in the next window the model reads at 60%+ inside the early span.</div>';
+  // lessons
+  let lh='';
+  (ED.lessons||[]).forEach(p=>{lh+='<div class="lesson"><b>'+esc(fmtT(Date.parse(p.window)/1000))+' ET · '+esc(p.grade?p.grade.outcome:'')+'</b> — '+esc(p.lesson||'')+'</div>';});
+  $('lessons').innerHTML=lh||'<div class="card">Lessons print here as plays settle — wins and misses alike.</div>';
+  // rules
+  const r=ED.rule||{};
+  $('rules').innerHTML='TELEGRAPH from '+TG_FROM+'s (lean + confidence, never graded) · <b>EARLY CALL span '+E_LO+'–'+E_HI+'s</b> — opens 30s before the plain desk\'s 110–200s span · call floor '+Math.round(FLOOR*100)+'% · <b>TAKE VALUE</b> when the early side reaches '+Math.round(VLINE*100)+'% · <b>FLIP</b> after value at opposite '+Math.round(0.60*100)+'%+, or a save flip at 75%+ with the price back through the open · no flips after '+FLIP_DL+'s · scoring: WIN 1pt · <b>★ DOUBLE WIN (value banked + flip right) 2pts for the one play</b> · LOSS 0 · settlement: mean of desk samples in the final 60s, up wins at-or-above the open, on the stand-in index.';
+}
+function render(){
+  const now=Date.now()/1000, w=Math.floor(now/WIN)*WIN, el=now-w, left=w+WIN-now;
+  if(mirrorWin!==w){mirrorWin=w;mirrorOpen=spot;}
+  const open=openFor(w), sig=sigmaS();
+  let cup=null;if(spot&&open&&sig){const srem=sig*Math.sqrt(left);cup=srem>0?clamp(phi(Math.log(spot/open)/srem),0.01,0.99):null;}
+  const side=cup==null?null:(cup>=0.5?'up':'down'), chance=cup==null?null:(side==='up'?cup:1-cup);
+  $('tWindow').textContent='the '+fmtT(w)+' – '+fmtT(w+WIN)+' ET window · telegraph';
+  const lw=ED&&ED.live_window&&ED.live_window.window===wiso(w)?ED.live_window:null;
+  let big='TELEGRAPHING…', cls='wait', why='';
+  if(lw&&lw.flip){big='🔄 FLIPPED → '+(lw.flip.to_side==='up'?'⬆ UP':'⬇ DOWN');cls=lw.flip.to_side==='up'?'up':'down';why='<b>'+esc(lw.flip.why||'The engine flipped its final answer.')+'</b>';}
+  else if(lw&&lw.call){big='⚡ EARLY CALL: '+(lw.call.side==='up'?'⬆ UP':'⬇ DOWN')+' · '+Math.round(lw.call.chance*100)+'%';cls=lw.call.side==='up'?'up':'down';why='<b>'+esc(lw.call.why||'')+'</b>';if(lw.value)why+='<br>💰 <b>'+esc(lw.value.why)+'</b>';}
+  else if(el<E_LO&&chance!=null){big='LEANING '+(side==='up'?'⬆ UP':'⬇ DOWN')+' · '+Math.round(chance*100)+'%';cls=side==='up'?'up':'down';why='<b>The telegraph: BTC is '+(spot-open>=0?'+':'−')+'$'+Math.abs(spot-open).toFixed(0)+' from the open and the model leans '+side.toUpperCase()+' — the early call span opens at 1:20 into the window, 30 seconds before the plain desk even starts deciding.</b>';}
+  else if(chance!=null&&chance>=FLOOR){big='LEANING '+(side==='up'?'⬆ UP':'⬇ DOWN')+' · '+Math.round(chance*100)+'%';cls=side==='up'?'up':'down';why='<b>The model is over the 60% bar inside the early span — the engine seals its call on its next pass (it runs every minute).</b>';}
+  else if(el>E_HI){big='NO PLAY';why='<b>The early span closed without a 60% read — this engine passes. Passing is printed, never hidden.</b>';}
+  else if(chance!=null){big='LEANING '+(side==='up'?'⬆ UP':'⬇ DOWN')+' · '+Math.round(chance*100)+'%';cls=side==='up'?'up':'down';why='<b>Under the 60% bar so far — telegraphing the lean, calling nothing yet.</b>';}
+  else{why='<b>Prices are live but the model is still warming up its volatility read.</b>';}
+  const sEl=$('tState');sEl.textContent=big;sEl.className='state '+cls;
+  $('tWhy').innerHTML=why;
+  // confidence bar — the engine's live confidence in its lean
+  const pct=chance!=null?Math.round(chance*100):50;
+  $('confFill').style.width=pct+'%';$('confFill').style.background=side==='up'?'var(--green)':(side==='down'?'var(--red)':'#9a97a3');
+  $('confLab').textContent=chance!=null?('CONFIDENCE '+pct+'% — '+side.toUpperCase()+(pct>=88?' · PAST THE VALUE LINE':'')):'CONFIDENCE —';
+  // chips for the sealed steps this window
+  let chips='';
+  if(lw){if(lw.call)chips+='<span class="chip gold">⚡ SEALED EARLY CALL '+(lw.call.side||'').toUpperCase()+' '+Math.round((lw.call.chance||0)*100)+'%</span>';
+    if(lw.value)chips+='<span class="chip teal">💰 VALUE BANKED '+Math.round((lw.value.chance||0)*100)+'%</span>';
+    if(lw.flip)chips+='<span class="chip org">🔄 FLIPPED → '+(lw.flip.to_side||'').toUpperCase()+'</span>';
+    if(lw.abstain)chips+='<span class="chip">NO PLAY — span closed</span>';}
+  chips+='<span class="chip">'+(el<E_LO?('early span opens in '+mmss(E_LO-el)):el<=E_HI?'EARLY SPAN OPEN — calling now':el<=FLIP_DL?'flip watch — moves can still be telegraphed':'riding it out — no more flips')+'</span>';
+  $('tChips').innerHTML=chips;
+  $('tMeta').textContent='window ends in '+mmss(left)+' · BTC '+(spot?fmt$(spot):'—')+' · open '+(open?fmt$(open):'—')+' · feed '+(spotSrc.length?spotSrc.join(' + '):'DOWN');
+  if(lw&&lw.plain){const pc=lw.plain; $('tPlain').innerHTML=pc.call?('beside it, the plain desk on this same window: <b>'+(pc.call.side||'').toUpperCase()+' '+Math.round((pc.call.chance||0)*100)+'%</b> (called at its own later span)'):(pc.abstain?'beside it, the plain desk: passed on this window so far':'beside it, the plain desk: still watching — its span opens 30s after this engine\'s');}
+  else $('tPlain').textContent='beside it, the plain desk: its span opens 30 seconds after this engine\u2019s';
+}
+async function tick(){await loadSpot();render();}
+loadCandles();loadData();tick();
+setInterval(tick,5000);setInterval(loadCandles,30000);setInterval(loadData,30000);
+</script>
+</body>
+</html>

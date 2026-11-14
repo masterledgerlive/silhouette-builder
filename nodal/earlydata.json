@@ -1,0 +1,177 @@
+{
+ "built_at": "2026-11-14T07:29:28Z",
+ "counters": {
+  "plays": 0,
+  "plays_won": 0,
+  "win_rate": null,
+  "score": 0,
+  "streak_points": 0,
+  "best_streak_points": 0,
+  "double_wins": 0,
+  "form": "",
+  "calls_made": 1,
+  "values": 1,
+  "flips": 0
+ },
+ "recent_plays": [
+  {
+   "window": "2026-11-14T07:25:00Z",
+   "side": "up",
+   "chance": 0.7628,
+   "at_elapsed_s": 93,
+   "seconds_left": 206,
+   "open_px": 67102.18,
+   "index_px": 67154.125,
+   "move_usd": 51.95,
+   "why_call": "BTC rose $52 from the window open with 206s left \u2014 the model put UP at 76%. Early read at 93s in, 30s before the plain desk's span opens.",
+   "telegraph": [
+    {
+     "chance": 0.7628,
+     "elapsed": 93,
+     "side": "up",
+     "t": 1794641193
+    }
+   ],
+   "value": {
+    "chance": 0.9136,
+    "at_elapsed_s": 136,
+    "why": "Early UP ran to 91% ($+89 from the open) at 136s \u2014 value taken, the early read is banked whatever happens next."
+   },
+   "flip": null,
+   "grade": null,
+   "playback": [
+    {
+     "t": 1794641127,
+     "elapsed": 27,
+     "px": 67102.18,
+     "drift": 0.0,
+     "chance_up": 0.5
+    },
+    {
+     "t": 1794641193,
+     "elapsed": 93,
+     "px": 67154.125,
+     "drift": 51.95,
+     "chance_up": 0.7628
+    },
+    {
+     "t": 1794641236,
+     "elapsed": 136,
+     "px": 67191.215,
+     "drift": 89.04,
+     "chance_up": 0.9136
+    },
+    {
+     "t": 1794641363,
+     "elapsed": 263,
+     "px": 67191.25,
+     "drift": 89.07,
+     "chance_up": 0.99
+    }
+   ],
+   "lesson": null
+  }
+ ],
+ "lessons": [],
+ "live_window": {
+  "window": "2026-11-14T07:25:00Z",
+  "open_px": 67102.18,
+  "lean": {
+   "side": "up",
+   "chance": 0.99,
+   "at": 1794641363
+  },
+  "telegraph": [
+   {
+    "t": 1794641193,
+    "elapsed": 93,
+    "side": "up",
+    "chance": 0.7628
+   },
+   {
+    "t": 1794641236,
+    "elapsed": 136,
+    "side": "up",
+    "chance": 0.9136
+   },
+   {
+    "t": 1794641363,
+    "elapsed": 263,
+    "side": "up",
+    "chance": 0.99
+   }
+  ],
+  "call": {
+   "side": "up",
+   "chance": 0.7628,
+   "at": 1794641193,
+   "at_elapsed_s": 93,
+   "why": "BTC rose $52 from the window open with 206s left \u2014 the model put UP at 76%. Early read at 93s in, 30s before the plain desk's span opens."
+  },
+  "value": {
+   "chance": 0.9136,
+   "at": 1794641236,
+   "why": "Early UP ran to 91% ($+89 from the open) at 136s \u2014 value taken, the early read is banked whatever happens next."
+  },
+  "flip": null,
+  "abstain": null,
+  "grade": null,
+  "samples": [
+   {
+    "t": 1794641127,
+    "elapsed": 27,
+    "px": 67102.18,
+    "drift": 0.0,
+    "chance_up": 0.5
+   },
+   {
+    "t": 1794641193,
+    "elapsed": 93,
+    "px": 67154.125,
+    "drift": 51.95,
+    "chance_up": 0.7628
+   },
+   {
+    "t": 1794641236,
+    "elapsed": 136,
+    "px": 67191.215,
+    "drift": 89.04,
+    "chance_up": 0.9136
+   },
+   {
+    "t": 1794641363,
+    "elapsed": 263,
+    "px": 67191.25,
+    "drift": 89.07,
+    "chance_up": 0.99
+   }
+  ],
+  "plain": {
+   "call": {
+    "side": "up",
+    "chance": 0.9323,
+    "at": 1794641293
+   },
+   "abstain": null
+  }
+ },
+ "rule": {
+  "name": "btc5-early-flip-v1",
+  "telegraph_from_s": 45,
+  "early_span_s": [
+   80,
+   140
+  ],
+  "plain_span_s": [
+   110,
+   200
+  ],
+  "call_floor": 0.6,
+  "value_line": 0.88,
+  "value_flip_floor": 0.6,
+  "save_flip_floor": 0.75,
+  "flip_deadline_s": 255,
+  "scoring": "WIN 1pt \u00b7 DOUBLE WIN (value banked + flip right) 2pts, one play \u00b7 LOSS 0",
+  "index": "STAND-IN index: median of Coinbase + Kraken spot (BRTI fallback per TerryCalls docs); sim settles on this stand-in, labeled in every record"
+ }
+}
