@@ -1,11 +1,11 @@
 {
- "built_at": "2026-11-14T15:59:53Z",
+ "built_at": "2026-11-14T16:09:58Z",
  "bands": [
   {
    "band": "60\u201370%",
-   "n": 41,
+   "n": 42,
    "stated": 65.5,
-   "actual": 58.5
+   "actual": 59.5
   },
   {
    "band": "70\u201380%",
@@ -31,11 +31,11 @@
   "name": "BTC 5-min desk (our specialist, sim)",
   "kind": "BTC Up/Down 5m windows \u00b7 plain vol model btc5-plain-v1 \u00b7 stand-in index",
   "calls": 136,
-  "graded": 134,
-  "correct": 108,
-  "accuracy": 80.6,
-  "brier": 0.1341,
-  "streak_now": 3,
+  "graded": 135,
+  "correct": 109,
+  "accuracy": 80.7,
+  "brier": 0.134,
+  "streak_now": 4,
   "streak_best": 19,
   "status": "APPROVED",
   "note": "graded from BTC5_GRADE records in the sealed ledger"
@@ -52,9 +52,9 @@
    "move_usd": -66.24,
    "band": "60\u201370%",
    "why": "BTC fell $66 from the window open with 175s left \u2014 the model put DOWN at 66%.",
-   "result": null,
-   "correct": null,
-   "brier": null
+   "result": "down",
+   "correct": true,
+   "brier": 0.1134
   },
   {
    "window": "2026-11-14T15:50:00Z",
@@ -404,6 +404,28 @@
  ],
  "recent_windows": [
   {
+   "window": "2026-11-14T16:05:00Z",
+   "open_px": 65416.005000000005,
+   "call": null,
+   "abstain": {
+    "why": "model chance 0.596 < 0.6",
+    "chance": 0.596,
+    "at": 1794672466
+   },
+   "grade": null
+  },
+  {
+   "window": "2026-11-14T16:00:00Z",
+   "open_px": 65646.085,
+   "call": null,
+   "abstain": {
+    "why": "model chance 0.5338 < 0.6",
+    "chance": 0.5338,
+    "at": 1794672124
+   },
+   "grade": null
+  },
+  {
    "window": "2026-11-14T15:55:00Z",
    "open_px": 65656.63,
    "call": {
@@ -412,7 +434,11 @@
     "at": 1794671824
    },
    "abstain": null,
-   "grade": null
+   "grade": {
+    "result": "down",
+    "correct": true,
+    "brier": 0.1134
+   }
   },
   {
    "window": "2026-11-14T15:50:00Z",
@@ -566,53 +592,27 @@
     "at": 1794668536
    },
    "grade": null
-  },
-  {
-   "window": "2026-11-14T14:55:00Z",
-   "open_px": 65889.42499999999,
-   "call": null,
-   "abstain": {
-    "why": "model chance 0.5 < 0.6",
-    "chance": 0.5,
-    "at": 1794668214
-   },
-   "grade": null
-  },
-  {
-   "window": "2026-11-14T14:50:00Z",
-   "open_px": 65896.16500000001,
-   "call": {
-    "side": "down",
-    "chance": 0.8143,
-    "at": 1794667967
-   },
-   "abstain": null,
-   "grade": {
-    "result": "down",
-    "correct": true,
-    "brier": 0.0345
-   }
   }
  ],
- "abstains_total": 46,
+ "abstains_total": 48,
  "counters": {
-  "graded": 134,
-  "wins": 108,
-  "win_rate": 80.6,
+  "graded": 135,
+  "wins": 109,
+  "win_rate": 80.7,
   "streak_type": "W",
-  "streak_n": 3,
+  "streak_n": 4,
   "best_win_streak": 19,
-  "last12": "WWWWLLWWLWWW"
+  "last12": "WWWLLWWLWWWW"
  },
  "live_window": {
-  "window": "2026-11-14T15:55:00Z",
-  "open_px": 65656.63,
-  "call": {
-   "side": "down",
-   "chance": 0.6633,
-   "at": 1794671824
+  "window": "2026-11-14T16:05:00Z",
+  "open_px": 65416.005000000005,
+  "call": null,
+  "abstain": {
+   "why": "model chance 0.596 < 0.6",
+   "chance": 0.596,
+   "at": 1794672466
   },
-  "abstain": null,
   "grade": null
  },
  "lessons": [
