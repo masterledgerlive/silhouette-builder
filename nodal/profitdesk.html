@@ -85,6 +85,10 @@
     <div class="small">Combo fee (Polymarket US, TerryCalls' published formula): price × [0.0695 × (1−price) + 0.06 × (1−price)⁴]. A <b>locked-profit</b> combo is the special case: a basket whose every-outcome prices sum to under $1 after fees — any single outcome pays. This panel prices single tickets; the basket check joins when live combo books are wired.</div>
   </div>
 
+  <h2>🏁 THE 5-MINUTE RACE — OUR SYSTEMS, BOTH VENUES, $10 EACH</h2>
+  <div class="sub">David's race: who has the best system? <b>PLAIN</b> buys only when our model's chance beats the ask by 3¢ or more (Terry's question) · <b>TAPE</b> just follows the move, no model, no price discipline — the baseline · <b>LOCK</b> races the late "safe" 90–96¢ entry both records warn about, so our own book can prove or disprove it. Polymarket runs the true 5-minute game; Kalshi has no 5-minute BTC market (verified — its series answers 404), so the Kalshi rail races its fastest, the 15-minute game, labeled everywhere. Fills walk the real ladders; every fill is sealed.</div>
+  <div class="card" id="race"><span class="small">loading…</span></div>
+
   <h2>📻 TERRY'S DESK — THE REFERENCE <span class="stamp ext">EXTERNAL</span></h2>
   <div class="card" id="terry"><span class="small">loading…</span></div>
 
@@ -120,6 +124,12 @@ async function load(){
     $('follow').innerHTML='<table><tr><th>Specialist · rail</th><th>Status</th><th class="num">Equity</th><th class="num">Realized</th><th class="num">Trades</th><th class="num">Win rate</th></tr>'+
       f.rows.map(r=>'<tr><td>'+r.name+' · '+r.rail+'</td><td>'+r.status+'</td><td class="num">$'+Number(r.equity).toFixed(2)+'</td><td class="num '+(r.realized>=0?'ok':'bad')+'">'+money(r.realized)+'</td><td class="num">'+r.trades+'</td><td class="num">'+r.win_rate+'%</td></tr>').join('')+
       '</table><div class="small" style="margin-top:6px">Arena snapshot: '+(f.updated||'')+'. '+f.note+'</div>';
+    const rc=pd.btc_arena;
+    if(rc){
+      $('race').innerHTML='<table><tr><th>System · venue</th><th>Status</th><th class="num">Equity</th><th class="num">Realized</th><th class="num">Trades</th><th class="num">Win rate</th><th class="num">Open</th></tr>'+
+        rc.rows.map(r=>'<tr><td>'+r.system+' · '+(r.venue=='POLY'?'Polymarket 5m':'Kalshi 15m')+'</td><td>'+r.status+'</td><td class="num">$'+Number(r.equity).toFixed(2)+'</td><td class="num '+(r.realized>=0?'ok':'bad')+'">'+money(r.realized)+'</td><td class="num">'+r.trades+'</td><td class="num">'+(r.win_rate==null?'—':r.win_rate+'%')+'</td><td class="num">'+r.open+'</td></tr>').join('')+
+        '</table><div class="small" style="margin-top:6px">'+rc.note+'</div>';
+    }
     const t=pd.terry_ref;
     $('terry').innerHTML='<div class="out">His closed-trade record ('+t.observed+', '+t.source+'): <b>'+t.record.trades+' trades · '+t.record.win_rate+'% won · <span class="bad">'+money(t.record.pnl)+'</span></b> · avg win +$'+t.record.avg_win+' vs avg loss −$'+Math.abs(t.record.avg_loss)+' · break-even needs '+t.record.breakeven_win_rate+'% · '+t.record.verdict+'</div>'+
       '<div class="out">If you had followed ($100 a call): <span class="ok">'+money(t.follower.at_call_price)+'</span> at the call price over '+t.follower.windows+' windows · <span class="ok">'+money(t.follower.still_worth_it)+'</span> only when still worth it · <span class="bad">'+money(t.follower.at_lock_price)+'</span> at the lock price. First calls: 5m '+t.first_calls['5m']+'% · 15m '+t.first_calls['15m']+'% · 1h '+t.first_calls['1h']+'% · locks '+t.locks+'.</div>'+
