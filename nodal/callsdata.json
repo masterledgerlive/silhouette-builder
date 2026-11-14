@@ -1,5 +1,5 @@
 {
- "built_at": "2026-11-14T17:09:51Z",
+ "built_at": "2026-11-14T17:19:48Z",
  "bands": [
   {
    "band": "60\u201370%",
@@ -9,9 +9,9 @@
   },
   {
    "band": "70\u201380%",
-   "n": 35,
+   "n": 36,
    "stated": 75.6,
-   "actual": 77.1
+   "actual": 77.8
   },
   {
    "band": "80\u201390%",
@@ -30,17 +30,32 @@
   "id": "BTC5",
   "name": "BTC 5-min desk (our specialist, sim)",
   "kind": "BTC Up/Down 5m windows \u00b7 plain vol model btc5-plain-v1 \u00b7 stand-in index",
-  "calls": 141,
-  "graded": 139,
-  "correct": 113,
-  "accuracy": 81.3,
-  "brier": 0.1327,
-  "streak_now": 8,
+  "calls": 142,
+  "graded": 140,
+  "correct": 114,
+  "accuracy": 81.4,
+  "brier": 0.1321,
+  "streak_now": 9,
   "streak_best": 19,
   "status": "APPROVED",
   "note": "graded from BTC5_GRADE records in the sealed ledger"
  },
  "recent_calls": [
+  {
+   "window": "2026-11-14T17:15:00Z",
+   "side": "down",
+   "chance": 0.6311,
+   "at_elapsed_s": 142,
+   "seconds_left": 157,
+   "index_px": 65191.130000000005,
+   "open_px": 65221.91,
+   "move_usd": -30.78,
+   "band": "60\u201370%",
+   "why": "BTC fell $31 from the window open with 157s left \u2014 the model put DOWN at 63%.",
+   "result": null,
+   "correct": null,
+   "brier": null
+  },
   {
    "window": "2026-11-14T17:05:00Z",
    "side": "down",
@@ -52,9 +67,9 @@
    "move_usd": -69.5,
    "band": "70\u201380%",
    "why": "BTC fell $70 from the window open with 141s left \u2014 the model put DOWN at 76%.",
-   "result": null,
-   "correct": null,
-   "brier": null
+   "result": "down",
+   "correct": true,
+   "brier": 0.0584
   },
   {
    "window": "2026-11-14T16:55:00Z",
@@ -385,24 +400,31 @@
    "result": "up",
    "correct": false,
    "brier": 0.464
-  },
-  {
-   "window": "2026-11-14T13:50:00Z",
-   "side": "down",
-   "chance": 0.9217,
-   "at_elapsed_s": 176,
-   "seconds_left": 123,
-   "index_px": 66724.1,
-   "open_px": 66824.5,
-   "move_usd": -100.4,
-   "band": "90\u201399%",
-   "why": "BTC fell $100 from the window open with 123s left \u2014 the model put DOWN at 92%. Top honesty band: 90\u201399% calls are 32-for-32 so far.",
-   "result": "down",
-   "correct": true,
-   "brier": 0.0061
   }
  ],
  "recent_windows": [
+  {
+   "window": "2026-11-14T17:15:00Z",
+   "open_px": 65221.91,
+   "call": {
+    "side": "down",
+    "chance": 0.6311,
+    "at": 1794676642
+   },
+   "abstain": null,
+   "grade": null
+  },
+  {
+   "window": "2026-11-14T17:10:00Z",
+   "open_px": 65129.765,
+   "call": null,
+   "abstain": {
+    "why": "model chance 0.5387 < 0.6",
+    "chance": 0.5387,
+    "at": 1794676354
+   },
+   "grade": null
+  },
   {
    "window": "2026-11-14T17:05:00Z",
    "open_px": 65176.215,
@@ -412,7 +434,11 @@
     "at": 1794676058
    },
    "abstain": null,
-   "grade": null
+   "grade": {
+    "result": "down",
+    "correct": true,
+    "brier": 0.0584
+   }
   },
   {
    "window": "2026-11-14T17:00:00Z",
@@ -546,47 +572,25 @@
     "at": 1794672713
    },
    "grade": null
-  },
-  {
-   "window": "2026-11-14T16:05:00Z",
-   "open_px": 65416.005000000005,
-   "call": null,
-   "abstain": {
-    "why": "model chance 0.596 < 0.6",
-    "chance": 0.596,
-    "at": 1794672466
-   },
-   "grade": null
-  },
-  {
-   "window": "2026-11-14T16:00:00Z",
-   "open_px": 65646.085,
-   "call": null,
-   "abstain": {
-    "why": "model chance 0.5338 < 0.6",
-    "chance": 0.5338,
-    "at": 1794672124
-   },
-   "grade": null
   }
  ],
- "abstains_total": 54,
+ "abstains_total": 55,
  "counters": {
-  "graded": 139,
-  "wins": 113,
-  "win_rate": 81.3,
+  "graded": 140,
+  "wins": 114,
+  "win_rate": 81.4,
   "streak_type": "W",
-  "streak_n": 8,
+  "streak_n": 9,
   "best_win_streak": 19,
-  "last12": "LWWLWWWWWWWW"
+  "last12": "WWLWWWWWWWWW"
  },
  "live_window": {
-  "window": "2026-11-14T17:05:00Z",
-  "open_px": 65176.215,
+  "window": "2026-11-14T17:15:00Z",
+  "open_px": 65221.91,
   "call": {
    "side": "down",
-   "chance": 0.7584,
-   "at": 1794676058
+   "chance": 0.6311,
+   "at": 1794676642
   },
   "abstain": null,
   "grade": null
