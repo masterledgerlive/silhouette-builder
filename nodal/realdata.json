@@ -1,5 +1,5 @@
 {
- "built_at": "2026-11-14T17:05:41Z",
+ "built_at": "2026-11-14T17:08:23Z",
  "authorized": "2026-11-14T16:58:00Z",
  "venue": "Polymarket US (open question: whether David's funded account is US or international settles at the first click)",
  "run_status": "REAL-CALL WATCH ON (David, 2026-11-14 ~12:02 EST: account funded, 'go ahead'). Desk relays guarded calls to David; David taps buy in his own Poly app; fill reports come back to the desk to seal. Watch runs until David says stop or a day stop hits.",
@@ -9,10 +9,11 @@
   "early_rule": "btc5-early-flip-v1 unchanged",
   "plain_floor": 0.7,
   "plain_one_position": true,
-  "reserve_floor_per_engine": 1.0,
-  "reserve_law": "never spend an engine's whole bank; always keep money for TWO MORE ROUNDS uncommitted ($1.00 at 50c stakes); a play that would breach the floor does not fire; stakes FLAT 50c forever \u2014 tighten when losing, NEVER loosen because of winnings; wins banked, not re-staked",
+  "reserve_law": "never spend an engine whole bank; savings plus two more rounds always remain; wins banked at settlement, enter B next day; tighten when losing, NEVER loosen mid-day because of winnings",
   "stake": 0.5,
-  "stakes_flat_forever": true
+  "stake_rule": "s = round down to 10c of 10% x day-start settled bank B, floored at $0.50; set once at day start, never changed mid-day",
+  "savings_lock": "L = $1.00 + 30% x max(0, all-time net profit above the starting $5.00); ratchets up only; bank <= L pauses the engine",
+  "fire_test": "a play fires only if uncommitted bank after committing s is >= L + 2s"
  },
  "plain": {
   "fills": [],
@@ -25,13 +26,21 @@
   "status": "EMPTY",
   "bank": {
    "cash": 5.0,
-   "day": null,
+   "day": "2026-11-14",
    "day_pnl": 0.0,
    "fills": 0,
    "open_position": null,
    "settled": 0,
-   "start": 5.0
+   "start": 5.0,
+   "day_start_bank": 5.0,
+   "peak_bank": 5.0
   },
+  "sizing": {
+   "B": 5.0,
+   "s": 0.5,
+   "L": 1.0
+  },
+  "can_fire": true,
   "bands": [
    {
     "band": "60-70",
@@ -70,13 +79,21 @@
   "status": "EMPTY",
   "bank": {
    "cash": 5.0,
-   "day": null,
+   "day": "2026-11-14",
    "day_pnl": 0.0,
    "fills": 0,
    "open_actions": [],
    "settled": 0,
-   "start": 5.0
+   "start": 5.0,
+   "day_start_bank": 5.0,
+   "peak_bank": 5.0
   },
+  "sizing": {
+   "B": 5.0,
+   "s": 0.5,
+   "L": 1.0
+  },
+  "can_fire": true,
   "bands": [
    {
     "band": "60-70",
@@ -138,9 +155,9 @@
    ]
   },
   "early": {
-   "graded": 73,
-   "win_rate": 82.2,
-   "score": 60
+   "graded": 74,
+   "win_rate": 82.4,
+   "score": 61
   }
  },
  "note": "REAL records only \u2014 graded on the venue settlement, never blended with SIM. The board starts EMPTY and earns its own verdict under the house bar: >=20 graded, >=62%, Brier <=0.21."

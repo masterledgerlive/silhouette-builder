@@ -48,9 +48,12 @@
   <div class="vs">
     <div class="eng plain">
       <h3 style="color:var(--teal)">PLAIN — the caller</h3>
-      <div class="small">Rule btc5-plain-v1 + the two adopted guards: real money only on calls ≥ 70%, one open position at a time. Stake $0.50 · buy only ≥3¢ under the model · exit at a 95¢ bid · day stop −$2.00 · bank floor $1.00.</div>
+      <div class="small">Rule btc5-plain-v1 + the two adopted guards: real money only on calls ≥ 70%, one open position at a time. Buy only ≥3¢ under the model · exit at a 95¢ bid · day stop −$2.00. Stake by David's equation: <b>s = 10% of the day-start bank B</b> (rounded down to 10¢, floored at $0.50), set once a day, never changed mid-day. A play fires only if savings lock L plus two more rounds remain uncommitted.</div>
       <div class="grid" style="margin-top:10px">
         <div class="card stat"><span>BANK</span><b id="pBank">—</b></div>
+        <div class="card stat"><span>DAY-START BANK B</span><b id="pB">—</b></div>
+        <div class="card stat"><span>TODAY'S STAKE s</span><b id="pS">—</b></div>
+        <div class="card stat"><span>SAVINGS LOCK L</span><b id="pL">—</b></div>
         <div class="card stat"><span>DAY P&amp;L</span><b id="pDay">—</b></div>
         <div class="card stat"><span>GRADED</span><b id="pGraded">—</b></div>
         <div class="card stat"><span>WIN RATE</span><b id="pRate">—</b></div>
@@ -60,9 +63,12 @@
     </div>
     <div class="eng early">
       <h3 style="color:var(--org)">THE EARLY CALLER — the flip engine</h3>
-      <div class="small">Rule btc5-early-flip-v1, unchanged: early call at 80–140s from a 0.60 floor, take value at 0.88, one flip. Stake $0.50 per leg action · day stop −$2.00 · bank floor $1.00. A ★ DOUBLE WIN scores 2 points for one play.</div>
+      <div class="small">Rule btc5-early-flip-v1, unchanged: early call at 80–140s from a 0.60 floor, take value at 0.88, one flip. Stake per leg action = the day's s by the same sizing equation · day stop −$2.00 · savings lock L + two rounds always held back. A ★ DOUBLE WIN scores 2 points for one play.</div>
       <div class="grid" style="margin-top:10px">
         <div class="card stat"><span>BANK</span><b id="eBank">—</b></div>
+        <div class="card stat"><span>DAY-START BANK B</span><b id="eB">—</b></div>
+        <div class="card stat"><span>TODAY'S STAKE s</span><b id="eS">—</b></div>
+        <div class="card stat"><span>SAVINGS LOCK L</span><b id="eL">—</b></div>
         <div class="card stat"><span>DAY P&amp;L</span><b id="eDay">—</b></div>
         <div class="card stat"><span>GRADED</span><b id="eGraded">—</b></div>
         <div class="card stat"><span>WIN RATE</span><b id="eRate">—</b></div>
@@ -103,9 +109,11 @@ fetch('realdata.json?_='+Date.now()).then(r=>r.json()).then(d=>{
   const P=d.plain,E=d.early;
   const fill=(id,v)=>document.getElementById(id).textContent=v;
   fill('pBank',money(P.bank.cash)+' / $5.00'); fill('pDay',money(P.bank.day_pnl));
+  fill('pB',money(P.sizing.B)); fill('pS',money(P.sizing.s)); fill('pL',money(P.sizing.L));
   fill('pGraded',P.graded); fill('pRate',P.win_rate===null?'—':P.win_rate+'%');
   fill('pPnl',money(P.pnl)); fill('pStatus',P.status);
   fill('eBank',money(E.bank.cash)+' / $5.00'); fill('eDay',money(E.bank.day_pnl));
+  fill('eB',money(E.sizing.B)); fill('eS',money(E.sizing.s)); fill('eL',money(E.sizing.L));
   fill('eGraded',E.graded); fill('eRate',E.win_rate===null?'—':E.win_rate+'%');
   fill('eScore',E.points+' pts · ★ '+E.double_wins); fill('eStatus',E.status);
   document.getElementById('pBands').innerHTML=bandsHTML(P.bands);
