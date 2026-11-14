@@ -1,15 +1,18 @@
 {
- "built_at": "2026-11-14T17:01:08Z",
+ "built_at": "2026-11-14T17:05:41Z",
  "authorized": "2026-11-14T16:58:00Z",
- "venue": "Polymarket US",
- "run_status": "AWAITING DAVID \u2014 fund Polymarket US with $10 and be present for the first session. Nothing fires before that.",
+ "venue": "Polymarket US (open question: whether David's funded account is US or international settles at the first click)",
+ "run_status": "REAL-CALL WATCH ON (David, 2026-11-14 ~12:02 EST: account funded, 'go ahead'). Desk relays guarded calls to David; David taps buy in his own Poly app; fill reports come back to the desk to seal. Watch runs until David says stop or a day stop hits.",
  "rules": {
   "bank_floor": 1.0,
   "day_stop_per_engine": -2.0,
   "early_rule": "btc5-early-flip-v1 unchanged",
   "plain_floor": 0.7,
   "plain_one_position": true,
-  "stake": 0.5
+  "reserve_floor_per_engine": 1.0,
+  "reserve_law": "never spend an engine's whole bank; always keep money for TWO MORE ROUNDS uncommitted ($1.00 at 50c stakes); a play that would breach the floor does not fire; stakes FLAT 50c forever \u2014 tighten when losing, NEVER loosen because of winnings; wins banked, not re-staked",
+  "stake": 0.5,
+  "stakes_flat_forever": true
  },
  "plain": {
   "fills": [],
@@ -105,14 +108,14 @@
  },
  "sim_reference": {
   "plain": {
-   "graded": 138,
-   "win_rate": 81.2,
+   "graded": 139,
+   "win_rate": 81.3,
    "bands": [
     {
      "band": "60\u201370%",
-     "n": 43,
-     "stated": 65.4,
-     "actual": 60.5
+     "n": 44,
+     "stated": 65.3,
+     "actual": 61.4
     },
     {
      "band": "70\u201380%",
