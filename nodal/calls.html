@@ -53,6 +53,14 @@
     <button id="btnTech" onclick="setView('tech')">TECHNICAL — THE DESK</button>
   </div>
 
+  <div class="grid" style="margin-top:10px">
+    <div class="card stat"><span>CALLS GRADED</span><b id="cGraded">—</b></div>
+    <div class="card stat"><span>WIN RATIO</span><b id="cWin">—</b></div>
+    <div class="card stat"><span>IN A ROW</span><b id="cStreak">—</b></div>
+    <div class="card stat"><span>BEST WIN STREAK</span><b id="cBest">—</b></div>
+  </div>
+  <div class="small" id="cForm" style="margin:2px 0 6px"></div>
+
   <!-- ============ SIMPLE VIEW ============ -->
   <div id="viewSimple">
     <div class="hero">
@@ -68,6 +76,8 @@
       <div id="sRecord" style="font-size:16.5px">…</div>
       <div id="sHist" style="margin-top:6px"></div>
     </div>
+    <h2>🧠 THE LAST LESSON — what a miss taught the desk</h2>
+    <div class="card" id="sLesson">…</div>
     <p class="small">How to read this page: the big word is the desk's call for the current 5-minute window — <b>UP</b>, <b>DOWN</b>, or <b>NO CALL</b> (the desk passes when the move is too small to trust; passing is the system working). The bold line under it is always the reason why. The live read on this page is a mirror of the desk's model fed by public prices; the sealed call in the ledger is the official record, and the recent-windows list below is that record as of the stamp shown.</p>
   </div>
 
@@ -91,6 +101,8 @@
     <div class="card"><table id="tQueue"><tr><th>WINDOW (ET)</th><th>DECISION SPAN (ET)</th><th>STATUS</th></tr></table></div>
     <h2>🔒 THE SEALED RECORD — last 24 calls</h2>
     <div class="card"><div class="small" id="tSealStamp">…</div><table id="tCalls"><tr><th>WINDOW (ET)</th><th>CALL</th><th class="num">CHANCE</th><th>BAND</th><th class="num">MOVE $</th><th>RESULT</th><th class="num">BRIER</th><th>WHY</th></tr></table></div>
+    <h2>🧠 LESSONS — every recent miss, post-mortemed in the open</h2>
+    <div class="card"><table id="tLessons"><tr><th>WINDOW (ET)</th><th>CALL</th><th>WHAT HAPPENED</th><th>THE LESSON</th></tr></table><div class="small" style="margin-top:6px">Reconstructed from the sealed call + grade and the desk's own price trail. A miss is never deleted, never re-explained after the fact — the facts are the ones the desk sealed before the window ended.</div></div>
     <h2>🎯 IS THE PERCENTAGE HONEST? — calibration</h2>
     <div class="card"><table id="tBands"><tr><th>STATED BAND</th><th class="num">CALLS</th><th class="num">STATED AVG</th><th class="num">ACTUALLY RIGHT</th><th>READ</th></tr></table><div class="small" id="tAbstain" style="margin-top:6px"></div></div>
     <h2>🏁 FOLLOW THE RACE — the same model, trading paper</h2>
@@ -152,8 +164,10 @@ function bandNote(ch){
   return '';
 }
 function sealedFor(w){
-  if(!CD||!CD.recent_windows)return null;
+  if(!CD)return null;
   const iso=wiso(w);
+  if(CD.live_window&&CD.live_window.window===iso&&CD.live_window.call)return CD.live_window;
+  if(!CD.recent_windows)return null;
   return CD.recent_windows.find(x=>x.window===iso)||null;
 }
 function state(){
@@ -223,6 +237,24 @@ function render(){
 }
 function renderRecord(){
   if(!CD)return;
+  const C=CD.counters;
+  if(C){
+    $('cGraded').textContent=C.graded;
+    $('cWin').textContent=C.win_rate+'% ('+C.wins+' of '+C.graded+')';
+    $('cStreak').innerHTML=C.streak_type==='W'?('🔥 '+C.streak_n+' WINS'):('❄ '+C.streak_n+' LOSS'+(C.streak_n>1?'ES':''));
+    $('cBest').textContent=C.best_win_streak;
+    $('cForm').textContent='recent form (oldest → newest): '+C.last12.split('').join(' ')+' · W = the desk was right, L = it was wrong — the misses stay on the board.';
+  }
+  const LS=CD.lessons||[];
+  if(LS.length){
+    const l0=LS[0];
+    $('sLesson').innerHTML='<div style="font-size:16px"><b>'+fmtT(Date.parse(l0.window)/1000)+' ET — CALL '+(l0.side==='up'?'⬆ UP':'⬇ DOWN')+' '+Math.round(l0.chance*100)+'% ✗ WRONG</b></div><div style="margin-top:5px">'+l0.what_happened+'</div><div style="margin-top:5px"><b>'+l0.lesson+'</b></div>';
+    let tl='<tr><th>WINDOW (ET)</th><th>CALL</th><th>WHAT HAPPENED</th><th>THE LESSON</th></tr>';
+    LS.forEach(l=>{tl+='<tr><td>'+fmtT(Date.parse(l.window)/1000)+'</td><td>'+(l.side==='up'?'⬆ UP':'⬇ DOWN')+' '+Math.round(l.chance*100)+'%<br><span class="small">'+l.band+' band</span></td><td class="small">'+l.what_happened+'</td><td class="small"><b>'+l.lesson+'</b></td></tr>';});
+    $('tLessons').innerHTML=tl;
+  } else {
+    $('sLesson').innerHTML='<span class="small">No misses on the recent record — when one lands, its post-mortem prints here.</span>';
+  }
   const L=CD.lane;
   if(L){$('sRecord').innerHTML='The desk\u2019s sealed record: <b>'+L.graded+' calls graded · '+L.accuracy+'% right · best streak '+L.streak_best+'</b> · status <b class="'+(L.status==='APPROVED'?'ok':'mid')+'">'+L.status+'</b> under the house bar (≥20 graded · ≥62% · Brier ≤0.21). It has also passed on '+CD.abstains_total+' windows — passes count, they are never hidden.';}
   const whyByWin={};(CD.recent_calls||[]).forEach(c=>whyByWin[c.window]=c);
