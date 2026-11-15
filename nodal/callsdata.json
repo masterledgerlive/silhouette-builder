@@ -1,5 +1,5 @@
 {
- "built_at": "2026-11-15T05:29:47Z",
+ "built_at": "2026-11-15T05:39:47Z",
  "bands": [
   {
    "band": "60\u201370%",
@@ -9,9 +9,9 @@
   },
   {
    "band": "70\u201380%",
-   "n": 64,
+   "n": 66,
    "stated": 75.0,
-   "actual": 75.0
+   "actual": 75.8
   },
   {
    "band": "80\u201390%",
@@ -30,17 +30,32 @@
   "id": "BTC5",
   "name": "BTC 5-min desk (our specialist, sim)",
   "kind": "BTC Up/Down 5m windows \u00b7 plain vol model btc5-plain-v1 \u00b7 stand-in index",
-  "calls": 234,
-  "graded": 233,
-  "correct": 187,
-  "accuracy": 80.3,
-  "brier": 0.1423,
-  "streak_now": 1,
+  "calls": 235,
+  "graded": 235,
+  "correct": 189,
+  "accuracy": 80.4,
+  "brier": 0.1417,
+  "streak_now": 3,
   "streak_best": 19,
   "status": "APPROVED",
   "note": "graded from BTC5_GRADE records in the sealed ledger"
  },
  "recent_calls": [
+  {
+   "window": "2026-11-15T05:30:00Z",
+   "side": "down",
+   "chance": 0.722,
+   "at_elapsed_s": 111,
+   "seconds_left": 188,
+   "index_px": 64760.415,
+   "open_px": 64811.494999999995,
+   "move_usd": -51.08,
+   "band": "70\u201380%",
+   "why": "BTC fell $51 from the window open with 188s left \u2014 the model put DOWN at 72%.",
+   "result": "down",
+   "correct": true,
+   "brier": 0.0773
+  },
   {
    "window": "2026-11-15T05:25:00Z",
    "side": "down",
@@ -52,9 +67,9 @@
    "move_usd": -49.14,
    "band": "70\u201380%",
    "why": "BTC fell $49 from the window open with 176s left \u2014 the model put DOWN at 72%.",
-   "result": null,
-   "correct": null,
-   "brier": null
+   "result": "down",
+   "correct": true,
+   "brier": 0.0792
   },
   {
    "window": "2026-11-15T05:15:00Z",
@@ -385,24 +400,35 @@
    "result": "up",
    "correct": true,
    "brier": 0.109
-  },
-  {
-   "window": "2026-11-15T02:35:00Z",
-   "side": "down",
-   "chance": 0.6276,
-   "at_elapsed_s": 146,
-   "seconds_left": 153,
-   "index_px": 64790.215,
-   "open_px": 64851.59,
-   "move_usd": -61.38,
-   "band": "60\u201370%",
-   "why": "BTC fell $61 from the window open with 153s left \u2014 the model put DOWN at 63%.",
-   "result": "down",
-   "correct": true,
-   "brier": 0.1387
   }
  ],
  "recent_windows": [
+  {
+   "window": "2026-11-15T05:35:00Z",
+   "open_px": 64806.53,
+   "call": null,
+   "abstain": {
+    "why": "model chance 0.5613 < 0.6",
+    "chance": 0.5613,
+    "at": 1794721041
+   },
+   "grade": null
+  },
+  {
+   "window": "2026-11-15T05:30:00Z",
+   "open_px": 64811.494999999995,
+   "call": {
+    "side": "down",
+    "chance": 0.722,
+    "at": 1794720711
+   },
+   "abstain": null,
+   "grade": {
+    "result": "down",
+    "correct": true,
+    "brier": 0.0773
+   }
+  },
   {
    "window": "2026-11-15T05:25:00Z",
    "open_px": 64851.79,
@@ -412,7 +438,11 @@
     "at": 1794720423
    },
    "abstain": null,
-   "grade": null
+   "grade": {
+    "result": "down",
+    "correct": true,
+    "brier": 0.0792
+   }
   },
   {
    "window": "2026-11-15T05:20:00Z",
@@ -574,53 +604,27 @@
     "correct": false,
     "brier": 0.4658
    }
-  },
-  {
-   "window": "2026-11-15T04:25:00Z",
-   "open_px": 64818.585,
-   "call": {
-    "side": "up",
-    "chance": 0.7106,
-    "at": 1794716810
-   },
-   "abstain": null,
-   "grade": {
-    "result": "up",
-    "correct": true,
-    "brier": 0.0838
-   }
-  },
-  {
-   "window": "2026-11-15T04:20:00Z",
-   "open_px": 64872.125,
-   "call": null,
-   "abstain": {
-    "why": "model chance 0.5493 < 0.6",
-    "chance": 0.5493,
-    "at": 1794716512
-   },
-   "grade": null
   }
  ],
- "abstains_total": 89,
+ "abstains_total": 90,
  "counters": {
-  "graded": 233,
-  "wins": 187,
-  "win_rate": 80.3,
+  "graded": 235,
+  "wins": 189,
+  "win_rate": 80.4,
   "streak_type": "W",
-  "streak_n": 1,
+  "streak_n": 3,
   "best_win_streak": 19,
-  "last12": "WWLWWWWWWWLW"
+  "last12": "LWWWWWWWLWWW"
  },
  "live_window": {
-  "window": "2026-11-15T05:25:00Z",
-  "open_px": 64851.79,
-  "call": {
-   "side": "down",
-   "chance": 0.7185,
-   "at": 1794720423
+  "window": "2026-11-15T05:35:00Z",
+  "open_px": 64806.53,
+  "call": null,
+  "abstain": {
+   "why": "model chance 0.5613 < 0.6",
+   "chance": 0.5613,
+   "at": 1794721041
   },
-  "abstain": null,
   "grade": null
  },
  "lessons": [
