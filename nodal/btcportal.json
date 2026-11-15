@@ -1,5 +1,5 @@
 {
- "built_at": "2026-11-15T16:05:12Z",
+ "built_at": "2026-11-15T16:10:48Z",
  "real": {
   "plain": {
    "bank": {
@@ -141,31 +141,27 @@
  "live": {
   "plain": {
    "window": {
-    "window": "2026-11-15T16:00:00Z",
-    "open_px": 64688.065,
-    "call": {
-     "side": "down",
-     "chance": 0.616,
-     "at": 1794758529
-    },
+    "window": "2026-11-15T16:10:00Z",
+    "open_px": 64622.1,
+    "call": null,
     "abstain": null,
     "grade": null
    },
    "counters": {
-    "graded": 312,
-    "wins": 255,
-    "win_rate": 81.7,
+    "graded": 313,
+    "wins": 256,
+    "win_rate": 81.8,
     "streak_type": "W",
-    "streak_n": 1,
+    "streak_n": 2,
     "best_win_streak": 21,
-    "last12": "WWWWWWWLWWLW"
+    "last12": "WWWWWWLWWLWW"
    },
    "bands": [
     {
      "band": "60\u201370%",
-     "n": 107,
+     "n": 108,
      "stated": 65.2,
-     "actual": 69.2
+     "actual": 69.4
     },
     {
      "band": "70\u201380%",
@@ -198,12 +194,12 @@
      "move_usd": -24.69,
      "band": "60\u201370%",
      "why": "BTC fell $25 from the window open with 170s left \u2014 the model put DOWN at 62%.",
-     "result": null,
-     "correct": null,
-     "brier": null,
+     "result": "down",
+     "correct": true,
+     "brier": 0.1475,
      "seq": 7433,
      "sealed_at": "2026-11-15T16:02:11+0000",
-     "grade_seq": null,
+     "grade_seq": 7442,
      "plan": "HOLD \u2014 ride to settlement; PLAIN's only early exit is a sell at a bid of 95\u00a2 or better",
      "final_answer": {
       "side": "down",
@@ -389,8 +385,8 @@
   },
   "early": {
    "window": {
-    "window": "2026-11-15T16:05:00Z",
-    "open_px": 64645.35,
+    "window": "2026-11-15T16:10:00Z",
+    "open_px": 64638.3,
     "lean": null,
     "telegraph": [],
     "call": null,
@@ -400,24 +396,34 @@
     "grade": null,
     "samples": [
      {
-      "t": 1794758700,
-      "elapsed": 0,
-      "px": 64645.35,
+      "t": 1794759001,
+      "elapsed": 1,
+      "px": 64638.3,
       "drift": 0.0,
       "chance_up": 0.5
+     },
+     {
+      "t": 1794759030,
+      "elapsed": 30,
+      "px": 64618.455,
+      "drift": -19.85,
+      "chance_up": 0.4139
      }
     ],
-    "plain": null
+    "plain": {
+     "call": null,
+     "abstain": null
+    }
    },
    "counters": {
-    "plays": 231,
-    "plays_won": 189,
-    "win_rate": 81.8,
-    "score": 190,
-    "streak_points": 1,
+    "plays": 232,
+    "plays_won": 190,
+    "win_rate": 81.9,
+    "score": 191,
+    "streak_points": 2,
     "best_streak_points": 22,
     "double_wins": 1,
-    "form": "WWWWWWWLWWWLLW",
+    "form": "WWWWWWLWWWLLWW",
     "calls_made": 234,
     "values": 97,
     "flips": 19
@@ -449,12 +455,63 @@
      ],
      "value": null,
      "flip": null,
-     "grade": null,
-     "playback": [],
+     "grade": {
+      "result": "down",
+      "correct": true,
+      "outcome": "WIN",
+      "points": 1,
+      "brier": 0.1462,
+      "early_correct": true,
+      "settle_px": 64645.35
+     },
+     "playback": [
+      {
+       "chance_up": 0.5,
+       "drift": 0.0,
+       "elapsed": 12,
+       "px": 64675.505000000005,
+       "t": 1794758412
+      },
+      {
+       "chance_up": 0.4443,
+       "drift": -14.59,
+       "elapsed": 42,
+       "px": 64660.915,
+       "t": 1794758442
+      },
+      {
+       "chance_up": 0.4658,
+       "drift": -8.39,
+       "elapsed": 72,
+       "px": 64667.119999999995,
+       "t": 1794758472
+      },
+      {
+       "chance_up": 0.3824,
+       "drift": -27.32,
+       "elapsed": 101,
+       "px": 64648.185,
+       "t": 1794758501
+      },
+      {
+       "chance_up": 0.4226,
+       "drift": -16.31,
+       "elapsed": 132,
+       "px": 64659.2,
+       "t": 1794758532
+      },
+      {
+       "chance_up": 0.2037,
+       "drift": -63.21,
+       "elapsed": 162,
+       "px": 64612.295,
+       "t": 1794758562
+      }
+     ],
      "seq": 7431,
      "sealed_at": "2026-11-15T16:01:43+0000",
-     "grade_seq": null,
-     "plan": "THE PLAN, as sealed: TAKE VALUE if the read reaches the 88% line \u00b7 ONE FLIP armed if the wave turns (a flip after value, or a save flip) \u00b7 otherwise HOLD to settlement",
+     "grade_seq": 7443,
+     "plan": "THE PLAN, as sealed: TAKE VALUE if the read reaches the 88% line \u00b7 ONE FLIP armed if the wave turns (a flip after value, or a save flip) \u00b7 otherwise HOLD to settlement \u00b7 neither fired \u2014 held to settlement",
      "final_answer": {
       "side": "down",
       "locked_seq": 7431,
@@ -463,7 +520,7 @@
      },
      "money": null,
      "money_note": "UNPRICED \u2014 the REAL watch sealed no ask for this window; no money line is invented",
-     "lesson": null
+     "lesson": "A clean early read that never needed the second move. The early span's whole edge is deciding 30 seconds sooner with the same model \u2014 this window, sooner was right."
     },
     {
      "window": "2026-11-15T15:55:00Z",
@@ -931,14 +988,14 @@
  },
  "sim_reference": {
   "plain": {
-   "graded": 312,
-   "win_rate": 81.7,
+   "graded": 313,
+   "win_rate": 81.8,
    "bands": [
     {
      "band": "60\u201370%",
-     "n": 107,
+     "n": 108,
      "stated": 65.2,
-     "actual": 69.2
+     "actual": 69.4
     },
     {
      "band": "70\u201380%",
@@ -961,9 +1018,9 @@
    ]
   },
   "early": {
-   "graded": 231,
-   "win_rate": 81.8,
-   "score": 190
+   "graded": 232,
+   "win_rate": 81.9,
+   "score": 191
   }
  },
  "venue": {
@@ -978,9 +1035,9 @@
  },
  "desk": {
   "plain": {
-   "graded": 312,
-   "win_rate": 81.7,
-   "streak_now": 1,
+   "graded": 313,
+   "win_rate": 81.8,
+   "streak_now": 2,
    "streak_best": 21,
    "bank": 154.84,
    "savings": 0.0,
@@ -995,12 +1052,12 @@
     "MAN": 0
    },
    "borrow_grade": "CLEAN",
-   "last_graded_window": "2026-11-15T15:55:00Z"
+   "last_graded_window": "2026-11-15T16:00:00Z"
   },
   "early": {
-   "graded": 231,
-   "win_rate": 81.8,
-   "streak_now": 1,
+   "graded": 232,
+   "win_rate": 81.9,
+   "streak_now": 2,
    "streak_best": 22,
    "bank": 189.88,
    "savings": 89.87,
@@ -1015,7 +1072,7 @@
     "MAN": 0
    },
    "borrow_grade": "CLEAN",
-   "last_graded_window": "2026-11-15T15:55:00Z"
+   "last_graded_window": "2026-11-15T16:00:00Z"
   },
   "note": "The engines' sealed record (sim play-along money = THE PROOF RECORD, the $5.00 bet algorithm). The REAL lane below is separate and still EMPTY \u2014 no fills reported yet."
  },
@@ -1030,8 +1087,8 @@
   "pnl_exit": 0
  },
  "last_graded": {
-  "plain": "2026-11-15T15:55:00Z",
-  "early": "2026-11-15T15:55:00Z"
+  "plain": "2026-11-15T16:00:00Z",
+  "early": "2026-11-15T16:00:00Z"
  },
  "riptide_trail": [
   {
@@ -1205,7 +1262,7 @@
   "name_note": "Name approved by David, 2026-11-14. SIM ONLY \u2014 real money needs his separate exact word.",
   "rule": "btc5-flow-v1",
   "concept": "Born from PLAIN + EARLY: the parents seed the window's trajectory, then it rides the crowd's wrong-way book flow with many micro plays inside one 5-minute window.",
-  "built_at": "2026-11-15T16:05:12Z",
+  "built_at": "2026-11-15T16:10:48Z",
   "ledgers": {
    "law": {
     "bank": 57.6,
@@ -1228,9 +1285,9 @@
    }
   },
   "scoreboard": {
-   "windows": 174,
+   "windows": 175,
    "windows_seeded": 177,
-   "call_hits": 136,
+   "call_hits": 137,
    "plays": 112,
    "correct": 55,
    "streak_type": "L",
@@ -1245,7 +1302,7 @@
     "seed_side": "down",
     "followed": "BOTH",
     "basis": "parents agree",
-    "call_hit": null,
+    "call_hit": true,
     "plays": 0,
     "correct": 0,
     "haul_law": 0,
