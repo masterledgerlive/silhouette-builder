@@ -210,7 +210,11 @@
    manifest blob = JSON {film, format, sections:[{n, blob_id, key_hex, media_sha256}]}
    section blob = secretbox( header-line + "\n" + media ), nonce = first 24 bytes of the blob,
    key = the section's key_hex (32 bytes). Media is proven by sha256(media) == media_sha256.
-   Gertie's manifest is the same shape with {n, blob} sections and one master key for all. */
+   Gertie's published manifest is {n, blob} sections with NO keys; every section
+   has its OWN key (the "master key" opens section 1 only). Section key =
+   the section's key_hex when the manifest carries one, else the master key.
+   Her loader tries gertie-rich-manifest.json (key_hex per section) first and
+   falls back to gertie-manifest.json. */
 const AGG="https://aggregator.walrus-testnet.walrus.space/v1/blobs/";
 const AGG2M="https://walrus-testnet.blockscope.net/v1/blobs/";
 const $=id=>document.getElementById(id);
@@ -239,7 +243,7 @@ const FILMS={
   rh:{title:"🏹 ROBIN HOOD (1986 VHS)", manifestId:"GTB6k1jJgEt4IZyAee4EKzvRVkihUWW1WjEPecLFs1o", mime:'video/mp4; codecs="avc1.640028, mp4a.40.2"', stat:"stat-rh"},
   notld:{title:"🧟 NIGHT OF THE LIVING DEAD (1968)", manifestId:"oielZhUzK1QIHGzK_UfMNwzNsdrH1fAcexjrAGYNWd8", mime:'video/mp4; codecs="avc1.64001e, mp4a.40.2"', stat:"stat-notld"},
   charade:{title:"💎 CHARADE (1963)", manifestId:"uFAie0VjGUFehT8spv80tWFBKD2Ae4byw-4EI2QQQjE", mime:'video/mp4; codecs="avc1.64001f, mp4a.40.2"', stat:"stat-charade"},
-  gertie:{title:"🐢 GERTIE THE DINOSAUR (1914)", manifestUrl:"https://arcade.highscores.live/arcade/blob-cinema/gertie-manifest.json", masterKey:GERTIE_MASTER, mime:'video/mp4; codecs="avc1.64001e, mp4a.40.2"', stat:"stat-gertie"}
+  gertie:{title:"🐢 GERTIE THE DINOSAUR (1914)", manifestUrl:"https://arcade.highscores.live/arcade/blob-cinema/gertie-manifest.json", richManifestUrl:"https://arcade.highscores.live/arcade/blob-cinema/gertie-rich-manifest.json", masterKey:GERTIE_MASTER, mime:'video/mp4; codecs="avc1.64001e, mp4a.40.2"', stat:"stat-gertie"}
 };
 let MANIFESTS={};
 function manifestURL(key){
@@ -247,6 +251,19 @@ function manifestURL(key){
   return F.manifestUrl ? F.manifestUrl : AGG+F.manifestId;
 }
 async function fetchManifest(key){
+  const F=FILMS[key];
+  /* Gertie: prefer the rich manifest (per-section key_hex) when it exists;
+     fall back to the plain repo manifest ({n, blob}, no keys). Fresh fetch
+     every time — this runs at page load AND at every play-press. */
+  if(F.richManifestUrl){
+    try{
+      const rr=await fetch(F.richManifestUrl,{cache:"no-store"});
+      if(rr.ok){
+        const rm=await rr.json();
+        if(rm&&Array.isArray(rm.sections)&&rm.sections.length){ MANIFESTS[key]=rm; return rm; }
+      }
+    }catch(e){ /* rich manifest not published yet — fall through to the plain one */ }
+  }
   const r=await fetch(manifestURL(key),{cache:"no-store"});
   if(!r.ok) throw new Error("HTTP "+r.status);
   const m=await r.json();
