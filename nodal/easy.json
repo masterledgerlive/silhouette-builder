@@ -3,12 +3,10 @@
  "window": "2026-11-15T15:40:00Z",
  "window_ends_in_s": 179,
  "daemon": {
-  "state": "STALLED",
-  "updated": "2026-11-15T15:41:53Z",
-  "chain": 7391,
-  "stall_components": [
-   "proof_refresh"
-  ],
+  "state": "LIVE",
+  "updated": "2026-11-15T15:44:09Z",
+  "chain": 7395,
+  "stall_components": [],
   "note": "The live pipeline runs as one AI-free program (nodal/live_daemon.py). A stall shows here and in nodal/daemon_state.json \u2014 no agent run needed."
  },
  "wave": {
@@ -189,6 +187,7 @@
    "call": null,
    "chance": null,
    "ask": null,
+   "follow": null,
    "sell_text": "Sell when the bid hits 95\u00a2 \u2014 or it rides to the end of the window.",
    "sell_mark": 0.95,
    "payout": null
@@ -205,6 +204,7 @@
    "call": "down",
    "chance": 0.6199,
    "ask": 0.42000000000000004,
+   "follow": "FIRE",
    "sell_text": "Take the money at the 88\u00a2 value line \u2014 or it flips once if the wave turns.",
    "sell_mark": 0.88,
    "payout": {
@@ -220,14 +220,15 @@
     "shares": 1.19
    },
    "value_hit": false,
-   "flipped": false
+   "flipped": false,
+   "flip_state": "FLIP ARMED \u2014 one flip can still come before this window ends"
   },
   {
    "name": "RIPTIDE",
    "mode": "TEST",
    "streak": 3,
    "best": 4,
-   "bank": 1.27,
+   "bank": 1.1,
    "savings": 66.65,
    "graded": 82,
    "wins": 40,
@@ -238,13 +239,13 @@
    "sell_mark": null,
    "payout": null,
    "in_play": false,
-   "plays": 0,
+   "plays": 1,
    "seeded": true
   }
  ],
  "tells": [
   {
-   "text": "The order book leans one way \u2014 ladder imbalance 0.70 out of 1.00.",
+   "text": "The order book behind RIPTIDE's side is stacked hard \u2014 ladder imbalance 0.98 out of 1.00. One side is pushing much harder than the other.",
    "src": "order book (RIPTIDE poll, this window)"
   },
   {

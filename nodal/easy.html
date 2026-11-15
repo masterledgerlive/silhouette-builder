@@ -97,11 +97,15 @@ function card(m){
     pay='<div class="pay">Press $0.50 at '+Math.round(m.ask*100)+'¢ → win '+fmt$(m.payout.win)+' if it lands, lose '+fmt$(Math.abs(m.payout.lose))+' if it misses.</div>';
     if(m.payout_value) pay+='<div class="meterlbl">Out at the 88¢ value line instead: '+fmt$(m.payout_value.win)+'.</div>';
   }
+  let followBanner='';
+  if(m.follow && m.follow.indexOf('ICE')===0) followBanner='<div style="background:#3a1414;border:1px solid #7a2d2d;color:#ffb3b3;border-radius:10px;padding:10px 12px;font-weight:800;margin:8px 0">🧊 ICE — DO NOT FOLLOW. This price is above the engine\'s own sell line: even if the call wins, the exit pays back less than the entry. A win that loses money.</div>';
+  else if(m.follow && m.follow.indexOf('NO PRICE')===0) followBanner='<div style="background:#2c2410;border:1px solid #5c4a1f;color:#ffd257;border-radius:10px;padding:10px 12px;font-weight:800;margin:8px 0">⚠️ NO PRICE — NO CALL. The price never read, so there is nothing to follow.</div>';
+  const flipLine = m.flip_state ? '<div class="sell">🔄 <b>Flip state:</b> '+m.flip_state+'</div>' : '';
   const badge = m.mode==='REAL' ? '<span class="badge real">REAL LANE</span>' : '<span class="badge test">FREE TEST</span>';
   const streak = (m.streak!=null) ? ('🔥 '+m.streak+' in a row (best '+m.best+')') : '';
   const bank = (m.bank!=null) ? ('Play-along bank '+fmt$(m.bank)+(m.savings?(' · savings '+fmt$(m.savings)):'')+' · '+m.wins+' wins of '+m.graded) : '';
   return '<div class="mcard"><div class="mname"><span>'+m.name+'</span>'+badge+'</div>'
-    +'<div class="call '+callCls+'">'+callTxt+'</div>'+meter+ladder(m)
+    +'<div class="call '+callCls+'">'+callTxt+'</div>'+followBanner+flipLine+meter+ladder(m)
     +'<div class="sell">🏁 <b>When is it a sell?</b> '+m.sell_text+'</div>'+pay
     +'<div class="bank">'+streak+(streak&&bank?' · ':'')+bank+'</div></div>';
 }
