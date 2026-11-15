@@ -1,5 +1,5 @@
 {
- "built_at": "2026-11-15T08:59:48Z",
+ "built_at": "2026-11-15T09:09:54Z",
  "bands": [
   {
    "band": "60\u201370%",
@@ -9,9 +9,9 @@
   },
   {
    "band": "70\u201380%",
-   "n": 70,
-   "stated": 75.0,
-   "actual": 77.1
+   "n": 71,
+   "stated": 74.9,
+   "actual": 77.5
   },
   {
    "band": "80\u201390%",
@@ -30,17 +30,32 @@
   "id": "BTC5",
   "name": "BTC 5-min desk (our specialist, sim)",
   "kind": "BTC Up/Down 5m windows \u00b7 plain vol model btc5-plain-v1 \u00b7 stand-in index",
-  "calls": 255,
-  "graded": 254,
-  "correct": 205,
-  "accuracy": 80.7,
-  "brier": 0.1392,
-  "streak_now": 7,
+  "calls": 256,
+  "graded": 255,
+  "correct": 206,
+  "accuracy": 80.8,
+  "brier": 0.1389,
+  "streak_now": 8,
   "streak_best": 19,
   "status": "APPROVED",
   "note": "graded from BTC5_GRADE records in the sealed ledger"
  },
  "recent_calls": [
+  {
+   "window": "2026-11-15T09:05:00Z",
+   "side": "up",
+   "chance": 0.9474,
+   "at_elapsed_s": 117,
+   "seconds_left": 182,
+   "index_px": 65932.04500000001,
+   "open_px": 65646.3,
+   "move_usd": 285.75,
+   "band": "90\u201399%",
+   "why": "BTC rose $286 from the window open with 182s left \u2014 the model put UP at 95%.",
+   "result": null,
+   "correct": null,
+   "brier": null
+  },
   {
    "window": "2026-11-15T08:55:00Z",
    "side": "up",
@@ -52,9 +67,9 @@
    "move_usd": 66.21,
    "band": "70\u201380%",
    "why": "BTC rose $66 from the window open with 177s left \u2014 the model put UP at 74%.",
-   "result": null,
-   "correct": null,
-   "brier": null
+   "result": "up",
+   "correct": true,
+   "brier": 0.0677
   },
   {
    "window": "2026-11-15T08:50:00Z",
@@ -385,24 +400,31 @@
    "result": "up",
    "correct": true,
    "brier": 0.113
-  },
-  {
-   "window": "2026-11-15T05:10:00Z",
-   "side": "down",
-   "chance": 0.7096,
-   "at_elapsed_s": 148,
-   "seconds_left": 151,
-   "index_px": 64746.33,
-   "open_px": 64790.44,
-   "move_usd": -44.11,
-   "band": "70\u201380%",
-   "why": "BTC fell $44 from the window open with 151s left \u2014 the model put DOWN at 71%.",
-   "result": "up",
-   "correct": false,
-   "brier": 0.5035
   }
  ],
  "recent_windows": [
+  {
+   "window": "2026-11-15T09:05:00Z",
+   "open_px": 65646.3,
+   "call": {
+    "side": "up",
+    "chance": 0.9474,
+    "at": 1794733617
+   },
+   "abstain": null,
+   "grade": null
+  },
+  {
+   "window": "2026-11-15T09:00:00Z",
+   "open_px": 65365.61,
+   "call": null,
+   "abstain": {
+    "why": "model chance 0.5075 < 0.6",
+    "chance": 0.5075,
+    "at": 1794733342
+   },
+   "grade": null
+  },
   {
    "window": "2026-11-15T08:55:00Z",
    "open_px": 64740.28,
@@ -412,7 +434,11 @@
     "at": 1794733022
    },
    "abstain": null,
-   "grade": null
+   "grade": {
+    "result": "up",
+    "correct": true,
+    "brier": 0.0677
+   }
   },
   {
    "window": "2026-11-15T08:50:00Z",
@@ -541,51 +567,25 @@
    "call": null,
    "abstain": null,
    "grade": null
-  },
-  {
-   "window": "2026-11-15T07:55:00Z",
-   "open_px": 63905.02,
-   "call": null,
-   "abstain": {
-    "why": "model chance 0.5 < 0.6",
-    "chance": 0.5,
-    "at": 1794729417
-   },
-   "grade": null
-  },
-  {
-   "window": "2026-11-15T07:50:00Z",
-   "open_px": 63767.925,
-   "call": {
-    "side": "up",
-    "chance": 0.6347,
-    "at": 1794729183
-   },
-   "abstain": null,
-   "grade": {
-    "result": "up",
-    "correct": true,
-    "brier": 0.1334
-   }
   }
  ],
- "abstains_total": 98,
+ "abstains_total": 99,
  "counters": {
-  "graded": 254,
-  "wins": 205,
-  "win_rate": 80.7,
+  "graded": 255,
+  "wins": 206,
+  "win_rate": 80.8,
   "streak_type": "W",
-  "streak_n": 7,
+  "streak_n": 8,
   "best_win_streak": 19,
-  "last12": "WLWWLWWWWWWW"
+  "last12": "LWWLWWWWWWWW"
  },
  "live_window": {
-  "window": "2026-11-15T08:55:00Z",
-  "open_px": 64740.28,
+  "window": "2026-11-15T09:05:00Z",
+  "open_px": 65646.3,
   "call": {
    "side": "up",
-   "chance": 0.7398,
-   "at": 1794733022
+   "chance": 0.9474,
+   "at": 1794733617
   },
   "abstain": null,
   "grade": null
