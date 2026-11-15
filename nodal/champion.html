@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>🏆 THE CHAMPION — NODAL</title>
+<style>
+  body{background:#070b14;color:#e6edf7;font-family:Georgia,'Times New Roman',serif;margin:0;padding:18px}
+  a{color:#38bdf8}
+  .wrap{max-width:880px;margin:0 auto}
+  .hero{border:3px solid #f5c542;border-radius:16px;padding:26px 22px;background:linear-gradient(180deg,#141b0e,#0b111f);text-align:center;margin:14px 0}
+  .hero .crown{font-size:15px;letter-spacing:4px;color:#f5c542;font-weight:800}
+  .hero h1{font-size:52px;margin:8px 0 2px;color:#ffd94d;letter-spacing:2px}
+  .hero .pick{font-size:19px;color:#fff;margin:6px 0 2px}
+  .hero .sub{color:#c9d6ee;font-size:14.5px;line-height:1.6}
+  .stats{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin:18px 0 4px}
+  .stat{border:1px solid #2b3a50;border-radius:12px;padding:10px 16px;background:#0d1524;min-width:110px}
+  .stat .n{font-size:27px;font-weight:800;color:#7ee787}
+  .stat .l{font-size:11px;letter-spacing:2px;color:#9fb4d8;margin-top:2px}
+  .record{border:2px solid #f97316;border-radius:14px;padding:16px 20px;background:#170f08;margin:14px 0}
+  .record .t{font-size:21px;font-weight:800;color:#ffb020;letter-spacing:1px}
+  .card{border:1px solid #2b3a50;border-radius:14px;padding:16px 20px;background:#0b111f;margin:14px 0}
+  .card h2{margin:2px 0 8px;font-size:21px;color:#fff;letter-spacing:1px}
+  .card p{color:#c9d6ee;font-size:13.5px;line-height:1.65}
+  table{width:100%;border-collapse:collapse;font-size:12.5px;color:#c9d6ee}
+  th{color:#9fb4d8;text-align:left;padding:4px 6px;border-bottom:1px solid #2b3a50;letter-spacing:1px;font-size:11px}
+  td{padding:4px 6px;border-bottom:1px solid #16203a}
+  .w{color:#7ee787;font-weight:700}.x{color:#f87171;font-weight:700}
+  .foot{color:#7d90b5;font-size:12px;line-height:1.7;margin:16px 0}
+  #stamp{color:#7d90b5;font-size:12px;text-align:center}
+</style>
+</head>
+<body>
+<div class="wrap">
+<p><a href="index.html">← NODAL hub</a></p>
+
+<div class="hero">
+  <div class="crown">🏆 THE CHAMPION 🏆</div>
+  <h1 id="champName">PLAIN</h1>
+  <div class="pick">New here? <b>Pick this model.</b> It is the only lane that has cleared the house bar.</div>
+  <div class="sub" id="champSub">The plain 5-minute Bitcoin call — one call per window, sealed before settlement, graded on the record.</div>
+  <div class="stats" id="champStats"></div>
+</div>
+
+<div class="record">
+  <div class="t" id="recordTitle">🔥 STREAK RECORD</div>
+  <p id="recordLine" style="color:#e8dcc8;font-size:14px;line-height:1.65;margin:8px 0"></p>
+  <div id="recordPlays"></div>
+</div>
+
+<div class="card">
+  <h2>THE CHAMPION'S 19 IN A ROW — EVERY PLAY</h2>
+  <p>David asked who got the 19 in a row. It was PLAIN, and here is the whole run, play by play, straight from the sealed ledger — no hand-picked highlights.</p>
+  <div id="champRun"></div>
+</div>
+
+<div class="card">
+  <h2>PLAIN — LATEST PLAYS (LIVE)</h2>
+  <div id="champRecent"></div>
+</div>
+
+<div class="card">
+  <h2>EARLY — THE EARLY CALLER (LIVE)</h2>
+  <p id="earlyLine"></p>
+  <div id="earlyRecent"></div>
+</div>
+
+<div class="card">
+  <h2>THE REST OF THE FIELD</h2>
+  <div id="field"></div>
+</div>
+
+<p class="foot" id="note"></p>
+<p id="stamp"></p>
+</div>
+
+<script>
+function pct(x){return (x*100).toFixed(0)+'%'}
+function playsTable(plays, early){
+  let h = '<table><tr><th>WINDOW (UTC)</th><th>CALL</th><th>MODEL</th><th>'+(early?'OUTCOME':'RESULT')+'</th><th>SEQ</th></tr>';
+  for(const p of plays){
+    const win = early ? (p.points>0) : (p.correct !== false);
+    const res = early ? (p.outcome||'') : (p.result||'');
+    h += '<tr><td>'+p.window+'</td><td>'+(p.side||'').toUpperCase()+'</td><td>'+pct(p.chance||0)+'</td><td class="'+(win?'w':'x')+'">'+res+(early&&p.value_banked?' · value banked':'')+(early&&p.flipped?' · flipped':'')+'</td><td>'+p.seq+'</td></tr>';
+  }
+  return h+'</table>';
+}
+function runTable(plays, early){
+  let h = '<table><tr><th>#</th><th>WINDOW (UTC)</th><th>CALL</th><th>MODEL</th><th>'+(early?'OUTCOME':'RESULT')+'</th><th>SEQ</th></tr>';
+  plays.forEach((p,i)=>{
+    const res = early ? (p.outcome||'') : (p.result||'');
+    h += '<tr><td>'+(i+1)+'</td><td>'+p.window+'</td><td>'+(p.side||'').toUpperCase()+'</td><td>'+pct(p.chance||0)+'</td><td class="w">'+res+'</td><td>'+p.seq+'</td></tr>';
+  });
+  return h+'</table>';
+}
+async function load(){
+  try{
+    const d = await (await fetch('championdata.json?ts='+Date.now())).json();
+    const c = d.champion, e = d.runner_up, r = d.streak_record;
+    document.getElementById('champName').textContent = c.model;
+    document.getElementById('champStats').innerHTML =
+      '<div class="stat"><div class="n">'+c.status+'</div><div class="l">HOUSE VERDICT</div></div>'+
+      '<div class="stat"><div class="n">'+c.accuracy+'%</div><div class="l">WIN RATE</div></div>'+
+      '<div class="stat"><div class="n">'+c.graded+'</div><div class="l">PLAYS GRADED</div></div>'+
+      '<div class="stat"><div class="n">'+c.best_streak+'</div><div class="l">BEST WIN STREAK</div></div>'+
+      '<div class="stat"><div class="n">'+c.current_streak+'</div><div class="l">CURRENT STREAK</div></div>'+
+      '<div class="stat"><div class="n">'+c.mean_brier+'</div><div class="l">MEAN BRIER</div></div>';
+    document.getElementById('recordTitle').textContent = '🔥 STREAK RECORD — '+r.holder+', '+r.length+' STRAIGHT WINS';
+    document.getElementById('recordLine').innerHTML =
+      'The longest win streak on the desk belongs to <b>'+r.holder+'</b>: <b>'+r.length+' wins in a row</b>, '+
+      'windows '+r.window_first+' → '+r.window_last+' (UTC), sealed in the ledger as records '+r.seq_first+'–'+r.seq_last+'. '+
+      (r.holder==='EARLY' ? 'All '+r.length+' graded WIN, one point each; 15 of them banked value on the way. The run PLAIN is famous for — the 19 — is one shorter.' : '');
+    document.getElementById('recordPlays').innerHTML = runTable(r.plays, r.holder==='EARLY');
+    document.getElementById('champRun').innerHTML =
+      '<p style="color:#c9d6ee;font-size:13px">Windows '+c.best_run.window_first+' → '+c.best_run.window_last+' (UTC) · ledger records '+c.best_run.seq_first+'–'+c.best_run.seq_last+' · broken by the very next window, which lost — the record keeps the loss too, one line below the run in the ledger.</p>'
+      + runTable(c.best_run.plays, false);
+    document.getElementById('champRecent').innerHTML = playsTable(c.recent, false);
+    document.getElementById('earlyLine').innerHTML =
+      'The Early Caller telegraphs its lean 45 seconds into each window, calls early, banks value at 88%, and can flip once. '+
+      'Record: <b>'+e.graded+' graded · '+e.accuracy+'% point-scoring · '+e.points+' points · '+e.double_wins+' double win'+(e.double_wins===1?'':'s')+'</b> · best streak <b>'+e.best_streak+'</b> · current streak '+e.current_streak+'.';
+    document.getElementById('earlyRecent').innerHTML = playsTable(e.recent, true);
+    document.getElementById('field').innerHTML = d.field.map(f=>
+      '<p><b style="color:#fff">'+f.model+'</b> — '+f.line+'<br><span style="color:#7ee787">'+f.stat+'</span></p>').join('');
+    document.getElementById('note').textContent = d.note;
+    document.getElementById('stamp').textContent = 'Computed from the sealed ledger · '+d.chain_records+' records · feed built '+d.generated_at+' · this page refreshes itself every 20 seconds';
+  }catch(err){
+    document.getElementById('stamp').textContent = 'feed not reachable yet — retrying…';
+  }
+}
+load(); setInterval(load, 20000);
+</script>
+</body>
+</html>
