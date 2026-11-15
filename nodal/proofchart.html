@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>💵 THE $5.00 PROOF CHART — PLAIN</title>
+<style>
+  body{background:#0a0f0a;color:#eef5ee;font-family:Verdana,Geneva,sans-serif;margin:0;padding:18px 14px 40px}
+  .wrap{max-width:920px;margin:0 auto}
+  h1{font-size:28px;letter-spacing:2px;margin:4px 0 2px;color:#7ee2a0}
+  .sub{color:#a9c4ab;font-size:13.5px;line-height:1.65;margin:0 0 14px}
+  .how{background:#0d1a12;border:2px solid #7ee2a0;border-radius:12px;padding:14px 18px;margin:0 0 18px}
+  .how h2{font-size:15px;letter-spacing:2px;color:#7ee2a0;margin:0 0 8px}
+  .how li{font-size:13px;line-height:1.75;color:#d8ecd9;margin:2px 0}
+  .lane{background:#101a12;border:2px solid #2f5f3a;border-radius:12px;padding:14px 16px;margin:0 0 18px}
+  .lane.real{border-color:#f5c542;background:#171408}
+  .lane h2{font-size:17px;letter-spacing:1px;margin:0 0 4px}
+  .big{font-size:15px;color:#fff}
+  .verified{color:#7ee2a0;font-weight:800}
+  .notverified{color:#ff6b81;font-weight:800}
+  table{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:10px}
+  th{color:#9db89f;text-align:left;padding:5px 6px;border-bottom:2px solid #2f5f3a;letter-spacing:.5px}
+  .real th{border-bottom-color:#8a6d1f;color:#d8c58a}
+  td{padding:5px 6px;border-bottom:1px solid #1d2f21;color:#d8ecd9}
+  .real td{border-bottom-color:#2f2a12;color:#efe6c8}
+  .win{color:#3ddc84;font-weight:800}
+  .loss{color:#ff6b81;font-weight:800}
+  .digit{background:#f5c542;color:#171408;font-weight:900;border-radius:6px;padding:1px 7px;font-size:11.5px}
+  .src{color:#77877a;font-size:11px}
+  .real .src{color:#8a8265}
+  .note{color:#9db89f;font-size:12.5px;line-height:1.7;margin-top:10px}
+  .real .note{color:#cbbd8a}
+  .foot{color:#77877a;font-size:12px;line-height:1.7}
+  a{color:#7ee2a0}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>💵 THE $5.00 PROOF CHART — PLAIN</h1>
+<p class="sub">The game proof, plain enough for anyone: the bank starts at <b>$5.00</b>, every play is here in order, each one marked <b>WIN</b> or <b>LOSS</b> with the running bank after it. Copy the cue, check every result against its sealed source, add the bank up yourself — and call out any error, ours or a tap's, the moment it happens. Two lanes, labeled, never blended: the <b>play-along sim</b> and PLAIN's <b>REAL $5.00</b>.</p>
+
+<div class="how"><h2>🔍 HOW TO VERIFY — FOUR CHECKS</h2><ul id="how"></ul></div>
+
+<div class="lane" id="simlane"></div>
+<div class="lane real" id="reallane"></div>
+
+<p class="foot" id="foot"></p>
+</div>
+<script>
+function et(iso){ try{ return new Date(iso).toLocaleString('en-US',{timeZone:'America/New_York',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}); }catch(e){ return iso; } }
+function m(x){ return (x==null)? '—' : '$' + Number(x).toFixed(2); }
+function pc(x){ return (x==null)? '—' : Math.round(x*100) + '¢'; }
+function render(d){
+  document.getElementById('how').innerHTML = (d.how_to_verify||[]).map(function(t){ return '<li>' + t + '</li>'; }).join('');
+  var s = d.sim_lane;
+  var h = '<h2>🎲 ' + s.label + '</h2>' +
+    '<div class="big">Start <b>$5.00</b> → now <b>' + m(s.final_bank) + '</b> · ' + s.plays.length + ' priced plays · ' +
+    (s.verified? '<span class="verified">✔ WALK VERIFIED — starts at $5.00, every step foots, count matches the board</span>' : '<span class="notverified">⚠ WALK CHECK FAILED: ' + (s.verify_notes||[]).join(' · ') + '</span>') + '</div>' +
+    '<table><tr><th>#</th><th>TIME (ET)</th><th>CALL</th><th>MODEL</th><th>ASK</th><th>STAKE</th><th>RESULT</th><th>P&amp;L</th><th>BANK AFTER</th><th>SETTLED BY</th></tr>';
+  s.plays.forEach(function(p, i){
+    h += '<tr><td>' + (i+1) + '</td><td>' + et(p.window) + '</td><td><b>' + (p.side||'').toUpperCase() + '</b></td><td>' + Math.round(p.chance*100) + '%</td><td>' + pc(p.ask) + '</td><td>' + m(p.stake) + '</td>' +
+      '<td class="' + (p.win?'win':'loss') + '">' + (p.win?'WIN':'LOSS') + ' (' + (p.result||'').toUpperCase() + ')</td>' +
+      '<td>' + (p.pnl>=0? '+' : '') + m(p.pnl).replace('$-','-$') + '</td>' +
+      '<td><b>' + m(p.bank_after) + '</b>' + (p.digit? ' <span class="digit">💥 $' + p.digit + ' BROKEN</span>' : '') + '</td>' +
+      '<td class="src">' + p.source + '</td></tr>';
+  });
+  h += '</table><p class="note">' + s.note + ' PLAIN\'s total sealed calls: ' + s.total_calls + ' (' + s.priced + ' priced, ' + s.unpriced + ' record-only).</p>';
+  document.getElementById('simlane').innerHTML = h;
+  var r = d.real_lane;
+  var h2 = '<h2>💵 ' + r.label + '</h2>' +
+    '<div class="big">Bank <b>' + m(r.bank) + '</b> · day P&amp;L ' + m(r.day_pnl) + ' · fills reported: <b>' + r.fills + '</b> · every cue the watch sealed for PLAIN, in order:</div>' +
+    '<table><tr><th>#</th><th>TIME (ET)</th><th>THE CUE — PRESS THIS</th><th>MODEL</th><th>ASK</th><th>STAKE</th><th>OUTCOME</th><th>YOUR TAP</th><th>BANK</th><th>SETTLED BY</th></tr>';
+  r.cues.forEach(function(c, i){
+    h2 += '<tr><td>' + (i+1) + '</td><td>' + et(c.window) + '</td><td><b>BUY ' + (c.side||'').toUpperCase() + '</b></td><td>' + Math.round(c.chance*100) + '%</td><td>' + pc(c.ask) + '</td><td>' + m(c.stake) + '</td>' +
+      '<td class="' + (c.win===null?'':(c.win?'win':'loss')) + '">' + (c.win===null?'— pending':(c.win?'WIN':'LOSS') + ' (' + (c.result||'').toUpperCase() + ')') + '</td>' +
+      '<td>no fill reported</td><td><b>' + m(r.bank) + '</b></td>' +
+      '<td class="src">' + c.source + '</td></tr>';
+  });
+  h2 += '</table><p class="note">' + r.note + '</p>';
+  document.getElementById('reallane').innerHTML = h2;
+  document.getElementById('foot').innerHTML = 'Built ' + d.built_at + ' from the sealed record — the same record blobbed to Walrus testnet. Every play\'s written proof (checks, reasons, exits) lives on <a href="proof.html">THE PROOF RECORD</a>; the fun face is <a href="gamelog.html">THE GAME LOG</a>.';
+}
+function tick(){ fetch('proofchart.json?ts=' + Date.now()).then(function(r){ return r.json(); }).then(render).catch(function(){}); }
+tick(); setInterval(tick, 20000);
+</script>
+</body>
+</html>
