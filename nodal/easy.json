@@ -1,7 +1,7 @@
 {
- "built_at": 1794753689,
+ "built_at": 1794753749,
  "window": "2026-11-15T14:40:00Z",
- "window_ends_in_s": 211,
+ "window_ends_in_s": 151,
  "daemon": {
   "state": "STALLED",
   "updated": "2026-11-15T14:41:47Z",
@@ -14,11 +14,11 @@
  "wave": {
   "state": "FALLING",
   "plain": "going down and staying down",
-  "drift": -222.7,
+  "drift": -100.8,
   "range": 222.7,
-  "flips": 0,
+  "flips": 1,
   "open": 64684.8,
-  "last": 64462.075
+  "last": 64584.0
  },
  "chart": {
   "points": [
@@ -177,6 +177,14 @@
    [
     1794753689,
     64462.075
+   ],
+   [
+    1794753719,
+    64483.63
+   ],
+   [
+    1794753749,
+    64584.0
    ]
   ],
   "bounds": [
@@ -202,8 +210,8 @@
    "savings": 0.0,
    "graded": 304,
    "wins": 249,
-   "call": null,
-   "chance": null,
+   "call": "down",
+   "chance": 0.9461,
    "ask": null,
    "sell_text": "Sell when the bid hits 95\u00a2 \u2014 or it rides to the end of the window.",
    "sell_mark": 0.95,
@@ -247,7 +255,7 @@
    "savings": 60.17,
    "graded": 77,
    "wins": 36,
-   "call": null,
+   "call": "down",
    "chance": null,
    "ask": null,
    "sell_text": "It gets out by itself: +5\u00a2 profit, the model dropping under 50%, or the window ending.",
@@ -255,24 +263,32 @@
    "payout": null,
    "in_play": false,
    "plays": 0,
-   "seeded": false
+   "seeded": true
   }
  ],
  "tells": [
   {
-   "text": "No live order-book read this window \u2014 the book feed only runs inside RIPTIDE's windows, and we don't guess.",
-   "src": "order book (no poll yet)"
+   "text": "The order book behind RIPTIDE's side is stacked hard \u2014 ladder imbalance 0.98 out of 1.00. One side is pushing much harder than the other.",
+   "src": "order book (RIPTIDE poll, this window)"
   },
   {
-   "text": "The price dropped $242 in the last two minutes \u2014 a real push, not a drift.",
+   "text": "All the models that have called are pointing the same way: DOWN.",
+   "src": "the sealed calls"
+  },
+  {
+   "text": "The price dropped $101 in the last two minutes \u2014 a real push, not a drift.",
    "src": "price trail (last 2 minutes)"
   },
   {
    "text": "EARLY's read is fading as the window goes on \u2014 its first lean is losing steam.",
    "src": "EARLY's in-window samples"
+  },
+  {
+   "text": "RIPTIDE has its seed and is watching for a dip of 4\u00a2 or more to jump in.",
+   "src": "RIPTIDE sealed seed"
   }
  ],
- "happening": "Bitcoin is FALLING \u2014 going down and staying down (-223 dollars this window). EARLY says BUY DOWN. 3 minutes 31 seconds left in the window.",
+ "happening": "Bitcoin is FALLING \u2014 going down and staying down (-101 dollars this window). PLAIN says BUY DOWN; EARLY says BUY DOWN; RIPTIDE says BUY DOWN. 2 minutes 31 seconds left in the window.",
  "history": [
   {
    "window": "2026-11-15T14:10:00Z",
