@@ -1,11 +1,11 @@
 {
- "built_at": "2026-11-15T13:25:09Z",
+ "built_at": "2026-11-15T13:38:13Z",
  "bands": [
   {
    "band": "60\u201370%",
-   "n": 99,
+   "n": 100,
    "stated": 65.3,
-   "actual": 67.7
+   "actual": 68.0
   },
   {
    "band": "70\u201380%",
@@ -15,9 +15,9 @@
   },
   {
    "band": "80\u201390%",
-   "n": 58,
+   "n": 60,
    "stated": 84.4,
-   "actual": 96.6
+   "actual": 96.7
   },
   {
    "band": "90\u201399%",
@@ -30,17 +30,62 @@
   "id": "BTC5",
   "name": "BTC 5-min desk (our specialist, sim)",
   "kind": "BTC Up/Down 5m windows \u00b7 plain vol model btc5-plain-v1 \u00b7 stand-in index",
-  "calls": 292,
-  "graded": 291,
-  "correct": 238,
-  "accuracy": 81.8,
-  "brier": 0.1362,
-  "streak_now": 5,
+  "calls": 295,
+  "graded": 294,
+  "correct": 241,
+  "accuracy": 82.0,
+  "brier": 0.1354,
+  "streak_now": 8,
   "streak_best": 21,
   "status": "APPROVED",
   "note": "graded from BTC5_GRADE records in the sealed ledger"
  },
  "recent_calls": [
+  {
+   "window": "2026-11-15T13:35:00Z",
+   "side": "up",
+   "chance": 0.6402,
+   "at_elapsed_s": 113,
+   "seconds_left": 186,
+   "index_px": 65464.84,
+   "open_px": 65433.34,
+   "move_usd": 31.5,
+   "band": "60\u201370%",
+   "why": "BTC rose $32 from the window open with 186s left \u2014 the model put UP at 64%.",
+   "result": null,
+   "correct": null,
+   "brier": null
+  },
+  {
+   "window": "2026-11-15T13:30:00Z",
+   "side": "down",
+   "chance": 0.8846,
+   "at_elapsed_s": 122,
+   "seconds_left": 177,
+   "index_px": 65430.4,
+   "open_px": 65534.0,
+   "move_usd": -103.6,
+   "band": "80\u201390%",
+   "why": "BTC fell $104 from the window open with 177s left \u2014 the model put DOWN at 88%.",
+   "result": "down",
+   "correct": true,
+   "brier": 0.0133
+  },
+  {
+   "window": "2026-11-15T13:25:00Z",
+   "side": "down",
+   "chance": 0.8109,
+   "at_elapsed_s": 193,
+   "seconds_left": 106,
+   "index_px": 65560.93,
+   "open_px": 65616.435,
+   "move_usd": -55.51,
+   "band": "80\u201390%",
+   "why": "BTC fell $56 from the window open with 106s left \u2014 the model put DOWN at 81%.",
+   "result": "down",
+   "correct": true,
+   "brier": 0.0358
+  },
   {
    "window": "2026-11-15T13:20:00Z",
    "side": "up",
@@ -52,9 +97,9 @@
    "move_usd": 32.5,
    "band": "60\u201370%",
    "why": "BTC rose $32 from the window open with 172s left \u2014 the model put UP at 66%.",
-   "result": null,
-   "correct": null,
-   "brier": null
+   "result": "up",
+   "correct": true,
+   "brier": 0.1135
   },
   {
    "window": "2026-11-15T13:15:00Z",
@@ -355,54 +400,50 @@
    "result": "down",
    "correct": true,
    "brier": 0.0459
-  },
-  {
-   "window": "2026-11-15T11:00:00Z",
-   "side": "down",
-   "chance": 0.8647,
-   "at_elapsed_s": 122,
-   "seconds_left": 177,
-   "index_px": 65453.479999999996,
-   "open_px": 65527.2,
-   "move_usd": -73.72,
-   "band": "80\u201390%",
-   "why": "BTC fell $74 from the window open with 177s left \u2014 the model put DOWN at 86%.",
-   "result": "down",
-   "correct": true,
-   "brier": 0.0183
-  },
-  {
-   "window": "2026-11-15T10:55:00Z",
-   "side": "down",
-   "chance": 0.7152,
-   "at_elapsed_s": 121,
-   "seconds_left": 178,
-   "index_px": 65468.0,
-   "open_px": 65507.515,
-   "move_usd": -39.51,
-   "band": "70\u201380%",
-   "why": "BTC fell $40 from the window open with 178s left \u2014 the model put DOWN at 72%.",
-   "result": "up",
-   "correct": false,
-   "brier": 0.5115
-  },
-  {
-   "window": "2026-11-15T10:45:00Z",
-   "side": "up",
-   "chance": 0.6696,
-   "at_elapsed_s": 151,
-   "seconds_left": 148,
-   "index_px": 65559.36,
-   "open_px": 65531.869999999995,
-   "move_usd": 27.49,
-   "band": "60\u201370%",
-   "why": "BTC rose $27 from the window open with 148s left \u2014 the model put UP at 67%.",
-   "result": "down",
-   "correct": false,
-   "brier": 0.4484
   }
  ],
  "recent_windows": [
+  {
+   "window": "2026-11-15T13:35:00Z",
+   "open_px": 65433.34,
+   "call": {
+    "side": "up",
+    "chance": 0.6402,
+    "at": 1794749813
+   },
+   "abstain": null,
+   "grade": null
+  },
+  {
+   "window": "2026-11-15T13:30:00Z",
+   "open_px": 65534.0,
+   "call": {
+    "side": "down",
+    "chance": 0.8846,
+    "at": 1794749522
+   },
+   "abstain": null,
+   "grade": {
+    "result": "down",
+    "correct": true,
+    "brier": 0.0133
+   }
+  },
+  {
+   "window": "2026-11-15T13:25:00Z",
+   "open_px": 65616.435,
+   "call": {
+    "side": "down",
+    "chance": 0.8109,
+    "at": 1794749293
+   },
+   "abstain": null,
+   "grade": {
+    "result": "down",
+    "correct": true,
+    "brier": 0.0358
+   }
+  },
   {
    "window": "2026-11-15T13:20:00Z",
    "open_px": 65614.2,
@@ -412,7 +453,11 @@
     "at": 1794748927
    },
    "abstain": null,
-   "grade": null
+   "grade": {
+    "result": "up",
+    "correct": true,
+    "brier": 0.1135
+   }
   },
   {
    "window": "2026-11-15T13:15:00Z",
@@ -555,62 +600,25 @@
     "correct": true,
     "brier": 0.0708
    }
-  },
-  {
-   "window": "2026-11-15T12:25:00Z",
-   "open_px": 65484.695,
-   "call": {
-    "side": "down",
-    "chance": 0.8363,
-    "at": 1794745615
-   },
-   "abstain": null,
-   "grade": {
-    "result": "down",
-    "correct": true,
-    "brier": 0.0268
-   }
-  },
-  {
-   "window": "2026-11-15T12:20:00Z",
-   "open_px": 65383.3,
-   "call": null,
-   "abstain": {
-    "why": "model chance 0.5217 < 0.6",
-    "chance": 0.5217,
-    "at": 1794745315
-   },
-   "grade": null
-  },
-  {
-   "window": "2026-11-15T12:15:00Z",
-   "open_px": 65304.5,
-   "call": null,
-   "abstain": {
-    "why": "model chance 0.505 < 0.6",
-    "chance": 0.505,
-    "at": 1794745015
-   },
-   "grade": null
   }
  ],
  "abstains_total": 114,
  "counters": {
-  "graded": 291,
-  "wins": 238,
-  "win_rate": 81.8,
+  "graded": 294,
+  "wins": 241,
+  "win_rate": 82.0,
   "streak_type": "W",
-  "streak_n": 5,
+  "streak_n": 8,
   "best_win_streak": 21,
-  "last12": "WWWWWWLWWWWW"
+  "last12": "WWWLWWWWWWWW"
  },
  "live_window": {
-  "window": "2026-11-15T13:20:00Z",
-  "open_px": 65614.2,
+  "window": "2026-11-15T13:35:00Z",
+  "open_px": 65433.34,
   "call": {
    "side": "up",
-   "chance": 0.6631,
-   "at": 1794748927
+   "chance": 0.6402,
+   "at": 1794749813
   },
   "abstain": null,
   "grade": null
