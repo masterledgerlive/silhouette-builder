@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE FULL RECORD — Every Call PLAIN Ever Made</title>
+<style>
+  body{background:#0b0e13;color:#e8ecf1;font-family:Georgia,serif;margin:0;padding:18px}
+  .wrap{max-width:860px;margin:0 auto}
+  h1{font-size:26px;margin:4px 0 2px}
+  .sub{color:#9fb0c3;font-size:14px;margin-bottom:14px}
+  .cards{display:flex;flex-wrap:wrap;gap:10px;margin:12px 0}
+  .card{background:#141a23;border:1px solid #2a3547;border-radius:10px;padding:10px 14px;min-width:110px}
+  .card .k{color:#9fb0c3;font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+  .card .v{font-size:22px;font-weight:bold;margin-top:2px}
+  .ok{color:#4ade80}.bad{color:#f87171}.mid{color:#fbbf24}
+  .strip{background:#141a23;border:1px solid #2a3547;border-radius:10px;padding:12px 14px;margin:12px 0;
+         font-family:ui-monospace,Menlo,monospace;font-size:15px;line-height:1.9;word-break:break-all}
+  .strip .w{color:#4ade80}.strip .l{color:#f87171}
+  .strip .grp{margin-right:10px;white-space:nowrap;display:inline-block}
+  .live{background:#1a2333;border:1px solid #3b82f6;border-radius:10px;padding:12px 14px;margin:12px 0}
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  th{color:#9fb0c3;text-align:left;padding:6px 8px;border-bottom:1px solid #2a3547;font-weight:normal;
+     letter-spacing:.05em;text-transform:uppercase;font-size:11px}
+  td{padding:6px 8px;border-bottom:1px solid #1c2534}
+  tr.win td.res{color:#4ade80} tr.loss td.res{color:#f87171}
+  .foot{color:#7d8ea3;font-size:12.5px;margin-top:16px;line-height:1.6}
+  a{color:#7dd3fc}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>📜 THE FULL RECORD</h1>
+  <div class="sub">Every call PLAIN (the BTC 5-minute model) has ever made — all of them, newest first, each with its result. Nothing trimmed, nothing hidden. Refreshes itself every 20 seconds.</div>
+
+  <div class="cards" id="cards"></div>
+
+  <div class="live" id="live">Loading the latest window…</div>
+
+  <h3 style="margin:16px 0 4px">The whole record, W / L — oldest → newest, in groups of ten so you can count the runs yourself</h3>
+  <div class="strip" id="strip"></div>
+
+  <h3 style="margin:16px 0 4px">Every call</h3>
+  <table>
+    <thead><tr><th>Window (ET)</th><th>Call</th><th>Model</th><th>Open → Settle</th><th>Result</th><th>Brier</th><th>Ledger</th></tr></thead>
+    <tbody id="rows"></tbody>
+  </table>
+
+  <div class="foot">
+    Simulation record, sealed in the house ledger (predict + grade sequence numbers on every row — check them against the chain).
+    Windows settle on the desk's stand-in index (median of Coinbase + Kraken spot), labeled in every sealed record.
+    Built by David's commission, 2026-11-14: THE CALLS v2 showed only the last 24 calls because its feed truncates by design — this page carries the full record instead. THE CALLS itself is untouched.
+    Back to <a href="calls.html">THE CALLS</a> · <a href="champion.html">THE CHAMPION</a> · <a href="index.html">the hub</a>.
+  </div>
+</div>
+<script>
+function etStr(iso){
+  const d=new Date(iso);
+  return d.toLocaleString('en-US',{timeZone:'America/New_York',month:'short',day:'numeric',hour:'numeric',minute:'2-digit',hour12:true});
+}
+function render(D){
+  const S=D.summary;
+  const streakCls=S.streak_now.startsWith('W')?'ok':'bad';
+  document.getElementById('cards').innerHTML=
+    '<div class="card"><div class="k">Calls graded</div><div class="v">'+S.graded+' / '+S.calls+'</div></div>'+
+    '<div class="card"><div class="k">Record</div><div class="v">'+S.wins+'–'+(S.graded-S.wins)+'</div></div>'+
+    '<div class="card"><div class="k">Accuracy</div><div class="v">'+S.accuracy+'%</div></div>'+
+    '<div class="card"><div class="k">Mean Brier</div><div class="v">'+S.brier+'</div></div>'+
+    '<div class="card"><div class="k">Streak now</div><div class="v '+streakCls+'">'+S.streak_now+'</div></div>'+
+    '<div class="card"><div class="k">Best win streak</div><div class="v ok">'+S.best_win_streak+'</div></div>'+
+    '<div class="card"><div class="k">Worst loss streak</div><div class="v bad">'+S.best_loss_streak+'</div></div>';
+  const L=D.live;
+  if(L){
+    document.getElementById('live').innerHTML='<b>Latest window:</b> '+etStr(L.window)+' ET — PLAIN called <b>'+(L.side||'').toUpperCase()+'</b> at '+Math.round((L.chance||0)*100)+'%'+
+      (L.graded?(' · settled <b>'+(L.result||'').toUpperCase()+'</b> — '+(L.correct?'<span class="ok"><b>RIGHT ✓</b></span>':'<span class="bad"><b>WRONG ✗</b></span>')):(L.open_now?' · <span class="mid">window still open…</span>':' · awaiting grade'));
+  }
+  let strip='';
+  for(let i=0;i<S.wl.length;i+=10){
+    strip+='<span class="grp">'+S.wl.slice(i,i+10).split('').map(c=>'<span class="'+(c==='W'?'w':'l')+'">'+c+'</span>').join('')+'</span>';
+  }
+  document.getElementById('strip').innerHTML=strip||'No graded calls yet.';
+  document.getElementById('rows').innerHTML=D.calls.map(c=>
+    '<tr class="'+(c.graded?(c.correct?'win':'loss'):'')+'">'+
+    '<td>'+etStr(c.window)+'</td>'+
+    '<td><b>'+(c.side||'').toUpperCase()+'</b></td>'+
+    '<td>'+Math.round((c.chance||0)*100)+'%</td>'+
+    '<td>'+(c.open_px?c.open_px.toLocaleString('en-US',{maximumFractionDigits:0}):'—')+' → '+(c.settle_px?c.settle_px.toLocaleString('en-US',{maximumFractionDigits:0}):'—')+'</td>'+
+    '<td class="res">'+(c.graded?((c.result||'').toUpperCase()+' '+(c.correct?'✓':'✗')):'open…')+'</td>'+
+    '<td>'+(c.brier!=null?c.brier.toFixed(3):'—')+'</td>'+
+    '<td>#'+c.predict_seq+(c.grade_seq?' / #'+c.grade_seq:'')+(c.late_regrade?' (late)':'')+'</td></tr>'
+  ).join('');
+}
+function tick(){
+  fetch('fullcalls.json?_='+Date.now(),{cache:'no-store'}).then(r=>r.json()).then(render).catch(()=>{});
+}
+tick(); setInterval(tick,20000);
+</script>
+</body>
+</html>
