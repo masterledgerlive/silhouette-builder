@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>🎮 THE GAME LOG — every call, play by play</title>
+<style>
+  body{background:#0a0c14;color:#eef1ff;font-family:Verdana,Geneva,sans-serif;margin:0;padding:18px 14px 40px}
+  .wrap{max-width:880px;margin:0 auto}
+  h1{font-size:30px;letter-spacing:2px;margin:4px 0 2px;color:#ffd94d;text-shadow:0 2px 0 #7a4d00}
+  .sub{color:#aab4d8;font-size:13.5px;line-height:1.65;margin:0 0 14px}
+  .ticker{background:#171029;border:2px solid #a78bfa;border-radius:12px;padding:10px 14px;margin:0 0 16px;overflow:hidden}
+  .ticker div{font-size:13.5px;line-height:1.9;color:#ddd6fe;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .cards{display:flex;gap:12px;flex-wrap:wrap;margin:0 0 16px}
+  .card{flex:1 1 250px;border-radius:14px;padding:14px 16px;background:#101623;border:2px solid #2b3a5f}
+  .card.real{border-color:#3ddc84;box-shadow:0 0 14px rgba(61,220,132,.25)}
+  .card.test{border-color:#5b6b96}
+  .ename{font-size:19px;font-weight:800;letter-spacing:1px}
+  .badge{display:inline-block;font-size:12px;font-weight:800;letter-spacing:1px;border-radius:20px;padding:3px 10px;margin-left:8px;vertical-align:2px}
+  .badge.real{background:#0f3d24;color:#3ddc84;border:1px solid #3ddc84}
+  .badge.test{background:#1b2440;color:#9db4ff;border:1px solid #5b6b96}
+  .money{font-size:13.5px;line-height:1.8;color:#c9d4f5;margin-top:6px}
+  .money b{color:#fff}
+  .flame{color:#ff9d3c;font-weight:800}
+  .rules{background:#0d1420;border:2px solid #2b3a5f;border-radius:12px;padding:14px 18px;margin:0 0 18px}
+  .rules h2{font-size:16px;letter-spacing:2px;color:#ffd94d;margin:0 0 8px}
+  .rules li{font-size:13px;line-height:1.75;color:#c9d4f5;margin:2px 0}
+  .logrow{display:flex;gap:10px;align-items:baseline;background:#101623;border:1px solid #232f52;border-radius:10px;padding:9px 12px;margin:0 0 7px;flex-wrap:wrap}
+  .logrow.live{border-color:#ffd94d;box-shadow:0 0 10px rgba(255,217,77,.25)}
+  .ltime{color:#8fa0cc;font-size:12px;min-width:86px}
+  .leng{font-weight:800;font-size:13px;letter-spacing:1px;min-width:64px}
+  .lmode{font-size:10.5px;font-weight:800;border-radius:12px;padding:2px 8px;letter-spacing:1px}
+  .lmode.real{background:#0f3d24;color:#3ddc84}
+  .lmode.test{background:#1b2440;color:#9db4ff}
+  .lcall{font-size:14px;font-weight:700}
+  .lres{font-size:13px}
+  .win{color:#3ddc84;font-weight:800}
+  .loss{color:#ff6b81;font-weight:800}
+  .check{color:#ffd94d;font-size:17px;font-weight:900}
+  .fire{background:#3d0f0f;color:#ff7847;border:1.5px solid #ff7847;border-radius:8px;font-weight:900;font-size:12.5px;padding:2px 9px;letter-spacing:1px}
+  .ice{background:#0b2233;color:#7dd7ff;border:1.5px solid #7dd7ff;border-radius:8px;font-weight:900;font-size:12.5px;padding:2px 9px;letter-spacing:1px}
+  .lwhy{color:#8fa0cc;font-size:11.5px;flex-basis:100%;line-height:1.5}
+  .lstreak{color:#ff9d3c;font-size:12.5px;font-weight:800}
+  .foot{color:#7787ad;font-size:12px;line-height:1.7;margin-top:18px}
+  a{color:#ffd94d}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>🎮 THE GAME LOG</h1>
+<p class="sub">Every call the engines make — <b>play by play</b>, as it happens. On a roll, an engine's calls ride the <b style="color:#3ddc84">REAL lane</b>; when it falters it drops back to the <b style="color:#9db4ff">FREE TEST</b> route to relearn. 🔥 <b>FIRE</b> means press it on Polymarket · 🧊 <b>ICE</b> means don't. ✔ marks a call that landed while its engine was on a roll. The money shown is the play-along sim record; the REAL $5 / $5 banks are their own lane, labeled, never blended. Fed by the same sealed record that blobs to Walrus testnet — watching this page <i>is</i> watching the proof.</p>
+
+<div class="ticker" id="ticker"></div>
+<div class="cards" id="cards"></div>
+
+<div class="rules"><h2>🔀 HOW THE LANES WORK — THE SWITCH RULES, PRINTED EXACT</h2><ul id="rules"></ul></div>
+
+<div id="log"></div>
+
+<p class="foot" id="foot"></p>
+</div>
+<script>
+function et(iso){ if(!iso) return ''; try{ return new Date(iso).toLocaleTimeString('en-US',{timeZone:'America/New_York',hour:'numeric',minute:'2-digit'}) + ' ET'; }catch(e){ return iso; } }
+function money(x){ return (x==null)? '—' : '$' + Number(x).toFixed(2); }
+function render(d){
+  var tk = document.getElementById('ticker');
+  tk.innerHTML = (d.celebrations||[]).slice(0,5).map(function(c){
+    var icon = c.kind=='CROWN'?'👑':(c.kind=='STREAK'?'🔥':(c.kind=='DOUBLE'?'⚡':(c.kind=='DIGIT'?'🎉':(c.kind=='PROMOTION'?'⬆️':'⬇️'))));
+    return '<div>' + icon + ' ' + c.text + (c.window? ' <span style="color:#8fa0cc">· ' + et(c.window) + '</span>' : '') + '</div>';
+  }).join('') || '<div>The arena is quiet… for now.</div>';
+  var cd = document.getElementById('cards');
+  cd.innerHTML = ['PLAIN','EARLY','RIPTIDE'].map(function(n){
+    var e = d.engines[n]; if(!e) return '';
+    var realLane = e.mode=='REAL';
+    var h = '<div class="card ' + (realLane?'real':'test') + '"><span class="ename">' + n + '</span>' +
+      '<span class="badge ' + (realLane?'real':'test') + '">' + (realLane?'🟢 REAL LANE':'🧪 FREE TEST') + '</span>';
+    if(e.streak_now>=3) h += '<div class="flame">🔥 ON A ROLL — ' + e.streak_now + ' in a row!</div>';
+    else if(e.streak_now>0) h += '<div style="color:#c9d4f5;font-size:13px;margin-top:4px">streak: ' + e.streak_now + ' · best: ' + e.streak_best + '</div>';
+    else h += '<div style="color:#c9d4f5;font-size:13px;margin-top:4px">best streak: ' + e.streak_best + '</div>';
+    h += '<div class="money">🎲 play-along bank <b>' + money(e.bank) + '</b>' +
+      (e.savings? ' · 🏦 savings <b>' + money(e.savings) + '</b>' : '') +
+      (e.digits && e.digits.length? '<br>💥 digits broken: ' + e.digits.map(function(x){return '$'+x;}).join(' → ') : '') +
+      '<br>record: <b>' + e.wins + 'W / ' + (e.graded - e.wins) + 'L</b> over ' + e.graded + ' played calls' +
+      '<br>lane switches: ⬆️ ' + e.promotions + ' promotions · ⬇️ ' + e.demotions + ' drops' +
+      (e.mode_since? '<br>' + (realLane?'riding REAL since ':'in FREE TEST since ') + et(e.mode_since) : '') +
+      (e.mode_note? '<br><i>' + e.mode_note + '</i>' : '') +
+      (e.real? '<br>💵 REAL bank: <b>' + money(e.real.bank) + '</b> · day P&L ' + money(e.real.day_pnl) + ' · fills ' + e.real.fills : '') +
+      '</div></div>';
+    return h;
+  }).join('');
+  document.getElementById('rules').innerHTML = (d.rules||[]).map(function(r){ return '<li>' + r + '</li>'; }).join('');
+  var lg = document.getElementById('log');
+  lg.innerHTML = (d.log||[]).map(function(e){
+    var call = e.noplay ? 'seeded ' + (e.side||'').toUpperCase() + ' — no entry, no play' :
+      'called <b>' + (e.side||'').toUpperCase() + '</b>' + (e.chance!=null? ' at ' + Math.round(e.chance*100) + '%' : '');
+    var res = '';
+    if(e.status=='LIVE') res = '<span style="color:#ffd94d;font-weight:800">● LIVE</span>';
+    else if(e.noplay) res = '<span style="color:#8fa0cc">seed only</span>';
+    else if(e.win) res = '<span class="win">WON' + (e.double? ' ⚡ DOUBLE WIN — 2 points!' : '') + '</span>';
+    else res = '<span class="loss">lost</span>';
+    var h = '<div class="logrow' + (e.status=='LIVE'?' live':'') + '">' +
+      '<span class="ltime">' + et(e.window) + '</span>' +
+      '<span class="leng">' + e.engine + '</span>' +
+      '<span class="lmode ' + (e.mode=='REAL'?'real':'test') + '">' + (e.mode=='REAL'?'REAL':'TEST') + '</span>' +
+      '<span class="lcall">' + call + '</span>' + res +
+      (e.check? ' <span class="check">✔</span>' : '') +
+      (e.streak_after>=3 && e.win? ' <span class="lstreak">🔥 ' + e.streak_after + ' in a row</span>' : '') +
+      (e.fire_ice? ' <span class="' + (e.fire_ice.read=='FIRE'?'fire':'ice') + '">' + (e.fire_ice.read=='FIRE'?'🔥 FIRE':'🧊 ICE') + ' · ask ' + Math.round(e.fire_ice.ask*100) + '¢</span>' : '');
+    if(e.fire_ice) h += '<span class="lwhy">' + (e.fire_ice.read=='FIRE'?'🔥 WHAT TO PRESS: buy ' + (e.side||'').toUpperCase() + ' on Polymarket — ' : '🧊 ') + e.fire_ice.why + '</span>';
+    return h + '</div>';
+  }).join('');
+  document.getElementById('foot').innerHTML = 'Built ' + d.built_at + ' from the sealed ledger (' + d.chain_records + ' records). ' + d.real_note +
+    ' Sim settlements ride the labeled stand-in index (median of Coinbase + Kraken), exactly as the record says. The full written proof under every call lives on <a href="proof.html">THE PROOF RECORD</a>.';
+}
+function tick(){ fetch('gamelog.json?ts=' + Date.now()).then(function(r){ return r.json(); }).then(render).catch(function(){}); }
+tick(); setInterval(tick, 20000);
+</script>
+</body>
+</html>
