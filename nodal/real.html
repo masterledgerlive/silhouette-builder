@@ -133,5 +133,30 @@ fetch('realdata.json?_='+Date.now()).then(r=>r.json()).then(d=>{
   document.getElementById('simRef').textContent=sr.join(' · ')||'—';
 }).catch(()=>{document.getElementById('runStatus').textContent='realdata.json not on the wire yet';});
 </script>
+<div style="max-width:1060px;margin:26px auto 10px;padding:0 14px">
+  <div style="background:#141b29;border:2px solid #ffd257;border-radius:14px;padding:16px">
+    <div style="font-size:21px;font-weight:800">🧑 DAVID'S OWN RECORD — his taps, beside the calls</div>
+    <p style="color:#93a1b5;font-size:13.5px;line-height:1.6;margin:6px 0">Every tap David reports is sealed as its own record (DAVID_FILL) and settled on the venue's word (DAVID_SETTLE) — beside the engine's call for the same window, so any loss can be checked call-by-call: the call, his price, the result. This lane is separate from the engine banks and never blended with them. No taps reported yet = this section prints EMPTY, honestly.</p>
+    <div id="davidSummary" style="font-size:16px;font-weight:700;margin:8px 0"></div>
+    <div id="davidRows"></div>
+  </div>
+</div>
+<script>
+fetch('realdata.json?_='+Date.now()).then(r=>r.json()).then(d=>{
+  const D=d.david||{fills:[],n_fills:0,n_settled:0,wins:0,losses:0,pnl:0};
+  const money=n=>(n<0?'−$':'$')+Math.abs(n).toFixed(2);
+  document.getElementById('davidSummary').textContent = D.n_fills===0
+    ? 'EMPTY — no taps reported yet.'
+    : D.n_fills+' tap(s) · '+D.n_settled+' settled · '+D.wins+' won / '+D.losses+' lost · P&L '+money(D.pnl);
+  document.getElementById('davidRows').innerHTML = D.fills.slice().reverse().map(f=>{
+    const ec=f.engine_calls||{};
+    const callTxt=Object.keys(ec).map(k=>{const c=ec[k];return k+' called '+(c.side||'—').toUpperCase()+(c.chance?' @ '+Math.round(c.chance*100)+'% model':'')+(c.ask?' · press '+Math.round(c.ask*100)+'¢':'')+(c.follow?' · '+c.follow:'');}).join(' · ')||'no engine call sealed';
+    const res = f.status==='SETTLED'
+      ? ' → venue settled <b>'+(f.result||'').toUpperCase()+'</b> · <b style="color:'+(f.correct?'#2fd67a':'#ff5d5d')+'">'+(f.correct?'WIN ':'LOSS ')+money(f.pnl||0)+'</b>'
+      : ' → <span style="color:#ffd257">OPEN — waiting on the venue</span>';
+    return '<div style="border-top:1px solid #24304a;padding:8px 0;font-size:14.5px"><b>'+f.window+'</b> · David BUY '+(f.side||'').toUpperCase()+' @ '+Math.round((f.price||0)*100)+'¢ · stake '+money(f.stake||0)+(f.engine_followed?' · followed '+f.engine_followed:'')+'<br><span style="color:#93a1b5">the call: '+callTxt+'</span>'+res+'</div>';
+  }).join('');
+}).catch(()=>{});
+</script>
 </body>
 </html>
