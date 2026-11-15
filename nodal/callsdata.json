@@ -1,46 +1,46 @@
 {
- "built_at": "2026-11-15T17:28:16Z",
+ "built_at": "2026-11-15T17:58:17Z",
  "bands": [
   {
    "band": "60\u201370%",
-   "n": 112,
-   "stated": 65.1,
-   "actual": 70.5
+   "n": 113,
+   "stated": 65.2,
+   "actual": 70.8
   },
   {
    "band": "70\u201380%",
-   "n": 87,
+   "n": 88,
    "stated": 75.0,
-   "actual": 75.9
+   "actual": 76.1
   },
   {
    "band": "80\u201390%",
-   "n": 62,
-   "stated": 84.4,
+   "n": 63,
+   "stated": 84.5,
    "actual": 96.8
   },
   {
    "band": "90\u201399%",
-   "n": 59,
-   "stated": 94.8,
-   "actual": 98.3
+   "n": 61,
+   "stated": 94.9,
+   "actual": 98.4
   }
  ],
  "lane": {
   "id": "BTC5",
   "name": "BTC 5-min desk (our specialist, sim)",
   "kind": "BTC Up/Down 5m windows \u00b7 plain vol model btc5-plain-v1 \u00b7 stand-in index",
-  "calls": 320,
-  "graded": 320,
-  "correct": 263,
-  "accuracy": 82.2,
-  "brier": 0.1366,
-  "streak_now": 9,
+  "calls": 326,
+  "graded": 325,
+  "correct": 268,
+  "accuracy": 82.5,
+  "brier": 0.135,
+  "streak_now": 14,
   "streak_best": 21,
   "status": "APPROVED",
   "note": "graded from BTC5_GRADE records in the sealed ledger"
  },
- "proof_built_at": "2026-11-15T17:20:44Z",
+ "proof_built_at": "2026-11-15T17:57:18Z",
  "borrows": {
   "lifetime": {
    "PEER": 0,
@@ -62,8 +62,170 @@
    "PEER": "A borrow from the other engines \u2014 counted on the record like every borrow."
   }
  },
- "last_graded_window": "2026-11-15T17:15:00Z",
+ "last_graded_window": "2026-11-15T17:50:00Z",
  "recent_calls": [
+  {
+   "window": "2026-11-15T17:55:00Z",
+   "side": "down",
+   "chance": 0.7896,
+   "at_elapsed_s": 127,
+   "seconds_left": 172,
+   "index_px": 64449.8,
+   "open_px": 64505.3,
+   "move_usd": -55.5,
+   "band": "70\u201380%",
+   "why": "BTC fell $56 from the window open with 172s left \u2014 the model put DOWN at 79%.",
+   "result": null,
+   "correct": null,
+   "brier": null,
+   "seq": 7656,
+   "sealed_at": "2026-11-15T17:57:09+0000",
+   "grade_seq": null,
+   "plan": "HOLD \u2014 ride to settlement; PLAIN's only early exit is a sell at a bid of 95\u00a2 or better",
+   "final_answer": {
+    "side": "down",
+    "locked_seq": 7656,
+    "locked_at": "2026-11-15T17:57:09+0000",
+    "via": "the sealed call itself \u2014 PLAIN never flips, so the call IS the final answer, locked at seal time"
+   },
+   "money": null,
+   "money_note": "UNPRICED \u2014 the REAL watch sealed no ask for this window; no money line is invented"
+  },
+  {
+   "window": "2026-11-15T17:50:00Z",
+   "side": "up",
+   "chance": 0.9704,
+   "at_elapsed_s": 135,
+   "seconds_left": 164,
+   "index_px": 64500.229999999996,
+   "open_px": 64368.4,
+   "move_usd": 131.83,
+   "band": "90\u201399%",
+   "why": "BTC rose $132 from the window open with 164s left \u2014 the model put UP at 97%.",
+   "result": "up",
+   "correct": true,
+   "brier": 0.0009,
+   "seq": 7644,
+   "sealed_at": "2026-11-15T17:52:17+0000",
+   "grade_seq": 7649,
+   "plan": "HOLD \u2014 ride to settlement; PLAIN's only early exit is a sell at a bid of 95\u00a2 or better",
+   "final_answer": {
+    "side": "up",
+    "locked_seq": 7644,
+    "locked_at": "2026-11-15T17:52:17+0000",
+    "via": "the sealed call itself \u2014 PLAIN never flips, so the call IS the final answer, locked at seal time"
+   },
+   "money": null,
+   "money_note": "UNPRICED \u2014 the REAL watch sealed no ask for this window; no money line is invented"
+  },
+  {
+   "window": "2026-11-15T17:45:00Z",
+   "side": "down",
+   "chance": 0.6781,
+   "at_elapsed_s": 114,
+   "seconds_left": 185,
+   "index_px": 64534.1,
+   "open_px": 64563.075,
+   "move_usd": -28.97,
+   "band": "60\u201370%",
+   "why": "BTC fell $29 from the window open with 185s left \u2014 the model put DOWN at 68%.",
+   "result": "down",
+   "correct": true,
+   "brier": 0.1036,
+   "seq": 7623,
+   "sealed_at": "2026-11-15T17:46:56+0000",
+   "grade_seq": 7637,
+   "plan": "HOLD \u2014 ride to settlement; PLAIN's only early exit is a sell at a bid of 95\u00a2 or better",
+   "final_answer": {
+    "side": "down",
+    "locked_seq": 7623,
+    "locked_at": "2026-11-15T17:46:56+0000",
+    "via": "the sealed call itself \u2014 PLAIN never flips, so the call IS the final answer, locked at seal time"
+   },
+   "money": null,
+   "money_note": "UNPRICED \u2014 the REAL watch sealed no ask for this window; no money line is invented"
+  },
+  {
+   "window": "2026-11-15T17:40:00Z",
+   "side": "up",
+   "chance": 0.7951,
+   "at_elapsed_s": 138,
+   "seconds_left": 161,
+   "index_px": 64549.42,
+   "open_px": 64492.565,
+   "move_usd": 56.85,
+   "band": "70\u201380%",
+   "why": "BTC rose $57 from the window open with 161s left \u2014 the model put UP at 80%.",
+   "result": "up",
+   "correct": true,
+   "brier": 0.042,
+   "seq": 7616,
+   "sealed_at": "2026-11-15T17:42:20+0000",
+   "grade_seq": 7621,
+   "plan": "HOLD \u2014 ride to settlement; PLAIN's only early exit is a sell at a bid of 95\u00a2 or better",
+   "final_answer": {
+    "side": "up",
+    "locked_seq": 7616,
+    "locked_at": "2026-11-15T17:42:20+0000",
+    "via": "the sealed call itself \u2014 PLAIN never flips, so the call IS the final answer, locked at seal time"
+   },
+   "money": null,
+   "money_note": "UNPRICED \u2014 the REAL watch sealed no ask for this window; no money line is invented"
+  },
+  {
+   "window": "2026-11-15T17:35:00Z",
+   "side": "down",
+   "chance": 0.99,
+   "at_elapsed_s": 130,
+   "seconds_left": 169,
+   "index_px": 64520.88,
+   "open_px": 64690.585,
+   "move_usd": -169.71,
+   "band": "90\u201399%",
+   "why": "BTC fell $170 from the window open with 169s left \u2014 the model put DOWN at 99%.",
+   "result": "down",
+   "correct": true,
+   "brier": 0.0001,
+   "seq": 7607,
+   "sealed_at": "2026-11-15T17:37:11+0000",
+   "grade_seq": 7611,
+   "plan": "HOLD \u2014 ride to settlement; PLAIN's only early exit is a sell at a bid of 95\u00a2 or better",
+   "final_answer": {
+    "side": "down",
+    "locked_seq": 7607,
+    "locked_at": "2026-11-15T17:37:11+0000",
+    "via": "the sealed call itself \u2014 PLAIN never flips, so the call IS the final answer, locked at seal time"
+   },
+   "money": null,
+   "money_note": "UNPRICED \u2014 the REAL watch sealed no ask for this window; no money line is invented"
+  },
+  {
+   "window": "2026-11-15T17:30:00Z",
+   "side": "down",
+   "chance": 0.8585,
+   "at_elapsed_s": 136,
+   "seconds_left": 163,
+   "index_px": 64746.0,
+   "open_px": 64820.09,
+   "move_usd": -74.09,
+   "band": "80\u201390%",
+   "why": "BTC fell $74 from the window open with 163s left \u2014 the model put DOWN at 86%.",
+   "result": "down",
+   "correct": true,
+   "brier": 0.02,
+   "seq": 7595,
+   "sealed_at": "2026-11-15T17:32:17+0000",
+   "grade_seq": 7601,
+   "plan": "HOLD \u2014 ride to settlement; PLAIN's only early exit is a sell at a bid of 95\u00a2 or better",
+   "final_answer": {
+    "side": "down",
+    "locked_seq": 7595,
+    "locked_at": "2026-11-15T17:32:17+0000",
+    "via": "the sealed call itself \u2014 PLAIN never flips, so the call IS the final answer, locked at seal time"
+   },
+   "money": null,
+   "money_note": "UNPRICED \u2014 the REAL watch sealed no ask for this window; no money line is invented"
+  },
   {
    "window": "2026-11-15T17:15:00Z",
    "side": "up",
@@ -597,195 +759,106 @@
     "how": "settlement"
    },
    "money_note": "the $5.00 bet algorithm (THE PROOF RECORD): stake sized by the banking law on the joint timeline, in at the sealed ask, entry fee in; settlement pays no exit trade \u2014 a directional win that loses money shows as a money LOSS"
-  },
-  {
-   "window": "2026-11-15T14:20:00Z",
-   "side": "down",
-   "chance": 0.6503,
-   "at_elapsed_s": 115,
-   "seconds_left": 184,
-   "index_px": 65319.475000000006,
-   "open_px": 65352.3,
-   "move_usd": -32.82,
-   "band": "60\u201370%",
-   "why": "BTC fell $33 from the window open with 184s left \u2014 the model put DOWN at 65%.",
-   "result": "down",
-   "correct": true,
-   "brier": 0.1223,
-   "seq": 7242,
-   "sealed_at": "2026-11-15T14:21:57+0000",
-   "grade_seq": 7247,
-   "plan": "HOLD \u2014 ride to settlement; PLAIN's only early exit is a sell at a bid of 95\u00a2 or better",
-   "final_answer": {
-    "side": "down",
-    "locked_seq": 7242,
-    "locked_at": "2026-11-15T14:21:57+0000",
-    "via": "the sealed call itself \u2014 PLAIN never flips, so the call IS the final answer, locked at seal time"
-   },
-   "money": null,
-   "money_note": "UNPRICED \u2014 the REAL watch sealed no ask for this window; no money line is invented"
-  },
-  {
-   "window": "2026-11-15T14:10:00Z",
-   "side": "up",
-   "chance": 0.7328,
-   "at_elapsed_s": 135,
-   "seconds_left": 164,
-   "index_px": 65196.1,
-   "open_px": 65144.205,
-   "move_usd": 51.89,
-   "band": "70\u201380%",
-   "why": "BTC rose $52 from the window open with 164s left \u2014 the model put UP at 73%.",
-   "result": "up",
-   "correct": true,
-   "brier": 0.0714,
-   "seq": 7225,
-   "sealed_at": "2026-11-15T14:12:17+0000",
-   "grade_seq": 7229,
-   "plan": "HOLD \u2014 ride to settlement; PLAIN's only early exit is a sell at a bid of 95\u00a2 or better",
-   "final_answer": {
-    "side": "up",
-    "locked_seq": 7225,
-    "locked_at": "2026-11-15T14:12:17+0000",
-    "via": "the sealed call itself \u2014 PLAIN never flips, so the call IS the final answer, locked at seal time"
-   },
-   "money": null,
-   "money_note": "UNPRICED \u2014 the REAL watch sealed no ask for this window; no money line is invented"
-  },
-  {
-   "window": "2026-11-15T14:05:00Z",
-   "side": "down",
-   "chance": 0.8633,
-   "at_elapsed_s": 120,
-   "seconds_left": 179,
-   "index_px": 65151.5,
-   "open_px": 65247.38,
-   "move_usd": -95.88,
-   "band": "80\u201390%",
-   "why": "BTC fell $96 from the window open with 179s left \u2014 the model put DOWN at 86%.",
-   "result": "down",
-   "correct": true,
-   "brier": 0.0187,
-   "seq": 7212,
-   "sealed_at": "2026-11-15T14:07:01+0000",
-   "grade_seq": 7218,
-   "plan": "HOLD \u2014 ride to settlement; PLAIN's only early exit is a sell at a bid of 95\u00a2 or better",
-   "final_answer": {
-    "side": "down",
-    "locked_seq": 7212,
-    "locked_at": "2026-11-15T14:07:01+0000",
-    "via": "the sealed call itself \u2014 PLAIN never flips, so the call IS the final answer, locked at seal time"
-   },
-   "money": {
-    "ask": 0.5,
-    "stake": 11.6,
-    "pnl": 11.2,
-    "bank_after": 127.61,
-    "run": 1,
-    "borrowed": false,
-    "self_borrowed": false,
-    "borrow_source": null,
-    "borrow_count": null,
-    "borrow_from": null,
-    "how": "settlement"
-   },
-   "money_note": "the $5.00 bet algorithm (THE PROOF RECORD): stake sized by the banking law on the joint timeline, in at the sealed ask, entry fee in; settlement pays no exit trade \u2014 a directional win that loses money shows as a money LOSS"
-  },
-  {
-   "window": "2026-11-15T14:00:00Z",
-   "side": "down",
-   "chance": 0.6179,
-   "at_elapsed_s": 113,
-   "seconds_left": 186,
-   "index_px": 65313.41,
-   "open_px": 65338.89,
-   "move_usd": -25.48,
-   "band": "60\u201370%",
-   "why": "BTC fell $25 from the window open with 186s left \u2014 the model put DOWN at 62%.",
-   "result": "down",
-   "correct": true,
-   "brier": 0.146,
-   "seq": 7201,
-   "sealed_at": "2026-11-15T14:01:54+0000",
-   "grade_seq": 7206,
-   "plan": "HOLD \u2014 ride to settlement; PLAIN's only early exit is a sell at a bid of 95\u00a2 or better",
-   "final_answer": {
-    "side": "down",
-    "locked_seq": 7201,
-    "locked_at": "2026-11-15T14:01:54+0000",
-    "via": "the sealed call itself \u2014 PLAIN never flips, so the call IS the final answer, locked at seal time"
-   },
-   "money": null,
-   "money_note": "UNPRICED \u2014 the REAL watch sealed no ask for this window; no money line is invented"
-  },
-  {
-   "window": "2026-11-15T13:55:00Z",
-   "side": "down",
-   "chance": 0.7865,
-   "at_elapsed_s": 118,
-   "seconds_left": 181,
-   "index_px": 65393.2,
-   "open_px": 65462.31,
-   "move_usd": -69.11,
-   "band": "70\u201380%",
-   "why": "BTC fell $69 from the window open with 181s left \u2014 the model put DOWN at 79%.",
-   "result": "down",
-   "correct": true,
-   "brier": 0.0456,
-   "seq": 7186,
-   "sealed_at": "2026-11-15T13:56:59+0000",
-   "grade_seq": 7196,
-   "plan": "HOLD \u2014 ride to settlement; PLAIN's only early exit is a sell at a bid of 95\u00a2 or better",
-   "final_answer": {
-    "side": "down",
-    "locked_seq": 7186,
-    "locked_at": "2026-11-15T13:56:59+0000",
-    "via": "the sealed call itself \u2014 PLAIN never flips, so the call IS the final answer, locked at seal time"
-   },
-   "money": {
-    "ask": 0.73,
-    "stake": 11.2,
-    "pnl": 3.93,
-    "bank_after": 116.41,
-    "run": 1,
-    "borrowed": false,
-    "self_borrowed": false,
-    "borrow_source": null,
-    "borrow_count": null,
-    "borrow_from": null,
-    "how": "settlement"
-   },
-   "money_note": "the $5.00 bet algorithm (THE PROOF RECORD): stake sized by the banking law on the joint timeline, in at the sealed ask, entry fee in; settlement pays no exit trade \u2014 a directional win that loses money shows as a money LOSS"
-  },
-  {
-   "window": "2026-11-15T13:45:00Z",
-   "side": "down",
-   "chance": 0.7434,
-   "at_elapsed_s": 122,
-   "seconds_left": 177,
-   "index_px": 65402.5,
-   "open_px": 65458.740000000005,
-   "move_usd": -56.24,
-   "band": "70\u201380%",
-   "why": "BTC fell $56 from the window open with 177s left \u2014 the model put DOWN at 74%.",
-   "result": "up",
-   "correct": false,
-   "brier": 0.5526,
-   "seq": 7168,
-   "sealed_at": "2026-11-15T13:47:04+0000",
-   "grade_seq": 7174,
-   "plan": "HOLD \u2014 ride to settlement; PLAIN's only early exit is a sell at a bid of 95\u00a2 or better",
-   "final_answer": {
-    "side": "down",
-    "locked_seq": 7168,
-    "locked_at": "2026-11-15T13:47:04+0000",
-    "via": "the sealed call itself \u2014 PLAIN never flips, so the call IS the final answer, locked at seal time"
-   },
-   "money": null,
-   "money_note": "UNPRICED \u2014 the REAL watch sealed no ask for this window; no money line is invented"
   }
  ],
  "recent_windows": [
+  {
+   "window": "2026-11-15T17:55:00Z",
+   "open_px": 64505.3,
+   "call": {
+    "side": "down",
+    "chance": 0.7896,
+    "at": 1794765427
+   },
+   "abstain": null,
+   "grade": null
+  },
+  {
+   "window": "2026-11-15T17:50:00Z",
+   "open_px": 64368.4,
+   "call": {
+    "side": "up",
+    "chance": 0.9704,
+    "at": 1794765135
+   },
+   "abstain": null,
+   "grade": {
+    "result": "up",
+    "correct": true,
+    "brier": 0.0009
+   }
+  },
+  {
+   "window": "2026-11-15T17:45:00Z",
+   "open_px": 64563.075,
+   "call": {
+    "side": "down",
+    "chance": 0.6781,
+    "at": 1794764814
+   },
+   "abstain": null,
+   "grade": {
+    "result": "down",
+    "correct": true,
+    "brier": 0.1036
+   }
+  },
+  {
+   "window": "2026-11-15T17:40:00Z",
+   "open_px": 64492.565,
+   "call": {
+    "side": "up",
+    "chance": 0.7951,
+    "at": 1794764538
+   },
+   "abstain": null,
+   "grade": {
+    "result": "up",
+    "correct": true,
+    "brier": 0.042
+   }
+  },
+  {
+   "window": "2026-11-15T17:35:00Z",
+   "open_px": 64690.585,
+   "call": {
+    "side": "down",
+    "chance": 0.99,
+    "at": 1794764230
+   },
+   "abstain": null,
+   "grade": {
+    "result": "down",
+    "correct": true,
+    "brier": 0.0001
+   }
+  },
+  {
+   "window": "2026-11-15T17:30:00Z",
+   "open_px": 64820.09,
+   "call": {
+    "side": "down",
+    "chance": 0.8585,
+    "at": 1794763936
+   },
+   "abstain": null,
+   "grade": {
+    "result": "down",
+    "correct": true,
+    "brier": 0.02
+   }
+  },
+  {
+   "window": "2026-11-15T17:25:00Z",
+   "open_px": 64856.36,
+   "call": null,
+   "abstain": {
+    "why": "model chance 0.5 < 0.6",
+    "chance": 0.5,
+    "at": 1794763696
+   },
+   "grade": null
+  },
   {
    "window": "2026-11-15T17:20:00Z",
    "open_px": 64734.32,
@@ -874,111 +947,26 @@
     "correct": true,
     "brier": 0.1276
    }
-  },
-  {
-   "window": "2026-11-15T16:35:00Z",
-   "open_px": 64592.8,
-   "call": {
-    "side": "down",
-    "chance": 0.7254,
-    "at": 1794760623
-   },
-   "abstain": null,
-   "grade": {
-    "result": "down",
-    "correct": true,
-    "brier": 0.0754
-   }
-  },
-  {
-   "window": "2026-11-15T16:30:00Z",
-   "open_px": 64800.2,
-   "call": {
-    "side": "down",
-    "chance": 0.9744,
-    "at": 1794760316
-   },
-   "abstain": null,
-   "grade": {
-    "result": "down",
-    "correct": true,
-    "brier": 0.0007
-   }
-  },
-  {
-   "window": "2026-11-15T16:25:00Z",
-   "open_px": 64401.08,
-   "call": null,
-   "abstain": {
-    "why": "model chance 0.5651 < 0.6",
-    "chance": 0.5651,
-    "at": 1794760015
-   },
-   "grade": null
-  },
-  {
-   "window": "2026-11-15T16:20:00Z",
-   "open_px": 64510.425,
-   "call": {
-    "side": "down",
-    "chance": 0.6554,
-    "at": 1794759748
-   },
-   "abstain": null,
-   "grade": {
-    "result": "down",
-    "correct": true,
-    "brier": 0.1187
-   }
-  },
-  {
-   "window": "2026-11-15T16:15:00Z",
-   "open_px": 64602.6,
-   "call": null,
-   "abstain": {
-    "why": "model chance 0.5854 < 0.6",
-    "chance": 0.5854,
-    "at": 1794759418
-   },
-   "grade": null
-  },
-  {
-   "window": "2026-11-15T16:10:00Z",
-   "open_px": 64622.1,
-   "call": null,
-   "abstain": {
-    "why": "model chance 0.5269 < 0.6",
-    "chance": 0.5269,
-    "at": 1794759118
-   },
-   "grade": null
-  },
-  {
-   "window": "2026-11-15T16:05:00Z",
-   "open_px": 64658.39,
-   "call": null,
-   "abstain": {
-    "why": "model chance 0.5076 < 0.6",
-    "chance": 0.5076,
-    "at": 1794758818
-   },
-   "grade": null
   }
  ],
- "abstains_total": 131,
+ "abstains_total": 132,
  "counters": {
-  "graded": 320,
-  "wins": 263,
-  "win_rate": 82.2,
+  "graded": 325,
+  "wins": 268,
+  "win_rate": 82.5,
   "streak_type": "W",
-  "streak_n": 9,
+  "streak_n": 14,
   "best_win_streak": 21,
-  "last12": "WWLWWWWWWWWW"
+  "last12": "WWWWWWWWWWWW"
  },
  "live_window": {
-  "window": "2026-11-15T17:20:00Z",
-  "open_px": 64734.32,
-  "call": null,
+  "window": "2026-11-15T17:55:00Z",
+  "open_px": 64505.3,
+  "call": {
+   "side": "down",
+   "chance": 0.7896,
+   "at": 1794765427
+  },
   "abstain": null,
   "grade": null
  },
