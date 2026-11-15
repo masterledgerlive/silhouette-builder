@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE ONE TRAIL — every engine, every play · PLAIN · EARLY · TAPE · LOCK · RIPTIDE</title>
+<style>
+  :root{--gold:#f5b942;--teal:#2dd4bf;--red:#f87171;--green:#4ade80;--ink:#e8e6df;--dim:#9a97a3;--card:#17171f;--line:#2a2a38;--vio:#a78bfa;--sea:#38bdf8}
+  *{box-sizing:border-box}
+  body{background:#0c0c12;color:var(--ink);font-family:Georgia,'Times New Roman',serif;margin:0;padding:18px 14px 60px}
+  .wrap{max-width:1060px;margin:0 auto}
+  h1{font-size:29px;letter-spacing:2px;margin:4px 0 2px;color:var(--gold)}
+  h2{font-size:19px;letter-spacing:1.5px;color:var(--teal);margin:26px 0 8px;border-bottom:1px solid var(--line);padding-bottom:5px}
+  .sub{color:var(--dim);font-size:14.5px;line-height:1.45}
+  .stamp{display:inline-block;border:1px solid var(--gold);color:var(--gold);border-radius:4px;padding:1px 7px;font-size:12px;letter-spacing:1px;margin-right:6px}
+  .stamp.real{border-color:var(--red);color:var(--red)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin:9px 0}
+  .ok{color:var(--green)} .bad{color:var(--red)} .mid{color:var(--gold)}
+  .small{font-size:13px;color:var(--dim);line-height:1.45}
+  a{color:var(--teal)}
+  .foot{margin-top:34px;color:var(--dim);font-size:13px;line-height:1.5;border-top:1px solid var(--line);padding-top:10px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:9px}
+  .stat b{display:block;font-size:19px;color:var(--gold);margin-top:2px}
+  .stat span{color:var(--dim);font-size:12px;letter-spacing:1px}
+  .filters{margin:14px 0}
+  .fbtn{background:#14141c;color:var(--ink);border:1px solid var(--line);border-radius:20px;padding:6px 14px;margin:3px;cursor:pointer;font-family:inherit;font-size:14px}
+  .fbtn.on{border-color:var(--gold);color:var(--gold)}
+  .rep{border:1px solid var(--line);border-radius:8px;padding:11px 14px;margin:8px 0;background:var(--card)}
+  .rep.win{border-left:4px solid var(--green)} .rep.loss{border-left:4px solid var(--red)}
+  .rep.open{border-left:4px solid var(--gold)} .rep.abstain{border-left:4px solid #444;opacity:.75}
+  .chip{display:inline-block;border-radius:4px;padding:1px 8px;font-size:12px;letter-spacing:1px;font-weight:bold;margin-right:6px}
+  .c-PLAIN{background:#134e4a;color:#99f6e4} .c-EARLY{background:#3b2f63;color:#ddd6fe}
+  .c-TAPE{background:#59331a;color:#fed7aa} .c-LOCK{background:#3f3f46;color:#e4e4e7}
+  .c-RIPTIDE{background:#0c4a6e;color:#bae6fd}
+  .kp{margin:7px 0 0 2px;font-size:14px;line-height:1.55}
+  .kp div{margin:3px 0}
+  .kpl{display:inline-block;min-width:74px;color:var(--gold);font-size:12px;letter-spacing:1px;font-weight:bold}
+  .audit{border-left:3px solid var(--red);padding:8px 12px;margin:8px 0;background:#14141c;font-size:14.5px;line-height:1.55}
+  .audit b{color:var(--red)}
+  button.more{background:#14141c;color:var(--gold);border:1px solid var(--gold);border-radius:8px;padding:10px 22px;font-family:inherit;font-size:15px;cursor:pointer;display:block;margin:18px auto}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="small"><a href="index.html">← NODAL hub</a> · <a href="btc.html">THE BTC PORTAL</a> · <a href="profitdesk.html">The Profit Desk</a> · <a href="real.html">THE REAL BOARD — BTC</a> · <a href="tennis-real.html">THE TENNIS REAL BOARD</a></div>
+  <h1>🧭 THE ONE TRAIL — EVERY ENGINE, EVERY PLAY</h1>
+  <div class="sub">One home for every engine's record — <b style="color:var(--teal)">PLAIN</b> · <b style="color:var(--vio)">EARLY</b> · <b style="color:#fdba74">TAPE</b> · <b>LOCK</b> · <b style="color:var(--sea)">🌊 RIPTIDE</b> — built from the sealed ledger, nothing scattered. Every replay carries its <b>key points</b>: what the engine saw, the call, the entry against the model, the exit or settlement, and the verdict. <span class="stamp">SIM RECORDS</span><span class="stamp real">REAL RIDES SEPARATELY BELOW — NEVER BLENDED</span></div>
+
+  <div class="grid" id="sums" style="margin-top:14px"></div>
+
+  <h2>🔍 THE LOGGING AUDIT — 2026-11-14</h2>
+  <div id="audit"></div>
+
+  <h2>THE TRAIL — REPLAYS, NEWEST FIRST</h2>
+  <div class="filters" id="filters">
+    <button class="fbtn on" data-e="ALL">ALL ENGINES</button>
+    <button class="fbtn" data-e="PLAIN">PLAIN</button>
+    <button class="fbtn" data-e="EARLY">EARLY</button>
+    <button class="fbtn" data-e="TAPE">TAPE</button>
+    <button class="fbtn" data-e="LOCK">LOCK</button>
+    <button class="fbtn" data-e="RIPTIDE">🌊 RIPTIDE</button>
+    <button class="fbtn" data-e="WINS">WINS ONLY</button>
+    <button class="fbtn" data-e="LOSSES">LOSSES ONLY</button>
+  </div>
+  <div id="trail"><p class="small">Loading the trail…</p></div>
+  <button class="more" id="more" style="display:none">Show more replays</button>
+
+  <h2>💵 THE REAL CLASS — SIGNALS &amp; FILLS (SEPARATE, NEVER BLENDED)</h2>
+  <div id="real"><p class="small">…</p></div>
+
+  <div class="foot">Source of truth: the sealed ledger (hash-chained; every replay lists its ledger sequence numbers). STATE-ONLY rows are labeled as such — they live in engine state, were never sealed, and are shown so the full day is visible, not just the fires. The trail snapshot is blobbed to Walrus testnet as the simulations run (FILE AT WILL, David, 2026-11-11) — receipts print in the desk's reports; blob ids ride the TRAIL_BLOB ledger records. Tennis REAL records live on THE TENNIS REAL BOARD, not here.</div>
+</div>
+<script>
+let ALL=[], shown=0, filter='ALL';
+const PAGE=120;
+function money(x){return (x<0?'−$':'+$')+Math.abs(x).toFixed(2)}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;')}
+function matches(r){
+  if(filter==='ALL') return true;
+  if(filter==='WINS') return r.result==='WIN';
+  if(filter==='LOSSES') return r.result==='LOSS';
+  return r.engine===filter;
+}
+function render(){
+  const rows=ALL.filter(matches);
+  const el=document.getElementById('trail');
+  el.innerHTML=rows.slice(0,shown).map(r=>{
+    const cls=r.result==='WIN'?'win':r.result==='LOSS'?'loss':r.result==='OPEN'?'open':'abstain';
+    const res=r.result==='WIN'?'<span class="ok">WIN</span>':r.result==='LOSS'?'<span class="bad">LOSS</span>':r.result;
+    const pnl=r.pnl!==null&&r.pnl!==undefined?' · P&amp;L <b class="'+(r.pnl>=0?'ok':'bad')+'">'+money(r.pnl)+'</b>':'';
+    const kps=r.key_points.map(k=>'<div><span class="kpl">'+k.k+'</span>'+esc(k.text)+'</div>').join('');
+    const seqs=r.seqs&&r.seqs.length?'<div class="small">ledger seq '+r.seqs.join(', ')+'</div>':'<div class="small">STATE-ONLY — not sealed</div>';
+    return '<div class="rep '+cls+'"><span class="chip c-'+r.engine+'">'+r.engine+'</span><b>'+esc(r.window||'')+'</b> · '+res+pnl+'<br><span class="small">'+esc(r.form)+' · '+esc(r.headline)+'</span><div class="kp">'+kps+'</div>'+seqs+'</div>';
+  }).join('')||'<p class="small">No replays match this filter yet.</p>';
+  document.getElementById('more').style.display=rows.length>shown?'block':'none';
+}
+fetch('trail.json?_='+Date.now()).then(r=>r.json()).then(d=>{
+  const S=d.summaries;
+  const card=(name,color,body)=>'<div class="card stat" style="border-top:3px solid '+color+'"><span>'+name+'</span><b style="color:'+color+';font-size:15px;line-height:1.5">'+body+'</b></div>';
+  document.getElementById('sums').innerHTML=
+    card('PLAIN — THE CALL','#2dd4bf',S.PLAIN.calls+' calls · '+S.PLAIN.graded+' graded · '+(S.PLAIN.win_rate||'—')+'% right<br><span style="color:#9a97a3">race rail: '+S.PLAIN.race.closed+' closed · '+money(S.PLAIN.race.pnl)+'</span>')+
+    card('EARLY — THE EARLY CALLER','#a78bfa',S.EARLY.calls+' calls · '+S.EARLY.graded+' graded · '+(S.EARLY.win_rate||'—')+'% right')+
+    card('TAPE — THE MOMENTUM RAIL','#fdba74',S.TAPE.trades+' trades · '+S.TAPE.closed+' closed · '+S.TAPE.wins+' wins · '+money(S.TAPE.pnl))+
+    card('LOCK — THE LATE-SAFE RAIL','#e4e4e7',S.LOCK.trades+' trades · '+S.LOCK.closed+' closed · '+S.LOCK.wins+' wins · '+money(S.LOCK.pnl))+
+    card('🌊 RIPTIDE — THE THIRD MODEL','#38bdf8',S.RIPTIDE.seeded+' seeded · '+S.RIPTIDE.graded+' graded · '+S.RIPTIDE.call_hits+' calls landed · '+S.RIPTIDE.plays+' plays · law '+money(S.RIPTIDE.law_pnl)+'<br><span style="color:#f87171">SIM ONLY</span>');
+  const A=d.audit;
+  document.getElementById('audit').innerHTML=
+    '<div class="audit"><b>THE COMMISSION:</b> '+esc(A.commission)+'</div>'+
+    '<div class="audit"><b>GAP A</b> — '+esc(A.gap_a)+'</div>'+
+    '<div class="audit"><b>GAP B</b> — '+esc(A.gap_b)+'</div>'+
+    '<div class="audit"><b>GAP C</b> — '+esc(A.gap_c)+'</div>'+
+    '<div class="card"><b class="ok">AUDITED CLEAN:</b> '+esc(A.clean)+'</div>';
+  ALL=d.replays; shown=PAGE; render();
+  const R=d.real||{signals:[],fills:[],settles:[]};
+  document.getElementById('real').innerHTML=
+    '<div class="card">REAL signals sealed: <b>'+R.signals.length+'</b> · REAL fills: <b>'+R.fills.length+'</b> · REAL settlements: <b>'+R.settles.length+'</b>. '+
+    (R.signals.length||R.fills.length?'':'The real book is still empty — no fills reported yet. Signals seal automatically from the first REAL CALL onward (audit fix, Gap C).')+'</div>';
+  document.querySelectorAll('.fbtn').forEach(b=>b.onclick=()=>{
+    document.querySelectorAll('.fbtn').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on'); filter=b.dataset.e; shown=PAGE; render();
+  });
+  document.getElementById('more').onclick=()=>{shown+=PAGE; render();};
+}).catch(()=>{document.getElementById('trail').innerHTML='<p class="small">trail.json not on the wire yet.</p>';});
+</script>
+</body>
+</html>
