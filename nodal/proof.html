@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE PROOF RECORD — Every Call, Its Checks, Its Reasons, Its Exits</title>
+<style>
+  body { background:#0b0e13; color:#dbe4f0; font-family: Georgia, 'Times New Roman', serif; margin:0; padding:18px; }
+  h1 { font-size:22px; margin:0 0 4px; color:#ffd76a; }
+  .sub { color:#8fa3bd; font-size:13px; margin-bottom:14px; }
+  .blob { background:#101725; border:1px solid #2b3950; border-radius:8px; padding:10px 12px; font-size:13px; margin-bottom:14px; word-break:break-all; }
+  .blob b { color:#7ee2a0; }
+  .conv { background:#0f141d; border-left:3px solid #ffd76a; padding:8px 12px; font-size:12.5px; color:#a9bcd4; margin-bottom:16px; }
+  .conv div { margin:3px 0; }
+  .boards { display:flex; flex-wrap:wrap; gap:10px; margin-bottom:18px; }
+  .board { background:#121826; border:1px solid #2b3950; border-radius:8px; padding:12px 14px; min-width:230px; flex:1; }
+  .board h2 { margin:0 0 6px; font-size:16px; color:#ffd76a; }
+  .bank { font-size:26px; color:#7ee2a0; }
+  .lab { color:#8fa3bd; font-size:11.5px; text-transform:uppercase; letter-spacing:.06em; }
+  .digit { display:inline-block; background:#1b2a1e; border:1px solid #3f7d4e; color:#a9e8bb; border-radius:20px; padding:2px 9px; font-size:12px; margin:2px 3px 2px 0; }
+  .digit small { color:#7fae8c; }
+  h3.eng { color:#ffd76a; border-bottom:1px solid #2b3950; padding-bottom:4px; margin:22px 0 10px; }
+  .call { background:#10151f; border:1px solid #232f45; border-radius:8px; padding:10px 12px; margin-bottom:10px; }
+  .call .head { font-size:14.5px; margin-bottom:6px; }
+  .win { color:#7ee2a0; } .loss { color:#ff8f8f; } .pend { color:#c9d6e8; }
+  .priced { color:#ffd76a; font-size:12.5px; }
+  .steps { margin:6px 0 0 4px; }
+  .step { font-size:12.8px; margin:3px 0; color:#b9c9de; }
+  .k { display:inline-block; min-width:52px; text-align:center; border-radius:4px; font-size:10.5px; padding:1px 4px; margin-right:6px; font-family:monospace; }
+  .k.CHECK { background:#1d2f4a; color:#9ec2f0; } .k.STATE { background:#26303f; color:#c9d6e8; }
+  .k.WHY { background:#3a2f14; color:#ffd76a; } .k.EXIT { background:#3a1f2e; color:#f0a9c2; }
+  .k.SETTLE { background:#1e3325; color:#a9e8bb; }
+  .at { color:#7186a0; font-family:monospace; font-size:11.5px; margin-right:6px; }
+  .foot { color:#5f7288; font-size:12px; margin-top:20px; }
+</style>
+</head>
+<body>
+<h1>🔍 THE PROOF RECORD</h1>
+<div class="sub">Every call by PLAIN, EARLY and RIPTIDE — with what was checked, what changed, why it was called, and how it exited, written under the call. Built from the sealed ledger alone. Refreshes every 20s.</div>
+<div class="blob" id="blob">blob status loading…</div>
+<div class="conv" id="conv"></div>
+<div class="boards" id="boards"></div>
+<div id="engines"></div>
+<div class="foot">SIM lanes are simulation. Settlement is the stand-in index (median Coinbase + Kraken) unless a step says Gamma. The play-along boards are replays under the printed conventions — the engines' own sealed records are the calls above them.</div>
+<script>
+function et(iso){ try { return new Date(iso).toLocaleString('en-US',{timeZone:'America/New_York',hour:'2-digit',minute:'2-digit',month:'short',day:'numeric'}); } catch(e){ return iso; } }
+function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
+async function load(){
+  let d, b;
+  try { d = await (await fetch('proofrecord.json?t='+Date.now())).json(); } catch(e){ return; }
+  try { b = await (await fetch('proofblob.json?t='+Date.now())).json(); } catch(e){ b = null; }
+  const bl = document.getElementById('blob');
+  if (b && b.blob_id) {
+    bl.innerHTML = '🧊 <b>WATCHING THE BLOB RECORD</b> — this page reads proofrecord.json, the same bytes sealed to Walrus <b>TESTNET</b>: blob <b>'+esc(b.blob_id)+'</b> · recall <b>'+esc(b.recall)+'</b> · '+b.bytes.toLocaleString()+' bytes · '+esc(b.at||'')+' · checked every 10 min, blobbed on change.';
+  } else {
+    bl.innerHTML = '🧊 Blob status pending — the record below is built from the sealed ledger; its first testnet blob lands with the next proof cycle.';
+  }
+  document.getElementById('conv').innerHTML = (d.conventions||[]).map(c=>'<div>· '+esc(c)+'</div>').join('');
+  const boards = document.getElementById('boards'); boards.innerHTML = '';
+  const names = {PLAIN:'📞 PLAIN — THE CALLS', EARLY:'⏰ EARLY — THE EARLY CALL', RIPTIDE:'🌊 RIPTIDE — THE THIRD MODEL'};
+  for (const name of ['PLAIN','EARLY','RIPTIDE']) {
+    const bd = d.engines[name].board;
+    const digits = (bd.digits||[]).map(x=>'<span class="digit">💥 $'+x.level+' BROKE · play #'+x.at_play+' · '+esc(et(x.window))+'</span>').join('') || '<span class="lab">no digit broken yet</span>';
+    boards.innerHTML += '<div class="board"><h2>'+names[name]+'</h2>'
+      + '<div class="lab">play-along bank (from $5.00)</div><div class="bank">$'+Number(bd.bank).toFixed(2)+'</div>'
+      + '<div><span class="lab">in a row now</span> <b>'+bd.streak_now+'</b> · <span class="lab">best</span> <b>'+bd.streak_best+'</b></div>'
+      + '<div><span class="lab">priced plays</span> '+bd.priced+' · <span class="lab">unpriced calls</span> '+bd.unpriced+'</div>'
+      + '<div style="margin-top:6px">'+digits+'</div></div>';
+  }
+  const eng = document.getElementById('engines'); eng.innerHTML = '';
+  for (const name of ['PLAIN','EARLY','RIPTIDE']) {
+    const e = d.engines[name];
+    let h = '<h3 class="eng">'+names[name]+' — '+e.board.calls_total+' calls on record (newest '+e.board.calls_listed+' shown)</h3>';
+    for (const c of e.calls) {
+      const res = c.correct === null ? '<span class="pend">⏳ open</span>' : (c.correct ? '<span class="win">✓ '+(c.result||'').toUpperCase()+'</span>' : '<span class="loss">✗ '+(c.result||'').toUpperCase()+'</span>');
+      const ch = c.chance != null ? ' · model '+(c.chance*100).toFixed(0)+'%' : '';
+      const pts = c.points != null ? ' · '+c.points+' pt'+(c.points===1?'':'s') : '';
+      const haul = c.haul_law != null ? ' · haul '+(c.haul_law>=0?'+':'')+c.haul_law.toFixed(2) : '';
+      const pr = c.priced ? '<div class="priced">💵 play-along: $'+c.priced.stake.toFixed(2)+' @ '+(c.priced.ask*100).toFixed(0)+'¢ → '+(c.priced.pnl>=0?'+':'')+c.priced.pnl.toFixed(2)+' · bank $'+c.priced.bank_after.toFixed(2)+(c.priced.how?' · '+esc(c.priced.how):'')+'</div>' : '';
+      h += '<div class="call"><div class="head"><b>'+esc(et(c.window))+' ET</b> · BUY '+esc((c.side||'').toUpperCase())+ch+' · '+res+pts+haul+'</div>'+pr+'<div class="steps">'
+        + c.steps.map(s=>'<div class="step"><span class="k '+s.kind+'">'+s.kind+'</span><span class="at">'+esc(s.at)+'</span>'+esc(s.text)+'</div>').join('')
+        + '</div></div>';
+    }
+    eng.innerHTML += h;
+  }
+  if (d.mirror && d.mirror.engines) {
+    let h = '<h3 class="eng">🪞 ARENA MIRROR — tennis engines on this same BTC feed (test: '+esc(d.mirror.test_id||'')+')</h3>';
+    for (const s of Object.keys(d.mirror.engines)) {
+      const m = d.mirror.engines[s];
+      h += '<div class="call"><div class="head"><b>'+esc(s)+'</b> · bank $'+Number(m.start_bank).toFixed(2)+' → $'+Number(m.end_bank).toFixed(2)+' ('+(m.movement>=0?'+':'')+Number(m.movement).toFixed(2)+') · '+m.plays+' plays · '+m.wins+'W / '+m.losses+'L</div></div>';
+    }
+    eng.innerHTML += h;
+  }
+}
+load(); setInterval(load, 20000);
+</script>
+</body>
+</html>
