@@ -41,6 +41,31 @@
   .ice{background:#0b2233;color:#7dd7ff;border:1.5px solid #7dd7ff;border-radius:8px;font-weight:900;font-size:12.5px;padding:2px 9px;letter-spacing:1px}
   .lwhy{color:#8fa0cc;font-size:11.5px;flex-basis:100%;line-height:1.5}
   .lstreak{color:#ff9d3c;font-size:12.5px;font-weight:800}
+  .livepanel{border:2px solid #ffd94d;border-radius:14px;padding:12px 14px;margin:0 0 16px;background:#141126;box-shadow:0 0 16px rgba(255,217,77,.18)}
+  .livepanel h2{font-size:16px;letter-spacing:2px;color:#ffd94d;margin:0 0 8px}
+  .livecard{background:#101623;border:1.5px solid #ffd94d;border-radius:10px;padding:10px 12px;margin:0 0 8px}
+  .press{display:flex;gap:8px;flex-wrap:wrap;margin-top:7px}
+  .pbox{border-radius:8px;padding:6px 10px;font-size:13px;font-weight:800;line-height:1.5}
+  .pbuy{background:#0f3d24;color:#3ddc84;border:1.5px solid #3ddc84}
+  .psell{background:#2a2107;color:#ffd94d;border:1.5px solid #ffd94d}
+  .pswitch{background:#2b1050;color:#c4a6ff;border:1.5px solid #a78bfa}
+  .pnote{color:#8fa0cc;font-size:11.5px;flex-basis:100%;line-height:1.55}
+  .pres{font-size:12.5px;font-weight:800}
+  .pres.win{color:#3ddc84}
+  .pres.cardloss{color:#ffb03c}
+  .pres.loss{color:#ff6b81}
+  .steps{flex-basis:100%;margin-top:7px;border-top:1px dashed #2b3a5f;padding-top:7px}
+  .step{display:flex;gap:8px;align-items:baseline;font-size:12.5px;line-height:1.6;padding:2.5px 0;color:#c9d4f5;opacity:0;transform:translateY(5px);transition:opacity .45s ease,transform .45s ease}
+  .step.shown{opacity:1;transform:none}
+  .step .dot{flex:0 0 auto;font-size:12px}
+  .step.due .dot{animation:pulse 1.1s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
+  .step.pending,.step.na{color:#7787ad}
+  .step .stamp{color:#5f6f99;font-size:10.5px;white-space:nowrap}
+  .mirrorplay{background:#101623;border:1.5px solid #a78bfa;border-radius:10px;padding:10px 12px;margin:0 0 8px}
+  details.stepbox{flex-basis:100%;margin-top:4px}
+  details.stepbox summary{cursor:pointer;color:#a78bfa;font-size:12px;font-weight:800;letter-spacing:1px}
+  details.stepbox .step{opacity:1;transform:none}
   .foot{color:#7787ad;font-size:12px;line-height:1.7;margin-top:18px}
   a{color:#ffd94d}
 </style>
@@ -48,9 +73,12 @@
 <body>
 <div class="wrap">
 <h1>🎮 THE GAME LOG</h1>
-<p class="sub">Every call the engines make — <b>play by play</b>, as it happens. On a roll, an engine's calls ride the <b style="color:#3ddc84">REAL lane</b>; when it falters it drops back to the <b style="color:#9db4ff">FREE TEST</b> route to relearn. 🔥 <b>FIRE</b> means press it on Polymarket · 🧊 <b>ICE</b> means don't. ✔ marks a call that landed while its engine was on a roll. The money shown is the play-along sim record; the REAL $5 / $5 banks are their own lane, labeled, never blended. Fed by the same sealed record that blobs to Walrus testnet — watching this page <i>is</i> watching the proof.</p>
+<p class="sub">Every call the engines make — <b>play by play</b>, as it happens. Live calls land at the top as <b>instruction cards</b>: <b style="color:#3ddc84">BUY at the sealed ask</b> · <b style="color:#ffd94d">SELL at the engine's line</b> · <b style="color:#c4a6ff">SWITCH when it flips</b> — set out the way you'd set it on Polymarket. Every priced call is then <b>scored at its own card prices</b>, fees in: direction right but money lost at the card earns <b>no ✔</b>, and the card shows what it actually paid. On a roll, an engine's calls ride the <b style="color:#3ddc84">REAL lane</b>; when it falters it drops back to the <b style="color:#9db4ff">FREE TEST</b> route to relearn. 🔥 <b>FIRE</b> means press it · 🧊 <b>ICE</b> means don't. The money shown is the play-along sim record; the REAL $5 / $5 banks are their own lane, labeled, never blended. Fed by the same sealed record that blobs to Walrus testnet — watching this page <i>is</i> watching the proof. And every play below unfolds in the <b style="color:#c4a6ff">🎬 STEP MIRROR</b>: step 1 the call seals, step 2 the buy press at the card price, step 3 the sell or the switch, step 4 the settle and the score — each step appearing as its sealed record lands, exactly as the person pressing would live it.</p>
 
 <div class="ticker" id="ticker"></div>
+<div class="ticker" id="blobstrip" style="border-color:#3a5f8a;background:#0a1420"><div style="color:#a9c8e8">⛓ blob status loading…</div></div>
+<div class="livepanel" id="live"></div>
+<div class="livepanel" id="mirror" style="border-color:#a78bfa;background:#120e24;box-shadow:0 0 16px rgba(167,139,250,.15)"></div>
 <div class="cards" id="cards"></div>
 
 <div class="rules"><h2>🔀 HOW THE LANES WORK — THE SWITCH RULES, PRINTED EXACT</h2><ul id="rules"></ul></div>
@@ -62,12 +90,68 @@
 <script>
 function et(iso){ if(!iso) return ''; try{ return new Date(iso).toLocaleTimeString('en-US',{timeZone:'America/New_York',hour:'numeric',minute:'2-digit'}) + ' ET'; }catch(e){ return iso; } }
 function money(x){ return (x==null)? '—' : '$' + Number(x).toFixed(2); }
+function pm(x){ return (x==null)? '—' : ((x>=0? '+$':'-$') + Math.abs(Number(x)).toFixed(2)); }
+function pressHTML(e){
+  var p = e.press; if(!p) return '';
+  var h = '<div class="press">';
+  if(p.buy!=null) h += '<span class="pbox pbuy">🟢 BUY ' + (p.side||'').toUpperCase() + ' @ ' + Math.round(p.buy*100) + '¢' + (p.stake? ' · stake $' + Number(p.stake).toFixed(2) : '') + '</span>';
+  if(p.sell!=null) h += '<span class="pbox psell">🟡 SELL @ ' + Math.round(p.sell*100) + '¢ line</span>';
+  if(p.value) h += '<span class="pbox psell">💰 TAKE VALUE CALLED</span>';
+  if(p.switch) h += '<span class="pbox pswitch">🟣 SWITCH ' + (p.switch.from_side||'').toUpperCase() + ' → ' + (p.switch.to_side||'').toUpperCase() + ' · ' + (p.switch.kind_flip||'') + '</span>';
+  h += '<span class="pnote">🎴 ' + (p.sell_text||'') + (p.note? ' ' + p.note : '') + (p.buy_note? ' ' + p.buy_note : '') + '</span></div>';
+  return h;
+}
+function stepDot(st){ return st=='done'?'🟢':(st=='due'?'🟡':(st=='plan'?'🔵':(st=='pending'?'⚪':'⚫'))); }
+function stepsHTML(e, shown){
+  var ss = e.steps||[]; if(!ss.length) return '';
+  var h = '<div class="steps">';
+  ss.forEach(function(s){
+    h += '<div class="step ' + s.state + (shown?' shown':'') + '"><span class="dot">' + stepDot(s.state) + '</span><span>' + s.text + '</span>' +
+      (s.ts? '<span class="stamp">sealed ' + s.ts + (s.seq? ' · #' + s.seq : '') + '</span>' : '') + '</div>';
+  });
+  return h + '</div>';
+}
 function render(d){
   var tk = document.getElementById('ticker');
   tk.innerHTML = (d.celebrations||[]).slice(0,5).map(function(c){
-    var icon = c.kind=='CROWN'?'👑':(c.kind=='STREAK'?'🔥':(c.kind=='DOUBLE'?'⚡':(c.kind=='DIGIT'?'🎉':(c.kind=='PROMOTION'?'⬆️':'⬇️'))));
+    var icon = c.kind=='CROWN'?'👑':(c.kind=='STREAK'?'🔥':(c.kind=='DOUBLE'?'⚡':(c.kind=='DIGIT'?'🎉':(c.kind=='CARDLOSS'?'🎴':(c.kind=='PROMOTION'?'⬆️':'⬇️')))));
     return '<div>' + icon + ' ' + c.text + (c.window? ' <span style="color:#8fa0cc">· ' + et(c.window) + '</span>' : '') + '</div>';
   }).join('') || '<div>The arena is quiet… for now.</div>';
+  var lv = document.getElementById('live');
+  if(d.live && d.live.length){
+    lv.innerHTML = '<h2>🔴 LIVE NOW — THE INSTRUCTION CARDS</h2>' + d.live.map(function(e){
+      var h = '<div class="livecard"><span class="ltime">' + et(e.window) + '</span> ' +
+        '<span class="leng">' + e.engine + '</span> ' +
+        '<span class="lmode ' + (e.mode=='REAL'?'real':'test') + '">' + (e.mode=='REAL'?'REAL':'TEST') + '</span> ' +
+        '<span class="lcall">called <b>' + (e.side||'').toUpperCase() + '</b>' + (e.chance!=null? ' at ' + Math.round(e.chance*100) + '%' : '') + '</span> ' +
+        '<span style="color:#ffd94d;font-weight:800">● LIVE</span>' +
+        (e.window_ends? ' <span style="color:#8fa0cc;font-size:12px">window ends ' + et(e.window_ends) + '</span>' : '') +
+        (e.fire_ice? ' <span class="' + (e.fire_ice.read=='FIRE'?'fire':'ice') + '">' + (e.fire_ice.read=='FIRE'?'🔥 FIRE':'🧊 ICE') + ' · ask ' + Math.round(e.fire_ice.ask*100) + '¢</span>' : '');
+      h += pressHTML(e);
+      if(e.fire_ice) h += '<div class="lwhy">' + e.fire_ice.why + '</div>';
+      h += stepsHTML(e, true);
+      return h + '</div>';
+    }).join('');
+  } else {
+    lv.innerHTML = '<h2>🔴 LIVE NOW</h2><div style="color:#c9d4f5;font-size:13px;line-height:1.65">No live call on the sealed feed this minute — calls seal every 5 minutes and ride this page on its sealed refresh. The cue chat stays the seconds-fast route; every call lands here with its press card as the feed picks it up.</div>';
+  }
+  var mr = document.getElementById('mirror');
+  var sm = d.step_mirror||{};
+  var mplays = (d.log||[]).filter(function(e){ return (e.steps||[]).length; }).slice(0,6);
+  mr.innerHTML = '<h2 style="color:#c4a6ff">🎬 THE STEP MIRROR — EVERY PLAY, STEP BY STEP</h2>' +
+    '<div style="color:#c9d4f5;font-size:13px;line-height:1.65;margin-bottom:8px">' + (sm.about||'') + ' ' + (sm.cadence||'') + '</div>' +
+    mplays.map(function(e, i){
+      var h = '<div class="mirrorplay"><span class="ltime">' + et(e.window) + '</span> ' +
+        '<span class="leng">' + e.engine + '</span> ' +
+        '<span class="lmode ' + (e.mode=='REAL'?'real':'test') + '">' + (e.mode=='REAL'?'REAL':'TEST') + '</span> ' +
+        '<span class="lcall">' + (e.noplay ? 'seeded ' + (e.side||'').toUpperCase() : 'called <b>' + (e.side||'').toUpperCase() + '</b>') + '</span> ' +
+        (e.status=='LIVE' ? '<span style="color:#ffd94d;font-weight:800">● LIVE — the show is mid-play</span>' :
+          (e.win ? '<span class="win">WON</span>' : (e.noplay ? '<span style="color:#8fa0cc">seed only</span>' : '<span class="loss">lost</span>'))) +
+        (e.check? ' <span class="check">✔</span>' : '');
+      h += stepsHTML(e, i>0);
+      return h + '</div>';
+    }).join('') +
+    '<div style="color:#7787ad;font-size:11.5px;line-height:1.6">' + (sm.executor_note||'') + '</div>';
   var cd = document.getElementById('cards');
   cd.innerHTML = ['PLAIN','EARLY','RIPTIDE'].map(function(n){
     var e = d.engines[n]; if(!e) return '';
@@ -81,6 +165,7 @@ function render(d){
       (e.savings? ' · 🏦 savings <b>' + money(e.savings) + '</b>' : '') +
       (e.digits && e.digits.length? '<br>💥 digits broken: ' + e.digits.map(function(x){return '$'+x;}).join(' → ') : '') +
       '<br>record: <b>' + e.wins + 'W / ' + (e.graded - e.wins) + 'L</b> over ' + e.graded + ' played calls' +
+      (e.press && e.press.priced? '<br>🎴 at its own card prices: <b>' + e.press.press_wins + ' paid / ' + e.press.press_losses + ' lost</b> · card P&amp;L <b>' + money(e.press.press_pnl) + '</b>' + (e.press.false_checks? ' · ' + e.press.false_checks + ' direction-win(s) lost at the card — no ✔' : '') : '') +
       '<br>lane switches: ⬆️ ' + e.promotions + ' promotions · ⬇️ ' + e.demotions + ' drops' +
       (e.mode_since? '<br>' + (realLane?'riding REAL since ':'in FREE TEST since ') + et(e.mode_since) : '') +
       (e.mode_note? '<br><i>' + e.mode_note + '</i>' : '') +
@@ -107,12 +192,30 @@ function render(d){
       (e.streak_after>=3 && e.win? ' <span class="lstreak">🔥 ' + e.streak_after + ' in a row</span>' : '') +
       (e.fire_ice? ' <span class="' + (e.fire_ice.read=='FIRE'?'fire':'ice') + '">' + (e.fire_ice.read=='FIRE'?'🔥 FIRE':'🧊 ICE') + ' · ask ' + Math.round(e.fire_ice.ask*100) + '¢</span>' : '');
     if(e.fire_ice) h += '<span class="lwhy">' + (e.fire_ice.read=='FIRE'?'🔥 WHAT TO PRESS: buy ' + (e.side||'').toUpperCase() + ' on Polymarket — ' : '🧊 ') + e.fire_ice.why + '</span>';
+    h += pressHTML(e);
+    if(e.press_result){
+      var pr = e.press_result;
+      var cls = pr.win? 'win' : (e.win? 'cardloss' : 'loss');
+      var lbl = pr.win? '✔ PAID ' + pm(pr.pnl) + ' AT THE CARD PRICES' : (e.win? 'DIRECTION RIGHT — CARD PRICES PAID ' + pm(pr.pnl) + ' — NO ✔' : 'card prices lost ' + pm(pr.pnl) + ' too');
+      h += '<span class="lwhy pres ' + cls + '">💵 ' + lbl + ' — ' + pr.text + '</span>';
+    }
+    if((e.steps||[]).length) h += '<details class="stepbox"><summary>🎬 STEP SHOW — watch this play unfold</summary>' + stepsHTML(e, true) + '</details>';
     return h + '</div>';
   }).join('');
   document.getElementById('foot').innerHTML = 'Built ' + d.built_at + ' from the sealed ledger (' + d.chain_records + ' records). ' + d.real_note +
-    ' Sim settlements ride the labeled stand-in index (median of Coinbase + Kraken), exactly as the record says. The full written proof under every call lives on <a href="proof.html">THE PROOF RECORD</a>.';
+    ' Sim settlements ride the labeled stand-in index (median of Coinbase + Kraken), exactly as the record says. Card scoring uses only sealed prices — the watch\'s asks, the 88c / 95c lines, RIPTIDE\'s sealed entry/exit avgs — with the taker fee in; unpriced calls are never scored by invention. The full written proof under every call lives on <a href="proof.html">THE PROOF RECORD</a>.';
+  // THE PUSH SHOW: the featured play in the step mirror deals its
+  // steps in one by one, the way they landed — a step every 450ms.
+  var feat = document.querySelectorAll('#mirror .mirrorplay')[0];
+  if(feat){
+    var fsteps = feat.querySelectorAll('.step');
+    fsteps.forEach(function(el, i){ setTimeout(function(){ el.classList.add('shown'); }, 200 + i*450); });
+  }
 }
-function tick(){ fetch('gamelog.json?ts=' + Date.now()).then(function(r){ return r.json(); }).then(render).catch(function(){}); }
+function blobtick(){ fetch('gamelogblob.json?ts=' + Date.now()).then(function(r){ return r.json(); }).then(function(b){
+    document.getElementById('blobstrip').innerHTML = '<div>⛓ THIS LOG IS SEALED OFF-SITE — Walrus testnet blob <b>' + b.blob_id + '</b> · recall <b>' + b.recall + '</b> · ' + b.bytes + ' bytes · the feed on this page is byte-for-byte the blobbed record · ' + b.at + '</div>';
+  }).catch(function(){}); }
+function tick(){ fetch('gamelog.json?ts=' + Date.now()).then(function(r){ return r.json(); }).then(render).catch(function(){}); blobtick(); }
 tick(); setInterval(tick, 20000);
 </script>
 </body>
