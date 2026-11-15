@@ -1,24 +1,24 @@
 {
- "built_at": 1794753039,
+ "built_at": 1794753129,
  "window": "2026-11-15T14:30:00Z",
- "window_ends_in_s": 261,
+ "window_ends_in_s": 171,
  "daemon": {
   "state": "STALLED",
-  "updated": "2026-11-15T14:30:21Z",
-  "chain": 7259,
+  "updated": "2026-11-15T14:31:59Z",
+  "chain": 7265,
   "stall_components": [
    "proof_refresh"
   ],
   "note": "The live pipeline runs as one AI-free program (nodal/live_daemon.py). A stall shows here and in nodal/daemon_state.json \u2014 no agent run needed."
  },
  "wave": {
-  "state": "CLIMBING",
-  "plain": "going up and staying up",
-  "drift": 72.1,
-  "range": 72.1,
-  "flips": 0,
+  "state": "FALLING",
+  "plain": "going down and staying down",
+  "drift": -29.2,
+  "range": 210.6,
+  "flips": 2,
   "open": 64891.155,
-  "last": 64963.3
+  "last": 64862.0
  },
  "chart": {
   "points": [
@@ -153,6 +153,18 @@
    [
     1794753039,
     64963.3
+   ],
+   [
+    1794753069,
+    64752.715
+   ],
+   [
+    1794753099,
+    64847.9
+   ],
+   [
+    1794753129,
+    64862.0
    ]
   ],
   "bounds": [
@@ -172,14 +184,14 @@
   {
    "name": "PLAIN",
    "mode": "REAL",
-   "streak": 5,
+   "streak": 6,
    "best": 21,
    "bank": 112.48,
    "savings": 0.0,
-   "graded": 302,
-   "wins": 247,
-   "call": null,
-   "chance": null,
+   "graded": 303,
+   "wins": 248,
+   "call": "down",
+   "chance": 0.6082,
    "ask": null,
    "sell_text": "Sell when the bid hits 95\u00a2 \u2014 or it rides to the end of the window.",
    "sell_mark": 0.95,
@@ -187,15 +199,15 @@
   },
   {
    "name": "EARLY",
-   "mode": "TEST",
-   "streak": 4,
+   "mode": "REAL",
+   "streak": 5,
    "best": 22,
    "bank": 218.13,
    "savings": 72.24,
-   "graded": 219,
-   "wins": 180,
-   "call": null,
-   "chance": null,
+   "graded": 220,
+   "wins": 181,
+   "call": "down",
+   "chance": 0.7148,
    "ask": null,
    "sell_text": "Take the money at the 88\u00a2 value line \u2014 or it flips once if the wave turns.",
    "sell_mark": 0.88,
@@ -230,18 +242,20 @@
    "src": "order book (no poll yet)"
   },
   {
-   "text": "The price jumped $72 in the last two minutes \u2014 a real push, not a drift.",
+   "text": "All the models that have called are pointing the same way: DOWN.",
+   "src": "the sealed calls"
+  },
+  {
+   "text": "The price dropped $29 in the last two minutes \u2014 a real push, not a drift.",
    "src": "price trail (last 2 minutes)"
+  },
+  {
+   "text": "EARLY's read is fading as the window goes on \u2014 its first lean is losing steam.",
+   "src": "EARLY's in-window samples"
   }
  ],
- "happening": "Bitcoin is CLIMBING \u2014 going up and staying up (+72 dollars this window). No model has called yet this window; they usually speak 2\u20133 minutes in. 4 minutes 21 seconds left in the window.",
+ "happening": "Bitcoin is FALLING \u2014 going down and staying down (-29 dollars this window). PLAIN says BUY DOWN; EARLY says BUY DOWN. 2 minutes 51 seconds left in the window.",
  "history": [
-  {
-   "window": "2026-11-15T14:00:00Z",
-   "result": "down",
-   "plain": true,
-   "early": null
-  },
   {
    "window": "2026-11-15T14:05:00Z",
    "result": "down",
@@ -256,6 +270,12 @@
   },
   {
    "window": "2026-11-15T14:20:00Z",
+   "result": "down",
+   "plain": true,
+   "early": true
+  },
+  {
+   "window": "2026-11-15T14:25:00Z",
    "result": "down",
    "plain": true,
    "early": true
