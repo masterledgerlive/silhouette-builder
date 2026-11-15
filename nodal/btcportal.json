@@ -1,5 +1,5 @@
 {
- "built_at": "2026-11-15T12:16:42Z",
+ "built_at": "2026-11-15T12:26:16Z",
  "real": {
   "plain": {
    "bank": {
@@ -141,8 +141,8 @@
  "live": {
   "plain": {
    "window": {
-    "window": "2026-11-15T12:15:00Z",
-    "open_px": 65304.5,
+    "window": "2026-11-15T12:25:00Z",
+    "open_px": 65484.695,
     "call": null,
     "abstain": null,
     "grade": null
@@ -277,59 +277,40 @@
   },
   "early": {
    "window": {
-    "window": "2026-11-15T12:15:00Z",
-    "open_px": 65303.1,
+    "window": "2026-11-15T12:25:00Z",
+    "open_px": 65485.4,
     "lean": {
-     "side": "up",
-     "chance": 0.7963,
-     "at": 1794744987
+     "side": "down",
+     "chance": 0.5751,
+     "at": 1794745557
     },
     "telegraph": [
      {
-      "t": 1794744957,
+      "t": 1794745557,
       "elapsed": 57,
       "side": "down",
-      "chance": 0.5088
-     },
-     {
-      "t": 1794744987,
-      "elapsed": 87,
-      "side": "up",
-      "chance": 0.7963
+      "chance": 0.5751
      }
     ],
-    "call": {
-     "side": "up",
-     "chance": 0.7963,
-     "at": 1794744987,
-     "at_elapsed_s": 87,
-     "why": "BTC rose $71 from the window open with 212s left \u2014 the model put UP at 80%. Early read at 87s in, 30s before the plain desk's span opens."
-    },
+    "call": null,
     "value": null,
     "flip": null,
     "abstain": null,
     "grade": null,
     "samples": [
      {
-      "t": 1794744927,
-      "elapsed": 27,
-      "px": 65303.1,
+      "t": 1794745528,
+      "elapsed": 28,
+      "px": 65485.4,
       "drift": 0.0,
       "chance_up": 0.5
      },
      {
-      "t": 1794744957,
+      "t": 1794745557,
       "elapsed": 57,
-      "px": 65301.125,
-      "drift": -1.97,
-      "chance_up": 0.4912
-     },
-     {
-      "t": 1794744987,
-      "elapsed": 87,
-      "px": 65374.2,
-      "drift": 71.1,
-      "chance_up": 0.7963
+      "px": 65469.399999999994,
+      "drift": -16.0,
+      "chance_up": 0.4249
      }
     ],
     "plain": {
@@ -338,14 +319,14 @@
     }
    },
    "counters": {
-    "plays": 204,
-    "plays_won": 169,
-    "win_rate": 82.8,
-    "score": 170,
-    "streak_points": 5,
+    "plays": 205,
+    "plays_won": 170,
+    "win_rate": 82.9,
+    "score": 171,
+    "streak_points": 6,
     "best_streak_points": 22,
     "double_wins": 1,
-    "form": "LLWWWWWLLWWWWW",
+    "form": "LWWWWWLLWWWWWW",
     "calls_made": 206,
     "values": 91,
     "flips": 19
@@ -377,31 +358,53 @@
      ],
      "value": null,
      "flip": null,
-     "grade": null,
+     "grade": {
+      "result": "up",
+      "correct": true,
+      "outcome": "WIN",
+      "points": 1,
+      "brier": 0.0415,
+      "early_correct": true,
+      "settle_px": 65381.41
+     },
      "playback": [
       {
-       "t": 1794744927,
+       "chance_up": 0.5,
+       "drift": 0.0,
        "elapsed": 27,
        "px": 65303.1,
-       "drift": 0.0,
-       "chance_up": 0.5
+       "t": 1794744927
       },
       {
-       "t": 1794744957,
+       "chance_up": 0.4912,
+       "drift": -1.97,
        "elapsed": 57,
        "px": 65301.125,
-       "drift": -1.97,
-       "chance_up": 0.4912
+       "t": 1794744957
       },
       {
-       "t": 1794744987,
+       "chance_up": 0.7963,
+       "drift": 71.1,
        "elapsed": 87,
        "px": 65374.2,
-       "drift": 71.1,
-       "chance_up": 0.7963
+       "t": 1794744987
+      },
+      {
+       "chance_up": 0.6172,
+       "drift": 21.81,
+       "elapsed": 147,
+       "px": 65324.91,
+       "t": 1794745047
+      },
+      {
+       "chance_up": 0.99,
+       "drift": 78.31,
+       "elapsed": 298,
+       "px": 65381.41499999999,
+       "t": 1794745198
       }
      ],
-     "lesson": null
+     "lesson": "A clean early read that never needed the second move. The early span's whole edge is deciding 30 seconds sooner with the same model \u2014 this window, sooner was right."
     },
     {
      "window": "2026-11-15T12:10:00Z",
@@ -855,9 +858,9 @@
    ]
   },
   "early": {
-   "graded": 204,
-   "win_rate": 82.8,
-   "score": 170
+   "graded": 205,
+   "win_rate": 82.9,
+   "score": 171
   }
  },
  "venue": {
@@ -876,34 +879,34 @@
   "name_note": "Name approved by David, 2026-11-14. SIM ONLY \u2014 real money needs his separate exact word.",
   "rule": "btc5-flow-v1",
   "concept": "Born from PLAIN + EARLY: the parents seed the window's trajectory, then it rides the crowd's wrong-way book flow with many micro plays inside one 5-minute window.",
-  "built_at": "2026-11-15T12:16:42Z",
+  "built_at": "2026-11-15T12:26:16Z",
   "ledgers": {
    "law": {
-    "bank": 48.91,
+    "bank": 53.26,
     "start": 5.0,
-    "pnl": 43.91,
-    "day_pnl": 32.73,
+    "pnl": 48.26,
+    "day_pnl": 37.08,
     "B": 16.17,
     "s": 1.6,
-    "L": 14.22
+    "L": 15.53
    },
    "hypo": {
-    "bank": 3856.34,
+    "bank": 4264.11,
     "start": 500.0,
-    "pnl": 3356.34,
-    "day_pnl": 2321.3,
+    "pnl": 3764.11,
+    "day_pnl": 2729.08,
     "B": 1535.04,
     "s": 150.0,
-    "L": 1111.5,
+    "L": 1234.56,
     "label": "HYPOTHETICAL \u2014 scaled x100, fees and ladder fills counted; a hypothesis under test, not a proven fact"
    }
   },
   "scoreboard": {
-   "windows": 139,
-   "windows_seeded": 140,
-   "call_hits": 109,
-   "plays": 80,
-   "correct": 38,
+   "windows": 140,
+   "windows_seeded": 141,
+   "call_hits": 110,
+   "plays": 83,
+   "correct": 40,
    "streak_type": "L",
    "streak_n": 1,
    "best_win_streak": 3,
@@ -911,6 +914,17 @@
    "best_haul_hypo": 940.02
   },
   "recent_windows": [
+   {
+    "window": "2026-11-15T12:15:00Z",
+    "seed_side": "up",
+    "followed": "EARLY",
+    "basis": "only EARLY called by seed time",
+    "call_hit": true,
+    "plays": 3,
+    "correct": 2,
+    "haul_law": 4.35,
+    "haul_hypo": 407.77
+   },
    {
     "window": "2026-11-15T12:10:00Z",
     "seed_side": "down",
@@ -965,17 +979,6 @@
     "correct": 2,
     "haul_law": 2.44,
     "haul_hypo": 226.29
-   },
-   {
-    "window": "2026-11-15T11:35:00Z",
-    "seed_side": "up",
-    "followed": "BOTH",
-    "basis": "parents agree",
-    "call_hit": true,
-    "plays": 1,
-    "correct": 0,
-    "haul_law": -0.14,
-    "haul_hypo": -13.16
    }
   ]
  }
