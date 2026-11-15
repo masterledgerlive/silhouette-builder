@@ -355,4 +355,25 @@ if(typeof window!=="undefined"){
   });
 }
 </script>
+<div style="max-width:1060px;margin:26px auto 10px;padding:0 14px">
+  <div style="background:#141b29;border:2px solid #6ec3ff;border-radius:14px;padding:16px">
+    <div style="font-size:21px;font-weight:800">₿ THE BTC DESK — the money record, live from the sealed ledger</div>
+    <p style="color:#93a1b5;font-size:13.5px;line-height:1.6;margin:6px 0">Fed by THE PROOF RECORD (the $5.00 bet algorithm) and THE REAL BOARD — the same numbers as the ledger at the stamp shown, money record and streaks, not direction only. An engine that is failing says so here.</p>
+    <div id="btcStage" style="font-size:15px;line-height:1.75">…</div>
+  </div>
+</div>
+<script>
+fetch('scoresdata.json?_='+Date.now()).then(r=>r.json()).then(d=>{
+  const B=d.btc, R=d.real, el=document.getElementById('btcStage');
+  if(!B){el.textContent='BTC desk feed not on the wire yet.';return;}
+  const money=n=>(n<0?'−$':'$')+Math.abs(n||0).toFixed(2);
+  const row=(e)=>'<b>'+e.engine+'</b> · '+e.calls+' calls · play-along bank <b>'+money(e.bank)+'</b> · savings '+money(e.savings)+' · streak now '+e.streak_now+' (best '+e.streak_best+') · win rate '+(e.win_rate==null?'—':e.win_rate+'%')+' · borrows PEER '+(e.borrows?e.borrows.PEER:0)+' / SELF '+(e.borrows?e.borrows.SELF:0)+' / MAN '+(e.borrows?e.borrows.MAN:0)+' · borrow grade <b>'+(e.borrow_grade||'—')+'</b>';
+  let h='<div style="color:#ffd257;font-weight:700">📡 stamp: scores built '+(B.built_at||'—')+' · proof record built '+(B.proof_built_at||'—')+'</div>';
+  h+='<div>'+row(B.plain)+'</div><div>'+row(B.early)+'</div><div>'+row(B.riptide)+'</div>';
+  const F=B.final_call||{};
+  h+='<div>⚖️ <b>FINAL CALL</b> · '+F.decided+' windows decided · '+F.for_sure+' FOR SURE / '+F.no_call+' NO CALL · money '+(F.money_wins||0)+'W/'+(F.money_losses||0)+'L · settle P&L <b>'+money(F.pnl_settle)+'</b></div>';
+  if(R)h+='<div>💵 <b>REAL lanes</b> (overlay — David places every order): PLAIN bank '+money(R.plain.bank_cash)+' · '+R.plain.status+' · EARLY bank '+money(R.early.bank_cash)+' · '+R.early.status+' · David\u2019s own taps: '+R.david.n_fills+' sealed, '+R.david.n_settled+' settled, P&L '+money(R.david.pnl)+'</div>';
+  el.innerHTML=h;
+}).catch(()=>{document.getElementById('btcStage').textContent='scoresdata.json not on the wire yet';});
+</script>
 </body></html>
