@@ -100,7 +100,7 @@
     <h2>⏭️ THE QUEUE AHEAD</h2>
     <div class="card"><table id="tQueue"><tr><th>WINDOW (ET)</th><th>DECISION SPAN (ET)</th><th>STATUS</th></tr></table></div>
     <h2>🔒 THE SEALED RECORD — last 24 calls</h2>
-    <div class="card"><div class="small" id="tSealStamp">…</div><table id="tCalls"><tr><th>WINDOW (ET)</th><th>CALL</th><th class="num">CHANCE</th><th>BAND</th><th class="num">MOVE $</th><th>RESULT</th><th class="num">BRIER</th><th>WHY</th></tr></table></div>
+    <div class="card"><div id="tStampBig" style="font-size:19px;font-weight:800;margin-bottom:4px">📡 DATA STAMP — …</div><div id="tBorrows" style="margin:10px 0"></div><div class="small" id="tSealStamp">…</div><table id="tCalls"><tr><th>WINDOW (ET)</th><th>CALL</th><th class="num">CHANCE</th><th>BAND</th><th class="num">MOVE $</th><th>RESULT</th><th class="num">BRIER</th><th>WHY</th><th>PROOF — sealed · plan · FINAL ANSWER · money</th></tr></table></div>
     <h2>🧠 LESSONS — every recent miss, post-mortemed in the open</h2>
     <div class="card"><table id="tLessons"><tr><th>WINDOW (ET)</th><th>CALL</th><th>WHAT HAPPENED</th><th>THE LESSON</th></tr></table><div class="small" style="margin-top:6px">Reconstructed from the sealed call + grade and the desk's own price trail. A miss is never deleted, never re-explained after the fact — the facts are the ones the desk sealed before the window ended.</div></div>
     <h2>🎯 IS THE PERCENTAGE HONEST? — calibration</h2>
@@ -266,10 +266,21 @@ function renderRecord(){
   });
   $('sHist').innerHTML=h||'<span class="small">the sealed record is still loading…</span>';
   $('tSealStamp').textContent='sealed record as of '+CD.built_at+' (UTC) — refreshed by the desk\u2019s minute loops; the hash-chained ledger is the real-time original';
-  let tc='<tr><th>WINDOW (ET)</th><th>CALL</th><th class="num">CHANCE</th><th>BAND</th><th class="num">MOVE $</th><th>RESULT</th><th class="num">BRIER</th><th>WHY</th></tr>';
+  $('tStampBig').textContent='📡 DATA STAMP — feed built '+CD.built_at+' UTC · last graded window '+(CD.last_graded_window||'—')+' · money lines from THE PROOF RECORD (built '+(CD.proof_built_at||'—')+')';
+  const B=CD.borrows;
+  if(B&&B.lifetime){
+    const gcol=B.grade==='CLEAN'?'#2fd67a':(B.grade==='FULL FAIL'?'#ff5d5d':'#ffd257');
+    $('tBorrows').innerHTML='<div style="border:2px solid '+gcol+';border-radius:10px;padding:10px 12px"><b style="font-size:16px">🏦 BORROW COUNTS — PLAIN</b> · grade: <b style="color:'+gcol+'">'+(B.grade||'—')+'</b><br>'
+      +'lifetime: piggy bank (SELF) <b>'+B.lifetime.SELF+'</b> · peers (PEER) <b>'+B.lifetime.PEER+'</b> · THE MAN (MAN) <b>'+B.lifetime.MAN+'</b> · total <b>'+(B.total||0)+'</b>'
+      +' · today: SELF <b>'+(B.today?B.today.SELF:0)+'</b> · PEER <b>'+(B.today?B.today.PEER:0)+'</b> · MAN <b>'+(B.today?B.today.MAN:0)+'</b><br>'
+      +'<span class="small">'+B.ruling.SELF+'<br>'+B.ruling.MAN+'<br>'+(B.tell||'')+'</span></div>';
+  }
+  let tc='<tr><th>WINDOW (ET)</th><th>CALL</th><th class="num">CHANCE</th><th>BAND</th><th class="num">MOVE $</th><th>RESULT</th><th class="num">BRIER</th><th>WHY</th><th>PROOF — sealed · plan · FINAL ANSWER · money</th></tr>';
   (CD.recent_calls||[]).forEach(c=>{
     const res=c.result?(c.correct?'<span class="ok">✓ '+c.result+'</span>':'<span class="bad">✗ '+c.result+'</span>'):'<span class="mid">open</span>';
-    tc+='<tr><td>'+fmtT(Date.parse(c.window)/1000)+'</td><td>'+(c.side==='up'?'⬆ UP':'⬇ DOWN')+'</td><td class="num">'+Math.round(c.chance*100)+'%</td><td>'+c.band+'</td><td class="num">'+(c.move_usd>=0?'+':'−')+'$'+Math.abs(c.move_usd).toFixed(0)+'</td><td>'+res+'</td><td class="num">'+(c.brier==null?'—':c.brier)+'</td><td class="small">'+c.why+'</td></tr>';
+    const mn=c.money?('in @ '+Math.round(c.money.ask*100)+'¢ · stake $'+(c.money.stake||0).toFixed(2)+' → <b class="'+(c.money.pnl>=0?'ok':'bad')+'">'+(c.money.pnl>=0?'+':'−')+'$'+Math.abs(c.money.pnl).toFixed(2)+'</b>'+(c.money.borrowed?' · ⚠️ borrowed stake ('+(c.money.borrow_source||'')+')':'')+' · bank after $'+(c.money.bank_after||0).toFixed(2)):'<span class="mid">UNPRICED — no sealed ask</span>';
+    const proof='<span class="small">🔒 sealed seq '+(c.seq||'—')+' · '+(c.at_elapsed_s||'—')+'s in'+(c.grade_seq?' · grade seq '+c.grade_seq:'')+'<br>plan: '+c.plan+'<br><b>FINAL ANSWER — LOCKED IN: '+(c.final_answer?(c.final_answer.side==='up'?'⬆ UP':'⬇ DOWN'):'—')+'</b> (locked seq '+(c.final_answer?c.final_answer.locked_seq:'—')+')<br>💵 '+mn+'</span>';
+    tc+='<tr><td>'+fmtT(Date.parse(c.window)/1000)+'</td><td>'+(c.side==='up'?'⬆ UP':'⬇ DOWN')+'</td><td class="num">'+Math.round(c.chance*100)+'%</td><td>'+c.band+'</td><td class="num">'+(c.move_usd>=0?'+':'−')+'$'+Math.abs(c.move_usd).toFixed(0)+'</td><td>'+res+'</td><td class="num">'+(c.brier==null?'—':c.brier)+'</td><td class="small">'+c.why+'</td><td>'+proof+'</td></tr>';
   });
   $('tCalls').innerHTML=tc;
   let tb='<tr><th>STATED BAND</th><th class="num">CALLS</th><th class="num">STATED AVG</th><th class="num">ACTUALLY RIGHT</th><th>READ</th></tr>';

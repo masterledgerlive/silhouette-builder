@@ -1,5 +1,5 @@
 {
- "built_at": "2026-11-15T15:38:13Z",
+ "built_at": "2026-11-15T15:58:55Z",
  "bands": [
   {
    "band": "60\u201370%",
@@ -9,9 +9,9 @@
   },
   {
    "band": "70\u201380%",
-   "n": 85,
-   "stated": 75.1,
-   "actual": 76.5
+   "n": 86,
+   "stated": 75.0,
+   "actual": 75.6
   },
   {
    "band": "80\u201390%",
@@ -30,17 +30,67 @@
   "id": "BTC5",
   "name": "BTC 5-min desk (our specialist, sim)",
   "kind": "BTC Up/Down 5m windows \u00b7 plain vol model btc5-plain-v1 \u00b7 stand-in index",
-  "calls": 311,
-  "graded": 310,
+  "calls": 312,
+  "graded": 311,
   "correct": 254,
-  "accuracy": 81.9,
-  "brier": 0.1365,
-  "streak_now": 2,
+  "accuracy": 81.7,
+  "brier": 0.1377,
+  "streak_now": 0,
   "streak_best": 21,
   "status": "APPROVED",
   "note": "graded from BTC5_GRADE records in the sealed ledger"
  },
+ "proof_built_at": "2026-11-15T15:57:17Z",
+ "borrows": {
+  "lifetime": {
+   "PEER": 0,
+   "SELF": 0,
+   "MAN": 0
+  },
+  "today": {
+   "PEER": 0,
+   "SELF": 0,
+   "MAN": 0
+  },
+  "total": 0,
+  "log": [],
+  "grade": "CLEAN",
+  "tell": "clean \u2014 never reached in, never borrowed from The Man",
+  "ruling": {
+   "SELF": "REACHED-IN FAIL (David, 2026-11-15): reaching into its own piggy bank is a fail on the record \u2014 better than a full loss, the engine is still floating on profits, but a fail.",
+   "MAN": "FULL FAIL (David, 2026-11-15): a borrow from THE MAN (the main bank) is a full fail \u2014 the run restarts.",
+   "PEER": "A borrow from the other engines \u2014 counted on the record like every borrow."
+  }
+ },
+ "last_graded_window": "2026-11-15T15:35:00Z",
  "recent_calls": [
+  {
+   "window": "2026-11-15T15:55:00Z",
+   "side": "down",
+   "chance": 0.6123,
+   "at_elapsed_s": 111,
+   "seconds_left": 188,
+   "index_px": 64709.365,
+   "open_px": 64735.6,
+   "move_usd": -26.24,
+   "band": "60\u201370%",
+   "why": "BTC fell $26 from the window open with 188s left \u2014 the model put DOWN at 61%.",
+   "result": null,
+   "correct": null,
+   "brier": null,
+   "seq": 7424,
+   "sealed_at": "2026-11-15T15:56:54+0000",
+   "grade_seq": null,
+   "plan": "HOLD \u2014 ride to settlement; PLAIN's only early exit is a sell at a bid of 95\u00a2 or better",
+   "final_answer": {
+    "side": "down",
+    "locked_seq": 7424,
+    "locked_at": "2026-11-15T15:56:54+0000",
+    "via": "the sealed call itself \u2014 PLAIN never flips, so the call IS the final answer, locked at seal time"
+   },
+   "money": null,
+   "money_note": "UNPRICED \u2014 the REAL watch sealed no ask for this window; no money line is invented"
+  },
   {
    "window": "2026-11-15T15:35:00Z",
    "side": "down",
@@ -52,9 +102,21 @@
    "move_usd": -62.96,
    "band": "70\u201380%",
    "why": "BTC fell $63 from the window open with 152s left \u2014 the model put DOWN at 72%.",
-   "result": null,
-   "correct": null,
-   "brier": null
+   "result": "up",
+   "correct": false,
+   "brier": 0.5196,
+   "seq": 7381,
+   "sealed_at": "2026-11-15T15:37:29+0000",
+   "grade_seq": 7384,
+   "plan": "HOLD \u2014 ride to settlement; PLAIN's only early exit is a sell at a bid of 95\u00a2 or better",
+   "final_answer": {
+    "side": "down",
+    "locked_seq": 7381,
+    "locked_at": "2026-11-15T15:37:29+0000",
+    "via": "the sealed call itself \u2014 PLAIN never flips, so the call IS the final answer, locked at seal time"
+   },
+   "money": null,
+   "money_note": "UNPRICED \u2014 the REAL watch sealed no ask for this window; no money line is invented"
   },
   {
    "window": "2026-11-15T15:30:00Z",
@@ -69,7 +131,31 @@
    "why": "BTC rose $127 from the window open with 167s left \u2014 the model put UP at 87%.",
    "result": "up",
    "correct": true,
-   "brier": 0.0169
+   "brier": 0.0169,
+   "seq": 7366,
+   "sealed_at": "2026-11-15T15:32:13+0000",
+   "grade_seq": 7373,
+   "plan": "HOLD \u2014 ride to settlement; PLAIN's only early exit is a sell at a bid of 95\u00a2 or better",
+   "final_answer": {
+    "side": "up",
+    "locked_seq": 7366,
+    "locked_at": "2026-11-15T15:32:13+0000",
+    "via": "the sealed call itself \u2014 PLAIN never flips, so the call IS the final answer, locked at seal time"
+   },
+   "money": {
+    "ask": 0.53,
+    "stake": 14.2,
+    "pnl": 12.13,
+    "bank_after": 154.84,
+    "run": 1,
+    "borrowed": false,
+    "self_borrowed": false,
+    "borrow_source": null,
+    "borrow_count": null,
+    "borrow_from": null,
+    "how": "settlement"
+   },
+   "money_note": "the $5.00 bet algorithm (THE PROOF RECORD): stake sized by the banking law on the joint timeline, in at the sealed ask, entry fee in; settlement pays no exit trade \u2014 a directional win that loses money shows as a money LOSS"
   },
   {
    "window": "2026-11-15T15:10:00Z",
@@ -84,7 +170,31 @@
    "why": "BTC fell $94 from the window open with 180s left \u2014 the model put DOWN at 75%.",
    "result": "down",
    "correct": true,
-   "brier": 0.0601
+   "brier": 0.0601,
+   "seq": 7335,
+   "sealed_at": "2026-11-15T15:12:01+0000",
+   "grade_seq": 7344,
+   "plan": "HOLD \u2014 ride to settlement; PLAIN's only early exit is a sell at a bid of 95\u00a2 or better",
+   "final_answer": {
+    "side": "down",
+    "locked_seq": 7335,
+    "locked_at": "2026-11-15T15:12:01+0000",
+    "via": "the sealed call itself \u2014 PLAIN never flips, so the call IS the final answer, locked at seal time"
+   },
+   "money": {
+    "ask": 0.4,
+    "stake": 12.4,
+    "pnl": 18.08,
+    "bank_after": 142.71,
+    "run": 1,
+    "borrowed": false,
+    "self_borrowed": false,
+    "borrow_source": null,
+    "borrow_count": null,
+    "borrow_from": null,
+    "how": "settlement"
+   },
+   "money_note": "the $5.00 bet algorithm (THE PROOF RECORD): stake sized by the banking law on the joint timeline, in at the sealed ask, entry fee in; settlement pays no exit trade \u2014 a directional win that loses money shows as a money LOSS"
   },
   {
    "window": "2026-11-15T15:05:00Z",
@@ -99,7 +209,31 @@
    "why": "BTC fell $91 from the window open with 183s left \u2014 the model put DOWN at 76%.",
    "result": "up",
    "correct": false,
-   "brier": 0.5708
+   "brier": 0.5708,
+   "seq": 7323,
+   "sealed_at": "2026-11-15T15:06:58+0000",
+   "grade_seq": 7331,
+   "plan": "HOLD \u2014 ride to settlement; PLAIN's only early exit is a sell at a bid of 95\u00a2 or better",
+   "final_answer": {
+    "side": "down",
+    "locked_seq": 7323,
+    "locked_at": "2026-11-15T15:06:58+0000",
+    "via": "the sealed call itself \u2014 PLAIN never flips, so the call IS the final answer, locked at seal time"
+   },
+   "money": {
+    "ask": 0.5,
+    "stake": 13.8,
+    "pnl": -14.28,
+    "bank_after": 124.63,
+    "run": 1,
+    "borrowed": false,
+    "self_borrowed": false,
+    "borrow_source": null,
+    "borrow_count": null,
+    "borrow_from": null,
+    "how": "settlement"
+   },
+   "money_note": "the $5.00 bet algorithm (THE PROOF RECORD): stake sized by the banking law on the joint timeline, in at the sealed ask, entry fee in; settlement pays no exit trade \u2014 a directional win that loses money shows as a money LOSS"
   },
   {
    "window": "2026-11-15T14:50:00Z",
@@ -114,7 +248,19 @@
    "why": "BTC rose $101 from the window open with 177s left \u2014 the model put UP at 77%.",
    "result": "up",
    "correct": true,
-   "brier": 0.0523
+   "brier": 0.0523,
+   "seq": 7304,
+   "sealed_at": "2026-11-15T14:52:03+0000",
+   "grade_seq": 7307,
+   "plan": "HOLD \u2014 ride to settlement; PLAIN's only early exit is a sell at a bid of 95\u00a2 or better",
+   "final_answer": {
+    "side": "up",
+    "locked_seq": 7304,
+    "locked_at": "2026-11-15T14:52:03+0000",
+    "via": "the sealed call itself \u2014 PLAIN never flips, so the call IS the final answer, locked at seal time"
+   },
+   "money": null,
+   "money_note": "UNPRICED \u2014 the REAL watch sealed no ask for this window; no money line is invented"
   },
   {
    "window": "2026-11-15T14:45:00Z",
@@ -129,7 +275,19 @@
    "why": "BTC rose $50 from the window open with 183s left \u2014 the model put UP at 65%.",
    "result": "up",
    "correct": true,
-   "brier": 0.1259
+   "brier": 0.1259,
+   "seq": 7290,
+   "sealed_at": "2026-11-15T14:46:58+0000",
+   "grade_seq": 7297,
+   "plan": "HOLD \u2014 ride to settlement; PLAIN's only early exit is a sell at a bid of 95\u00a2 or better",
+   "final_answer": {
+    "side": "up",
+    "locked_seq": 7290,
+    "locked_at": "2026-11-15T14:46:58+0000",
+    "via": "the sealed call itself \u2014 PLAIN never flips, so the call IS the final answer, locked at seal time"
+   },
+   "money": null,
+   "money_note": "UNPRICED \u2014 the REAL watch sealed no ask for this window; no money line is invented"
   },
   {
    "window": "2026-11-15T14:40:00Z",
@@ -144,7 +302,19 @@
    "why": "BTC fell $201 from the window open with 180s left \u2014 the model put DOWN at 95%.",
    "result": "down",
    "correct": true,
-   "brier": 0.0029
+   "brier": 0.0029,
+   "seq": 7279,
+   "sealed_at": "2026-11-15T14:42:01+0000",
+   "grade_seq": 7285,
+   "plan": "HOLD \u2014 ride to settlement; PLAIN's only early exit is a sell at a bid of 95\u00a2 or better",
+   "final_answer": {
+    "side": "down",
+    "locked_seq": 7279,
+    "locked_at": "2026-11-15T14:42:01+0000",
+    "via": "the sealed call itself \u2014 PLAIN never flips, so the call IS the final answer, locked at seal time"
+   },
+   "money": null,
+   "money_note": "UNPRICED \u2014 the REAL watch sealed no ask for this window; no money line is invented"
   },
   {
    "window": "2026-11-15T14:30:00Z",
@@ -159,7 +329,19 @@
    "why": "BTC fell $29 from the window open with 170s left \u2014 the model put DOWN at 61%.",
    "result": "down",
    "correct": true,
-   "brier": 0.1535
+   "brier": 0.1535,
+   "seq": 7265,
+   "sealed_at": "2026-11-15T14:32:11+0000",
+   "grade_seq": 7268,
+   "plan": "HOLD \u2014 ride to settlement; PLAIN's only early exit is a sell at a bid of 95\u00a2 or better",
+   "final_answer": {
+    "side": "down",
+    "locked_seq": 7265,
+    "locked_at": "2026-11-15T14:32:11+0000",
+    "via": "the sealed call itself \u2014 PLAIN never flips, so the call IS the final answer, locked at seal time"
+   },
+   "money": null,
+   "money_note": "UNPRICED \u2014 the REAL watch sealed no ask for this window; no money line is invented"
   },
   {
    "window": "2026-11-15T14:25:00Z",
@@ -174,7 +356,31 @@
    "why": "BTC fell $58 from the window open with 184s left \u2014 the model put DOWN at 76%.",
    "result": "down",
    "correct": true,
-   "brier": 0.0594
+   "brier": 0.0594,
+   "seq": 7252,
+   "sealed_at": "2026-11-15T14:26:57+0000",
+   "grade_seq": 7260,
+   "plan": "HOLD \u2014 ride to settlement; PLAIN's only early exit is a sell at a bid of 95\u00a2 or better",
+   "final_answer": {
+    "side": "down",
+    "locked_seq": 7252,
+    "locked_at": "2026-11-15T14:26:57+0000",
+    "via": "the sealed call itself \u2014 PLAIN never flips, so the call IS the final answer, locked at seal time"
+   },
+   "money": {
+    "ask": 0.52,
+    "stake": 12.7,
+    "pnl": 11.3,
+    "bank_after": 138.91,
+    "run": 1,
+    "borrowed": false,
+    "self_borrowed": false,
+    "borrow_source": null,
+    "borrow_count": null,
+    "borrow_from": null,
+    "how": "settlement"
+   },
+   "money_note": "the $5.00 bet algorithm (THE PROOF RECORD): stake sized by the banking law on the joint timeline, in at the sealed ask, entry fee in; settlement pays no exit trade \u2014 a directional win that loses money shows as a money LOSS"
   },
   {
    "window": "2026-11-15T14:20:00Z",
@@ -189,7 +395,19 @@
    "why": "BTC fell $33 from the window open with 184s left \u2014 the model put DOWN at 65%.",
    "result": "down",
    "correct": true,
-   "brier": 0.1223
+   "brier": 0.1223,
+   "seq": 7242,
+   "sealed_at": "2026-11-15T14:21:57+0000",
+   "grade_seq": 7247,
+   "plan": "HOLD \u2014 ride to settlement; PLAIN's only early exit is a sell at a bid of 95\u00a2 or better",
+   "final_answer": {
+    "side": "down",
+    "locked_seq": 7242,
+    "locked_at": "2026-11-15T14:21:57+0000",
+    "via": "the sealed call itself \u2014 PLAIN never flips, so the call IS the final answer, locked at seal time"
+   },
+   "money": null,
+   "money_note": "UNPRICED \u2014 the REAL watch sealed no ask for this window; no money line is invented"
   },
   {
    "window": "2026-11-15T14:10:00Z",
@@ -204,7 +422,19 @@
    "why": "BTC rose $52 from the window open with 164s left \u2014 the model put UP at 73%.",
    "result": "up",
    "correct": true,
-   "brier": 0.0714
+   "brier": 0.0714,
+   "seq": 7225,
+   "sealed_at": "2026-11-15T14:12:17+0000",
+   "grade_seq": 7229,
+   "plan": "HOLD \u2014 ride to settlement; PLAIN's only early exit is a sell at a bid of 95\u00a2 or better",
+   "final_answer": {
+    "side": "up",
+    "locked_seq": 7225,
+    "locked_at": "2026-11-15T14:12:17+0000",
+    "via": "the sealed call itself \u2014 PLAIN never flips, so the call IS the final answer, locked at seal time"
+   },
+   "money": null,
+   "money_note": "UNPRICED \u2014 the REAL watch sealed no ask for this window; no money line is invented"
   },
   {
    "window": "2026-11-15T14:05:00Z",
@@ -219,7 +449,31 @@
    "why": "BTC fell $96 from the window open with 179s left \u2014 the model put DOWN at 86%.",
    "result": "down",
    "correct": true,
-   "brier": 0.0187
+   "brier": 0.0187,
+   "seq": 7212,
+   "sealed_at": "2026-11-15T14:07:01+0000",
+   "grade_seq": 7218,
+   "plan": "HOLD \u2014 ride to settlement; PLAIN's only early exit is a sell at a bid of 95\u00a2 or better",
+   "final_answer": {
+    "side": "down",
+    "locked_seq": 7212,
+    "locked_at": "2026-11-15T14:07:01+0000",
+    "via": "the sealed call itself \u2014 PLAIN never flips, so the call IS the final answer, locked at seal time"
+   },
+   "money": {
+    "ask": 0.5,
+    "stake": 11.6,
+    "pnl": 11.2,
+    "bank_after": 127.61,
+    "run": 1,
+    "borrowed": false,
+    "self_borrowed": false,
+    "borrow_source": null,
+    "borrow_count": null,
+    "borrow_from": null,
+    "how": "settlement"
+   },
+   "money_note": "the $5.00 bet algorithm (THE PROOF RECORD): stake sized by the banking law on the joint timeline, in at the sealed ask, entry fee in; settlement pays no exit trade \u2014 a directional win that loses money shows as a money LOSS"
   },
   {
    "window": "2026-11-15T14:00:00Z",
@@ -234,7 +488,19 @@
    "why": "BTC fell $25 from the window open with 186s left \u2014 the model put DOWN at 62%.",
    "result": "down",
    "correct": true,
-   "brier": 0.146
+   "brier": 0.146,
+   "seq": 7201,
+   "sealed_at": "2026-11-15T14:01:54+0000",
+   "grade_seq": 7206,
+   "plan": "HOLD \u2014 ride to settlement; PLAIN's only early exit is a sell at a bid of 95\u00a2 or better",
+   "final_answer": {
+    "side": "down",
+    "locked_seq": 7201,
+    "locked_at": "2026-11-15T14:01:54+0000",
+    "via": "the sealed call itself \u2014 PLAIN never flips, so the call IS the final answer, locked at seal time"
+   },
+   "money": null,
+   "money_note": "UNPRICED \u2014 the REAL watch sealed no ask for this window; no money line is invented"
   },
   {
    "window": "2026-11-15T13:55:00Z",
@@ -249,7 +515,31 @@
    "why": "BTC fell $69 from the window open with 181s left \u2014 the model put DOWN at 79%.",
    "result": "down",
    "correct": true,
-   "brier": 0.0456
+   "brier": 0.0456,
+   "seq": 7186,
+   "sealed_at": "2026-11-15T13:56:59+0000",
+   "grade_seq": 7196,
+   "plan": "HOLD \u2014 ride to settlement; PLAIN's only early exit is a sell at a bid of 95\u00a2 or better",
+   "final_answer": {
+    "side": "down",
+    "locked_seq": 7186,
+    "locked_at": "2026-11-15T13:56:59+0000",
+    "via": "the sealed call itself \u2014 PLAIN never flips, so the call IS the final answer, locked at seal time"
+   },
+   "money": {
+    "ask": 0.73,
+    "stake": 11.2,
+    "pnl": 3.93,
+    "bank_after": 116.41,
+    "run": 1,
+    "borrowed": false,
+    "self_borrowed": false,
+    "borrow_source": null,
+    "borrow_count": null,
+    "borrow_from": null,
+    "how": "settlement"
+   },
+   "money_note": "the $5.00 bet algorithm (THE PROOF RECORD): stake sized by the banking law on the joint timeline, in at the sealed ask, entry fee in; settlement pays no exit trade \u2014 a directional win that loses money shows as a money LOSS"
   },
   {
    "window": "2026-11-15T13:45:00Z",
@@ -264,7 +554,19 @@
    "why": "BTC fell $56 from the window open with 177s left \u2014 the model put DOWN at 74%.",
    "result": "up",
    "correct": false,
-   "brier": 0.5526
+   "brier": 0.5526,
+   "seq": 7168,
+   "sealed_at": "2026-11-15T13:47:04+0000",
+   "grade_seq": 7174,
+   "plan": "HOLD \u2014 ride to settlement; PLAIN's only early exit is a sell at a bid of 95\u00a2 or better",
+   "final_answer": {
+    "side": "down",
+    "locked_seq": 7168,
+    "locked_at": "2026-11-15T13:47:04+0000",
+    "via": "the sealed call itself \u2014 PLAIN never flips, so the call IS the final answer, locked at seal time"
+   },
+   "money": null,
+   "money_note": "UNPRICED \u2014 the REAL watch sealed no ask for this window; no money line is invented"
   },
   {
    "window": "2026-11-15T13:40:00Z",
@@ -279,7 +581,19 @@
    "why": "BTC rose $43 from the window open with 170s left \u2014 the model put UP at 69%.",
    "result": "up",
    "correct": true,
-   "brier": 0.0931
+   "brier": 0.0931,
+   "seq": 7159,
+   "sealed_at": "2026-11-15T13:42:10+0000",
+   "grade_seq": 7165,
+   "plan": "HOLD \u2014 ride to settlement; PLAIN's only early exit is a sell at a bid of 95\u00a2 or better",
+   "final_answer": {
+    "side": "up",
+    "locked_seq": 7159,
+    "locked_at": "2026-11-15T13:42:10+0000",
+    "via": "the sealed call itself \u2014 PLAIN never flips, so the call IS the final answer, locked at seal time"
+   },
+   "money": null,
+   "money_note": "UNPRICED \u2014 the REAL watch sealed no ask for this window; no money line is invented"
   },
   {
    "window": "2026-11-15T13:35:00Z",
@@ -294,7 +608,19 @@
    "why": "BTC rose $32 from the window open with 186s left \u2014 the model put UP at 64%.",
    "result": "down",
    "correct": false,
-   "brier": 0.4099
+   "brier": 0.4099,
+   "seq": 7151,
+   "sealed_at": "2026-11-15T13:36:54+0000",
+   "grade_seq": 7156,
+   "plan": "HOLD \u2014 ride to settlement; PLAIN's only early exit is a sell at a bid of 95\u00a2 or better",
+   "final_answer": {
+    "side": "up",
+    "locked_seq": 7151,
+    "locked_at": "2026-11-15T13:36:54+0000",
+    "via": "the sealed call itself \u2014 PLAIN never flips, so the call IS the final answer, locked at seal time"
+   },
+   "money": null,
+   "money_note": "UNPRICED \u2014 the REAL watch sealed no ask for this window; no money line is invented"
   },
   {
    "window": "2026-11-15T13:30:00Z",
@@ -309,7 +635,19 @@
    "why": "BTC fell $104 from the window open with 177s left \u2014 the model put DOWN at 88%.",
    "result": "down",
    "correct": true,
-   "brier": 0.0133
+   "brier": 0.0133,
+   "seq": 7143,
+   "sealed_at": "2026-11-15T13:32:04+0000",
+   "grade_seq": 7148,
+   "plan": "HOLD \u2014 ride to settlement; PLAIN's only early exit is a sell at a bid of 95\u00a2 or better",
+   "final_answer": {
+    "side": "down",
+    "locked_seq": 7143,
+    "locked_at": "2026-11-15T13:32:04+0000",
+    "via": "the sealed call itself \u2014 PLAIN never flips, so the call IS the final answer, locked at seal time"
+   },
+   "money": null,
+   "money_note": "UNPRICED \u2014 the REAL watch sealed no ask for this window; no money line is invented"
   },
   {
    "window": "2026-11-15T13:25:00Z",
@@ -324,7 +662,19 @@
    "why": "BTC fell $56 from the window open with 106s left \u2014 the model put DOWN at 81%.",
    "result": "down",
    "correct": true,
-   "brier": 0.0358
+   "brier": 0.0358,
+   "seq": 7127,
+   "sealed_at": "2026-11-15T13:28:15+0000",
+   "grade_seq": 7136,
+   "plan": "HOLD \u2014 ride to settlement; PLAIN's only early exit is a sell at a bid of 95\u00a2 or better",
+   "final_answer": {
+    "side": "down",
+    "locked_seq": 7127,
+    "locked_at": "2026-11-15T13:28:15+0000",
+    "via": "the sealed call itself \u2014 PLAIN never flips, so the call IS the final answer, locked at seal time"
+   },
+   "money": null,
+   "money_note": "UNPRICED \u2014 the REAL watch sealed no ask for this window; no money line is invented"
   },
   {
    "window": "2026-11-15T13:20:00Z",
@@ -339,7 +689,19 @@
    "why": "BTC rose $32 from the window open with 172s left \u2014 the model put UP at 66%.",
    "result": "up",
    "correct": true,
-   "brier": 0.1135
+   "brier": 0.1135,
+   "seq": 7121,
+   "sealed_at": "2026-11-15T13:22:08+0000",
+   "grade_seq": 7126,
+   "plan": "HOLD \u2014 ride to settlement; PLAIN's only early exit is a sell at a bid of 95\u00a2 or better",
+   "final_answer": {
+    "side": "up",
+    "locked_seq": 7121,
+    "locked_at": "2026-11-15T13:22:08+0000",
+    "via": "the sealed call itself \u2014 PLAIN never flips, so the call IS the final answer, locked at seal time"
+   },
+   "money": null,
+   "money_note": "UNPRICED \u2014 the REAL watch sealed no ask for this window; no money line is invented"
   },
   {
    "window": "2026-11-15T13:15:00Z",
@@ -354,7 +716,31 @@
    "why": "BTC rose $49 from the window open with 188s left \u2014 the model put UP at 78%.",
    "result": "up",
    "correct": true,
-   "brier": 0.0476
+   "brier": 0.0476,
+   "seq": 7097,
+   "sealed_at": "2026-11-15T13:16:53+0000",
+   "grade_seq": 7110,
+   "plan": "HOLD \u2014 ride to settlement; PLAIN's only early exit is a sell at a bid of 95\u00a2 or better",
+   "final_answer": {
+    "side": "up",
+    "locked_seq": 7097,
+    "locked_at": "2026-11-15T13:16:53+0000",
+    "via": "the sealed call itself \u2014 PLAIN never flips, so the call IS the final answer, locked at seal time"
+   },
+   "money": {
+    "ask": 0.49,
+    "stake": 10.2,
+    "pnl": 10.26,
+    "bank_after": 112.48,
+    "run": 1,
+    "borrowed": false,
+    "self_borrowed": false,
+    "borrow_source": null,
+    "borrow_count": null,
+    "borrow_from": null,
+    "how": "settlement"
+   },
+   "money_note": "the $5.00 bet algorithm (THE PROOF RECORD): stake sized by the banking law on the joint timeline, in at the sealed ask, entry fee in; settlement pays no exit trade \u2014 a directional win that loses money shows as a money LOSS"
   },
   {
    "window": "2026-11-15T13:10:00Z",
@@ -369,7 +755,19 @@
    "why": "BTC fell $26 from the window open with 184s left \u2014 the model put DOWN at 65%.",
    "result": "down",
    "correct": true,
-   "brier": 0.1243
+   "brier": 0.1243,
+   "seq": 7085,
+   "sealed_at": "2026-11-15T13:11:57+0000",
+   "grade_seq": 7090,
+   "plan": "HOLD \u2014 ride to settlement; PLAIN's only early exit is a sell at a bid of 95\u00a2 or better",
+   "final_answer": {
+    "side": "down",
+    "locked_seq": 7085,
+    "locked_at": "2026-11-15T13:11:57+0000",
+    "via": "the sealed call itself \u2014 PLAIN never flips, so the call IS the final answer, locked at seal time"
+   },
+   "money": null,
+   "money_note": "UNPRICED \u2014 the REAL watch sealed no ask for this window; no money line is invented"
   },
   {
    "window": "2026-11-15T13:05:00Z",
@@ -384,25 +782,66 @@
    "why": "BTC fell $17 from the window open with 148s left \u2014 the model put DOWN at 61%.",
    "result": "down",
    "correct": true,
-   "brier": 0.1495
-  },
-  {
-   "window": "2026-11-15T13:00:00Z",
-   "side": "up",
-   "chance": 0.7939,
-   "at_elapsed_s": 120,
-   "seconds_left": 179,
-   "index_px": 65505.395000000004,
-   "open_px": 65452.4,
-   "move_usd": 53.0,
-   "band": "70\u201380%",
-   "why": "BTC rose $53 from the window open with 179s left \u2014 the model put UP at 79%.",
-   "result": "up",
-   "correct": true,
-   "brier": 0.0425
+   "brier": 0.1495,
+   "seq": 7077,
+   "sealed_at": "2026-11-15T13:07:32+0000",
+   "grade_seq": 7083,
+   "plan": "HOLD \u2014 ride to settlement; PLAIN's only early exit is a sell at a bid of 95\u00a2 or better",
+   "final_answer": {
+    "side": "down",
+    "locked_seq": 7077,
+    "locked_at": "2026-11-15T13:07:32+0000",
+    "via": "the sealed call itself \u2014 PLAIN never flips, so the call IS the final answer, locked at seal time"
+   },
+   "money": null,
+   "money_note": "UNPRICED \u2014 the REAL watch sealed no ask for this window; no money line is invented"
   }
  ],
  "recent_windows": [
+  {
+   "window": "2026-11-15T15:55:00Z",
+   "open_px": 64735.6,
+   "call": {
+    "side": "down",
+    "chance": 0.6123,
+    "at": 1794758211
+   },
+   "abstain": null,
+   "grade": null
+  },
+  {
+   "window": "2026-11-15T15:50:00Z",
+   "open_px": 64709.8,
+   "call": null,
+   "abstain": {
+    "why": "model chance 0.539 < 0.6",
+    "chance": 0.539,
+    "at": 1794757927
+   },
+   "grade": null
+  },
+  {
+   "window": "2026-11-15T15:45:00Z",
+   "open_px": 64664.035,
+   "call": null,
+   "abstain": {
+    "why": "model chance 0.5733 < 0.6",
+    "chance": 0.5733,
+    "at": 1794757622
+   },
+   "grade": null
+  },
+  {
+   "window": "2026-11-15T15:40:00Z",
+   "open_px": 64728.82,
+   "call": null,
+   "abstain": {
+    "why": "model chance 0.5996 < 0.6",
+    "chance": 0.5996,
+    "at": 1794757321
+   },
+   "grade": null
+  },
   {
    "window": "2026-11-15T15:35:00Z",
    "open_px": 64692.755000000005,
@@ -412,7 +851,11 @@
     "at": 1794757047
    },
    "abstain": null,
-   "grade": null
+   "grade": {
+    "result": "up",
+    "correct": false,
+    "brier": 0.5196
+   }
   },
   {
    "window": "2026-11-15T15:30:00Z",
@@ -528,86 +971,41 @@
     "correct": true,
     "brier": 0.0523
    }
-  },
-  {
-   "window": "2026-11-15T14:45:00Z",
-   "open_px": 64690.3,
-   "call": {
-    "side": "up",
-    "chance": 0.6452,
-    "at": 1794754016
-   },
-   "abstain": null,
-   "grade": {
-    "result": "up",
-    "correct": true,
-    "brier": 0.1259
-   }
-  },
-  {
-   "window": "2026-11-15T14:40:00Z",
-   "open_px": 64684.8,
-   "call": {
-    "side": "down",
-    "chance": 0.9461,
-    "at": 1794753719
-   },
-   "abstain": null,
-   "grade": {
-    "result": "down",
-    "correct": true,
-    "brier": 0.0029
-   }
-  },
-  {
-   "window": "2026-11-15T14:35:00Z",
-   "open_px": 64860.0,
-   "call": null,
-   "abstain": {
-    "why": "model chance 0.5903 < 0.6",
-    "chance": 0.5903,
-    "at": 1794753419
-   },
-   "grade": null
-  },
-  {
-   "window": "2026-11-15T14:30:00Z",
-   "open_px": 64891.155,
-   "call": {
-    "side": "down",
-    "chance": 0.6082,
-    "at": 1794753129
-   },
-   "abstain": null,
-   "grade": {
-    "result": "down",
-    "correct": true,
-    "brier": 0.1535
-   }
   }
  ],
- "abstains_total": 122,
+ "abstains_total": 125,
  "counters": {
-  "graded": 310,
+  "graded": 311,
   "wins": 254,
-  "win_rate": 81.9,
-  "streak_type": "W",
-  "streak_n": 2,
+  "win_rate": 81.7,
+  "streak_type": "L",
+  "streak_n": 1,
   "best_win_streak": 21,
-  "last12": "WWWWWWWWWLWW"
+  "last12": "WWWWWWWWLWWL"
  },
  "live_window": {
-  "window": "2026-11-15T15:35:00Z",
-  "open_px": 64692.755000000005,
+  "window": "2026-11-15T15:55:00Z",
+  "open_px": 64735.6,
   "call": {
    "side": "down",
-   "chance": 0.7208,
-   "at": 1794757047
+   "chance": 0.6123,
+   "at": 1794758211
   },
   "abstain": null,
   "grade": null
  },
  "lessons": [
+  {
+   "window": "2026-11-15T15:35:00Z",
+   "side": "down",
+   "chance": 0.7208,
+   "band": "70\u201380%",
+   "move_usd": -62.96,
+   "settle_move_usd": 36.06,
+   "brier": 0.5196,
+   "what_happened": "Called DOWN at 72% on a $-63 move from the open. BTC settled $+36 on the other side of the open. After the call the price reversed back through the open and never came back.",
+   "lesson": "Momentum is not a promise: a real move reversed inside three minutes. The model prices the drift it sees; it cannot see the turn coming. Streaks end like this, not with a bang."
+  },
   {
    "window": "2026-11-15T15:05:00Z",
    "side": "down",
@@ -683,17 +1081,6 @@
    "settle_move_usd": -29.96,
    "brier": 0.4484,
    "what_happened": "Called UP at 67% on a $+27 move from the open. BTC settled $-30 on the other side of the open. After the call the price reversed back through the open and never came back.",
-   "lesson": "The cold band again: 60\u201370% calls are the desk's least honest range. Counted, printed, and the reason the real-money draft puts its floor at 0.70."
-  },
-  {
-   "window": "2026-11-15T06:45:00Z",
-   "side": "down",
-   "chance": 0.6762,
-   "band": "60\u201370%",
-   "move_usd": -29.8,
-   "settle_move_usd": 0.25,
-   "brier": 0.4572,
-   "what_happened": "Called DOWN at 68% on a $-30 move from the open. BTC settled $+0 on the other side of the open. After the call the price reversed back through the open and never came back.",
    "lesson": "The cold band again: 60\u201370% calls are the desk's least honest range. Counted, printed, and the reason the real-money draft puts its floor at 0.70."
   }
  ],
