@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>🎈 THE EASY BOARD — Bitcoin 5-minute, in plain words</title>
+<style>
+  :root{--bg:#0b0f17;--card:#141b29;--ink:#eef2f8;--dim:#93a1b5;--green:#2fd67a;--red:#ff5d5d;--purple:#c792ff;--gray:#8b98a9;--gold:#ffd257;--line:#24304a}
+  *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif}
+  .wrap{max-width:1080px;margin:0 auto;padding:18px 14px 40px}
+  h1{font-size:30px;margin:4px 0 2px} .sub{color:var(--dim);font-size:15px}
+  .live{display:inline-block;padding:3px 10px;border-radius:999px;font-weight:700;font-size:13px;background:#123324;color:var(--green);border:1px solid #1f5c3a}
+  .live.stalled{background:#3a2a12;color:var(--gold);border-color:#5c4a1f}
+  .waveword{font-size:min(17vw,110px);font-weight:900;letter-spacing:1px;line-height:1.02;margin:10px 0 0}
+  .waveplain{font-size:22px;color:var(--ink);margin:2px 0 6px}
+  .wavenums{color:var(--dim);font-size:16px}
+  .happening{font-size:21px;line-height:1.45;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin:14px 0}
+  .chartbox{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 8px 4px;margin:10px 0}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;margin:16px 0}
+  .mcard{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px}
+  .mname{font-size:20px;font-weight:800;display:flex;justify-content:space-between;align-items:center}
+  .badge{font-size:12px;font-weight:800;padding:3px 9px;border-radius:999px}
+  .badge.real{background:#123324;color:var(--green);border:1px solid #1f5c3a}
+  .badge.test{background:#2c2410;color:var(--gold);border:1px solid #5c4a1f}
+  .call{font-size:52px;font-weight:900;line-height:1.05;margin:8px 0 2px}
+  .up{color:var(--green)} .down{color:var(--red)} .wait{color:var(--gray)}
+  .meter{height:16px;background:#0d1320;border:1px solid var(--line);border-radius:999px;overflow:hidden;margin:8px 0 4px}
+  .meter>div{height:100%}
+  .meterlbl{font-size:13px;color:var(--dim)}
+  .ladder{position:relative;height:34px;background:#0d1320;border:1px solid var(--line);border-radius:9px;margin:12px 0 4px}
+  .ladder .tick{position:absolute;top:-4px;width:2px;height:42px;background:var(--gold)}
+  .ladder .entry{position:absolute;top:6px;width:14px;height:14px;border-radius:50%;background:#fff;border:3px solid #00000055;transform:translateX(-7px)}
+  .ladderlbl{position:relative;height:18px;font-size:11px;color:var(--dim)}
+  .ladderlbl span{position:absolute;transform:translateX(-50%);white-space:nowrap}
+  .sell{font-size:15px;margin:8px 0 2px}
+  .pay{font-size:17px;font-weight:700;margin:6px 0 2px}
+  .bank{color:var(--dim);font-size:14px;margin-top:8px}
+  .tells{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
+  .tell{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--gold);border-radius:12px;padding:12px 14px;font-size:16px;line-height:1.4}
+  .tell .src{display:block;color:var(--dim);font-size:12px;margin-top:6px;text-transform:uppercase;letter-spacing:.6px}
+  .hist{display:flex;gap:10px;flex-wrap:wrap;margin:8px 0}
+  .hchip{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 12px;font-size:14px}
+  h2{font-size:22px;margin:22px 0 8px}
+  .foot{color:var(--dim);font-size:13px;line-height:1.55;margin-top:26px;border-top:1px solid var(--line);padding-top:12px}
+  a{color:#7db4ff}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+    <h1>🎈 THE EASY BOARD</h1>
+    <span id="livechip" class="live">connecting…</span>
+  </div>
+  <div class="sub">Bitcoin's 5-minute game, in plain words. What the wave is doing, what our three best models say, and the tells that teach the read. The page re-checks every 15 seconds; a fresh feed lands with every new call and on the game log's cadence. Nobody here places a trade for you — this board teaches and shows.</div>
+
+  <div id="waveword" class="waveword">…</div>
+  <div id="waveplain" class="waveplain"></div>
+  <div id="wavenums" class="wavenums"></div>
+
+  <div class="chartbox"><svg id="chart" width="100%" height="240" preserveAspectRatio="none" viewBox="0 0 1000 240"></svg></div>
+
+  <div id="happening" class="happening"></div>
+
+  <h2>The models, side by side</h2>
+  <div id="cards" class="cards"></div>
+
+  <h2>👀 The tells — what's really happening</h2>
+  <div id="tells" class="tells"></div>
+
+  <h2>The last few windows</h2>
+  <div id="hist" class="hist"></div>
+
+  <div id="foot" class="foot"></div>
+</div>
+<script>
+const WAVECOLOR={CLIMBING:'#2fd67a',FALLING:'#ff5d5d',ROLLERCOASTER:'#c792ff',FLAT:'#8b98a9'};
+function fmt$(n){return (n<0?'−$':'$')+Math.abs(n).toFixed(2)}
+function ladder(m){
+  if(!m.ask) return '<div class="meterlbl" style="margin-top:12px">No press price sealed yet this window — the price prints here the moment the watch seals it. We never guess a price.</div>';
+  let ticks='';
+  if(m.sell_mark){const x=m.sell_mark*100;
+    ticks+='<div class="tick" style="left:'+x+'%"></div>';
+  }
+  let lbl='<span style="left:2%">0¢</span><span style="left:'+(m.ask*100)+'%">YOU '+Math.round(m.ask*100)+'¢</span>';
+  if(m.sell_mark) lbl+='<span style="left:'+(m.sell_mark*100)+'%">SELL '+Math.round(m.sell_mark*100)+'¢</span>';
+  lbl+='<span style="left:97%">$1</span>';
+  return '<div class="ladder"><div class="entry" style="left:'+(m.ask*100)+'%"></div>'+ticks+'</div><div class="ladderlbl">'+lbl+'</div>';
+}
+function card(m){
+  const callTxt = m.call ? ('BUY '+m.call.toUpperCase()) : (m.name==='RIPTIDE' && m.seeded ? 'WAITING FOR A DIP' : 'WAIT');
+  const callCls = m.call ? (m.call==='up'?'up':'down') : 'wait';
+  const conf = (m.chance!=null) ? Math.round(m.chance*100) : null;
+  const meter = conf!=null ? '<div class="meter"><div style="width:'+conf+'%;background:'+(m.call==='down'?'var(--red)':'var(--green)')+'"></div></div><div class="meterlbl">How sure the model is: <b>'+conf+'%</b></div>'
+                             : '<div class="meterlbl" style="margin-top:10px">This model rides the other two\'s calls plus the live book — it shows its hand when it plays.</div>';
+  let pay='';
+  if(m.payout){
+    pay='<div class="pay">Press $0.50 at '+Math.round(m.ask*100)+'¢ → win '+fmt$(m.payout.win)+' if it lands, lose '+fmt$(Math.abs(m.payout.lose))+' if it misses.</div>';
+    if(m.payout_value) pay+='<div class="meterlbl">Out at the 88¢ value line instead: '+fmt$(m.payout_value.win)+'.</div>';
+  }
+  const badge = m.mode==='REAL' ? '<span class="badge real">REAL LANE</span>' : '<span class="badge test">FREE TEST</span>';
+  const streak = (m.streak!=null) ? ('🔥 '+m.streak+' in a row (best '+m.best+')') : '';
+  const bank = (m.bank!=null) ? ('Play-along bank '+fmt$(m.bank)+(m.savings?(' · savings '+fmt$(m.savings)):'')+' · '+m.wins+' wins of '+m.graded) : '';
+  return '<div class="mcard"><div class="mname"><span>'+m.name+'</span>'+badge+'</div>'
+    +'<div class="call '+callCls+'">'+callTxt+'</div>'+meter+ladder(m)
+    +'<div class="sell">🏁 <b>When is it a sell?</b> '+m.sell_text+'</div>'+pay
+    +'<div class="bank">'+streak+(streak&&bank?' · ':'')+bank+'</div></div>';
+}
+function drawChart(d){
+  const svg=document.getElementById('chart'); const pts=d.chart.points;
+  if(!pts.length){svg.innerHTML='';return}
+  const W=1000,H=240,PAD=8;
+  const t0=d.chart.wstart, t1=d.chart.wend;
+  let lo=Infinity,hi=-Infinity; pts.forEach(p=>{lo=Math.min(lo,p[1]);hi=Math.max(hi,p[1])});
+  lo=Math.min(lo,d.chart.open); hi=Math.max(hi,d.chart.open);
+  const pad=(hi-lo)*0.12||10; lo-=pad; hi+=pad;
+  const X=t=>PAD+(t-t0)/(t1-t0)*(W-2*PAD), Y=v=>H-14-((v-lo)/(hi-lo))*(H-30);
+  let s='';
+  d.chart.bounds.forEach(b=>{const x=X(b); s+='<line x1="'+x+'" y1="0" x2="'+x+'" y2="'+H+'" stroke="#24304a" stroke-width="1"/>';});
+  const nowB=d.chart.bounds[d.chart.bounds.length-2];
+  s+='<line x1="'+X(nowB)+'" y1="0" x2="'+X(nowB)+'" y2="'+H+'" stroke="#ffd257" stroke-width="2" stroke-dasharray="5 4"/>';
+  s+='<text x="'+(X(nowB)+6)+'" y="16" fill="#ffd257" font-size="13" font-weight="700">THIS WINDOW</text>';
+  s+='<line x1="0" y1="'+Y(d.chart.open)+'" x2="'+W+'" y2="'+Y(d.chart.open)+'" stroke="#93a1b5" stroke-width="1" stroke-dasharray="3 4"/>';
+  s+='<text x="6" y="'+(Y(d.chart.open)-5)+'" fill="#93a1b5" font-size="12">window start $'+Math.round(d.chart.open).toLocaleString()+'</text>';
+  const line=pts.map((p,i)=>(i?'L':'M')+X(p[0]).toFixed(1)+' '+Y(p[1]).toFixed(1)).join(' ');
+  s+='<path d="'+line+'" fill="none" stroke="'+(WAVECOLOR[d.wave.state]||'#fff')+'" stroke-width="2.5"/>';
+  const lp=pts[pts.length-1];
+  s+='<circle cx="'+X(lp[0])+'" cy="'+Y(lp[1])+'" r="5" fill="#fff"/>';
+  s+='<text x="'+(X(lp[0])-8)+'" y="'+(Y(lp[1])-10)+'" fill="#fff" font-size="14" font-weight="800" text-anchor="end">$'+Math.round(lp[1]).toLocaleString()+'</text>';
+  s+='<text x="6" y="'+(H-2)+'" fill="#93a1b5" font-size="11">top $'+Math.round(hi-pad).toLocaleString()+' · bottom $'+Math.round(lo+pad).toLocaleString()+' · gold line = this window · dashed = where the window started</text>';
+  svg.innerHTML=s;
+}
+async function tick(){
+  try{
+    const r=await fetch('easy.json?_='+Date.now()); const d=await r.json();
+    const chip=document.getElementById('livechip');
+    if(d.daemon && d.daemon.state==='LIVE'){chip.textContent='🟢 LIVE · chain '+d.daemon.chain; chip.className='live';}
+    else{chip.textContent='⚠️ PIPELINE STALLED'; chip.className='live stalled';}
+    const w=document.getElementById('waveword');
+    w.textContent=d.wave.state; w.style.color=WAVECOLOR[d.wave.state]||'#fff';
+    document.getElementById('waveplain').textContent='The wave is '+d.wave.plain+'.';
+    document.getElementById('wavenums').textContent='This window: '+(d.wave.drift>=0?'+':'−')+'$'+Math.abs(Math.round(d.wave.drift))+' from the start · swung $'+Math.round(d.wave.range)+' top to bottom · now $'+Math.round(d.wave.last).toLocaleString()+' · window ends in '+Math.floor(d.window_ends_in_s/60)+'m '+(d.window_ends_in_s%60)+'s';
+    drawChart(d);
+    document.getElementById('happening').textContent='🗣️ '+d.happening;
+    document.getElementById('cards').innerHTML=d.models.map(card).join('');
+    document.getElementById('tells').innerHTML=d.tells.map(t=>'<div class="tell">'+t.text+'<span class="src">seen in: '+t.src+'</span></div>').join('');
+    document.getElementById('hist').innerHTML=(d.history||[]).map(h=>{
+      const t=h.window.slice(11,16)+'Z';
+      const pm=h.plain==null?'—':(h.plain?'✔':'✗'), em=h.early==null?'—':(h.early?'✔':'✗');
+      return '<div class="hchip">'+t+' → went <b>'+(h.result||'?').toUpperCase()+'</b> · PLAIN '+pm+' · EARLY '+em+'</div>';
+    }).join('')||'<div class="hchip">…</div>';
+    document.getElementById('foot').innerHTML=d.ruler+'<br><br>Built from the desk\'s own sealed record — the same record that blobs to Walrus testnet. The full detail lives on <a href="gamelog.html">THE GAME LOG</a> and <a href="proof.html">THE PROOF RECORD</a>. Overlay only: David places every real order himself; this board never trades.';
+  }catch(e){/* keep last frame */}
+}
+tick(); setInterval(tick,15000);
+</script>
+</body>
+</html>
