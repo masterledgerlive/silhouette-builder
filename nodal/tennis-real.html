@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE TENNIS REAL BOARD — $5 vs $5 · PLAIN vs TAPE, for real</title>
+<style>
+  :root{--gold:#f5b942;--teal:#2dd4bf;--red:#f87171;--green:#4ade80;--ink:#e8e6df;--dim:#9a97a3;--card:#17171f;--line:#2a2a38;--vio:#a78bfa}
+  *{box-sizing:border-box}
+  body{background:#0c0c12;color:var(--ink);font-family:Georgia,'Times New Roman',serif;margin:0;padding:18px 14px 60px}
+  .wrap{max-width:1060px;margin:0 auto}
+  h1{font-size:30px;letter-spacing:2px;margin:4px 0 2px;color:var(--gold)}
+  h2{font-size:19px;letter-spacing:1.5px;color:var(--teal);margin:26px 0 8px;border-bottom:1px solid var(--line);padding-bottom:5px}
+  .sub{color:var(--dim);font-size:14.5px;line-height:1.45}
+  .stamp{display:inline-block;border:1px solid var(--gold);color:var(--gold);border-radius:4px;padding:1px 7px;font-size:12px;letter-spacing:1px;margin-right:6px}
+  .stamp.real{border-color:var(--red);color:var(--red)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin:9px 0}
+  .ok{color:var(--green)} .bad{color:var(--red)} .mid{color:var(--gold)}
+  .small{font-size:13px;color:var(--dim);line-height:1.45}
+  a{color:var(--teal)}
+  .foot{margin-top:34px;color:var(--dim);font-size:13px;line-height:1.5;border-top:1px solid var(--line);padding-top:10px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:9px}
+  .stat b{display:block;font-size:20px;color:var(--gold);margin-top:2px}
+  .stat span{color:var(--dim);font-size:12.5px;letter-spacing:1px}
+  .vs{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media (max-width:700px){.vs{grid-template-columns:1fr}}
+  .eng{border-radius:12px;padding:16px;background:var(--card)}
+  .eng.plain{border:2px solid var(--teal)} .eng.tape{border:2px solid var(--vio)}
+  .eng h3{margin:2px 0 8px;font-size:21px;letter-spacing:1px}
+  .empty{font-size:30px;letter-spacing:3px;color:var(--dim);text-align:center;padding:26px 0 6px}
+  .row{border:1px solid var(--line);border-radius:8px;padding:10px 13px;margin:8px 0;background:var(--card);font-size:14.5px;line-height:1.55}
+  .badge{display:inline-block;border-radius:4px;padding:1px 8px;font-size:12.5px;letter-spacing:1px;font-weight:bold}
+  .b-win{background:#14532d;color:#bbf7d0} .b-loss{background:#7f1d1d;color:#fecaca} .b-fill{background:#1e3a5f;color:#bfdbfe}
+  table{border-collapse:collapse;width:100%;font-size:14px}
+  td,th{border:1px solid var(--line);padding:6px 9px;text-align:left}
+  th{color:var(--dim);letter-spacing:1px;font-size:12.5px}
+  .lesson{border-left:3px solid var(--gold);padding:8px 12px;margin:8px 0;background:#14141c;font-size:14.5px;line-height:1.55}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="small"><a href="index.html">← NODAL hub</a> · <a href="real.html">THE REAL BOARD — BTC $5 vs $5</a> · <a href="arena.html">The Specialist Arena (sim)</a> · <a href="profitdesk.html">The Profit Desk</a></div>
+  <h1>🎾💵 THE TENNIS REAL BOARD — $5 vs $5</h1>
+  <div class="sub">Authorized by David on 2026-11-14: the top two engines run <b>for real</b> on tennis — <b style="color:var(--teal)">PLAIN</b> with a $5.00 bank and <b style="color:var(--vio)">TAPE</b> with its own $5.00 bank. <b>LOCK stays paper.</b> The banks never mix. Every real fill is sealed as a REAL record and graded on the <b>venue's own settlement</b>, never blended with the simulation record. Entries only on a Clear Sign; every entry ships with its exits pre-placed; the standing mandate caps hold ($15/order · $45/day, limit orders only, tour tennis). <span class="stamp real">REAL MONEY</span><span class="stamp">DAVID PLACES EVERY ORDER — OVERLAY MODE</span></div>
+
+  <div class="card" style="border-color:var(--gold)"><b>RUN STATUS —</b> <span id="runStatus">…</span></div>
+
+  <div class="vs">
+    <div class="eng plain">
+      <h3 style="color:var(--teal)">PLAIN — the plain call</h3>
+      <div class="small">The desk's plain call taken plainly: the full machine deck's modal pick (the LEDGER lane's pure read) at the call price — no drift-chasing. Clear-Sign entries only · exits pre-placed at entry · day stop −$2.00. Stake by David's equation: <b>s = 10% of the day-start bank B</b> (rounded down to 10¢, floored at $0.50), set once a day, never changed mid-day. A play fires only if savings lock L plus two more rounds remain uncommitted.</div>
+      <div class="grid" style="margin-top:10px">
+        <div class="card stat"><span>BANK</span><b id="pBank">—</b></div>
+        <div class="card stat"><span>DAY-START BANK B</span><b id="pB">—</b></div>
+        <div class="card stat"><span>TODAY'S STAKE s</span><b id="pS">—</b></div>
+        <div class="card stat"><span>SAVINGS LOCK L</span><b id="pL">—</b></div>
+        <div class="card stat"><span>DAY P&amp;L</span><b id="pDay">—</b></div>
+        <div class="card stat"><span>GRADED</span><b id="pGraded">—</b></div>
+        <div class="card stat"><span>WIN RATE</span><b id="pRate">—</b></div>
+        <div class="card stat"><span>REAL P&amp;L</span><b id="pPnl">—</b></div>
+        <div class="card stat"><span>STATUS</span><b id="pStatus">—</b></div>
+      </div>
+    </div>
+    <div class="eng tape">
+      <h3 style="color:var(--vio)">TAPE — the live-tape engine</h3>
+      <div class="small">In-match plays read off the live tape — entered only on a Clear Sign while the modal path is intact; it trades the wave's travel, not hunches between points. Exits pre-placed at entry · the 88–95 zone is banked, not held · day stop −$2.00. Stake per play = the day's s by the same sizing equation · savings lock L + two rounds always held back.</div>
+      <div class="grid" style="margin-top:10px">
+        <div class="card stat"><span>BANK</span><b id="tBank">—</b></div>
+        <div class="card stat"><span>DAY-START BANK B</span><b id="tB">—</b></div>
+        <div class="card stat"><span>TODAY'S STAKE s</span><b id="tS">—</b></div>
+        <div class="card stat"><span>SAVINGS LOCK L</span><b id="tL">—</b></div>
+        <div class="card stat"><span>DAY P&amp;L</span><b id="tDay">—</b></div>
+        <div class="card stat"><span>GRADED</span><b id="tGraded">—</b></div>
+        <div class="card stat"><span>WIN RATE</span><b id="tRate">—</b></div>
+        <div class="card stat"><span>REAL P&amp;L</span><b id="tPnl">—</b></div>
+        <div class="card stat"><span>STATUS</span><b id="tStatus">—</b></div>
+      </div>
+    </div>
+  </div>
+
+  <h2>THE REAL RECORD — SEALED FILLS &amp; VENUE SETTLEMENTS</h2>
+  <div id="record"><div class="empty">EMPTY</div><p class="small" style="text-align:center">No real tennis trade has settled yet. This board starts empty on purpose — the sim numbers live on their own pages and never migrate here.</p></div>
+
+  <h2>IS THE PERCENTAGE HONEST? — REAL CALIBRATION</h2>
+  <p class="small">Stated chance band vs what actually happened, computed from REAL settlements only, per engine. Beside it, the same engine's SIM record — labeled, separate, never merged. The learner watches both.</p>
+  <div class="vs">
+    <div class="card"><b style="color:var(--teal)">PLAIN — REAL</b><div id="pBands" style="margin-top:8px"></div></div>
+    <div class="card"><b style="color:var(--vio)">TAPE — REAL</b><div id="tBands" style="margin-top:8px"></div></div>
+  </div>
+
+  <h2>🧠 THE LEARNER RIDES THE RUN</h2>
+  <div class="lesson">The simulations <b>never stop</b> — the arena, the daily board and the lanes keep cycling while the real run plays, so the reads stay current and every real play can be compared against what the sim did on the same match.</div>
+  <div class="lesson">Every real fill is sealed with the desk's call for that match attached, so real-vs-sim divergence is <b>measured, not remembered</b>.</div>
+  <div class="lesson">What the learner finds becomes a <b>proposal</b> to David. <b>Real-money rules never change without David's word.</b></div>
+  <div class="card"><b>SIM REFERENCE (not real money):</b> <span id="simRef">…</span></div>
+
+  <div class="foot">Rulebook: the tennis <i>RULEBOOK.md</i> amendment of 2026-11-14 (PLAIN + TAPE AUTHORIZED, $5 each; LOCK paper only), under the signed Kalshi production mandate of 2026-10-31. Risks, printed plain: the whole $10 can be lost; spread and fees apply on every trade; a match settles on the venue's official result, not ours. Both REAL lanes earn their own verdict under the house bar — ≥20 graded · ≥62% · Brier ≤0.21 = APPROVED. No automation places orders; David clicks every trade himself. His word "stop" halts the run instantly.</div>
+</div>
+<script>
+function money(x){return (x<0?'−$':'$')+Math.abs(x).toFixed(2)}
+function bandsHTML(bands){
+  if(!bands || !bands.some(b=>b.n>0)) return '<p class="small">No real settlements in any band yet — EMPTY.</p>';
+  let h='<table><tr><th>BAND</th><th>N</th><th>STATED</th><th>ACTUAL</th></tr>';
+  for(const b of bands){ if(b.n>0) h+='<tr><td>'+b.band+'%</td><td>'+b.n+'</td><td>'+b.stated+'%</td><td>'+b.actual+'%</td></tr>'; }
+  return h+'</table>';
+}
+fetch('tennisrealdata.json?_='+Date.now()).then(r=>r.json()).then(d=>{
+  document.getElementById('runStatus').textContent=d.run_status;
+  const P=d.plain,T=d.tape;
+  const fill=(id,v)=>document.getElementById(id).textContent=v;
+  fill('pBank',money(P.bank.cash)+' / $5.00'); fill('pDay',money(P.bank.day_pnl));
+  fill('pB',money(P.sizing.B)); fill('pS',money(P.sizing.s)); fill('pL',money(P.sizing.L));
+  fill('pGraded',P.graded); fill('pRate',P.win_rate===null?'—':P.win_rate+'%');
+  fill('pPnl',money(P.pnl)); fill('pStatus',P.status);
+  fill('tBank',money(T.bank.cash)+' / $5.00'); fill('tDay',money(T.bank.day_pnl));
+  fill('tB',money(T.sizing.B)); fill('tS',money(T.sizing.s)); fill('tL',money(T.sizing.L));
+  fill('tGraded',T.graded); fill('tRate',T.win_rate===null?'—':T.win_rate+'%');
+  fill('tPnl',money(T.pnl)); fill('tStatus',T.status);
+  document.getElementById('pBands').innerHTML=bandsHTML(P.bands);
+  document.getElementById('tBands').innerHTML=bandsHTML(T.bands);
+  const rows=[];
+  const clean=m=>(m||'').split('|').slice(1).join('|')||m;
+  for(const f of P.fills.concat(T.fills)) rows.push({seq:f.seq,html:'<span class="badge b-fill">FILL</span> <b>'+f.engine+'</b> · '+clean(f.match)+' · '+(f.side||'')+' · '+(f.venue_class||'')+' @ '+(f.price!==undefined?Math.round(f.price*100)+'¢':'')+' · stake '+money(f.stake||0)});
+  for(const s of P.settles.concat(T.settles)){
+    const win=s.correct;
+    rows.push({seq:s.seq,html:'<span class="badge '+(win?'b-win':'b-loss')+'">'+(win?'WIN':'LOSS')+'</span> <b>'+s.engine+'</b> · '+clean(s.match)+' · venue settled '+(s.venue_result||'')+' · P&amp;L <b class="'+(s.pnl>=0?'ok':'bad')+'">'+money(s.pnl||0)+'</b>'});
+  }
+  rows.sort((a,b)=>a.seq-b.seq);
+  if(rows.length) document.getElementById('record').innerHTML=rows.map(r=>'<div class="row">'+r.html+'</div>').join('');
+  const S=d.sim_reference||{};
+  let sr=[];
+  if(S.plain) sr.push('PLAIN sim ('+S.plain.label+'): '+S.plain.graded+' graded · '+S.plain.win_rate+'% · '+S.plain.status);
+  if(S.tape) sr.push('TAPE sim ('+S.tape.label+'): '+S.tape.trades+' trades · realized '+money(S.tape.realized));
+  document.getElementById('simRef').textContent=sr.join(' · ')||'—';
+}).catch(()=>{document.getElementById('runStatus').textContent='tennisrealdata.json not on the wire yet';});
+</script>
+</body>
+</html>
