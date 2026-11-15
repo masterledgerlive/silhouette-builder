@@ -111,6 +111,11 @@ function stepsHTML(e, shown){
   });
   return h + '</div>';
 }
+function daemonChip(d){
+  var dm = d.daemon; if(!dm) return '';
+  if(dm.state=='STALLED') return '<div style="background:#5a1420;border:1px solid #ff5d73;color:#ffd7dc;border-radius:8px;padding:6px 10px;font-size:13px;margin-bottom:8px">⚠️ PIPELINE STALLED — ' + ((dm.stall_components||[]).join(', ')||'fast tick') + ' — the stall is on the record in daemon_state.json.</div>';
+  return '<div style="color:#7ee2a8;font-size:12px;margin-bottom:6px">🟢 pipeline LIVE · AI-free daemon · chain ' + (dm.chain||'?') + ' · state ' + (dm.updated||'') + '</div>';
+}
 function render(d){
   var tk = document.getElementById('ticker');
   tk.innerHTML = (d.celebrations||[]).slice(0,5).map(function(c){
@@ -119,7 +124,7 @@ function render(d){
   }).join('') || '<div>The arena is quiet… for now.</div>';
   var lv = document.getElementById('live');
   if(d.live && d.live.length){
-    lv.innerHTML = '<h2>🔴 LIVE NOW — THE INSTRUCTION CARDS</h2>' + d.live.map(function(e){
+    lv.innerHTML = '<h2>🔴 LIVE NOW — THE INSTRUCTION CARDS</h2>' + daemonChip(d) + d.live.map(function(e){
       var h = '<div class="livecard"><span class="ltime">' + et(e.window) + '</span> ' +
         '<span class="leng">' + e.engine + '</span> ' +
         '<span class="lmode ' + (e.mode=='REAL'?'real':'test') + '">' + (e.mode=='REAL'?'REAL':'TEST') + '</span> ' +
@@ -133,7 +138,7 @@ function render(d){
       return h + '</div>';
     }).join('');
   } else {
-    lv.innerHTML = '<h2>🔴 LIVE NOW</h2><div style="color:#c9d4f5;font-size:13px;line-height:1.65">No live call on the sealed feed this minute — calls seal every 5 minutes and ride this page on its sealed refresh. The cue chat stays the seconds-fast route; every call lands here with its press card as the feed picks it up.</div>';
+    lv.innerHTML = '<h2>🔴 LIVE NOW</h2>' + daemonChip(d) + '<div style="color:#c9d4f5;font-size:13px;line-height:1.65">No live call on the sealed feed this minute — calls seal every 5 minutes and the AI-free pipeline daemon refreshes this page the moment one lands, with its press card.</div>';
   }
   var mr = document.getElementById('mirror');
   var sm = d.step_mirror||{};
