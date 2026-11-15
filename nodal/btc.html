@@ -50,6 +50,8 @@
   <div class="sub">Two house models trade the same 5-minute question — <i>is Bitcoin up or down when this window closes?</i> — and nothing else. No tennis, no other sport: this page is the BTC desk, whole and separate. <b style="color:var(--teal)">PLAIN</b> makes one careful call per window. <b style="color:var(--gold)">THE EARLY CALLER</b> calls 30 seconds earlier and can bank value and flip. Both now run <b>for real</b> on Polymarket US with $5.00 banks, under David's sizing equation and reserve law — and a third, more aggressive model is being born from the two of them, in simulation only. <span class="stamp real">REAL MONEY</span><span class="stamp">DAVID PLACES EVERY ORDER — OVERLAY MODE</span></div>
 
   <div class="card" style="border-color:var(--btc)"><b>RUN STATUS —</b> <span id="runStatus">…</span></div>
+  <div id="portalStamp" style="font-size:19px;font-weight:800;margin:10px 0">📡 DATA STAMP — …</div>
+  <div class="card" id="deskCard" style="border-color:var(--teal)"><b style="font-size:17px">🏆 THE DESK RECORD — PLAIN + EARLY, FROM THE SEALED LEDGER</b><div id="deskStrip" style="margin-top:6px;line-height:1.8">…</div></div>
 
   <h2>⏱ THE LIVE WINDOW <span class="stamp sim">SIM MIRROR — THE SEALED RECORD GOVERNS</span></h2>
   <div class="hero">
@@ -154,6 +156,17 @@ function render(){
   if(!DATA) return;
   const d=DATA, P=d.real.plain, E=d.real.early;
   document.getElementById('runStatus').textContent=d.run_status||'—';
+  const DK=d.desk||{}, LG=d.last_graded||{};
+  document.getElementById('portalStamp').textContent='📡 DATA STAMP — portal feed built '+(d.built_at||'—')+' UTC · PLAIN last graded '+(LG.plain||'—')+' · EARLY last graded '+(LG.early||'—');
+  if(DK.plain&&DK.early){
+    const mn=n=>(n<0?'−$':'$')+Math.abs(n||0).toFixed(2);
+    const drow=(nm,x)=>'<b>'+nm+'</b> · '+x.graded+' graded · '+(x.win_rate==null?'—':x.win_rate+'%')+' right · streak now '+(x.streak_now==null?'—':x.streak_now)+' (best '+(x.streak_best==null?'—':x.streak_best)+') · play-along bank <b>'+mn(x.bank)+'</b> · savings '+mn(x.savings)+' · borrows PEER '+(x.borrows?x.borrows.PEER:0)+' / SELF '+(x.borrows?x.borrows.SELF:0)+' / MAN '+(x.borrows?x.borrows.MAN:0)+' · grade <b>'+(x.borrow_grade||'—')+'</b>';
+    let dh=drow('PLAIN',DK.plain)+'<br>'+drow('EARLY',DK.early);
+    const F=d.final||{};
+    dh+='<br>⚖️ <b>FINAL CALL</b> · '+F.decided+' decided · '+F.for_sure+' FOR SURE / '+F.no_call+' NO CALL · money '+(F.money_wins||0)+'W/'+(F.money_losses||0)+'L · settle P&L <b>'+mn(F.pnl_settle)+'</b>';
+    dh+='<br><span class="small">'+(DK.note||'')+' The REAL-money lane for both models is the section below — still EMPTY, and it says so.</span>';
+    document.getElementById('deskStrip').innerHTML=dh;
+  }
   const fill=(id,v)=>document.getElementById(id).textContent=v;
   fill('pBank',money(P.bank.cash)+' / $5.00'); fill('pDay',money(P.bank.day_pnl));
   fill('pB',money(P.sizing.B)); fill('pS',money(P.sizing.s)); fill('pL',money(P.sizing.L));
@@ -213,7 +226,9 @@ function render(){
       +'<div class="card stat"><span>HYPOTHETICAL BANK ($500, LABELED)</span><b>'+money(H.bank)+'</b></div>'
       +'<div class="card stat"><span>HYPOTHETICAL P&amp;L (NOT A PROMISE)</span><b>'+money(H.pnl)+'</b></div>'
       +'</div><div class="small">Two ledgers, same plays: the LAW ledger runs David\'s real sizing equation, reserve law and day stops on a $5 sim bank. The HYPOTHETICAL ledger runs the identical plays at a $500 scale with fees and ladder-walk fills counted — it tests David\'s hypothesis that more capital earns more over time. It is a hypothesis under test, not a proven fact.</div>'
-      +((T.recent_windows&&T.recent_windows.length)? '<div style="margin-top:8px">'+T.recent_windows.map(w=>'<div class="row"><b>'+w.window+'</b> · seeded '+w.seed_side.toUpperCase()+' (followed '+w.followed+') · call '+(w.call_hit===null?'pending':w.call_hit?'LANDED ✓':'missed ✗')+' · '+w.plays+' plays · '+w.correct+' correct · haul <b class="'+(w.haul_law>=0?'ok':'bad')+'">'+money(w.haul_law)+'</b> law / '+money(w.haul_hypo)+' hypo</div>').join('')+'</div>':'');
+      +((T.recent_windows&&T.recent_windows.length)? '<div style="margin-top:8px">'+T.recent_windows.map(w=>'<div class="row"><b>'+w.window+'</b> · seeded '+w.seed_side.toUpperCase()+' (followed '+w.followed+') · call '+(w.call_hit===null?'pending':w.call_hit?'LANDED ✓':'missed ✗')+' · '+w.plays+' plays · '+w.correct+' correct · haul <b class="'+(w.haul_law>=0?'ok':'bad')+'">'+money(w.haul_law)+'</b> law / '+money(w.haul_hypo)+' hypo</div>').join('')+'</div>':'')
+      +((DATA.riptide_money)? '<div style="margin-top:10px"><b>💵 RIPTIDE MONEY TRAIL — every play graded at its sealed entry/exit averages, fees in:</b> '+DATA.riptide_money.plays+' plays · money <b>'+DATA.riptide_money.money_wins+'W / '+DATA.riptide_money.money_losses+'L</b> · sealed play P&L sum <b class="'+(DATA.riptide_money.law_pnl_sum>=0?'ok':'bad')+'">'+money(DATA.riptide_money.law_pnl_sum)+'</b> · walk ($5 + running sum) <b>'+money(DATA.riptide_money.walk_now)+'</b><br><span class="small">'+DATA.riptide_money.note+' Hit rate is near a coin flip — the money is made or lost on exit discipline, and this trail is the proof either way.</span></div>'
+        +((DATA.riptide_trail&&DATA.riptide_trail.length)? '<div style="margin-top:6px">'+DATA.riptide_trail.slice().reverse().map(t=>'<div class="row"><b>'+t.window+'</b> · seq '+t.seq+' · in at '+(t.elapsed_s==null?'—':t.elapsed_s+'s')+' · '+(t.side||'').toUpperCase()+' in @ '+Math.round((t.entry_avg||0)*100)+'¢ → out @ '+Math.round((t.exit_avg||0)*100)+'¢ · fees '+money(t.fees||0)+' · <b class="'+(t.pnl>=0?'ok':'bad')+'">'+money(t.pnl||0)+'</b> · walk '+money(t.walk_after)+'<br><span class="small">in: '+(t.reason_in||'')+' · out: '+(t.reason_out||'')+'</span></div>').join('')+'</div>':''):'');
   }
 }
 function loadData(){ fetch('btcportal.json?_='+Date.now()).then(r=>r.json()).then(d=>{DATA=d;render();}).catch(()=>{}); }
