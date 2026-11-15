@@ -1,11 +1,11 @@
 {
- "built_at": "2026-11-15T16:09:07Z",
+ "built_at": "2026-11-15T16:29:06Z",
  "bands": [
   {
    "band": "60\u201370%",
-   "n": 108,
+   "n": 109,
    "stated": 65.2,
-   "actual": 69.4
+   "actual": 69.7
   },
   {
    "band": "70\u201380%",
@@ -30,17 +30,17 @@
   "id": "BTC5",
   "name": "BTC 5-min desk (our specialist, sim)",
   "kind": "BTC Up/Down 5m windows \u00b7 plain vol model btc5-plain-v1 \u00b7 stand-in index",
-  "calls": 313,
-  "graded": 313,
-  "correct": 256,
+  "calls": 314,
+  "graded": 314,
+  "correct": 257,
   "accuracy": 81.8,
-  "brier": 0.1378,
-  "streak_now": 2,
+  "brier": 0.1377,
+  "streak_now": 3,
   "streak_best": 21,
   "status": "APPROVED",
   "note": "graded from BTC5_GRADE records in the sealed ledger"
  },
- "proof_built_at": "2026-11-15T16:08:40Z",
+ "proof_built_at": "2026-11-15T16:27:06Z",
  "borrows": {
   "lifetime": {
    "PEER": 0,
@@ -62,8 +62,35 @@
    "PEER": "A borrow from the other engines \u2014 counted on the record like every borrow."
   }
  },
- "last_graded_window": "2026-11-15T16:00:00Z",
+ "last_graded_window": "2026-11-15T16:20:00Z",
  "recent_calls": [
+  {
+   "window": "2026-11-15T16:20:00Z",
+   "side": "down",
+   "chance": 0.6554,
+   "at_elapsed_s": 148,
+   "seconds_left": 151,
+   "index_px": 64485.415,
+   "open_px": 64510.425,
+   "move_usd": -25.01,
+   "band": "60\u201370%",
+   "why": "BTC fell $25 from the window open with 151s left \u2014 the model put DOWN at 66%.",
+   "result": "down",
+   "correct": true,
+   "brier": 0.1187,
+   "seq": 7477,
+   "sealed_at": "2026-11-15T16:22:30+0000",
+   "grade_seq": 7482,
+   "plan": "HOLD \u2014 ride to settlement; PLAIN's only early exit is a sell at a bid of 95\u00a2 or better",
+   "final_answer": {
+    "side": "down",
+    "locked_seq": 7477,
+    "locked_at": "2026-11-15T16:22:30+0000",
+    "via": "the sealed call itself \u2014 PLAIN never flips, so the call IS the final answer, locked at seal time"
+   },
+   "money": null,
+   "money_note": "UNPRICED \u2014 the REAL watch sealed no ask for this window; no money line is invented"
+  },
   {
    "window": "2026-11-15T16:00:00Z",
    "side": "down",
@@ -768,36 +795,57 @@
     "how": "settlement"
    },
    "money_note": "the $5.00 bet algorithm (THE PROOF RECORD): stake sized by the banking law on the joint timeline, in at the sealed ask, entry fee in; settlement pays no exit trade \u2014 a directional win that loses money shows as a money LOSS"
-  },
-  {
-   "window": "2026-11-15T13:10:00Z",
-   "side": "down",
-   "chance": 0.6474,
-   "at_elapsed_s": 115,
-   "seconds_left": 184,
-   "index_px": 65539.32,
-   "open_px": 65564.845,
-   "move_usd": -25.52,
-   "band": "60\u201370%",
-   "why": "BTC fell $26 from the window open with 184s left \u2014 the model put DOWN at 65%.",
-   "result": "down",
-   "correct": true,
-   "brier": 0.1243,
-   "seq": 7085,
-   "sealed_at": "2026-11-15T13:11:57+0000",
-   "grade_seq": 7090,
-   "plan": "HOLD \u2014 ride to settlement; PLAIN's only early exit is a sell at a bid of 95\u00a2 or better",
-   "final_answer": {
-    "side": "down",
-    "locked_seq": 7085,
-    "locked_at": "2026-11-15T13:11:57+0000",
-    "via": "the sealed call itself \u2014 PLAIN never flips, so the call IS the final answer, locked at seal time"
-   },
-   "money": null,
-   "money_note": "UNPRICED \u2014 the REAL watch sealed no ask for this window; no money line is invented"
   }
  ],
  "recent_windows": [
+  {
+   "window": "2026-11-15T16:25:00Z",
+   "open_px": 64401.08,
+   "call": null,
+   "abstain": {
+    "why": "model chance 0.5651 < 0.6",
+    "chance": 0.5651,
+    "at": 1794760015
+   },
+   "grade": null
+  },
+  {
+   "window": "2026-11-15T16:20:00Z",
+   "open_px": 64510.425,
+   "call": {
+    "side": "down",
+    "chance": 0.6554,
+    "at": 1794759748
+   },
+   "abstain": null,
+   "grade": {
+    "result": "down",
+    "correct": true,
+    "brier": 0.1187
+   }
+  },
+  {
+   "window": "2026-11-15T16:15:00Z",
+   "open_px": 64602.6,
+   "call": null,
+   "abstain": {
+    "why": "model chance 0.5854 < 0.6",
+    "chance": 0.5854,
+    "at": 1794759418
+   },
+   "grade": null
+  },
+  {
+   "window": "2026-11-15T16:10:00Z",
+   "open_px": 64622.1,
+   "call": null,
+   "abstain": {
+    "why": "model chance 0.5269 < 0.6",
+    "chance": 0.5269,
+    "at": 1794759118
+   },
+   "grade": null
+  },
   {
    "window": "2026-11-15T16:05:00Z",
    "open_px": 64658.39,
@@ -923,78 +971,26 @@
     "at": 1794756122
    },
    "grade": null
-  },
-  {
-   "window": "2026-11-15T15:15:00Z",
-   "open_px": 64642.0,
-   "call": null,
-   "abstain": {
-    "why": "model chance 0.5081 < 0.6",
-    "chance": 0.5081,
-    "at": 1794755821
-   },
-   "grade": null
-  },
-  {
-   "window": "2026-11-15T15:10:00Z",
-   "open_px": 64777.44,
-   "call": {
-    "side": "down",
-    "chance": 0.7548,
-    "at": 1794755519
-   },
-   "abstain": null,
-   "grade": {
-    "result": "down",
-    "correct": true,
-    "brier": 0.0601
-   }
-  },
-  {
-   "window": "2026-11-15T15:05:00Z",
-   "open_px": 64592.56,
-   "call": {
-    "side": "down",
-    "chance": 0.7555,
-    "at": 1794755216
-   },
-   "abstain": null,
-   "grade": {
-    "result": "up",
-    "correct": false,
-    "brier": 0.5708
-   }
-  },
-  {
-   "window": "2026-11-15T15:00:00Z",
-   "open_px": 64697.37,
-   "call": null,
-   "abstain": {
-    "why": "model chance 0.5012 < 0.6",
-    "chance": 0.5012,
-    "at": 1794754915
-   },
-   "grade": null
   }
  ],
- "abstains_total": 126,
+ "abstains_total": 129,
  "counters": {
-  "graded": 313,
-  "wins": 256,
+  "graded": 314,
+  "wins": 257,
   "win_rate": 81.8,
   "streak_type": "W",
-  "streak_n": 2,
+  "streak_n": 3,
   "best_win_streak": 21,
-  "last12": "WWWWWWLWWLWW"
+  "last12": "WWWWWLWWLWWW"
  },
  "live_window": {
-  "window": "2026-11-15T16:05:00Z",
-  "open_px": 64658.39,
+  "window": "2026-11-15T16:25:00Z",
+  "open_px": 64401.08,
   "call": null,
   "abstain": {
-   "why": "model chance 0.5076 < 0.6",
-   "chance": 0.5076,
-   "at": 1794758818
+   "why": "model chance 0.5651 < 0.6",
+   "chance": 0.5651,
+   "at": 1794760015
   },
   "grade": null
  },
