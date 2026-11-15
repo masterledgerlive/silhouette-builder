@@ -1,5 +1,5 @@
 {
- "built_at": "2026-11-15T04:19:49Z",
+ "built_at": "2026-11-15T04:29:47Z",
  "bands": [
   {
    "band": "60\u201370%",
@@ -9,9 +9,9 @@
   },
   {
    "band": "70\u201380%",
-   "n": 59,
-   "stated": 75.3,
-   "actual": 74.6
+   "n": 60,
+   "stated": 75.2,
+   "actual": 75.0
   },
   {
    "band": "80\u201390%",
@@ -30,17 +30,32 @@
   "id": "BTC5",
   "name": "BTC 5-min desk (our specialist, sim)",
   "kind": "BTC Up/Down 5m windows \u00b7 plain vol model btc5-plain-v1 \u00b7 stand-in index",
-  "calls": 222,
-  "graded": 221,
-  "correct": 177,
-  "accuracy": 80.1,
-  "brier": 0.143,
-  "streak_now": 5,
+  "calls": 223,
+  "graded": 222,
+  "correct": 178,
+  "accuracy": 80.2,
+  "brier": 0.1427,
+  "streak_now": 6,
   "streak_best": 19,
   "status": "APPROVED",
   "note": "graded from BTC5_GRADE records in the sealed ledger"
  },
  "recent_calls": [
+  {
+   "window": "2026-11-15T04:25:00Z",
+   "side": "up",
+   "chance": 0.7106,
+   "at_elapsed_s": 110,
+   "seconds_left": 189,
+   "index_px": 64878.615,
+   "open_px": 64818.585,
+   "move_usd": 60.03,
+   "band": "70\u201380%",
+   "why": "BTC rose $60 from the window open with 189s left \u2014 the model put UP at 71%.",
+   "result": null,
+   "correct": null,
+   "brier": null
+  },
   {
    "window": "2026-11-15T04:15:00Z",
    "side": "down",
@@ -52,9 +67,9 @@
    "move_usd": -50.85,
    "band": "70\u201380%",
    "why": "BTC fell $51 from the window open with 143s left \u2014 the model put DOWN at 70%.",
-   "result": null,
-   "correct": null,
-   "brier": null
+   "result": "down",
+   "correct": true,
+   "brier": 0.0899
   },
   {
    "window": "2026-11-15T04:10:00Z",
@@ -385,24 +400,31 @@
    "result": "up",
    "correct": true,
    "brier": 0.0995
-  },
-  {
-   "window": "2026-11-15T01:10:00Z",
-   "side": "up",
-   "chance": 0.7915,
-   "at_elapsed_s": 114,
-   "seconds_left": 185,
-   "index_px": 62754.990000000005,
-   "open_px": 62614.805,
-   "move_usd": 140.19,
-   "band": "70\u201380%",
-   "why": "BTC rose $140 from the window open with 185s left \u2014 the model put UP at 79%.",
-   "result": "up",
-   "correct": true,
-   "brier": 0.0435
   }
  ],
  "recent_windows": [
+  {
+   "window": "2026-11-15T04:25:00Z",
+   "open_px": 64818.585,
+   "call": {
+    "side": "up",
+    "chance": 0.7106,
+    "at": 1794716810
+   },
+   "abstain": null,
+   "grade": null
+  },
+  {
+   "window": "2026-11-15T04:20:00Z",
+   "open_px": 64872.125,
+   "call": null,
+   "abstain": {
+    "why": "model chance 0.5493 < 0.6",
+    "chance": 0.5493,
+    "at": 1794716512
+   },
+   "grade": null
+  },
   {
    "window": "2026-11-15T04:15:00Z",
    "open_px": 64913.145000000004,
@@ -412,7 +434,11 @@
     "at": 1794716256
    },
    "abstain": null,
-   "grade": null
+   "grade": {
+    "result": "down",
+    "correct": true,
+    "brier": 0.0899
+   }
   },
   {
    "window": "2026-11-15T04:10:00Z",
@@ -558,47 +584,25 @@
     "at": 1794712935
    },
    "grade": null
-  },
-  {
-   "window": "2026-11-15T03:15:00Z",
-   "open_px": 65212.8,
-   "call": null,
-   "abstain": {
-    "why": "model chance 0.5796 < 0.6",
-    "chance": 0.5796,
-    "at": 1794712676
-   },
-   "grade": null
-  },
-  {
-   "window": "2026-11-15T03:10:00Z",
-   "open_px": 65420.97,
-   "call": null,
-   "abstain": {
-    "why": "model chance 0.5627 < 0.6",
-    "chance": 0.5627,
-    "at": 1794712321
-   },
-   "grade": null
   }
  ],
- "abstains_total": 87,
+ "abstains_total": 88,
  "counters": {
-  "graded": 221,
-  "wins": 177,
-  "win_rate": 80.1,
+  "graded": 222,
+  "wins": 178,
+  "win_rate": 80.2,
   "streak_type": "W",
-  "streak_n": 5,
+  "streak_n": 6,
   "best_win_streak": 19,
-  "last12": "WWWWWLLWWWWW"
+  "last12": "WWWWLLWWWWWW"
  },
  "live_window": {
-  "window": "2026-11-15T04:15:00Z",
-  "open_px": 64913.145000000004,
+  "window": "2026-11-15T04:25:00Z",
+  "open_px": 64818.585,
   "call": {
-   "side": "down",
-   "chance": 0.7001,
-   "at": 1794716256
+   "side": "up",
+   "chance": 0.7106,
+   "at": 1794716810
   },
   "abstain": null,
   "grade": null
