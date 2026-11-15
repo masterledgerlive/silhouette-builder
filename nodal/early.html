@@ -67,6 +67,8 @@
   </div>
 
   <h2>🧾 THE PLAYS — one row per play, double wins highlighted</h2>
+  <div id="eStamp" style="font-size:19px;font-weight:800;margin:6px 0">📡 DATA STAMP — …</div>
+  <div id="eBorrows" style="margin:10px 0"></div>
   <div id="plays">…</div>
 
   <h2>🧠 LESSONS — what the wins and the misses teach</h2>
@@ -127,6 +129,15 @@ function renderRecord(){
   $('cBest').textContent=c.best_streak_points!=null?c.best_streak_points:'—';
   $('cDouble').textContent=c.double_wins!=null?c.double_wins:'—';
   $('cForm').innerHTML='recent form (★ = double win): <b>'+esc(c.form||'—')+'</b> · calls made '+ (c.calls_made||0) +' · values banked '+(c.values||0)+' · flips '+(c.flips||0)+' · sealed record as of '+esc(ED.built_at||'');
+  $('eStamp').textContent='📡 DATA STAMP — feed built '+(ED.built_at||'—')+' UTC · last graded window '+(ED.last_graded_window||'—')+' · money lines from THE PROOF RECORD (built '+(ED.proof_built_at||'—')+')';
+  const B=ED.borrows;
+  if(B&&B.lifetime){
+    const gcol=B.grade==='CLEAN'?'#2fd67a':(B.grade==='FULL FAIL'?'#ff5d5d':'#ffd257');
+    $('eBorrows').innerHTML='<div style="border:2px solid '+gcol+';border-radius:10px;padding:10px 12px;background:#141b29"><b style="font-size:16px">🏦 BORROW COUNTS — EARLY</b> · grade: <b style="color:'+gcol+'">'+(B.grade||'—')+'</b><br>'
+      +'lifetime: piggy bank (SELF) <b>'+B.lifetime.SELF+'</b> · peers (PEER) <b>'+B.lifetime.PEER+'</b> · THE MAN (MAN) <b>'+B.lifetime.MAN+'</b> · total <b>'+(B.total||0)+'</b>'
+      +' · today: SELF <b>'+(B.today?B.today.SELF:0)+'</b> · PEER <b>'+(B.today?B.today.PEER:0)+'</b> · MAN <b>'+(B.today?B.today.MAN:0)+'</b><br>'
+      +'<span class="small">'+B.ruling.SELF+'<br>'+B.ruling.MAN+'<br>'+(B.tell||'')+'</span></div>';
+  }
   // plays
   let h='';
   (ED.recent_plays||[]).forEach(p=>{
@@ -141,6 +152,9 @@ function renderRecord(){
     if(p.value)h+='<div style="margin-top:4px">💰 <b>VALUE TAKEN</b> at '+p.value.at_elapsed_s+'s — '+esc(p.value.why)+'</div>';
     if(p.flip)h+='<div style="margin-top:4px">🔄 <b>FLIPPED to '+(p.flip.to_side==='up'?'⬆ UP':'⬇ DOWN')+' '+Math.round(p.flip.chance*100)+'%</b> ('+esc(p.flip.kind||'')+') at '+p.flip.at_elapsed_s+'s — '+esc(p.flip.why)+'</div>';
     if(g)h+='<div style="margin-top:4px">settled <b>'+(g.result==='up'?'⬆ UP':'⬇ DOWN')+'</b> · final answer '+(g.correct?'<span class="ok">RIGHT</span>':'<span class="bad">WRONG</span>')+' · the early side alone would have been '+(g.early_correct?'right':'wrong')+' · Brier '+g.brier+'</div>';
+    h+='<div style="margin-top:4px" class="small">🔒 <b>PROOF</b> — sealed seq '+(p.seq||'—')+' at '+(p.at_elapsed_s||'—')+'s in'+(p.grade_seq?' · grade seq '+p.grade_seq:'')+'<br>plan: '+esc(p.plan||'')+'<br><b>FINAL ANSWER — LOCKED IN: '+(p.final_answer?(p.final_answer.side==='up'?'⬆ UP':'⬇ DOWN'):'—')+'</b> · '+esc(p.final_answer?p.final_answer.via:'')+'</div>';
+    if(p.money)h+='<div style="margin-top:4px">💵 <b>MONEY (the $5.00 bet algorithm):</b> in @ '+Math.round(p.money.ask*100)+'¢ · stake $'+(p.money.stake||0).toFixed(2)+' → <b class="'+(p.money.pnl>=0?'ok':'bad')+'">'+(p.money.pnl>=0?'+':'−')+'$'+Math.abs(p.money.pnl).toFixed(2)+'</b>'+(p.money.borrowed?' · ⚠️ borrowed stake ('+esc(p.money.borrow_source||'')+')':'')+' · bank after $'+(p.money.bank_after||0).toFixed(2)+'</div>';
+    else h+='<div style="margin-top:4px" class="small">💵 MONEY: UNPRICED — the REAL watch sealed no ask for this window; no money line is invented.</div>';
     const marks=[];if(p.at_elapsed_s!=null)marks.push({elapsed:p.at_elapsed_s,color:'#f5b942',label:'CALL'});
     if(p.value)marks.push({elapsed:p.value.at_elapsed_s,color:'#2dd4bf',label:'VALUE'});
     if(p.flip)marks.push({elapsed:p.flip.at_elapsed_s,color:'#fb923c',label:'FLIP'});
