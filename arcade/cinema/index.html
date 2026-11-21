@@ -214,7 +214,11 @@
    has its OWN key (the "master key" opens section 1 only). Section key =
    the section's key_hex when the manifest carries one, else the master key.
    Her loader tries gertie-rich-manifest.json (key_hex per section) first and
-   falls back to gertie-manifest.json. */
+   falls back to gertie-manifest.json.
+   Playback: ONE shared fetch→unseal→verify pipeline feeds a streaming
+   source — ManagedMediaSource first (iOS 17+; needs disableRemotePlayback),
+   else MediaSource — and playback starts on the first appended sections.
+   Whole-film assembly runs ONLY when neither source exists. */
 const AGG="https://aggregator.walrus-testnet.walrus.space/v1/blobs/";
 const AGG2M="https://walrus-testnet.blockscope.net/v1/blobs/";
 const $=id=>document.getElementById(id);
@@ -354,6 +358,21 @@ $("leaveBtn").onclick=()=>{
 /* ===== the player ===== */
 let RUN_ID=0, STOP=false;
 const v=$("v");
+/* Playback source choice, best first:
+   1. ManagedMediaSource — iOS 17+ Safari's streaming source, the ONLY one on
+      iPhone. WebKit requires the video element's remote playback to be
+      disabled or the source never opens (the page then used to sit through
+      a timeout and fall back to assembling the whole film before playing).
+   2. MediaSource — desktop Chrome/Edge/Firefox/Safari, Android Chrome.
+   3. Neither — whole-film assembly, last resort only, progress on screen. */
+function pickSourceCtor(){
+  if(window.ManagedMediaSource) return {Ctor:window.ManagedMediaSource, kind:"managed"};
+  if(window.MediaSource) return {Ctor:window.MediaSource, kind:"media"};
+  return null;
+}
+function prepareVideoFor(kind){
+  if(kind==="managed"){ try{ v.disableRemotePlayback=true; }catch(e){} }
+}
 function lg(msg,cls){
   const L=$("log"); const d=document.createElement("div");
   if(cls)d.className=cls; d.innerHTML=msg; L.appendChild(d);
@@ -436,6 +455,7 @@ async function playFilm(key){
       const media=await pullSection(i);
       if(media===null) break;
       parts.push(media);
+      now("ASSEMBLING","section "+S.done+"/"+secs.length+" · "+(S.bytes/1048576).toFixed(1)+" MB in — this browser cannot stream from blobs, so the film starts when the last section lands. The wait is on screen, never silent.");
     }
     if(myRun!==RUN_ID) return;
     if(STOP){
@@ -458,28 +478,42 @@ async function playFilm(key){
   }
   let phoneStarted=false;
   const goPhone=r=>{ if(phoneStarted||myRun!==RUN_ID) return; phoneStarted=true; phonePath(r); };
-  const Ctor=window.MediaSource||window.ManagedMediaSource;
+  const pick=pickSourceCtor();
   let ms=null;
-  if(Ctor){ try{ ms=new Ctor(); }catch(e){ ms=null; } }
-  if(!ms){ goPhone("this browser exposes no MediaSource at all (iPhone)"); return; }
+  if(pick){ try{ ms=new pick.Ctor(); }catch(e){ ms=null; } }
+  if(!ms){ goPhone("this browser exposes no streaming source at all (no MediaSource, no ManagedMediaSource)"); return; }
+  prepareVideoFor(pick.kind);
   v.src=URL.createObjectURL(ms);
+  lg(pick.kind==="managed"
+    ? "📱 ManagedMediaSource — iPhone streaming path: playback starts as the first sections land, not when the film finishes"
+    : "🎞 MediaSource streaming — playback starts as the first sections land","dim");
   let sourceOpened=false;
   setTimeout(()=>{ if(!sourceOpened) goPhone("MediaSource never opened"); },6000);
   ms.addEventListener("sourceopen", async ()=>{
     sourceOpened=true;
     if(phoneStarted||myRun!==RUN_ID) return;
     let sb=null;
-    for(const cand of [F.mime,'video/mp4; codecs="avc1.64001f, mp4a.40.2"',"video/mp4"]){
-      try{ sb=ms.addSourceBuffer(cand); lg("SourceBuffer: "+cand,"dim"); break; }catch(e){}
+    const cands=[F.mime,'video/mp4; codecs="avc1.64001f, mp4a.40.2"',"video/mp4"];
+    for(const strict of [true,false]){
+      for(const cand of cands){
+        if(strict && pick.Ctor.isTypeSupported && !pick.Ctor.isTypeSupported(cand)) continue;
+        try{ sb=ms.addSourceBuffer(cand); lg("SourceBuffer: "+cand,"dim"); break; }catch(e){}
+      }
+      if(sb) break;
     }
-    if(!sb){ goPhone("MediaSource refused every codec string"); return; }
-    const queue=[]; let appending=false, appendDrops=0, firstMs=0;
+    if(!sb){ goPhone("the streaming source refused every codec string"); return; }
+    const queue=[]; let appending=false, appendDrops=0, firstMs=0, appendedCt=0, started=false;
     const leadSec=()=>{ try{ if(!v.buffered||!v.buffered.length) return 0;
       return v.buffered.end(v.buffered.length-1)-v.currentTime; }catch(e){ return 0; } };
     const pump=()=>{ if(appending||!queue.length||myRun!==RUN_ID) return;
-      if(leadSec()>30){ setTimeout(pump,400); return; }
+      if(started && leadSec()>30){ setTimeout(pump,400); return; }
       appending=true;
-      const h=()=>{ sb.removeEventListener("updateend",h); appending=false; pump(); };
+      const h=()=>{ sb.removeEventListener("updateend",h); appending=false; appendedCt++;
+        if(!started){ started=true; firstMs=performance.now()-T0;
+          v.play().catch(()=>{});
+          stats(S,secs.length,firstMs);
+          lg("▶ playing — the first sections are on screen while the rest still load · ⏱ time to first frame: "+(firstMs/1000).toFixed(2)+" s","gold"); }
+        pump(); };
       sb.addEventListener("updateend",h);
       try{ sb.appendBuffer(queue.shift()); }
       catch(e){ sb.removeEventListener("updateend",h); appending=false; appendDrops++;
@@ -491,9 +525,6 @@ async function playFilm(key){
       const media=await pullSection(i);
       if(media===null) break;
       queue.push(media); pump();
-      if(S.done===1){ firstMs=performance.now()-T0; v.play().catch(()=>{});
-        stats(S,secs.length,firstMs);
-        lg("⏱ time to first frame: "+(firstMs/1000).toFixed(2)+" s","gold"); }
       if(sb.updating) await Promise.race([ new Promise(r=>sb.addEventListener("updateend",r,{once:true})),
         new Promise(r=>setTimeout(r,3000)) ]);
     }
