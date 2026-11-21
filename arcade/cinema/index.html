@@ -510,7 +510,7 @@ async function playFilm(key){
       appending=true;
       const h=()=>{ sb.removeEventListener("updateend",h); appending=false; appendedCt++;
         if(!started){ started=true; firstMs=performance.now()-T0;
-          v.play().catch(()=>{});
+          v.play().catch(()=>{ lg("👆 tap the film once to start it — this browser wants a tap before it plays with sound","gold"); });
           stats(S,secs.length,firstMs);
           lg("▶ playing — the first sections are on screen while the rest still load · ⏱ time to first frame: "+(firstMs/1000).toFixed(2)+" s","gold"); }
         pump(); };
