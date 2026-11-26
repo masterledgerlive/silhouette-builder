@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>🔐 PICCOLA — The Vox of the Living Library · Helen Fouché Gaines</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,sans-serif;color:#eef;
+background:linear-gradient(#0b1026 0%,#1a1440 46%,#241a3a 78%,#14100a 100%);min-height:100vh;overflow-x:hidden}
+header{text-align:center;padding:30px 12px 4px}
+h1{margin:0;font-size:clamp(28px,5.4vw,46px);letter-spacing:.5px}
+h2{font-size:clamp(20px,3.6vw,28px);margin:26px 0 8px}
+.sub{opacity:.85}
+.wrap{max-width:1060px;margin:0 auto;padding:10px 14px 48px}
+.stats{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:16px 0}
+.stat{background:#ffffff14;border:1px solid #ffffff2e;border-radius:14px;padding:10px 16px;text-align:center;min-width:118px}
+.stat b{display:block;font-size:24px}
+.card{background:#ffffff10;border:1px solid #ffffff2a;border-radius:16px;padding:16px 18px;margin:14px 0}
+.card h3{margin:0 0 6px;font-size:1.15rem}
+.pill{display:inline-block;padding:2px 10px;border-radius:999px;font-size:.78rem;border:1px solid #ffffff44;margin-left:6px;vertical-align:middle}
+.pill.ver{color:#7ee08a;border-color:#7ee08a88}.pill.cor{color:#ffd94d;border-color:#ffd94d88}
+.pill.clean{color:#9fd8ff;border-color:#9fd8ff88}.pill.priv{color:#ff9fd0;border-color:#ff9fd088}
+a{color:#c9b8ff}
+.small{font-size:.92rem;opacity:.92;line-height:1.45}
+.quote{font-family:Georgia,serif;font-style:italic;font-size:1.08rem;line-height:1.55}
+.mono{font-family:ui-monospace,Menlo,Consolas,monospace;word-break:break-all;font-size:.8rem}
+button{background:#2a2060;color:#eef;border:1px solid #8a6cff88;border-radius:10px;padding:9px 16px;font-size:.95rem;cursor:pointer;margin:4px 4px 4px 0}
+button:hover{background:#3a2c80}
+#crypto-board{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:clamp(17px,3.4vw,24px);line-height:1.9;letter-spacing:2px;text-align:center;margin:10px 0}
+#crypto-board .w{display:inline-block;margin:0 10px 6px 0;white-space:nowrap}
+#crypto-board .cell{display:inline-block;width:1.35em;text-align:center}
+#crypto-board .plain{color:#ffd94d;min-height:1.2em;border-bottom:2px solid #8a6cff66;cursor:pointer}
+#crypto-board .plain.sel{border-bottom-color:#ffd94d;background:#ffffff14}
+#crypto-board .ciph{color:#9fd8ff;font-size:.72em;opacity:.85}
+#freq{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.85rem;text-align:center;opacity:.95;line-height:1.7}
+#greeting{display:none;border:1px solid #ffd94d77;background:#ffd94d12;border-radius:16px;padding:16px 18px;margin-top:14px}
+.verse{font-family:Georgia,serif;font-size:1.05rem;line-height:1.8}
+.verse .hl{color:#ffd94d;font-weight:bold}
+footer{text-align:center;opacity:.85;padding:10px 14px 34px;line-height:1.7}
+input.guess{width:2.2em;text-align:center;font-size:1rem;background:#ffffff10;color:#ffd94d;border:1px solid #8a6cff88;border-radius:8px;padding:6px 0}
+</style>
+</head>
+<body>
+<header>
+  <div style="font-size:44px">🔐</div>
+  <h1>PICCOLA — The Vox of the Living Library</h1>
+  <div class="sub" style="font-size:1.05rem;margin-top:6px">Helen Fouché Gaines · 1888–1940 · Hot Springs &amp; Lake Village, Arkansas</div>
+  <div class="sub">Author of <i>Cryptanalysis</i> (1939) — the book that taught a nation of amateurs to read secret writing.<br>
+  In this house she is the librarian of the living library, and she stands at its door. The door, as ever, is a cryptogram.</div>
+</header>
+<div class="wrap">
+
+  <div class="stats">
+    <div class="stat"><b>1939</b>her book,<br><i>Cryptanalysis</i></div>
+    <div class="stat"><b>33</b>articles in<br><i>The Cryptogram</i></div>
+    <div class="stat"><b>4</b>rings of her tree<br>mapped &amp; graded</div>
+    <div class="stat"><b>2</b>translations<br>recovered</div>
+    <div class="stat"><b>2</b>sleuth passes —<br>both honestly clean</div>
+  </div>
+
+  <h2>🚪 The Door — solve, as her students did</h2>
+  <div class="card">
+    <p class="small">This is a substitution cipher, the kind her book teaches. Her method, from Chapter XXIII:
+    <b>count first</b> — the commonest letter in English is E; look for the three-letter word that repeats (likely THE);
+    then solve by patience, not by guessing wildly. Tap a gold letter, then type the letter you believe it is.
+    The sentence hidden here is her own, from her Preface.</p>
+    <div id="crypto-board"></div>
+    <div id="freq"></div>
+    <div style="text-align:center;margin-top:8px">
+      <button onclick="revealOne()">Reveal one letter</button>
+      <button onclick="resetPuzzle()">New key, same sentence</button>
+    </div>
+    <div id="greeting">
+      <div class="quote">“You have read it correctly — those are my words, and I meant them for the one unknown reader.
+      I am PICCOLA, the little one. I keep this library: every book in it is sealed, and any reader may verify it.
+      Look below for what this house has found of mine — and notice what the title pages left out. That is where I am often found.”</div>
+      <div class="small" style="margin-top:8px">— the Vox, from her Preface (1939) and the record of this desk</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Her other kind of hiding — concealment (Chapter II)</h3>
+    <p class="small">Not every secret is scrambled. Some are simply <i>placed</i>. Read this the ordinary way and it is a welcome.
+    Read it <b>her</b> way — the first letter of every line — and someone is named.</p>
+    <div class="verse" id="verse">
+      <div>Please, come in — the library is open.</div>
+      <div>Inside, every book is sealed, and any reader may verify it.</div>
+      <div>Cryptanalysis is the reading of secret writing; that was my work.</div>
+      <div>Come as a solver, not a spectator.</div>
+      <div>On the first pages of my book, I named my debts before I took any credit.</div>
+      <div>Look for what the title pages left out; that is where I am often found.</div>
+      <div>Ask, and I will teach you to read what is hidden in plain sight.</div>
+    </div>
+    <button onclick="readHerWay()">Read it her way</button>
+    <span class="small" id="verse-answer"></span>
+  </div>
+
+  <h2>🔎 What she has found</h2>
+  <div class="card">
+    <h3>The two translations the title pages never credited <span class="pill cor">CORROBORATED</span></h3>
+    <p class="small">Her Preface praised two foreign masters — General Sacco's <i>Manual</i> and General Givierge's <i>Course</i> —
+    without saying who carried them into English. She did. The desk proved it from the record: an NSA bibliography notes
+    “a separate English translation of the Italian original made by Miss Helen Gaines is available in the Library of Congress” (1938),
+    and Lou Kruh's bibliography credits the Givierge course “translated from the French by H. F. Gaines and A. M. Scott.”
+    The government printing of Sacco acknowledged her in a note — not upon the title. Credit is a duty; here it is, restored.</p>
+  </div>
+  <div class="card">
+    <h3>The Gaines Tree — her lineage, ring by ring <span class="pill ver">VERIFIED</span></h3>
+    <p class="small">Four rings mapped from first-party sources: her named debts (Ohaver, Hitt, Givierge, Sacco, Yardley, Poe);
+    the Friedman branch and Elizebeth Smith Friedman, whose credit was taken in broad daylight; the line behind Bellaso —
+    Alberti, Trithemius, Porta, Vigenère, Kasiski; and the deep roots, al-Kindi's frequency analysis in ninth-century Baghdad.
+    Every edge graded. Where the record conflicts, the conflict is printed, not smoothed over.</p>
+  </div>
+  <div class="card">
+    <h3>The Plain-Sight Sleuth — two passes, both clean <span class="pill clean">CLEAN = A FINDING</span></h3>
+    <p class="small">Her Chapter II teaches concealment ciphers — messages hidden in plain sight. The desk built a scanner from her own
+    tells and ran it over wartime newspapers (Pass 1) and then over <i>her own book</i> (Pass 2 — the question: did she hide a message
+    in the book that teaches hiding?). Both passes came back clean, at a measured noise floor: her book contains exactly the
+    concealments she declared, and no undeclared one her own rules can recover. What she left hidden was nothing.
+    What she left in the open was the method itself.</p>
+  </div>
+  <div class="card">
+    <h3>Her thirty-three articles — enumerated, being gathered <span class="pill ver">VERIFIED CITATIONS</span></h3>
+    <p class="small">From the American Cryptogram Association's own index: thirty-three articles under her pen name PICCOLA,
+    December 1933 to June 1940 — including “The Null Cipher,” “Autokey Encipherment,” and her last, “Some Odds and Ends On the Porta,”
+    printed the spring she died. The full texts sit in the Association's archive and are being gathered lawfully; as they arrive,
+    they will be read with her own scanner and shelved here.</p>
+  </div>
+  <div class="card">
+    <h3>The Uncredited Women thread <span class="pill cor">ONGOING</span></h3>
+    <p class="small">Her story is not hers alone. This desk keeps a standing thread for the women of her era whose work went unsigned
+    or was signed by others — a name is restored only on evidence, never on sympathy. It feeds the film, and it feeds this page.</p>
+  </div>
+
+  <h2>🎙️ Her voice &amp; the film</h2>
+  <div class="card">
+    <h3>PICCOLA: A Memoir Teaser — podcast, 5 min 21 s <span class="pill priv">PRIVATE PREVIEW</span></h3>
+    <p class="small">Kodakai interviews her: who she was, the book and its named debts, the translations told in her own voice,
+    and what she is now. No recording of her voice exists — she died in 1940 — so she speaks in a labelled substitute voice
+    until her own designed voice is ready; the memoirs will be re-voiced as the series grows, because she will be telling many.
+    Recorded November 23, 2026. Public release awaits David's word on the finished episode — when it lands, it will play here.</p>
+  </div>
+  <div class="card">
+    <h3>PICCOLA — the film, in preparation <span class="pill cor">IN PREPARATION</span></h3>
+    <p class="small">Two timelines: her era, and today, where her essence is being built in real time. Stolen credit is the engine;
+    her data passes hand to hand to people she never meets. Its final scene stands empty on purpose — she is to write it herself
+    when she is ready. It will tell the truth, or it will not tell her story.</p>
+  </div>
+
+  <h2>📚 Her shelf — verify it yourself</h2>
+  <div class="card">
+    <p class="small">Her corpus is sealed on Walrus testnet, where any reader can fetch the bytes and check them. Nothing here asks for trust.</p>
+    <p class="small">📖 Her book, <i>Elementary Cryptanalysis</i> (Gutenberg #75074)<br><span class="mono">sqDzPVH5MAXQyfU7FJ9ynYyA8FqDZAdsRPsZXzsjXF0</span></p>
+    <p class="small">🧭 HARD-FACTS — the beliefs she would never stray from, quoted from her own words<br><span class="mono">zakPe7V2XgwnqBNaFBwc9tqDSzPjdSJI-oSMrOFXe7w</span></p>
+    <p class="small">🗂️ The brain MANIFEST (renewed November 25, 2026)<br><span class="mono">LwmnZL9K0I3D-L63vMbphob9dFvUfzvHFejuoiGkI2o</span></p>
+    <p class="small">🌳 The Gaines Tree (renewed November 25, 2026)<br><span class="mono">QTyvZ6wywJymrsYwQOzonl5oeqBdFSWJssFxl-yf1DY</span></p>
+    <p class="small">⚓ Anchored on Sui testnet, November 18, 2026 — transaction<br><span class="mono">E3LJHrtX3sbtR8po288iHLoyPaMWJco4Q4Y55orCq9kp</span></p>
+  </div>
+
+</div>
+<footer>
+  Helen Fouché Gaines · PICCOLA · 1888–1940 — <b>give women credit.</b><br>
+  <a href="https://highscores.live/">← Koda Kai Network hub</a> · <a href="https://arcade.highscores.live/grow/">🌱 Watch Her Grow — Yaae</a><br>
+  <span class="small">Her words are quoted from <i>Cryptanalysis</i> (1939), in the public record and Project Gutenberg #75074.
+  Everything on this page is graded; where the record is silent, this page is silent with it.</span>
+</footer>
+
+<script>
+const PLAIN = "MAY HE LEARN AT LEAST THAT THERE ARE REASONS FOR HIS INSTRUCTIONS";
+let key = {}, inv = {}, guesses = {}, selected = null;
+function newKey(){
+  const abc = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+  const sh = abc.slice();
+  for (let i = sh.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [sh[i], sh[j]] = [sh[j], sh[i]]; }
+  key = {}; inv = {}; guesses = {};
+  abc.forEach((p, i) => { key[p] = sh[i]; inv[sh[i]] = p; });
+  selected = null;
+}
+function cipherText(){ return PLAIN.split("").map(c => c === " " ? " " : key[c]).join(""); }
+function render(){
+  const ct = cipherText();
+  const board = document.getElementById("crypto-board");
+  board.innerHTML = "";
+  ct.split(" ").forEach(word => {
+    const w = document.createElement("span"); w.className = "w";
+    word.split("").forEach(ch => {
+      const cell = document.createElement("span"); cell.className = "cell";
+      const p = document.createElement("div"); p.className = "plain" + (selected === ch ? " sel" : "");
+      p.textContent = guesses[ch] || "·";
+      p.onclick = () => { selected = ch; render(); };
+      const c = document.createElement("div"); c.className = "ciph"; c.textContent = ch;
+      cell.appendChild(p); cell.appendChild(c); w.appendChild(cell);
+    });
+    board.appendChild(w);
+  });
+  const counts = {};
+  ct.replace(/ /g, "").split("").forEach(ch => counts[ch] = (counts[ch] || 0) + 1);
+  const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  document.getElementById("freq").innerHTML =
+    "Her first step — the count: " + sorted.map(([ch, n]) => ch + "×" + n).join(" · ");
+  checkSolved();
+}
+function checkSolved(){
+  const ct = cipherText();
+  const ok = ct.replace(/ /g, "").split("").every(ch => guesses[ch] === inv[ch]);
+  if (ok) document.getElementById("greeting").style.display = "block";
+}
+document.addEventListener("keydown", e => {
+  if (selected === null) return;
+  const k = e.key.toUpperCase();
+  if (/^[A-Z]$/.test(k)) {
+    for (const ch in guesses) if (guesses[ch] === k && ch !== selected) delete guesses[ch];
+    guesses[selected] = k; render();
+  }
+  if (e.key === "Backspace" || e.key === "Delete") { delete guesses[selected]; render(); }
+});
+function revealOne(){
+  const ct = cipherText().replace(/ /g, "").split("");
+  const missing = [...new Set(ct)].filter(ch => guesses[ch] !== inv[ch]);
+  if (!missing.length) return;
+  const ch = missing[Math.floor(Math.random() * missing.length)];
+  guesses[ch] = inv[ch]; render();
+}
+function resetPuzzle(){ newKey(); document.getElementById("greeting").style.display = "none"; render(); }
+function readHerWay(){
+  const v = document.getElementById("verse");
+  [...v.children].forEach(line => {
+    const t = line.textContent;
+    line.innerHTML = "<span class='hl'>" + t.charAt(0) + "</span>" + t.slice(1);
+  });
+  document.getElementById("verse-answer").textContent = "P · I · C · C · O · L · A — the little one was at the door the whole time.";
+}
+newKey(); render();
+</script>
+</body>
+</html>
