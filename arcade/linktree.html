@@ -24,6 +24,7 @@
              font-size:.95rem; font-weight:600; transition:.18s; }
   .linkbtn:hover { border-color:#22d3ee; box-shadow:0 0 16px #22d3ee55; transform:translateY(-1px); }
   .linkbtn .sub { display:block; font-weight:400; font-size:.75rem; color:#8888aa; margin-top:3px; word-break:break-all; }
+  .codechip { display:inline-block; margin-top:5px; padding:3px 10px; border:1px dashed #ffd700; border-radius:999px; color:#ffd700; font-weight:700; font-size:.78rem; cursor:pointer; }
   .section-label { text-align:center; color:#66668a; font-size:.75rem; letter-spacing:.25em; margin:26px 0 12px; }
   .foot { text-align:center; margin-top:36px; font-size:.8rem; color:#66668a; line-height:2.2; }
   .foot a { color:#22d3ee; text-decoration:none; border:1px solid #22d3ee; border-radius:999px; padding:7px 18px; margin:0 4px; display:inline-block;}
@@ -40,6 +41,21 @@
     <div class="handle">@infinitumikn</div>
     <div class="bio" id="pbio">🌟 Exploring the universe, one vibe at a time! ✨</div>
   </div>
+  <div class="section-label">🎟️ MY ADS · LINKS &amp; CODES</div>
+  <img src="golden-pass-billboard.webp" alt="2027 Golden Pass — Grifols Plasma on a billboard: Come donate with me!" style="width:100%;border-radius:14px;border:1px solid #2a2a5a;margin-bottom:12px;display:block">
+  <div class="links">
+    <a class="linkbtn" href="https://identity.grifolsplasmadonorhub.com/donor/SelfRegister?referralCode=LumberQuebec0987&amp;lang=en" target="_blank" rel="noopener">🩸 GRIFOLS PLASMA — Come donate with me!<span class="sub">Help others &amp; get paid for your time · up to $800 your first 8 donations<span class="codechip" data-copy="LumberQuebec0987">CODE: LumberQuebec0987 — tap to copy</span></span></a>
+    <a class="linkbtn" href="https://muse.ai/join" target="_blank" rel="noopener">🌊 MUSE — join with my code<span class="sub">We each get 1 billion tokens<span class="codechip" data-copy="BUD12L">CODE: BUD12L — tap to copy</span></span></a>
+    <a class="linkbtn" href="https://blipbillboards.com/referral-program/?utm_source=promo&amp;utm_campaign=tsmxtd&amp;utm_content=fwckmg" target="_blank" rel="noopener">🚦 BLIP BILLBOARDS — your ad on a real billboard<span class="sub">Spend $100 on your first boards, you get $25 billboard credit</span></a>
+    <a class="linkbtn" href="https://polymarket.us/join/nintendokid" target="_blank" rel="noopener">🎯 POLYMARKET US — predict the markets<span class="sub">Deposit $10+, we each get $25 bonus credit (trade credit, not cash)<span class="codechip" data-copy="nintendokid">CODE: nintendokid — tap to copy</span></span></a>
+    <a class="linkbtn" href="https://www.atomm.com/christmas-tree?utm_medium=referral&amp;utm_campaign=sharetoearn2&amp;utm_id=1394651&amp;utm_source=copylink" target="_blank" rel="noopener">🎄 ATOMM CHRISTMAS WISH TREE<span class="sub">Collect all 9 ornaments · through Dec 24</span></a>
+    <a class="linkbtn" href="https://app.grass.io/register?referralCode=b3HNupZPHk3JrzE" target="_blank" rel="noopener">🌱 GRASS — get paid for unused internet<span class="sub">Join free with my link</span></a>
+    <a class="linkbtn" href="https://join.robinhood.com/davidj1716" target="_blank" rel="noopener">📈 ROBINHOOD — free stock<span class="sub">Get $5–$200 of stock when you join and link a bank account</span></a>
+    <a class="linkbtn" href="https://resonance.iqm.tech/referral?code=EB7GHGEX" target="_blank" rel="noopener">⚛️ IQM RESONANCE — quantum computing<span class="sub">We each get 100 credits<span class="codechip" data-copy="EB7GHGEX">CODE: EB7GHGEX — tap to copy</span></span></a>
+    <a class="linkbtn" href="https://fomo.family/r/nintendokid" target="_blank" rel="noopener">📱 FOMO — social crypto app<span class="sub">10% off trading fees for life with my link</span></a>
+    <a class="linkbtn" href="https://try.elevenlabs.io/Nintendokid" target="_blank" rel="noopener">🎙️ ELEVENLABS — AI voices<span class="sub">Affiliate link: if you subscribe through it, I earn a commission at no extra cost to you</span></a>
+  </div>
+  <div class="section-label">🔗 ALL MY LINKS</div>
   <div class="links" id="links"></div>
   <div class="mirror-note">Mirror of <a href="https://linktr.ee/infinitumikn" target="_blank" rel="noopener">linktr.ee/infinitumikn</a> · hosted on highscores.live</div>
   <div class="foot">
@@ -132,6 +148,18 @@ LINKS.forEach(l => {
   a.className = 'linkbtn'; a.href = l.u; a.target = '_blank'; a.rel = 'noopener';
   a.innerHTML = l.t + (l.s ? '<span class="sub">' + l.s + '</span>' : '');
   box.appendChild(a);
+});
+</script>
+<script>
+document.querySelectorAll('.codechip').forEach(function(chip){
+  chip.addEventListener('click', function(e){
+    e.preventDefault(); e.stopPropagation();
+    var code = chip.getAttribute('data-copy');
+    if (navigator.clipboard) { navigator.clipboard.writeText(code); }
+    var old = chip.textContent;
+    chip.textContent = 'COPIED: ' + code + ' ✓';
+    setTimeout(function(){ chip.textContent = old; }, 1600);
+  });
 });
 </script>
 </body>
