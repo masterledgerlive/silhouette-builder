@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>The Galactocentric Pulsar Calendar — The New Astrology Is a True Star Map</title>
+<style>
+:root{--bg:#050914;--card:#0b1428;--line:#1d2c4d;--txt:#e8eefc;--mut:#9db1d8;--acc:#ffd166;--acc2:#6ee7ff;--good:#7bf1a8;--warn:#ffb86b;--bad:#ff7b93}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(1200px 600px at 70% -10%,#16264d 0%,var(--bg) 55%);color:var(--txt);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;line-height:1.55}
+.wrap{max-width:980px;margin:0 auto;padding:20px 16px 64px}
+h1{font-size:2rem;line-height:1.15;margin:.2em 0}h2{margin-top:2.2em;border-bottom:1px solid var(--line);padding-bottom:.3em}h3{margin-top:1.4em}
+a{color:var(--acc2)}.mut{color:var(--mut)}.small{font-size:.88rem}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin:14px 0}
+table{border-collapse:collapse;width:100%;font-size:.92rem}td,th{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
+code,pre{font-family:ui-monospace,Menlo,Consolas,monospace}pre{background:#02040a;border:1px solid var(--line);border-radius:10px;padding:12px;overflow:auto;font-size:.78rem;line-height:1.35}
+.pill{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:2px 10px;margin:2px;font-size:.8rem;color:var(--mut)}
+.big{font-size:1.5rem;color:var(--acc);font-variant-numeric:tabular-nums}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
+.g-true{color:var(--good)}.g-corr{color:var(--warn)}.g-ana{color:var(--acc2)}.g-false{color:var(--bad)}
+input[type=datetime-local]{background:#02040a;color:var(--txt);border:1px solid var(--line);border-radius:8px;padding:8px;font-size:1rem}
+button{background:var(--acc);color:#111;border:0;border-radius:8px;padding:9px 16px;font-weight:700;cursor:pointer}
+canvas{width:100%;height:auto;background:#02040a;border:1px solid var(--line);border-radius:12px}
+details{margin:10px 0}summary{cursor:pointer;color:var(--acc2)}
+</style></head><body><div class="wrap">
+
+<p class="mut small">KODA KAI NETWORK · HIGHSCORES.LIVE · 2026-11-26 · Built from David Jeffords' Gemini master prompt, improved &amp; gauntlet-graded by Kodakai</p>
+<h1>🌌 The Galactocentric Pulsar Calendar</h1>
+<p><b>The new astrology is not fortune-telling. It is a true star map.</b> A calendar anchored where physics anchors: the center of our galaxy (Sagittarius A*), Earth's real elliptical orbit around the Solar System Barycenter, and the millisecond pulsars that NASA spacecraft already navigate by. No drifting tropical grid. No 30-day boxes. No leap-day fudge. Continuous time, measured — from the Planck scale to the Galactic Year, with the same harmonic mathematics running through every rung, graded honestly for what is proven and what is analogy.</p>
+
+<h2>⏱️ Live Galactic Epoch Timestamp — right now</h2>
+<div class="card">
+<div class="grid">
+<div><div class="mut small">GALACTIC EPOCH TIMESTAMP (GET)</div><div class="big" id="get">—</div><div class="small mut">Julian Date, continuous, no leap fudge</div></div>
+<div><div class="mut small">SUN APPARENT LONGITUDE</div><div class="big" id="sunlon">—</div><div class="small mut">geocentric ecliptic, degrees</div></div>
+<div><div class="mut small">EARTH TRUE ANOMALY ν</div><div class="big" id="nu">—</div><div class="small mut">from perihelion, Kepler's equation</div></div>
+<div><div class="mut small">SUN – Sgr A* SEPARATION</div><div class="big" id="sep">—</div><div class="small mut">minimum ~5.6° each ~Dec 18–19</div></div>
+<div><div class="mut small">PSR J0437−4715 TICKS TODAY</div><div class="big" id="ticks">—</div><div class="small mut">5.757451831 ms per tick, since 00:00 UTC</div></div>
+<div><div class="mut small">ANOMALISTIC YEAR PROGRESS</div><div class="big" id="prog">—</div><div class="small mut">perihelion → perihelion, 365.259636 d</div></div>
+</div>
+<p class="small mut">Live math in your browser (Meeus solar formulas + Kepler solver). Convert any moment:</p>
+<input type="datetime-local" id="when" value="2026-11-26T08:42"> <button onclick="convertPicked()">Convert</button>
+<pre id="worked">—</pre>
+</div>
+
+<h2>🗺️ The Pulsar Map — humanity's galactocentric address</h2>
+<canvas id="map" width="920" height="520"></canvas>
+<p class="small mut">Schematic after Frank Drake's Pioneer/Voyager pulsar map: the Sun at center, 14 pulsars as rays whose lengths are relative distances and whose labels are periods — plus the long ray to the Galactic Center. On the real plaques the periods are written in binary, in units of the hydrogen hyperfine transition (0.704 ns). Anyone in the galaxy who can measure a pulsar can find us — and date us, because pulsars spin down at known rates. That is a calendar and an address in one object.</p>
+
+<h2>§1 Mathematical axioms &amp; constants</h2>
+<div class="card"><table>
+<tr><th>Constant</th><th>Value</th><th>Grade</th></tr>
+<tr><td>Sgr A* position (ICRS J2000)</td><td>RA 17h 45m 40.04s · Dec −29° 00′ 28.1″ · ecliptic λ 266.85°, β −5.61° · mass ~4.3×10⁶ M☉</td><td class="g-true">MEASURED</td></tr>
+<tr><td>Sun → Galactic Center distance</td><td>~8.2 kpc (~26,700 ly)</td><td class="g-true">MEASURED (±~1–2%)</td></tr>
+<tr><td>Solar galactic orbital speed</td><td>~220–230 km/s</td><td class="g-true">MEASURED range</td></tr>
+<tr><td>Galactic Year</td><td>225–250 million years — published as a range, never fake precision</td><td class="g-corr">MODELLED</td></tr>
+<tr><td>Vertical oscillation through galactic plane</td><td>~60–70 Myr full period; plane crossings every ~30–35 Myr</td><td class="g-corr">MODELLED</td></tr>
+<tr><td>Anomalistic year (calendar year #1)</td><td>365.259636 days — perihelion to perihelion</td><td class="g-true">MEASURED</td></tr>
+<tr><td>Sidereal year (calendar year #2)</td><td>365.256363 days — fixed stars to fixed stars</td><td class="g-true">MEASURED</td></tr>
+<tr><td>Tropical year (the legacy year being replaced)</td><td>365.24219 days — drifts ~1° per 72 yr with precession; its zodiac is now ~24° off the stars it names</td><td class="g-true">MEASURED</td></tr>
+<tr><td>Earth orbital eccentricity e</td><td>0.0167086 (slowly decreasing)</td><td class="g-true">MEASURED</td></tr>
+<tr><td>Kepler phase law</td><td>M = E − e·sin E · ν = 2·atan2(√(1+e)·sin(E/2), √(1−e)·cos(E/2)) · equal areas in equal times</td><td class="g-true">DERIVED</td></tr>
+<tr><td>PSR J0437−4715</td><td>P = 5.757451831 ms · 173.68 Hz · nearest &amp; brightest millisecond pulsar, ~510 ly</td><td class="g-true">MEASURED</td></tr>
+<tr><td>PSR B1937+21</td><td>P = 1.5578 ms · 641.93 Hz · first millisecond pulsar (1982)</td><td class="g-true">MEASURED</td></tr>
+<tr><td>PSR J1748−2446ad</td><td>P = 1.3960 ms · 716 Hz · fastest known spinner</td><td class="g-true">MEASURED</td></tr>
+<tr><td>Hydrogen hyperfine transition</td><td>1420.40575 MHz · period 0.704 ns · the Voyager map's universal unit</td><td class="g-true">MEASURED</td></tr>
+<tr><td>Planck time / length</td><td>tP = 5.391247×10⁻⁴⁴ s · ℓP = 1.616255×10⁻³⁵ m — dimensional limits where QM &amp; GR collide, <b>not</b> observed ticks</td><td class="g-corr">DERIVED units</td></tr>
+<tr><td>Lunar cycles (kept, exact)</td><td>Synodic 29.530588 d · sidereal 27.321661 d — used as exact fractions, never rounded to months</td><td class="g-true">MEASURED</td></tr>
+</table></div>
+
+<h2>§2 The hierarchy of time — one ladder</h2>
+<div class="card">
+<p><span class="pill">Planck time 5.39×10⁻⁴⁴ s</span> → <span class="pill">Hydrogen tick 0.704 ns</span> → <span class="pill">Pulsar tick 1.4–5.8 ms</span> → <span class="pill">Second / day</span> → <span class="pill">Lunar synodic 29.530588 d</span> → <span class="pill">True-anomaly phase (equal-area, unequal days)</span> → <span class="pill">Anomalistic year 365.259636 d</span> → <span class="pill">Precession cycle ~25,772 yr</span> → <span class="pill">Plane crossing ~30–35 Myr</span> → <span class="pill">Galactic Year ~230 Myr</span></p>
+<p>One Galactic Year ≈ <b>1.35×10⁵⁹ Planck times</b>. The ladder spans ~59 orders of magnitude in time and ~62 in length (Planck length → observable universe, the house Scale Ladder's count). At every rung the governing mathematics is the harmonic family — oscillation, resonance, Fourier decomposition: a pulsar is a spinning oscillator, an orbit is a gravitational oscillator, a galactic rotation is the slowest oscillator we ride. <b class="g-ana">Grade: ANALOGY for the unity, MEASURED for every rung.</b> Same equations family, different physics at each scale — we say exactly that, and no more.</p>
+</div>
+
+<h2>§3 Conversion — worked example, today</h2>
+<div class="card">
+<p><b>Gregorian:</b> Thursday, November 26, 2026, 08:42 EST (Thanksgiving Day in the legacy calendar)</p>
+<table>
+<tr><td>Julian Date</td><td><b>2461371.071</b></td></tr>
+<tr><td>Sun apparent longitude</td><td>244.31° (legacy label: ~4° Sagittarius tropical — the stars actually behind the Sun today are in Scorpius/Ophiuchus; that drift is the bug this calendar fixes)</td></tr>
+<tr><td>Earth heliocentric longitude</td><td>64.31°</td></tr>
+<tr><td>Earth true anomaly ν</td><td>320.91° from perihelion</td></tr>
+<tr><td>Days since perihelion (Jan 3, 2026)</td><td>326.85 d = <b>89.48%</b> of the anomalistic year</td></tr>
+<tr><td>Sun – Sgr A* angular separation</td><td>23.19° and closing — Galactic Alignment (yearly minimum, ~5.6°) falls ~<b>Dec 18–19, 2026</b></td></tr>
+<tr><td>Pulsar ticks since 00:00 UTC</td><td>J0437−4715: 8,566,289 · B1937+21: 31,659,911</td></tr>
+<tr><td>Lunar age</td><td>~16.7 days (just past full, waning gibbous)</td></tr>
+</table>
+<p class="small">Formulas: JD from Unix time · T = (JD−2451545)/36525 · L₀ = 280.46646 + T·36000.76983 · M = 357.52911 + T·35999.05029 · solve Kepler for E, then ν · Sgr A* separation by spherical law of cosines against λ 266.85°, β −5.61°. The live calculator above runs this same math — check us.</p>
+</div>
+
+<h2>§4 The nested geometry</h2>
+<pre>
+                         GALACTIC PLANE  (Milky Way disk, ~100,000 ly across)
+   ─────────────────────────────────────────────────────────────────────────
+        Sgr A* ●━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━►  8.2 kpc  ┌─ SOLAR SYSTEM
+      (4.3M suns,                                          │   BARYCENTER ◉◄─ Jupiter/Saturn
+       galactic origin)                                    │        ╲   pull the Sun around it
+                                                           │   EARTH'S ELLIPSE (e=0.0167)
+        Sun's orbit: ~230 Myr, 220–230 km/s,               │      ╭─────●─────╮
+        bobbing ±~30 Myr through the plane                 │     ╱   ν = true  ╲
+                                                           │     ╲   anomaly   ╱
+        PULSAR TRIANGULATION (XNAV / SEXTANT):             │      ╰─────┬─────╯
+          J0437−4715 ╲        ╱ B1937+21                   │        perihelion
+            (5.757 ms) ╲    ╱ (1.558 ms)                   └─  ticks counted against
+                        ╲  ╱                                  PTA ensemble, SSB frame
+                    J0218+4232 · B1821−24 · J0030+0451
+</pre>
+
+<h2>🛰️ The NASA sextant — this is already how spacecraft navigate</h2>
+<div class="card">
+<p><b>SEXTANT</b> (Station Explorer for X-ray Timing and Navigation Technology), riding the NICER telescope on the International Space Station, made history in <b>November 2017</b>: the first fully autonomous, real-time X-ray pulsar navigation in orbit. Starting from a deliberately degraded position, SEXTANT reached <b>under 10 km RSS error in about 7.5 hours</b> and held it for the 2.2-day experiment — 78 timing measurements from pulsars including <b>J0218+4232, B1821−24, J0030+0451 and J0437−4715</b>. A sailor's sextant fixed position by the Sun and stars; SEXTANT fixes it by dead stars' clocks, anywhere in the Solar System, with no signal from Earth. Our calendar simply adopts, for civil time, the reference frame deep space already uses.</p>
+<p class="small mut">Sources: NASA GSFC NICER science nugget, 17 Nov 2017; APS Physics 11, 11 (Jan 2018). Pulsar Timing Arrays (NANOGrav, EPTA, PPTA → IPTA) pursue the same ensemble as an independent time standard and a gravitational-wave detector.</p>
+</div>
+
+<h2>📜 A short, honest history of astrology</h2>
+<div class="card"><table>
+<tr><td>~700 BCE</td><td><b>Babylon:</b> omen astrology — sky signs read for kings and states. The zodiac's 12 equal signs are invented here: a ruler's grid laid over uneven constellations.</td></tr>
+<tr><td>~280 BCE</td><td><b>Berossus &amp; the Hellenistic synthesis:</b> personal horoscopes are born — Babylonian signs + Greek geometry + Egyptian decans.</td></tr>
+<tr><td>~150 BCE</td><td><b>Hipparchus discovers precession</b> — the slow wobble that will quietly break the tropical zodiac over the next two millennia.</td></tr>
+<tr><td>~150 CE</td><td><b>Ptolemy splits the art in two:</b> the <i>Almagest</i> (astronomy, predictive math) and the <i>Tetrabiblos</i> (astrology, interpretation). The split was there from the start.</td></tr>
+<tr><td>1600s</td><td><b>Kepler</b> casts horoscopes to pay for the work that finds the three laws of planetary motion — the same Kepler equation this calendar runs on.</td></tr>
+<tr><td>1972 / 1977</td><td><b>Pioneer &amp; Voyager pulsar maps</b> (Frank Drake): humanity's address, written in pulsar periods and galactic geometry — astrology's root art, <i>mapping the stars</i>, done rigorously at last.</td></tr>
+<tr><td>2017</td><td><b>SEXTANT</b> navigates by pulsars in orbit. The star map stops being a message in a bottle and becomes an instrument.</td></tr>
+<tr><td>2026</td><td><b>This calendar:</b> the map becomes the clock. What it does <i>not</i> do: predict personality or fate. No such claim has ever survived a controlled test, and none is made here.</td></tr>
+</table></div>
+
+<h2>⚔️ The Gauntlet — every load-bearing claim, graded</h2>
+<div class="card"><table>
+<tr><th>Claim</th><th>Verdict</th></tr>
+<tr><td>Sgr A* coordinates &amp; ecliptic position</td><td class="g-true">TRUE — measured, ICRS</td></tr>
+<tr><td>Galactic Year 225–250 Myr, vertical period 60–70 Myr</td><td class="g-corr">CORRECTED — model ranges, published as ranges; anyone quoting one exact figure is overselling</td></tr>
+<tr><td>"Galactic alignment" each December</td><td class="g-corr">CORRECTED — minimum separation ~5.6°, because Sgr A* lies 5.61° off the ecliptic; a perfect Earth–Sun–center line never occurs</td></tr>
+<tr><td>Pulsars are more stable than atomic clocks</td><td class="g-false">FALSE as stated — the best atomic clocks win short-term (Hartnett &amp; Luiten). CORRECTED claim: an ensemble pulsar timescale is independent of Earth and competitive over years — independence is the value</td></tr>
+<tr><td>SEXTANT demonstrated autonomous pulsar navigation &lt;10 km</td><td class="g-true">TRUE — NASA, Nov 2017, ISS</td></tr>
+<tr><td>Voyager map = working galactocentric address</td><td class="g-true">TRUE — 14 pulsars + center ray, hyperfine units; distances approximate, periods precise</td></tr>
+<tr><td>Same math at the Planck scale</td><td class="g-ana">ANALOGY — the harmonic-oscillator/Fourier family spans the ladder; Planck units are dimensional limits, not observed oscillators. The unity is mathematical, not a proven single mechanism</td></tr>
+<tr><td>GitHub source data for harmonics</td><td class="g-corr">CORRECTED — David's GitHubs (34 repos, both accounts, code-searched) hold no dedicated pulsar/harmonic file; the house harmonic material lives in the Decoder's MATH-PHYSICS and the Scale Ladder (School H). Cited as such — no invented provenance</td></tr>
+<tr><td>Today's worked example (2026-11-26)</td><td class="g-true">TRUE — computed twice (server + the live calculator on this page), agreement to the digits shown</td></tr>
+<tr><td>External panel legs (OpenRouter / Crosswalk Grok)</td><td class="g-corr">BLOCKED, recorded — OpenRouter free cap returned 429 and Crosswalk is disconnected today; the gauntlet above is the house adversarial panel. External legs retry when the cap resets — the grades stand open to challenge</td></tr>
+</table></div>
+
+<h2>🎙️ The podcasts — three episodes</h2>
+<div class="card" id="podcasts">
+<p><b>Ep 1 — The Clock in the Dead Stars:</b> the pulsar calendar itself, SEXTANT, and today's date converted live.</p>
+<p><b>Ep 2 — A History of Astrology:</b> from Babylon's omens to the pulsar map — how the star map split from fortune-telling.</p>
+<p><b>Ep 3 — The Same Math at Every Scale:</b> harmonics from Planck time to the Galactic Year, with the honest line between math and mechanism.</p>
+<p class="small mut" id="podstatus">Episodes recorded &amp; publishing — listen links land here on this page the moment the feed is live.</p>
+</div>
+
+<h2>🧾 The improved master prompt</h2>
+<details><summary>Open the full v2 prompt (the Gemini original, improved &amp; graded)</summary>
+<pre id="promptbox">Loading…</pre></details>
+
+<p class="small mut">Sources: NASA GSFC NICER/SEXTANT (2017) · APS Physics 11, 11 (2018) · ATNF Pulsar Catalogue (J0437−4715, B1937+21, J1748−2446ad) · Johnston, Reading the Pioneer/Voyager Pulsar Map (2007) · Hartnett &amp; Luiten, Colloquium: astrophysical vs terrestrial frequency standards (2010) · Meeus, Astronomical Algorithms (solar formulas) · House: Scale Ladder / School H; Decoder MATH-PHYSICS (github.com/masterledgerlive). Built 2026-11-26. Nothing on this page asks you to believe — every number can be checked, and the calculator above lets you do it.</p>
+</div>
+<script>
+const SGR={lam:266.8517*Math.PI/180,beta:-5.6077*Math.PI/180};
+function sunPos(d){const T=d/36525,L0=(280.46646+T*(36000.76983+0.0003032*T))%360,M=(357.52911+T*(35999.05029-0.0001537*T))%360,e=0.016708634-T*(0.000042037+0.0000001267*T),Mr=M*Math.PI/180;
+let E=Mr;for(let i=0;i<8;i++)E=E-(E-e*Math.sin(E)-Mr)/(1-e*Math.cos(E));
+const nu=2*Math.atan2(Math.sqrt(1+e)*Math.sin(E/2),Math.sqrt(1-e)*Math.cos(E/2));
+const C=(1.914602-T*(0.004817+0.000014*T))*Math.sin(Mr)+(0.019993-0.000101*T)*Math.sin(2*Mr)+0.000289*Math.sin(3*Mr);
+const lam=((L0+C)%360+360)%360, om=125.04-1934.136*T, app=lam-0.00569-0.00478*Math.sin(om*Math.PI/180);
+return{app,nu:nu*180/Math.PI,e};}
+function sepDeg(appDeg){const l=appDeg*Math.PI/180;const c=Math.cos(SGR.beta)*Math.cos(l-SGR.lam);return Math.acos(Math.max(-1,Math.min(1,c)))*180/Math.PI;}
+function fmt(n){return n.toLocaleString('en-US');}
+function render(dt){
+ const jd=dt.getTime()/86400000+2440587.5, d=jd-2451545.0, s=sunPos(d), sep=sepDeg(s.app);
+ const peri=Date.UTC(2026,0,3,17,15)/86400000+2440587.5; let frac=((jd-peri)%365.259636)/365.259636; if(frac<0)frac+=1;
+ const secsUTC=dt.getUTCHours()*3600+dt.getUTCMinutes()*60+dt.getUTCSeconds();
+ const ticks=Math.floor(secsUTC/0.005757451831);
+ const set=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
+ set('get','GET '+jd.toFixed(5)); set('sunlon',s.app.toFixed(2)+'°'); set('nu',s.nu.toFixed(2)+'°');
+ set('sep',sep.toFixed(2)+'°'); set('ticks',fmt(ticks)); set('prog',(frac*100).toFixed(2)+'%');
+ return{jd,s,sep,frac,ticks};
+}
+function worked(dt){const r=render(dt);const ref=new Date(Date.UTC(2000,0,6,18,14));const age=(((dt-ref)/86400000)%29.530588853+29.530588853)%29.530588853;
+ document.getElementById('worked').textContent=
+ 'Input (UTC): '+dt.toISOString()+'\nJulian Date: '+r.jd.toFixed(5)+'\nSun apparent longitude: '+r.s.app.toFixed(2)+' deg\nEarth heliocentric longitude: '+((r.s.app+180)%360).toFixed(2)+' deg\nEarth true anomaly: '+r.s.nu.toFixed(2)+' deg\nSun-Sgr A* separation: '+r.sep.toFixed(2)+' deg\nAnomalistic year progress: '+(r.frac*100).toFixed(2)+'%\nJ0437-4715 ticks since 00:00 UTC: '+fmt(r.ticks)+'\nLunar age: '+age.toFixed(1)+' days';}
+function convertPicked(){const v=document.getElementById('when').value;if(v)worked(new Date(v));}
+setInterval(()=>{render(new Date());},1000); worked(new Date(Date.UTC(2026,10,26,13,42)));
+/* pulsar map */
+const cv=document.getElementById('map'),ctx=cv.getContext('2d');const cx=460,cy=260;
+const ps=[[0.830,17,150],[0.263,49,60],[0.388,58,190],[0.089,95,120],[0.253,129,55],[0.531,162,60],[0.033,196,210],[1.337,228,170],[0.059,255,90],[0.714,282,140],[0.150,305,100],[0.101,330,160],[0.290,348,80],[0.405,15,130]];
+ctx.strokeStyle='#1d2c4d';for(let r=60;r<=240;r+=60){ctx.beginPath();ctx.arc(cx,cy,r,0,7);ctx.stroke();}
+ctx.fillStyle='#ffd166';ctx.beginPath();ctx.arc(cx,cy,6,0,7);ctx.fill();ctx.fillText('SUN',cx+10,cy+4);
+ctx.strokeStyle='#ff7b93';ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+250,cy);ctx.stroke();ctx.fillStyle='#ff7b93';ctx.fillText('→ GALACTIC CENTER · Sgr A* · 8.2 kpc',cx+90,cy-8);
+ps.forEach((p,i)=>{const a=p[1]*Math.PI/180,x=cx+Math.cos(a)*p[2]*1.15,y=cy-Math.sin(a)*p[2]*0.82;ctx.strokeStyle='#6ee7ff';ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(x,y);ctx.stroke();ctx.fillStyle='#6ee7ff';ctx.beginPath();ctx.arc(x,y,3.5,0,7);ctx.fill();ctx.fillStyle='#9db1d8';ctx.font='11px monospace';ctx.fillText('P '+(p[0]).toFixed(3)+'s',x+6,y+3);});
+ctx.fillStyle='#e8eefc';ctx.font='bold 13px system-ui';ctx.fillText('14 PULSARS · periods in hydrogen hyperfine units on the real plaques',14,24);
+fetch('pulsar-prompt.md').then(r=>{if(r.ok)return r.text();throw 0;}).then(t=>{document.getElementById('promptbox').textContent=t;}).catch(()=>{document.getElementById('promptbox').textContent='Full prompt: IMPROVED-PROMPT v2 — see the Pulsar Calendar desk copy (~/workspace/pulsar-calendar/IMPROVED-PROMPT.md). Core upgrades: sourced constants with uncertainties, true minimum-separation alignment (~5.6 degrees, never a perfect line), pulsar-time independence instead of superiority, Planck units graded as dimensional limits, harmonics graded ANALOGY, and a hard ban on fate/personality claims.';});
+</script>
+</body></html>
