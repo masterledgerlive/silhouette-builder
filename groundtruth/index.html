@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GroundTruth 3D — Proof of Truth | highscores.live</title>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:#0b1020;color:#e8ecf4}
+  header{padding:20px 18px 8px;max-width:980px;margin:0 auto}
+  h1{margin:0 0 6px;font-size:28px} h1 .wave{font-size:24px}
+  .sub{color:#aab4c8;line-height:1.5;margin:0 0 4px}
+  .badge{display:inline-block;border:1px solid #3a4560;border-radius:999px;padding:2px 10px;font-size:12px;color:#c9d4ea;margin:4px 4px 0 0}
+  main{max-width:980px;margin:0 auto;padding:10px 18px 40px}
+  .card{background:#121a30;border:1px solid #263252;border-radius:14px;padding:16px;margin:14px 0}
+  .card h2{margin:0 0 8px;font-size:19px}
+  .card p,.card li{color:#c4cede;line-height:1.55}
+  #mapwrap{position:relative;background:radial-gradient(ellipse at 50% 40%,#16264d 0%,#0b1020 70%);border:1px solid #263252;border-radius:14px;overflow:hidden}
+  canvas{display:block;width:100%;height:auto}
+  .pin{position:absolute;width:16px;height:16px;border-radius:50%;transform:translate(-50%,-50%);cursor:pointer;border:2px solid #0b1020}
+  .pin.eye{background:#f5b942}.pin.log{background:#4da3ff}.pin.off{background:#ff5d5d}
+  .pin.pulse{animation:pulse 1.6s infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(255,93,93,.6)}70%{box-shadow:0 0 0 12px rgba(255,93,93,0)}100%{box-shadow:0 0 0 0 rgba(255,93,93,0)}}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:#aab4c8;margin-top:8px}
+  .dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:middle}
+  input[type=range]{width:100%}
+  .diff{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media(max-width:640px){.diff{grid-template-columns:1fr}}
+  .side{background:#0d1430;border:1px solid #263252;border-radius:10px;padding:12px}
+  .side h3{margin:0 0 6px;font-size:15px}
+  .grade{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#8fa0bd}
+  .cta{border-color:#f5b942}
+  a{color:#7db4ff}
+  footer{color:#7787a3;font-size:12px;text-align:center;padding:0 18px 30px;line-height:1.6}
+</style>
+</head>
+<body>
+<header>
+  <h1><span class="wave">🌊</span> GroundTruth 3D — Proof of Truth</h1>
+  <p class="sub">A decentralized, open-source 3D geospatial archive where veterans, journalists and eyewitnesses pin what they actually saw — and it is checked, place by place and hour by hour, against the official record. Built on our own blob tech. No central archive to edit, classify, or bury.</p>
+  <span class="badge">A highscores.live page</span><span class="badge">Blob-native — no servers, no Docker</span><span class="badge">Seed corridor: Iraq, Mar–Apr 2003</span><span class="badge">LIVE on highscores.live</span>
+</header>
+<main>
+  <div class="card">
+    <h2>The corridor — 15th MEU, March–April 2003</h2>
+    <p>Scrub the timeline, tap a pin. Gold is boots-on-the-ground testimony, blue is the declassified log, red is the official line. A pulsing pin is a place where the two do not agree — tap it to see both sides, each at its grade.</p>
+    <div id="mapwrap"><canvas id="map" width="920" height="430"></canvas></div>
+    <div class="legend">
+      <span><span class="dot" style="background:#f5b942"></span>Eyewitness</span>
+      <span><span class="dot" style="background:#4da3ff"></span>Declassified log</span>
+      <span><span class="dot" style="background:#ff5d5d"></span>Official / media</span>
+      <span>◉ Pulsing = high divergence</span>
+    </div>
+    <p style="margin:12px 0 4px"><label for="scrub">Timeline: <strong id="datelabel">Mar 21, 2003</strong></label></p>
+    <input type="range" id="scrub" min="0" max="44" value="0">
+    <div id="drawer" style="margin-top:14px"></div>
+  </div>
+
+  <div class="card">
+    <h2>How proof works here</h2>
+    <ul>
+      <li><strong>Every record is a signed blob.</strong> Photos, logs and testimony are hashed, chained into a manifest, and stored on Walrus — recall it and the hash either matches or it doesn't. Nobody can quietly rewrite a pin.</li>
+      <li><strong>Corroboration is automatic, grading is honest.</strong> Records at the same place and time cluster together and are graded CORROBORATES, CONTRADICTS, or CONTEXTUALIZES. A pattern is a lead, not a truth, until it survives checking.</li>
+      <li><strong>People stay private.</strong> Contributors prove unit and theater with a hashed attestation. Faces, plates and personal details are redacted <em>before</em> anything is stored — personal information never goes onto immutable storage.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>The Tribunal — the trial that ended all the other trials</h2>
+    <p><strong>The case they tried first was Dujail, 1982.</strong> On July 8, 1982, gunmen of the Iranian-backed al-Dawa party tried to assassinate Saddam Hussein in the Shia town of Dujail, in the middle of the Iran–Iraq War. His reprisal swept up hundreds: around 600 arrested, <strong>148 men and boys executed or dead in custody</strong>, families deported, the town's orchards and farmland razed.</p>
+    <p><strong>Why Dujail matters to the theory:</strong> of all the cases against him, Dujail was the one where Saddam had his strongest argument — <em>they tried to kill me first, in wartime</em>. A head of state answering an assassination attempt is the most defensible ground he ever stood on. And it was the <em>smallest</em> case. Behind it in line stood Anfal — the chemical campaigns against the Kurds — the Iran–Iraq War itself, and the crushing of the 1991 Shia uprising. Those trials would have walked straight through the 1980s: the years the United States backed Saddam against Iran, shared intelligence with him, approved dual-use exports, and sent Donald Rumsfeld to shake his hand in Baghdad in 1983 and 1984.</p>
+    <p><strong>The mechanism (this part is documents, not theory):</strong> the Iraqi High Tribunal — created in the U.S.-occupation era and heavily U.S.-funded and supported — tried Dujail first. Saddam was convicted November 5, 2006; his appeal was rejected December 26; and under the tribunal's own statute an upheld death sentence <strong>had to be carried out within 30 days, with no stay allowed for other trials</strong>. He was hanged <strong>December 30, 2006 — four days later</strong>. The Anfal trial, already underway, lost its chief defendant mid-stream. The other trials never happened.</p>
+    <p><strong>The 30-day argument:</strong> America doesn't do this. In the United States no one is executed thirty days after a final appeal — capital cases run years of appeals, often well over a decade. And America doesn't destroy its best source: a living Saddam was the highest-value prisoner on earth, and the FBI's own debriefs of him produced real intelligence — including his admission that the WMD posture was a bluff aimed at Iran. The rational design, if justice and intelligence were the goals, was a prison cell, every trial heard, every page extracted. The design chosen was the opposite: execution mandatory within thirty days, no stay, no clemency — a clock whose only certain effect was that the other cases could never be heard.</p>
+    <p><strong>The result, whatever the motive:</strong> we will never hear, under oath and on the record, what the Iran–Iraq War, Anfal, and 1991 files would have shown — including everything they would have shown about Washington's own years backing him. <span class="grade">Grades: tribunal dates, statute and Dujail facts — DOCUMENTED · the sequencing as deliberate burial of the U.S. record — THEORY, presented here as the founder's, for the evidence to judge</span></p>
+  </div>
+
+  <div class="card">
+    <h2>The Gaines Hunt — is anything hidden in the paperwork?</h2>
+    <p>Helen Fouché Gaines wrote the book on finding concealed messages. Her method — frequency, position, structure — is now pointed at this era's own documents: briefing transcripts, category codes, and the calendar itself. Some hiding needs no cipher: try a man on the smallest charge first, make execution mandatory within 30 days, and the bigger trials are never heard. The hunt reports at grade — candidate, corroborated, proven — and a clean pass with zero finds is a result we publish too. Hear it unfold in <strong>Proof of Truth</strong>, our four-part series: <em>The Corridor · The Buried Record · How We Would Know If We're Wrong · An Open Door for Truth.</em></p>
+  </div>
+
+  <div class="card">
+    <h2>The players — one map, both eras</h2>
+    <p><strong>Warned, on the record:</strong> Shinseki (several hundred thousand troops, Senate testimony, Feb 2003 — dismissed and sidelined) · Zinni (CENTCOM's own plan wanted 380,000; its intel never once said WMD) · Thomas White · Greg Thielmann · Joseph Wilson (Niger yellowcake was forged — and his wife Valerie Plame paid for his saying so) · Brent Scowcroft ("Don't Attack Saddam," 2002) · Batiste &amp; Newbold (Revolt of the Generals) · Hans Blix (no WMD found, needed months more) · Scott Ritter (90–95% already destroyed in the 90s).</p>
+    <p><strong>The architects:</strong> Rumsfeld (light footprint, warners overruled) · Cheney · Wolfowitz · Feith (the Office of Special Plans stovepipe) · Bremer (Orders 1 &amp; 2: an army dissolved overnight) · George W. Bush · Chalabi and the Curveball fabrications.</p>
+    <p><strong>The 1980s backers — the era the later trials would have opened:</strong> George H.W. Bush (NSD-26 credits; the 1991 Safwan stand-down) · Reagan &amp; Casey (NSDD 114/139: intelligence and dual-use support) · Shultz &amp; Weinberger (Iraq struck from the terrorism list, 1982; UN condemnations blocked) · Howard Teicher, whose <strong>sworn 1995 affidavit</strong> already says, in a court record, that the NSC and CIA facilitated arms and chemical supply lines to Saddam.</p>
+    <p><strong>Superpose the eras and one name stands at the top of both: Rumsfeld</strong> — the envoy who shook Saddam's hand in Baghdad in 1983 and 1984, and the Secretary of Defense of 2003. No cipher hides that link. It hides in plain sight, in the habit of telling the two eras as two different stories. <span class="grade">Involvement anchors: DOCUMENTED · bridge structure: CORROBORATED · burial motive: THEORY, the founder's</span></p>
+  </div>
+
+  <div class="card cta">
+    <h2>Truth is a collaboration</h2>
+    <p>Were you there — any war, any side of the lens? Journalists, veterans, medics, translators, civilians: your pin, corroborated against everyone else's, is how isolated memory becomes undeniable. Contribution opens soon, under one rule that never changes: <strong>find the truth, grade it, show your work.</strong></p>
+  </div>
+</main>
+<footer>GroundTruth 3D / Proof of Truth — founded by a USMC 0481 Landing Support Specialist, 15th MEU, Iraq 2003.<br>Published 2026-11-25 on the founder's word.</footer>
+<script>
+const NODES=[
+ {id:"kuwait",name:"Kuwait Naval Base / Ash Shuaybah",lon:47.98,lat:29.35,day:0,type:"eye",title:"Feb 12, 2003 — offload and staging",grade:"FIRST-HAND",text:"15th MEU offloads, stages forward logistics and A/DACG operations. The corridor begins here.",off:"Official record agrees on the staging role and dates.",div:false},
+ {id:"ummqasr",name:"Umm Qasr",lon:47.92,lat:30.04,day:9,type:"eye",title:"Mar 21–24, 2003 — port secured with UK 3 Commando",grade:"FIRST-HAND",text:"Deep-water port secured attached to UK 3 Commando Brigade; Az Zubayr in the same push.",off:"Briefings framed a contested port battle; ground role was port/logistics security in the attached UK sector.",div:false},
+ {id:"nasiriyah",name:"An Nasiriyah",lon:46.26,lat:31.05,day:16,type:"eye",title:"Late Mar – Apr 1, 2003 — forward LZs, perimeter, diversion",grade:"FIRST-HAND",text:"Support to forward LZs and perimeter/diversion operations during the Apr 1 hospital extraction of Pfc. Jessica Lynch. Under-equipped reserve units — the 507th Maintenance Company — had already been hit hard here.",off:"The rescue was told as a firefight story; later reporting and ground accounts diverged sharply on resistance at the hospital.",div:true},
+ {id:"baghdad",name:"Southern Baghdad approaches",lon:44.36,lat:33.20,day:30,type:"eye",title:"Apr 2003 — abandoned airfields, EOD sweeps",grade:"FIRST-HAND",text:"EOD sweeps of munitions bunkers found degraded, rusted mortar rounds from the Iran–Iraq and 1991 wars — no active WMD stockpiles, no functioning Iraqi regular military or police, functional AK-47s in abandoned infrastructure.",off:"Official line in this window: WMD programs and organized resistance. Ground truth at these sites: abandoned, degraded, empty.",div:true},
+ {id:"retro",name:"Retrograde to Kuwait",lon:47.98,lat:29.35,day:44,type:"log",title:"Late Apr – May 4, 2003 — wash-down and re-embark",grade:"UNIT RECORD",text:"Retrograde complete; returned to Southern California July 12–13, 2003 with zero 15th MEU fatalities.",off:"Official casualty tables for the invasion window (Mar 19 – May 1): 139 U.S. deaths, 33 UK deaths — theater-wide figures, not this unit's.",div:false}
+];
+const wrap=document.getElementById('mapwrap'),cv=document.getElementById('map'),ctx=cv.getContext('2d');
+function xy(lon,lat){return [ (lon-38)/14*920, 430-(lat-27)/10*430 ];}
+function draw(){ctx.clearRect(0,0,920,430);ctx.strokeStyle='rgba(120,150,220,.15)';for(let i=0;i<14;i++){ctx.beginPath();ctx.moveTo(i*66,0);ctx.lineTo(i*66,430);ctx.stroke();}for(let i=0;i<10;i++){ctx.beginPath();ctx.moveTo(0,i*43);ctx.lineTo(920,i*43);ctx.stroke();}ctx.strokeStyle='#f5b942';ctx.lineWidth=2;ctx.beginPath();NODES.forEach((n,i)=>{const[x,y]=xy(n.lon,n.lat);i?ctx.lineTo(x,y):ctx.moveTo(x,y);});ctx.stroke();ctx.lineWidth=1;}
+draw();
+const day0=new Date(Date.UTC(2003,2,12));
+function render(day){document.querySelectorAll('.pin').forEach(p=>p.remove());
+ NODES.filter(n=>n.day<=day).forEach(n=>{const[x,y]=xy(n.lon,n.lat);const d=document.createElement('div');d.className='pin '+(n.type==='eye'?'eye':n.type==='log'?'log':'off')+(n.div?' pulse':'');d.style.left=(x/920*100)+'%';d.style.top=(y/430*100)+'%';d.title=n.name;d.onclick=()=>show(n);wrap.appendChild(d);});
+ const dt=new Date(day0.getTime()+(9+day)*864e5);document.getElementById('datelabel').textContent=dt.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric',timeZone:'UTC'});}
+function show(n){document.getElementById('drawer').innerHTML='<div class="diff"><div class="side"><div class="grade">Ground truth · '+n.grade+'</div><h3>'+n.title+'</h3><p>'+n.text+'</p></div><div class="side"><div class="grade">Official record</div><h3>'+n.name+'</h3><p>'+n.off+'</p></div></div>'+(n.div?'<p style="color:#ff9a9a;margin-top:10px"><strong>Divergence flagged:</strong> ground truth and official narrative do not agree at this pin. Both sides shown at grade — the reader judges from the sources.</p>':'');}
+document.getElementById('scrub').addEventListener('input',e=>render(+e.target.value));
+render(0);show(NODES[0]);
+</script>
+</body>
+</html>
