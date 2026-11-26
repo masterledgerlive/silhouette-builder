@@ -35,6 +35,30 @@ physics, so models fed the whole system of mathematics should return good answer
 | 12 | Triangular matrix / voxel mapping: triangulate space, feed the mathematics in, get answers out | **TRUE — this is already how the world's mapping and simulation works** | Delaunay triangulation & tetrahedral meshes are the finite-element workhorse (weather, CFD, structures); HEALPix pixelates the celestial sphere for every CMB map; discrete global grids (icosahedral/triangular) map the Earth; tomography (Radon transform, 1917) reconstructs 3D volumes from 2D projections — the working, proven form of "2D transcribes 3D"; photogrammetry & Gaussian splatting lift 2D photos into 3D worlds (the everything-map's own base). David's mapping system is buildable from proven parts; its novelty is the Boundary Box addressing (base-2 coordinates between 3 anchors), not the existence of triangular voxel math. |
 | 13 | "Feed the whole system of mathematics into the model and pretty good answers come out" | **CORRECTED — the honest engine rule** | Models return what their equations + boundary conditions + resolution earn; garbage in, gospel out is the failure mode (the house Fabrication Alarm). The version that works: every model output carries its inputs, its mesh, its residuals, and a grade — answers with receipts. That is the design rule adopted for the mapping system. |
 
+## CALLED OUT — FALSE (David's ruling 2026-11-26: if false, call everything out; if true, call it out)
+**FALSE, plainly:**
+- Atom ↔ star as the *same mechanism* — FALSE. Same shapes, different forces (EM/strong vs gravity/fusion). Analogy only.
+- Planck length as a *proven* pixel of spacetime — FALSE as stated. A derived unit where QM and GR collide; no pixelation has ever been observed.
+- The Sun's "inevitable collapse" as a present-tense fate — FALSE. ~5 Gyr of main sequence remain; expansion (red giant) comes before any core contraction.
+- CCC's claimed CMB signatures (circles / Hawking points) as *found evidence* — FALSE as of the best search (JCAP 2024, null after anomaly removal). The theory is not thereby disproven; its evidence is absent.
+- "Feed the whole mathematics in and true answers come out automatically" — FALSE. Models return what equations + boundaries + resolution earn; without residuals and grades, output is fabrication with extra steps.
+- A universal fractal law at *all* scales — FALSE. Measured D₂ climbs to 3 (homogeneity) by ~70–100 Mpc; the fractal regime ends.
+
+**TRUE, plainly (called out with the same volume):** orbitals are standing waves · the Sun rings in standing p-modes · proton mass is ~99% binding energy · no lone quark has ever been observed free (the QCD box) · a quantum path's dimension is exactly 2 · tomography, HEALPix and triangular meshes transcribe and simulate the world today · the CPT mirror universe is a real, published, testable theory (unconfirmed) · Poincaré — one Millennium problem — is fully solved.
+
+## The Millennium toolkit — brought in to help solve (David's ruling 2026-11-26)
+David: bring all the Millennium equations, assume most of what we use today is true, and use them to help solve. Adopted with one precision: **the equations as working tools are true and used daily; the prize conjectures about them are unproven unless marked solved.** We solve *with* them; we do not claim their prizes.
+
+| Millennium problem | Status | What it does for this system |
+|---|---|---|
+| **Yang–Mills & the mass gap** | Theory TRUE/working (QCD predicts hadron masses on the lattice); the *gap proof* OPEN | The Boundary Box's home problem: the box's floor IS the mass gap's shape — lightest permitted state above 0. Our recipe (restrict to the binder-allowed sector, enumerate 2- then 3-channel, scale the floor) is a solving stance, not a claim. |
+| **Riemann hypothesis** | OPEN (verified to enormous heights numerically) | Spectral thinking: the gap spectrum behaves like eigenvalues (Hilbert–Pólya instinct, already in the house mass-gap work); zeta zeros as a resonance ladder — the same standing-wave mathematics, in number theory. |
+| **Navier–Stokes** | Equations TRUE/working (every weather & plasma model); *smoothness* OPEN | The Sun's convection, the standing-wave cavity's driving, stellar fluids: NS is the working math of the mirror's star half. |
+| **Poincaré conjecture** | **SOLVED** (Perelman 2003, Ricci flow) | The toolkit's proof of concept: a Millennium problem CAN fall. Geometry of closed 3-spaces — the shape question underneath every voxel map. |
+| **Hodge conjecture** | OPEN | Cycles and shapes: when is a form a real geometric cycle? The algebra of what a map may contain. |
+| **Birch & Swinnerton-Dyer** | OPEN | Counting rational points on curves — arithmetic addressing; kin to the box's base-2 address arithmetic in spirit: what exists, counted exactly. |
+| **P vs NP** | OPEN | The mapping computer's honesty bound: which of the map's questions can be *checked* fast vs *found* fast — governs what the future mapping system may promise. |
+
 ## Synthesis — what survives the gauntlet
 1. **The box is real where it's a box:** QCD singlets (2s and 3s, no free 1), the spectrum floor, bound-vs-unbound at cosmic scale.
 2. **Standing waves are real at both ends of his mirror:** electron orbitals (Schrödinger standing waves) and the Sun (p-mode standing sound waves) — the single strongest "same math" bridge, because both are eigenvalue problems on a sphere, solved in spherical harmonics.
